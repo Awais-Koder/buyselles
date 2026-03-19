@@ -8,11 +8,9 @@ use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Events\RequestProductRestockEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
-use App\Models\CartShipping;
 use App\Models\Color;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\ShippingType;
 use App\Services\RestockProductService;
 use App\Utils\CartManager;
 use App\Utils\CustomerManager;
@@ -30,14 +28,12 @@ class CartController extends Controller
     use VatTaxManagement;
 
     public function __construct(
-        private Order                                              $order,
-        private readonly RestockProductService                     $restockProductService,
-        private readonly ProductRepositoryInterface                $productRepo,
-        private readonly RestockProductRepositoryInterface         $restockProductRepo,
+        private Order $order,
+        private readonly RestockProductService $restockProductService,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
         private readonly RestockProductCustomerRepositoryInterface $restockProductCustomerRepo,
-    )
-    {
-    }
+    ) {}
 
     public function getCartList(Request $request): JsonResponse
     {
@@ -49,8 +45,8 @@ class CartController extends Controller
         CartManager::updateOrderSummaryShippingCost(type: 'checked');
 
         $cart = Cart::whereHas('product', function ($query) {
-                return $query->active();
-            })
+            return $query->active();
+        })
             ->with(['shop', 'product' => function ($query) {
                 return $query->with(['category' => function ($query) {
                     return $query->with(['taxVats' => function ($query) {
@@ -75,12 +71,12 @@ class CartController extends Controller
 
         $totalTax = \App\Utils\OrderManager::processOrderGenerateData(data: [
             'coupon_code' => $request['coupon_code'] ?? '',
-            'requestObj' => $request
+            'requestObj' => $request,
         ]);
 
         if ($cart) {
             foreach ($cart as $key => $value) {
-                if (!isset($value['product'])) {
+                if (! isset($value['product'])) {
                     $cart_data = Cart::find($value['id']);
                     $cart_data->delete();
                     unset($cart[$key]);
@@ -122,7 +118,7 @@ class CartController extends Controller
                 }
 
                 $data['product']['total_current_stock'] = isset($data['product']['current_stock']) ? $data['product']['current_stock'] : 0;
-                if (isset($data['product']['variation']) && !empty($data['product']['variation'])) {
+                if (isset($data['product']['variation']) && ! empty($data['product']['variation'])) {
                     $variants = json_decode($data['product']['variation']);
                     foreach ($variants as $var) {
                         if ($data['variant'] == $var->type) {
@@ -133,6 +129,7 @@ class CartController extends Controller
 
                 $data['discount'] = getProductPriceByType(product: $data['product'], type: 'discounted_amount', result: 'value', price: $data['price']);
                 unset($data['product']['variation']);
+
                 return $data;
             });
         }
@@ -146,7 +143,7 @@ class CartController extends Controller
             'id' => 'required',
             'quantity' => 'required',
         ], [
-            'id.required' => translate('Product ID is required!')
+            'id.required' => translate('Product ID is required!'),
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -154,16 +151,17 @@ class CartController extends Controller
         }
 
         $cart = CartManager::add_to_cart($request);
+
         return response()->json($cart, 200);
     }
 
-    public function update_cart(Request $request):JsonResponse
+    public function update_cart(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'key' => 'required',
             'quantity' => 'required',
         ], [
-            'key.required' => translate('Cart key or ID is required!')
+            'key.required' => translate('Cart key or ID is required!'),
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -171,15 +169,16 @@ class CartController extends Controller
         }
 
         $response = CartManager::update_cart_qty($request);
+
         return response()->json($response);
     }
 
-    public function remove_from_cart(Request $request):JsonResponse
+    public function remove_from_cart(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'key' => 'required'
+            'key' => 'required',
         ], [
-            'key.required' => translate('Cart key or ID is required!')
+            'key.required' => translate('Cart key or ID is required!'),
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -192,15 +191,16 @@ class CartController extends Controller
             'customer_id' => ($user == 'offline' ? (session('guest_id') ?? $request->guest_id) : $user->id),
             'is_guest' => ($user == 'offline' ? 1 : '0'),
         ])->delete();
+
         return response()->json(translate('successfully_removed'));
     }
 
-    public function remove_all_from_cart(Request $request):JsonResponse
+    public function remove_all_from_cart(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'key' => 'required'
+            'key' => 'required',
         ], [
-            'key.required' => translate('Cart key or ID is required!')
+            'key.required' => translate('Cart key or ID is required!'),
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -212,6 +212,7 @@ class CartController extends Controller
             'customer_id' => ($user == 'offline' ? $request->guest_id : $user->id),
             'is_guest' => ($user == 'offline' ? 1 : '0'),
         ])->delete();
+
         return response()->json(translate('successfully_removed'));
     }
 
@@ -222,6 +223,7 @@ class CartController extends Controller
         } elseif ($request['action'] == 'checked') {
             Cart::whereIn('id', $request['ids'])->update(['is_checked' => 1]);
         }
+
         return response()->json(translate('Successfully_Update'), 200);
     }
 
@@ -238,7 +240,7 @@ class CartController extends Controller
 
             foreach (json_decode($product['choice_options']) as $key => $choice) {
                 if ($variationCode != null) {
-                    $variationCode .= '-' . str_replace(' ', '', $request[$choice->name]);
+                    $variationCode .= '-'.str_replace(' ', '', $request[$choice->name]);
                 } else {
                     $variationCode .= str_replace(' ', '', $request[$choice->name]);
                 }
@@ -268,7 +270,7 @@ class CartController extends Controller
 
             return response()->json([
                 'message' => translate('Request_sent_successfully'),
-                'topic' => getRestockProductFCMTopic(restockRequest: $restockRequest)
+                'topic' => getRestockProductFCMTopic(restockRequest: $restockRequest),
             ], 200);
         }
 
@@ -289,16 +291,16 @@ class CartController extends Controller
             $count = $firstProduct?->restock_product_customers_count ?? 0;
             $data = [
                 'title' => $firstProduct?->product?->name ?? '',
-                'body' => $count < 100 ? translate('This_product_has') . ' ' . $count . ' ' . translate('restock_request') : translate('This_product_has') . ' 99+ ' . translate('restock_request'),
+                'body' => $count < 100 ? translate('This_product_has').' '.$count.' '.translate('restock_request') : translate('This_product_has').' 99+ '.translate('restock_request'),
                 'image' => getStorageImages(path: $firstProduct?->product?->thumbnail_full_url ?? '', type: 'product'),
-                'firebase_token' => $product?->seller?->cm_firebase_token
+                'firebase_token' => $product?->seller?->cm_firebase_token,
             ];
         } elseif (count($restockProductList) > 1) {
             $data = [
                 'title' => translate('Restock_Request'),
-                'body' => (count($restockProductList) < 100 ? count($restockProductList) : '99 +') . ' ' . translate('more_products_have_restock_request'),
+                'body' => (count($restockProductList) < 100 ? count($restockProductList) : '99 +').' '.translate('more_products_have_restock_request'),
                 'image' => dynamicAsset(path: 'public/assets/back-end/img/icons/restock-request-icon.svg'),
-                'firebase_token' => $product?->seller?->cm_firebase_token
+                'firebase_token' => $product?->seller?->cm_firebase_token,
             ];
         }
 
@@ -322,13 +324,13 @@ class CartController extends Controller
     {
         $user = Helpers::getCustomerInformation($request);
         if ($user != 'offline') {
-            if (isset($request['cart_guest_id']) && !is_null($request['cart_guest_id'])) {
+            if (isset($request['cart_guest_id']) && ! is_null($request['cart_guest_id'])) {
                 $cartList = Cart::where(['is_guest' => 1, 'customer_id' => $request['cart_guest_id']])->get();
                 foreach ($cartList as $cart) {
                     $databaseCart = Cart::where([
                         'customer_id' => $user->id,
                         'seller_id' => $cart['seller_id'],
-                        'seller_is' => $cart['seller_is']
+                        'seller_is' => $cart['seller_is'],
                     ])->first();
 
                     Cart::where([
@@ -336,7 +338,7 @@ class CartController extends Controller
                         'product_id' => $cart['product_id'],
                         'variant' => $cart['variant'],
                         'seller_id' => $cart['seller_id'],
-                        'seller_is' => $cart['seller_is']
+                        'seller_is' => $cart['seller_is'],
                     ])->delete();
 
                     Cart::where(['id' => $cart['id']])->update([
@@ -346,6 +348,7 @@ class CartController extends Controller
                     ]);
                 }
             }
+
             return response()->json(['message' => translate('Cart_update_successfully')], 200);
         }
 

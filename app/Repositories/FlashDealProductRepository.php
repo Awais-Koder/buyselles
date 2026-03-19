@@ -10,13 +10,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class FlashDealProductRepository implements FlashDealProductRepositoryInterface
 {
-    public function __construct(private readonly FlashDealProduct $flashDealProduct)
-    {
-    }
+    public function __construct(private readonly FlashDealProduct $flashDealProduct) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'products');
+
         return $this->flashDealProduct->create($data);
     }
 
@@ -28,7 +27,7 @@ class FlashDealProductRepository implements FlashDealProductRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->flashDealProduct->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -45,11 +44,12 @@ class FlashDealProductRepository implements FlashDealProductRepositoryInterface
             ->when(isset($filters['flash_deal_id']), function ($query) use ($filters) {
                 return $query->where(['flash_deal_id' => $filters['flash_deal_id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -62,8 +62,7 @@ class FlashDealProductRepository implements FlashDealProductRepositoryInterface
     {
         cacheRemoveByType(type: 'products');
         $this->flashDealProduct->where($params)->delete();
+
         return true;
     }
-
-
 }

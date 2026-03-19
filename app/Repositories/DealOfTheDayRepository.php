@@ -10,9 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class DealOfTheDayRepository implements DealOfTheDayRepositoryInterface
 {
-    public function __construct(private readonly DealOfTheDay $dealOfTheDay)
-    {
-    }
+    public function __construct(private readonly DealOfTheDay $dealOfTheDay) {}
 
     public function add(array $data): string|object
     {
@@ -32,41 +30,43 @@ class DealOfTheDayRepository implements DealOfTheDayRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->dealOfTheDay->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->dealOfTheDay
             ->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 $query->orWhere('title', 'like', "%$searchValue%");
             })
-            ->when(isset($filters['product_id']), function ($query) use ($filters){
-                return $query->where(['product_id'=>$filters['product_id']]);
+            ->when(isset($filters['product_id']), function ($query) use ($filters) {
+                return $query->where(['product_id' => $filters['product_id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         $this->dealOfTheDay->where('id', $id)->update($data);
+
         return true;
     }
-
 
     public function updateWhere(array $params, array $data): bool
     {
         $this->dealOfTheDay->where($params)->update($data);
+
         return true;
     }
 
@@ -74,6 +74,4 @@ class DealOfTheDayRepository implements DealOfTheDayRepositoryInterface
     {
         return $this->dealOfTheDay->where($params)->delete();
     }
-
-
 }

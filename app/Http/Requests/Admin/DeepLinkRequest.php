@@ -64,7 +64,6 @@ class DeepLinkRequest extends FormRequest
         ];
     }
 
-
     public function messages(): array
     {
         return [
@@ -76,5 +75,4 @@ class DeepLinkRequest extends FormRequest
             'app_store_redirect_url.required_with' => translate('app_store_redirect_url and Team ID must be provided together.'),
         ];
     }
-
 }

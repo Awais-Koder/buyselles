@@ -22,14 +22,12 @@ use Illuminate\Support\Str;
 class SocialAuthController extends Controller
 {
     public function __construct(
-        private readonly CustomerRepositoryInterface                 $customerRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly PhoneOrEmailVerificationRepositoryInterface $phoneOrEmailVerificationRepo,
-        private readonly LoginSetupRepositoryInterface               $loginSetupRepo
-    )
-    {
-    }
+        private readonly LoginSetupRepositoryInterface $loginSetupRepo
+    ) {}
 
-    public function social_login(Request $request):JsonResponse
+    public function social_login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',
@@ -41,17 +39,17 @@ class SocialAuthController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $client = new Client();
+        $client = new Client;
         $token = $request['token'];
         $email = $request['email'];
         $unique_id = $request['unique_id'];
 
         try {
             if ($request['medium'] == 'google') {
-                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token=' . $token);
+                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='.$token);
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'facebook') {
-                $res = $client->request('GET', 'https://graph.facebook.com/' . $unique_id . '?access_token=' . $token . '&&fields=name,email');
+                $res = $client->request('GET', 'https://graph.facebook.com/'.$unique_id.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'apple') {
                 $apple_login = BusinessSetting::where(['type' => 'apple_login'])->first();
@@ -64,7 +62,7 @@ class SocialAuthController extends Controller
                 $aud = 'https://appleid.apple.com';
                 $iat = strtotime('now');
                 $exp = strtotime('+60days');
-                $keyContent = file_get_contents(dynamicStorage(path: 'storage/app/public/apple-login/' . $apple_login->service_file));
+                $keyContent = file_get_contents(dynamicStorage(path: 'storage/app/public/apple-login/'.$apple_login->service_file));
 
                 $token = JWT::encode([
                     'iss' => $teamId,
@@ -104,13 +102,13 @@ class SocialAuthController extends Controller
                     'is_phone_verified' => 0,
                     'is_email_verified' => 1,
                     'referral_code' => Helpers::generate_referer_code(),
-                    'temporary_token' => Str::random(40)
+                    'temporary_token' => Str::random(40),
                 ]);
             } else {
                 $user->temporary_token = Str::random(40);
                 $user->save();
             }
-            if (!isset($user->phone)) {
+            if (! isset($user->phone)) {
                 return response()->json([
                     'token_type' => 'update phone number',
                     'temporary_token' => $user->temporary_token]);
@@ -120,18 +118,19 @@ class SocialAuthController extends Controller
             if ($token != null) {
 
                 CartManager::cartListSessionToDatabase($request);
+
                 return response()->json(['token' => $token]);
             }
-            return response()->json(['error_message' => translate('customer_not_found_or_account_has_been_suspended')]);
 
+            return response()->json(['error_message' => translate('customer_not_found_or_account_has_been_suspended')]);
 
         } elseif (strcmp($email, $data['email']) === 0) {
             $name = explode(' ', $data['name']);
             if (count($name) > 1) {
-                $fast_name = implode(" ", array_slice($name, 0, -1));
+                $fast_name = implode(' ', array_slice($name, 0, -1));
                 $last_name = end($name);
             } else {
-                $fast_name = implode(" ", $name);
+                $fast_name = implode(' ', $name);
                 $last_name = '';
             }
             $user = User::where('email', $email)->first();
@@ -148,13 +147,13 @@ class SocialAuthController extends Controller
                     'is_phone_verified' => 0,
                     'is_email_verified' => 1,
                     'referral_code' => Helpers::generate_referer_code(),
-                    'temporary_token' => Str::random(40)
+                    'temporary_token' => Str::random(40),
                 ]);
             } else {
                 $user->temporary_token = Str::random(40);
                 $user->save();
             }
-            if (!isset($user->phone)) {
+            if (! isset($user->phone)) {
                 return response()->json([
                     'token_type' => 'update phone number',
                     'temporary_token' => $user->temporary_token]);
@@ -164,15 +163,17 @@ class SocialAuthController extends Controller
             if ($token != null) {
 
                 CartManager::cartListSessionToDatabase($request);
+
                 return response()->json(['token' => $token]);
             }
+
             return response()->json(['error_message' => translate('customer_not_found_or_account_has_been_suspended')]);
         }
 
         return response()->json(['error' => translate('email_does_not_match')]);
     }
 
-    public static function login_process_passport($user, $email, $password):?string
+    public static function login_process_passport($user, $email, $password): ?string
     {
         $token = null;
         if (isset($user)) {
@@ -187,7 +188,7 @@ class SocialAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'temporary_token' => 'required',
-            'phone' => 'required|min:11|max:14'
+            'phone' => 'required|min:11|max:14',
         ]);
 
         if ($validator->fails()) {
@@ -198,13 +199,12 @@ class SocialAuthController extends Controller
         $user->phone = $request->phone;
         $user->save();
 
-
         $phoneVerification = getLoginConfig(key: 'phone_verification');
 
         if ($phoneVerification == 1) {
             return response()->json([
                 'token_type' => 'phone verification on',
-                'temporary_token' => $request['temporary_token']
+                'temporary_token' => $request['temporary_token'],
             ]);
 
         } else {
@@ -225,7 +225,7 @@ class SocialAuthController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $client = new Client();
+        $client = new Client;
         $token = $request['token'];
         $email = $request['email'];
         $uniqueId = $request['unique_id'];
@@ -233,10 +233,10 @@ class SocialAuthController extends Controller
 
         try {
             if ($request['medium'] == 'google') {
-                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . $token);
+                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'facebook') {
-                $res = $client->request('GET', 'https://graph.facebook.com/' . $uniqueId . '?access_token=' . $token . '&&fields=name,email');
+                $res = $client->request('GET', 'https://graph.facebook.com/'.$uniqueId.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'apple') {
                 $apple_login = BusinessSetting::where(['type' => 'apple_login'])->first();
@@ -249,7 +249,7 @@ class SocialAuthController extends Controller
                 $aud = 'https://appleid.apple.com';
                 $iat = strtotime('now');
                 $exp = strtotime('+60days');
-                $keyContent = file_get_contents(dynamicStorage(path: 'storage/app/public/apple-login/' . $apple_login['service_file']));
+                $keyContent = file_get_contents(dynamicStorage(path: 'storage/app/public/apple-login/'.$apple_login['service_file']));
                 $token = JWT::encode([
                     'iss' => $teamId,
                     'iat' => $iat,
@@ -274,15 +274,16 @@ class SocialAuthController extends Controller
         } catch (Exception $exception) {
             $errors = [];
             $errors[] = ['code' => 'auth-001', 'message' => 'Invalid Token'];
+
             return response()->json([
                 'errors' => $errors,
-                'message' => $exception->getMessage()
+                'message' => $exception->getMessage(),
             ], 401);
         }
 
-        if (!isset($claims) && isset($data)) {
+        if (! isset($claims) && isset($data)) {
             if (strcmp($email, $data['email']) != 0) {
-                if ($request['medium'] == 'apple' && (!isset($data['id']) && !isset($data['kid']))) {
+                if ($request['medium'] == 'apple' && (! isset($data['id']) && ! isset($data['kid']))) {
                     return response()->json(['error' => translate('email_does_not_match')], 403);
                 } else {
                     return response()->json(['error' => translate('email_does_not_match')], 403);
@@ -293,19 +294,20 @@ class SocialAuthController extends Controller
         $existingUser = $this->customerRepo->getFirstWhere(params: ['email' => $data['email']]);
         $temporaryToken = Str::random(40);
 
-        if (!$existingUser) {
+        if (! $existingUser) {
             return response()->json(['temp_token' => $temporaryToken, 'status' => false, 'new_user' => 0, 'socialResponse' => $socialResponse]);
         }
 
-        if (!$existingUser['is_active'] || (getLoginConfig(key: 'phone_verification') && !$existingUser['is_phone_verified'])) {
+        if (! $existingUser['is_active'] || (getLoginConfig(key: 'phone_verification') && ! $existingUser['is_phone_verified'])) {
             return response()->json(['user' => $existingUser, 'status' => false]);
         }
 
         $this->customerRepo->updateWhere(params: ['email' => $data['email']], data: [
             'is_email_verified' => 1,
-            'email_verified_at' => now()
+            'email_verified_at' => now(),
         ]);
         $token = $existingUser->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token, 'status' => true]);
     }
 
@@ -324,7 +326,7 @@ class SocialAuthController extends Controller
         $user = $this->customerRepo->getFirstWhere(params: ['email' => $request['email']]);
 
         $temporaryToken = Str::random(40);
-        if (!$user) {
+        if (! $user) {
             return response()->json(['temp_token' => $temporaryToken, 'status' => false]);
         }
 
@@ -335,6 +337,7 @@ class SocialAuthController extends Controller
             ]);
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['token' => $token, 'status' => true]);
         }
 
@@ -362,7 +365,7 @@ class SocialAuthController extends Controller
 
         if ($isPhoneExist) {
             return response()->json(['errors' => [
-                ['code' => 'email', 'message' => translate('This phone has already been used in another account!')]
+                ['code' => 'email', 'message' => translate('This phone has already been used in another account!')],
             ]], 403);
         }
         $temporaryToken = Str::random(40);
@@ -386,6 +389,7 @@ class SocialAuthController extends Controller
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token]);
     }
 }

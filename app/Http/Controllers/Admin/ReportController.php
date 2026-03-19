@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\ExportFileNames\Admin\Report;
 use App\Exports\AdminEarningReportExport;
 use App\Exports\VendorEarningReportExport;
-use App\Services\Admin\Reports\EarningReportsService;
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessSetting;
 use App\Models\Order;
@@ -15,6 +13,8 @@ use App\Models\Product;
 use App\Models\RefundTransaction;
 use App\Models\Seller;
 use App\Models\SellerWallet;
+use App\Services\Admin\Reports\EarningReportsService;
+use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View as PageView;
@@ -26,12 +26,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportController extends Controller
 {
-
     public function __construct(
         private readonly EarningReportsService $earningReportsService,
-    )
-    {
-    }
+    ) {}
 
     public function admin_earning(Request $request): PageView
     {
@@ -45,8 +42,9 @@ class ReportController extends Controller
 
         $totalEarningStatisticsLabel = array_values(collect(array_keys($earningData['total_earning_statistics']))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' ' . date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -83,7 +81,6 @@ class ReportController extends Controller
         $totalEarningStatistics = [];
         $totalCommissionStatistics = [];
         $inhouseEarningFormatedArray = [];
-
 
         foreach ($inhouseEarn as $key => $earning) {
             $totalInhouseEarning += $earning;
@@ -131,7 +128,7 @@ class ReportController extends Controller
                 'total_commission_statistics' => $totalCommissionStatistics,
                 'total_in_house_products' => $totalInHouseProducts,
                 'total_stores' => $totalStores,
-            ]
+            ],
         ];
     }
 
@@ -158,38 +155,43 @@ class ReportController extends Controller
 
         foreach ($orderEditHistory as $editHistory) {
 
-            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
-                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && !in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
+            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
+                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && ! in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'cash_on_delivery' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'wallet' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'offline_payment' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_return_payment_status == 'returned') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_return_amount');
         }
@@ -220,6 +222,7 @@ class ReportController extends Controller
             'dateType' => $dateType,
             'inhouseEarn' => $getEarningFormatedData['formatted_data'],
         ];
+
         return Excel::download(new AdminEarningReportExport($data), Report::ADMIN_EARNING_REPORT);
     }
 
@@ -244,7 +247,7 @@ class ReportController extends Controller
             $fromYear = Carbon::parse($from)->format('Y');
 
             return self::earningReportSameYear($type, $currentStartYear, $currentEndYear, $fromYear, $number, $defaultInc);
-        } elseif ($dateType == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($dateType == 'custom_date' && ! empty($from) && ! empty($to)) {
             $startDate = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $endDate = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $fromYear = Carbon::parse($from)->format('Y');
@@ -319,7 +322,7 @@ class ReportController extends Controller
                 });
         })
             ->select(
-                DB::raw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility=' . ($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"') . ' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive'),
+                DB::raw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility='.($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"').' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive'),
                 DB::raw("(DATE_FORMAT(created_at, '%W')) as day")
             )
             ->where(['order_type' => 'default_type', 'order_status' => 'delivered'])
@@ -381,7 +384,6 @@ class ReportController extends Controller
             incrementNumber: 1,
         );
 
-
         $refunds = RefundTransaction::where(['payment_status' => 'paid', 'paid_by' => $type])
             ->whereHas('order')
             ->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()])
@@ -430,7 +432,7 @@ class ReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });
@@ -451,7 +453,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $commissions = Order::where(['seller_is' => 'seller', 'order_status' => 'delivered'])
@@ -468,7 +470,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $shippingEarns = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
@@ -485,7 +487,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $deliverymanIncentives = Order::whereHas('deliveryMan', function ($query) use ($type) {
@@ -495,7 +497,7 @@ class ReportController extends Controller
                 $query->where('seller_id', '!=', '0');
             });
         })
-            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility=' . ($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"') . ' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
+            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility='.($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"').' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
             ->where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
@@ -509,7 +511,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $adminBearerFreeShippingData = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
@@ -520,7 +522,7 @@ class ReportController extends Controller
             ->latest('created_at')->get();
 
         $adminBearerFreeShipping = [];
-        for ($inc = (int)$defaultInc; $inc <= $number; $inc++) {
+        for ($inc = (int) $defaultInc; $inc <= $number; $inc++) {
             $adminBearerFreeShipping[$inc] = 0;
             foreach ($adminBearerFreeShippingData as $match) {
                 if ($match['day'] == $inc) {
@@ -542,7 +544,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $taxes = OrderTransaction::where(['seller_is' => $type, 'status' => 'disburse'])
@@ -559,7 +561,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         $refunds = RefundTransaction::where(['payment_status' => 'paid', 'paid_by' => $type])
@@ -577,7 +579,7 @@ class ReportController extends Controller
             startDate: $start_date,
             endDate: $end_date,
             incrementNumber: $number,
-            defaultIncrement: (int)$defaultInc
+            defaultIncrement: (int) $defaultInc
         );
 
         return [
@@ -603,7 +605,7 @@ class ReportController extends Controller
 
         $earnFromOrders = Order::where(['order_status' => 'delivered', 'seller_is' => $type])
             ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-            ->selectRaw("*, ((DAYOFWEEK(created_at) + 5) % 7) as day")
+            ->selectRaw('*, ((DAYOFWEEK(created_at) + 5) % 7) as day')
             ->latest('created_at')->get();
 
         $earnFromOrder = $this->earningReportsService->getEarnFromOrderForEarningReport(
@@ -634,7 +636,7 @@ class ReportController extends Controller
         $shippingEarns = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
             ->orderBy('created_at', 'desc')
-            ->selectRaw("*, ((DAYOFWEEK(created_at) + 5) % 7) as day")
+            ->selectRaw('*, ((DAYOFWEEK(created_at) + 5) % 7) as day')
             ->get();
 
         $shippingEarn = $this->earningReportsService->getShippingEarnFromOrderForEarningReport(
@@ -653,7 +655,7 @@ class ReportController extends Controller
             });
         })
             ->select(
-                DB::raw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility=' . ($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"') . ' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive'),
+                DB::raw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility='.($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"').' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive'),
                 DB::raw("(DATE_FORMAT(created_at, '%W')) as day")
             )
             ->where(['order_type' => 'default_type', 'order_status' => 'delivered'])
@@ -690,7 +692,7 @@ class ReportController extends Controller
 
         $discountGivenQuery = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-            ->selectRaw("*, ((DAYOFWEEK(created_at) + 5) % 7) as day")
+            ->selectRaw('*, ((DAYOFWEEK(created_at) + 5) % 7) as day')
             ->latest('created_at')->get();
 
         $discountGiven = $this->earningReportsService->getDiscountGivenFromOrderForEarningReport(
@@ -807,7 +809,7 @@ class ReportController extends Controller
                 $query->where('seller_id', '!=', '0');
             });
         })
-            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility=' . ($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"') . ' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year, MONTH(created_at) month')
+            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility='.($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"').' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year, MONTH(created_at) month')
             ->where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
@@ -832,7 +834,7 @@ class ReportController extends Controller
             ->latest('created_at')->get();
 
         for ($inc = $defaultInc; $inc <= $number; $inc++) {
-            $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+            $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
             $adminBearerFreeShipping[$month] = 0;
             foreach ($adminBearerFreeShippingData as $match) {
                 if ($match['month'] == $inc) {
@@ -966,7 +968,7 @@ class ReportController extends Controller
             ->where(['order_type' => 'default_type', 'order_status' => 'delivered', 'is_shipping_free' => '0'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
-            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility=' . ($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"') . ' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year')
+            ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility='.($type == 'seller' ? '"sellerwise_shipping" AND seller_is="seller"' : '"inhouse_shipping" OR seller_is="admin"').' THEN deliveryman_charge ELSE 0 END) as deliveryman_incentive, YEAR(created_at) year')
             ->groupBy(DB::raw("DATE_FORMAT(created_at, '%Y')"))
             ->latest('created_at')->get();
 
@@ -980,7 +982,7 @@ class ReportController extends Controller
             defaultIncrement: $from_year
         );
 
-        //admin bearer free shipping
+        // admin bearer free shipping
         $adminBearerFreeShippingData = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
@@ -998,7 +1000,7 @@ class ReportController extends Controller
             }
         }
 
-        //discount_given
+        // discount_given
         $discountGivenQuery = Order::where(['order_type' => 'default_type', 'order_status' => 'delivered'])
             ->whereDate('created_at', '>=', $start_date)
             ->whereDate('created_at', '<=', $end_date)
@@ -1070,7 +1072,6 @@ class ReportController extends Controller
         $company_name = BusinessSetting::where('type', 'company_name')->first()->value;
         $company_web_logo = BusinessSetting::where('type', 'company_web_logo')->first()->value;
 
-
         $mpdf_view = View::make('admin-views.report.admin-earning-duration-wise-pdf', compact('earning_data', 'company_name', 'company_email', 'company_phone', 'company_web_logo'));
         Helpers::gen_mpdf($mpdf_view, 'admin_earning_', $earning_data['duration']);
     }
@@ -1138,8 +1139,9 @@ class ReportController extends Controller
 
         $chartEarningStatisticsLabel = array_values(collect(array_keys($chartEarningStatistics))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' ' . date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -1195,7 +1197,7 @@ class ReportController extends Controller
             $total_refund_given += $refund;
 
             $sellerEarnFormattedData[] = [
-                'vendor_id' => isset($seller_earn['seller_id']) ? $seller_earn['seller_id'] : "",
+                'vendor_id' => isset($seller_earn['seller_id']) ? $seller_earn['seller_id'] : '',
                 'vendor_info' => isset($seller_earn['seller_id']) && isset($seller_earn['name']) ? $seller_earn['name'] : 'vendor_not_found',
                 'earn_from_order' => $seller_earn['amount'],
                 'earn_from_shipping' => $shipping_earn,
@@ -1210,7 +1212,7 @@ class ReportController extends Controller
 
         return [
             'sellerEarnFormattedData' => $sellerEarnFormattedData,
-            'totalEarning' => $total_seller_earning + $total_shipping_earn + $total_tax - $total_discount_given - $total_commission - $total_refund_given - $total_deliveryman_incentive
+            'totalEarning' => $total_seller_earning + $total_shipping_earn + $total_tax - $total_discount_given - $total_commission - $total_refund_given - $total_deliveryman_incentive,
         ];
     }
 
@@ -1228,6 +1230,7 @@ class ReportController extends Controller
             'dateType' => $dateType,
             'vendorEarnTable' => $seller_earning_formatted_data['sellerEarnFormattedData'],
         ];
+
         return Excel::download(new VendorEarningReportExport($data), Report::VENDOR_EARNING_REPORT);
     }
 
@@ -1236,18 +1239,21 @@ class ReportController extends Controller
         if ($date_type == 'this_year') {
             $start_date = date('Y-01-01');
             $end_date = date('Y-12-31');
+
             return self::seller_earning_query_table($start_date, $end_date);
         } elseif ($date_type == 'this_month') {
             $current_month_start = date('Y-m-01');
             $current_month_end = date('Y-m-t');
+
             return self::seller_earning_query_table($current_month_start, $current_month_end);
         } elseif ($date_type == 'this_week') {
             return self::seller_earning_query_table(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
         } elseif ($date_type == 'today') {
             return self::seller_earning_query_table(Carbon::now()->startOfDay(), Carbon::now()->endOfDay());
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date_custom = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date_custom = Carbon::parse($to)->format('Y-m-d 23:59:59');
+
             return self::seller_earning_query_table($start_date_custom, $end_date_custom);
         }
     }
@@ -1268,16 +1274,16 @@ class ReportController extends Controller
         foreach ($orders as $order) {
             $sellerId = $order->seller_id;
 
-            if (!isset($seller_earn_table[$sellerId])) {
+            if (! isset($seller_earn_table[$sellerId])) {
                 $seller = Seller::find($sellerId);
                 $seller_earn_table[$sellerId] = [
                     'seller_id' => $sellerId,
-                    'name' => $seller ? $seller->f_name . ' ' . $seller->l_name : '',
-                    'amount' => 0
+                    'name' => $seller ? $seller->f_name.' '.$seller->l_name : '',
+                    'amount' => 0,
                 ];
                 $commission_given_table[$sellerId] = [
-                    'name' => $seller ? $seller->f_name . ' ' . $seller->l_name : '',
-                    'amount' => 0
+                    'name' => $seller ? $seller->f_name.' '.$seller->l_name : '',
+                    'amount' => 0,
                 ];
             }
 
@@ -1285,23 +1291,23 @@ class ReportController extends Controller
             $commission_given_table[$sellerId]['amount'] += $order->admin_commission;
         }
 
-        //discount_given_bearer_admin
+        // discount_given_bearer_admin
         $discount_given_bearer_admin = Order::where(['coupon_discount_bearer' => 'inhouse', 'discount_type' => 'coupon_discount', 'order_status' => 'delivered'])
             ->whereBetween('created_at', [$start_date, $end_date])
             ->selectRaw('sum(discount_amount) as discount_amount, seller_id, YEAR(created_at) year, MONTH(created_at) month')
             ->groupBy('seller_id')
             ->latest('created_at')->get();
 
-        $discount_given_bearer_admin_table = array();
+        $discount_given_bearer_admin_table = [];
         foreach ($discount_given_bearer_admin as $data) {
             $seller = Seller::find($data->seller_id);
-            $discount_given_bearer_admin_table[$data->seller_id] = array(
-                'name' => !empty($seller) ? $seller->f_name . ' ' . $seller->l_name : '',
-                'amount' => $data->discount_amount
-            );
+            $discount_given_bearer_admin_table[$data->seller_id] = [
+                'name' => ! empty($seller) ? $seller->f_name.' '.$seller->l_name : '',
+                'amount' => $data->discount_amount,
+            ];
         }
 
-        //shipping earn
+        // shipping earn
         $shipping_earns = Order::where([
             'order_type' => 'default_type',
             'order_status' => 'delivered',
@@ -1310,14 +1316,14 @@ class ReportController extends Controller
             ->whereBetween('created_at', [$start_date, $end_date])
             ->latest('created_at')->get();
 
-        $shippingEarnTable = array();
+        $shippingEarnTable = [];
         foreach ($shipping_earns as $order) {
             if ($order->shipping_responsibility == 'sellerwise_shipping') {
-                if (!isset($shippingEarnTable[$sellerId])) {
+                if (! isset($shippingEarnTable[$sellerId])) {
                     $seller = Seller::find($sellerId);
                     $shippingEarnTable[$sellerId] = [
-                        'name' => $seller ? $seller->f_name . ' ' . $seller->l_name : '',
-                        'amount' => 0
+                        'name' => $seller ? $seller->f_name.' '.$seller->l_name : '',
+                        'amount' => 0,
                     ];
                 }
 
@@ -1329,7 +1335,7 @@ class ReportController extends Controller
             }
         }
 
-        //deliveryman incentive
+        // deliveryman incentive
         $deliveryman_incentives = Order::where([
             'order_type' => 'default_type',
             'order_status' => 'delivered',
@@ -1343,13 +1349,13 @@ class ReportController extends Controller
         $deliveryman_incentive = [];
         foreach ($deliveryman_incentives as $data) {
             $seller = Seller::find($data->seller_id);
-            $deliveryman_incentive[$data->seller_id] = array(
-                'name' => !empty($seller) ? $seller->f_name . ' ' . $seller->l_name : '',
-                'amount' => $data->deliveryman_incentive
-            );
+            $deliveryman_incentive[$data->seller_id] = [
+                'name' => ! empty($seller) ? $seller->f_name.' '.$seller->l_name : '',
+                'amount' => $data->deliveryman_incentive,
+            ];
         }
 
-        //discount_given
+        // discount_given
         $discountsGivenOrders = Order::where('order_status', 'delivered')
             ->whereHas('seller', function ($query) {
                 return $query;
@@ -1363,14 +1369,14 @@ class ReportController extends Controller
             $sellerId = $ordersGroup->first()?->seller_id;
             $sellerFirstName = $ordersGroup->first()?->seller?->f_name;
             $sellerLastName = $ordersGroup->first()?->seller?->l_name;
-            $sellerName = ($sellerFirstName . ' ' . $sellerLastName) ?? '';
+            $sellerName = ($sellerFirstName.' '.$sellerLastName) ?? '';
 
             $discountAmount = 0;
             foreach ($ordersGroup as $order) {
                 if ($order->discount_type === 'coupon_discount' && $order->coupon_discount_bearer === 'seller') {
                     $discountAmount += $order->discount_amount;
                 }
-                if ((int)$order->is_shipping_free === 1 && $order->free_delivery_bearer === 'seller') {
+                if ((int) $order->is_shipping_free === 1 && $order->free_delivery_bearer === 'seller') {
                     $discountAmount += $order->extra_discount;
                 }
             }
@@ -1381,23 +1387,23 @@ class ReportController extends Controller
             ];
         }
 
-        //vat/tax
+        // vat/tax
         $taxes = OrderTransaction::where(['seller_is' => 'seller', 'status' => 'disburse'])
             ->whereBetween('created_at', [$start_date, $end_date])
             ->selectRaw('sum(tax) as total_tax, seller_id, YEAR(created_at) year, MONTH(created_at) month')
             ->groupBy('seller_id')
             ->latest('created_at')->get();
 
-        $total_tax_table = array();
+        $total_tax_table = [];
         foreach ($taxes as $data) {
             $seller = Seller::find($data->seller_id);
-            $total_tax_table[$data->seller_id] = array(
-                'name' => !empty($seller) ? $seller->f_name . ' ' . $seller->l_name : '',
-                'amount' => $data->total_tax
-            );
+            $total_tax_table[$data->seller_id] = [
+                'name' => ! empty($seller) ? $seller->f_name.' '.$seller->l_name : '',
+                'amount' => $data->total_tax,
+            ];
         }
 
-        //refund given
+        // refund given
         $refunds = RefundTransaction::where(['payment_status' => 'paid', 'paid_by' => 'seller'])
             ->whereHas('order')
             ->whereBetween('created_at', [$start_date, $end_date])
@@ -1405,21 +1411,21 @@ class ReportController extends Controller
             ->groupBy('payer_id')
             ->latest('created_at')->get();
 
-        $total_refund_table = array();
+        $total_refund_table = [];
         foreach ($refunds as $data) {
             $seller = Seller::find($data->payer_id);
-            $total_refund_table[$data->payer_id] = array(
-                'name' => !empty($seller) ? $seller->f_name . ' ' . $seller->l_name : '',
-                'amount' => $data->refund_amount
-            );
+            $total_refund_table[$data->payer_id] = [
+                'name' => ! empty($seller) ? $seller->f_name.' '.$seller->l_name : '',
+                'amount' => $data->refund_amount,
+            ];
         }
 
         foreach ($total_refund_table as $key => $data) {
-            if (!array_key_exists($key, $seller_earn_table)) {
-                $seller_earn_table[$key] = array(
+            if (! array_key_exists($key, $seller_earn_table)) {
+                $seller_earn_table[$key] = [
                     'name' => $data['name'],
                     'amount' => 0,
-                );
+                ];
             }
         }
 
@@ -1444,6 +1450,7 @@ class ReportController extends Controller
         session()->put('to_date', $to);
 
         $previousUrl = strtok(url()->previous(), '?');
-        return redirect()->to($previousUrl . '?' . http_build_query(['from_date' => $request['from'], 'to_date' => $request['to']]))->with(['from' => $from, 'to' => $to]);
+
+        return redirect()->to($previousUrl.'?'.http_build_query(['from_date' => $request['from'], 'to_date' => $request['to']]))->with(['from' => $from, 'to' => $to]);
     }
 }

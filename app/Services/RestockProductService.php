@@ -4,7 +4,6 @@ namespace App\Services;
 
 class RestockProductService
 {
-
     public function getProductRestockRequestAddData(object|array $request, object|array $restockRequest): array
     {
         return [
@@ -13,5 +12,4 @@ class RestockProductService
             'variant' => $request['product_variation_code'],
         ];
     }
-
 }

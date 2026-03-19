@@ -20,12 +20,9 @@ use Illuminate\Support\Carbon;
  * @property int $approved
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class WithdrawRequest extends Model
 {
-
     /**
      * The attributes that are mass assignable.
      *
@@ -54,18 +51,18 @@ class WithdrawRequest extends Model
 
     public function seller(): BelongsTo
     {
-        return $this->belongsTo(Seller::class,'seller_id');
+        return $this->belongsTo(Seller::class, 'seller_id');
     }
 
-    /*  delivery_men->deliveryMan*/
+    /*  delivery_men->deliveryMan */
     public function deliveryMan(): BelongsTo
     {
-        return $this->belongsTo(DeliveryMan::class,'delivery_man_id');
+        return $this->belongsTo(DeliveryMan::class, 'delivery_man_id');
     }
 
-    /*  withdraw_method->deliveryMan*/
+    /*  withdraw_method->deliveryMan */
     public function withdrawMethod(): BelongsTo
     {
-        return $this->belongsTo(WithdrawalMethod::class,'withdrawal_method_id');
+        return $this->belongsTo(WithdrawalMethod::class, 'withdrawal_method_id');
     }
 }

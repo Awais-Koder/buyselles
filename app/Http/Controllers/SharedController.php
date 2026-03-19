@@ -6,19 +6,17 @@ use App\Http\Requests\Request;
 use App\Traits\ActivationClass;
 use App\Traits\RecaptchaTrait;
 use App\Utils\Helpers;
-use App\Models\BusinessSetting;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
 class SharedController extends Controller
 {
-    use RecaptchaTrait;
     use ActivationClass;
+    use RecaptchaTrait;
 
     public function changeLanguage(Request $request): JsonResponse
     {
@@ -34,7 +32,8 @@ class SharedController extends Controller
         session()->put('local', $request['language_code']);
         Session::put('direction', $direction);
         Artisan::call('cache:clear');
-        return response()->json(['message' => translate('language_change_successfully') . '.']);
+
+        return response()->json(['message' => translate('language_change_successfully').'.']);
     }
 
     public function getSessionRecaptchaCode(Request $request): JsonResponse
@@ -42,6 +41,7 @@ class SharedController extends Controller
         if (env('APP_MODE') == 'dev' && session()->has($request['sessionKey'])) {
             $code = session($request['sessionKey']);
         }
+
         return response()->json(['code' => $code ?? '']);
     }
 
@@ -51,6 +51,7 @@ class SharedController extends Controller
         if ($response) {
             session()->put('g-recaptcha-response', $response);
         }
+
         return response()->json(['recaptcha' => $response]);
     }
 
@@ -61,10 +62,10 @@ class SharedController extends Controller
             Session::forget($request['sessionKey']);
         }
         Session::put($request['sessionKey'], $recaptchaBuilder->getPhrase());
-        header("Cache-Control: no-cache, must-revalidate");
-        header("Content-Type:image/jpeg");
-        header("Pragma:no-cache");
-        header("Expires:Sat, 26 Jul 1997 05:00:00 GMT");
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Content-Type:image/jpeg');
+        header('Pragma:no-cache');
+        header('Expires:Sat, 26 Jul 1997 05:00:00 GMT');
         $recaptchaBuilder->output();
     }
 
@@ -73,6 +74,7 @@ class SharedController extends Controller
         $config = $this->getAddonsConfig();
         $adminPanel = $config['admin_panel'] ?? [];
         $status = ($this->is_local() || env('DEVELOPMENT_ENVIRONMENT', false)) ? 1 : ($adminPanel['active'] ?? 0);
+
         return $status == 1 ? redirect(url('/')) : view('installation.activation-check');
     }
 
@@ -85,14 +87,13 @@ class SharedController extends Controller
         );
         $this->updateActivationConfig(app: 'admin_panel', response: $response);
 
-        if (!empty($response['errors'])) {
+        if (! empty($response['errors'])) {
             foreach ($response['errors'] as $error) {
                 $message = is_array($error) ? ($error[0] ?? 'Unknown error') : $error;
                 ToastMagic::error($message);
             }
         }
+
         return redirect(url('/'));
     }
-
-
 }

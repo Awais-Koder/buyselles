@@ -39,7 +39,7 @@ class CategoryAddRequest extends FormRequest
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed: true
             ),
-            'priority' => 'required'
+            'priority' => 'required',
         ];
     }
 
@@ -49,8 +49,8 @@ class CategoryAddRequest extends FormRequest
             'name.required' => translate('category_name_is_required'),
             'name.0.required' => translate('the_name_field_is_required'),
             'image.required' => translate('category_image_is_required'),
-            'image.mimes' => translate('category_image_must_be_'). getFileUploadFormats(skip: '.svg', asMessage: 'true'),
-            'image.max' => translate('category_image_must_not_exceed_'). getFileUploadMaxSize(). "MB",
+            'image.mimes' => translate('category_image_must_be_').getFileUploadFormats(skip: '.svg', asMessage: 'true'),
+            'image.max' => translate('category_image_must_not_exceed_').getFileUploadMaxSize().'MB',
             'priority.required' => translate('category_priority_is_required'),
         ];
     }
@@ -61,20 +61,19 @@ class CategoryAddRequest extends FormRequest
             function (Validator $validator) {
                 if (isset($this['name'][0]) && Category::where(['name' => $this['name'][0], 'position' => $this['position']])->first()) {
                     $validator->errors()->add(
-                        'name.unique', translate('The_category_has_already_been_taken') . '!'
+                        'name.unique', translate('The_category_has_already_been_taken').'!'
                     );
                 }
 
                 $taxData = $this->getTaxSystemType();
                 $categoryWiseTax = $taxData['categoryWiseTax'];
 
-                if ($categoryWiseTax && (!isset($this['tax_ids']) || empty($this['tax_ids']))) {
+                if ($categoryWiseTax && (! isset($this['tax_ids']) || empty($this['tax_ids']))) {
                     $validator->errors()->add(
-                        'tax', translate('Please_add_your_category_tax') . '!'
+                        'tax', translate('Please_add_your_category_tax').'!'
                     );
                 }
-            }
+            },
         ];
     }
-
 }

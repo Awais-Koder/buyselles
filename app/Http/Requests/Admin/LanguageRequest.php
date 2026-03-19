@@ -14,12 +14,11 @@ use Illuminate\Validation\Validator;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class LanguageRequest extends FormRequest
 {
     use ResponseHandler;
+
     protected $stopOnFirstFailure = true;
 
     public function authorize(): bool
@@ -34,7 +33,6 @@ class LanguageRequest extends FormRequest
             'code' => 'required',
         ];
     }
-
 
     public function messages(): array
     {
@@ -56,24 +54,23 @@ class LanguageRequest extends FormRequest
                 if ($this['type'] == 'add') {
                     if (in_array($this['name'], $existingNames)) {
                         $validator->errors()->add(
-                            'name', translate('The_language_name_must_be_unique') . '!'
+                            'name', translate('The_language_name_must_be_unique').'!'
                         );
                     }
 
                     if (in_array($this['code'], $existingCodes)) {
                         $validator->errors()->add(
-                            'code', translate('The_language_code_must_be_unique') . '!'
+                            'code', translate('The_language_code_must_be_unique').'!'
                         );
                     }
                 } else {
                     if (in_array($this['name'], $existingNames) && $languages->where('name', $this['name'])->first()['code'] != $this['code']) {
                         $validator->errors()->add(
-                            'name', translate('The_language_name_must_be_unique') . '!'
+                            'name', translate('The_language_name_must_be_unique').'!'
                         );
                     }
                 }
-            }
+            },
         ];
     }
-
 }

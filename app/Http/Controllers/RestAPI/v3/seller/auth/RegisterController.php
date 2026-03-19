@@ -8,17 +8,13 @@ use App\Http\Requests\API\v3\SellerRegistrationRequest;
 use App\Models\Admin;
 use App\Models\Seller;
 use App\Models\Shop;
-use App\Utils\Helpers;
 use App\Utils\ImageManager;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-
     public function store(SellerRegistrationRequest $request): JsonResponse
     {
         $adminEmail = Admin::where('admin_role_id', 1)->select('email')->first();
@@ -31,24 +27,24 @@ class RegisterController extends Controller
         $storage = config('filesystems.disks.default') ?? 'public';
         DB::beginTransaction();
         try {
-            $seller = new Seller();
+            $seller = new Seller;
             $seller->f_name = $request->f_name;
             $seller->l_name = $request->l_name;
             $seller->phone = $request->phone;
             $seller->email = $request->email;
             $seller->image = $request->file('image') ? ImageManager::upload('seller/', 'webp', $request->file('image')) : null;
             $seller->password = bcrypt($request->password);
-            $seller->status = $request->status == 'approved' ? 'approved' : "pending";
+            $seller->status = $request->status == 'approved' ? 'approved' : 'pending';
             $seller->save();
 
-            $shop = new Shop();
+            $shop = new Shop;
             $shop->seller_id = $seller->id;
             $shop->name = $request->shop_name;
             $shop->address = $request->shop_address;
             $shop->contact = $request->phone;
             $shop->image = $request->file('logo') ? ImageManager::upload('shop/', 'webp', $request->file('logo')) : null;
             $shop->image_storage_type = $request->has('logo') ? $storage : null;
-            $shop->banner =  $request->file('banner') ? ImageManager::upload('shop/banner/', 'webp', $request->file('banner')) : null;
+            $shop->banner = $request->file('banner') ? ImageManager::upload('shop/banner/', 'webp', $request->file('banner')) : null;
             $shop->banner_storage_type = $request->has('banner') ? $storage : null;
             $shop->bottom_banner = ImageManager::upload('shop/banner/', 'webp', $request->file('bottom_banner'));
             $shop->bottom_banner_storage_type = $request->has('bottom_banner') ? $storage : null;
@@ -82,10 +78,12 @@ class RegisterController extends Controller
                 'templateName' => 'registration',
             ];
             event(new VendorRegistrationEvent(email: $request['email'], data: $data));
+
             return response()->json(['message' => 'Shop apply successfully!'], 200);
 
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json([
                 'message' => 'Shop apply fail!',
                 'error' => $e->getMessage(),

@@ -10,13 +10,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class CouponRepository implements CouponRepositoryInterface
 {
-    public function __construct(private readonly Coupon $coupon)
-    {
-    }
+    public function __construct(private readonly Coupon $coupon) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'shops');
+
         return $this->coupon->newInstance()->create($data);
     }
 
@@ -55,7 +54,7 @@ class CouponRepository implements CouponRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->coupon->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -65,7 +64,7 @@ class CouponRepository implements CouponRepositoryInterface
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->coupon->with($relations)
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 return $query->where(function ($query) use ($searchValue) {
                     return $query->orWhere('title', 'like', "%{$searchValue}%")
                         ->orWhere('code', 'like', "%{$searchValue}%")
@@ -79,22 +78,25 @@ class CouponRepository implements CouponRepositoryInterface
                 return $query->where(['added_by' => $filters['added_by']]);
             })
             ->withCount('order')
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         cacheRemoveByType(type: 'shops');
+
         return $this->coupon->where('id', $id)->update($data);
     }
 
     public function delete(array $params): bool
     {
         cacheRemoveByType(type: 'shops');
+
         return $this->coupon->where($params)->delete();
     }
 }

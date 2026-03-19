@@ -23,10 +23,9 @@ class CustomerService
             'city' => $request['city'] ?? null,
             'zip' => $request['zip_code'] ?? null,
             'street_address' => $request['address'] ?? null,
-            'password' => bcrypt($request['password'] ?? 'password')
+            'password' => bcrypt($request['password'] ?? 'password'),
         ];
     }
-
 
     public function getCustomerProfileUpdateData(object $request, object|array|null $customer): array
     {
@@ -39,14 +38,16 @@ class CustomerService
         if ($request->file('image')) {
             $data['image'] = ImageManager::update('profile/', $customer?->image, 'webp', $request->file('image'));
         }
+
         return $data;
     }
 
-    public function deleteImage(object|null $data): bool
+    public function deleteImage(?object $data): bool
     {
         if ($data && $data['image']) {
-            $this->delete('profile/' . $data['image']);
+            $this->delete('profile/'.$data['image']);
         }
+
         return true;
     }
 }

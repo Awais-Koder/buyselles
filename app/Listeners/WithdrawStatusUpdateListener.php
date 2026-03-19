@@ -5,7 +5,6 @@ namespace App\Listeners;
 use App\Events\WithdrawStatusUpdateEvent;
 use App\Traits\PushNotificationTrait;
 
-
 class WithdrawStatusUpdateListener
 {
     use PushNotificationTrait;

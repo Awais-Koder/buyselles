@@ -6,17 +6,16 @@ enum UserLoyalty
 {
     const LOYALTY = [
         URI => 'loyalty',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const EXCHANGE_CURRENCY = [
         URI => 'loyalty-exchange-currency',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const GET_CURRENCY_AMOUNT = [
         URI => 'ajax-loyalty-currency-amount',
-        VIEW => ''
+        VIEW => '',
     ];
-
 }

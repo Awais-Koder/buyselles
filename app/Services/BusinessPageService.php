@@ -44,6 +44,7 @@ class BusinessPageService
         if (in_array($request['slug'], ['terms-and-conditions', 'about-us', 'privacy-policy'])) {
             $status = 1;
         }
+
         return [
             'title' => $request['title'],
             'slug' => $slug,
@@ -56,6 +57,7 @@ class BusinessPageService
     {
         $banner = $this->upload(dir: 'business-pages/', format: 'webp', image: $request['banner']);
         $storage = config('filesystems.disks.default') ?? 'public';
+
         return [
             'attachable_type' => 'App\Models\BusinessPage',
             'attachable_id' => $page->id,
@@ -64,5 +66,4 @@ class BusinessPageService
             'storage_disk' => $storage,
         ];
     }
-
 }

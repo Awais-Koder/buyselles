@@ -19,8 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $transaction_type
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DeliveryManTransaction extends Model
 {
@@ -45,5 +43,4 @@ class DeliveryManTransaction extends Model
         'credit',
         'transaction_type',
     ];
-
 }

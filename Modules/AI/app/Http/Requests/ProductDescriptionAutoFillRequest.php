@@ -17,9 +17,11 @@ class ProductDescriptionAutoFillRequest extends FormRequest
         ];
     }
 
-    public function messages(): array{
+    public function messages(): array
+    {
         return ['name.required' => translate('product_name_is_required_to_generate_description')];
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */

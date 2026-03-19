@@ -17,8 +17,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $cause
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class OrderStatusHistory extends Model
 {

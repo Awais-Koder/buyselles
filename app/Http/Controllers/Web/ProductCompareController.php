@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web;
 
 use App\Contracts\Repositories\AttributeRepositoryInterface;
 use App\Contracts\Repositories\ProductCompareRepositoryInterface;
-use App\Enums\GlobalConstant;
 use App\Enums\SessionKey;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Web\ProductCompareRequest;
@@ -19,36 +18,20 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProductCompareController extends BaseController
 {
-    /**
-     * @param ProductCompareRepositoryInterface $productCompareRepo
-     * @param ProductCompareService $productCompareService
-     * @param AttributeRepositoryInterface $attributeRepo
-     */
     public function __construct(
         private readonly ProductCompareRepositoryInterface $productCompareRepo,
         private readonly ProductCompareService $productCompareService,
         private readonly AttributeRepositoryInterface $attributeRepo,
-    )
-    {
+    ) {}
 
-    }
-
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
-       return $this->getProductCompareListView();
+        return $this->getProductCompareListView();
     }
 
-    /**
-     * @return View
-     */
-    public function getProductCompareListView():View
+    public function getProductCompareListView(): View
     {
-        $customerId =auth('customer')->id();
+        $customerId = auth('customer')->id();
         $compareLists = $this->productCompareRepo->getListWhere(
             orderBy: ['id' => 'desc'],
             filters: ['user_id' => $customerId, 'whereHas' => 'product'],
@@ -63,16 +46,14 @@ class ProductCompareController extends BaseController
         }
         CustomerManager::onlyUpdateCustomerCompareAndWishListSession(userId: auth('customer')->id());
 
-        return view(VIEW_FILE_NAMES['account_compare_list'], compact('compareLists','attributes'));
+        return view(VIEW_FILE_NAMES['account_compare_list'], compact('compareLists', 'attributes'));
     }
 
     /**
-     * @param ProductCompareRequest $request
-     * @return JsonResponse|RedirectResponse
      * @note if ($request->ajax()) {this request come from product details and home page and other product related section }
      * @note if (!$request->ajax()) {this request come  from user profile compare list tab  }
      */
-    public function add(ProductCompareRequest $request):JsonResponse|RedirectResponse
+    public function add(ProductCompareRequest $request): JsonResponse|RedirectResponse
     {
         if ($request->ajax()) {
             if (auth('customer')->check()) {
@@ -89,12 +70,13 @@ class ProductCompareController extends BaseController
                     $compareProductIds = $compareLists->pluck('product_id')->toArray();
                     session()->forget(SessionKey::PRODUCT_COMPARE_LIST);
                     session()->put(SessionKey::PRODUCT_COMPARE_LIST, $compareProductIds);
+
                     return response()->json([
-                        'error' => translate("compare_list_Removed"),
+                        'error' => translate('compare_list_Removed'),
                         'value' => 2,
                         'count' => $compareLists->count(),
                         'product_count' => count($compareProductIds),
-                        'compare_product_ids' => $compareProductIds
+                        'compare_product_ids' => $compareProductIds,
                     ]);
                 } else {
                     $compareLists = $this->productCompareRepo->getListWhere(
@@ -116,13 +98,14 @@ class ProductCompareController extends BaseController
                     $compareProductIds = $compareLists->pluck('product_id')->toArray();
                     session()->forget(SessionKey::PRODUCT_COMPARE_LIST);
                     session()->put(SessionKey::PRODUCT_COMPARE_LIST, $compareProductIds);
+
                     return response()->json([
-                        'success' => translate("product_added_to_compare_list"),
+                        'success' => translate('product_added_to_compare_list'),
                         'value' => 1,
                         'count' => $compareLists->count(),
                         'id' => $request['product_id'],
                         'product_count' => count($compareProductIds),
-                        'compare_product_ids' => $compareProductIds
+                        'compare_product_ids' => $compareProductIds,
                     ]);
                 }
             } else {
@@ -155,15 +138,12 @@ class ProductCompareController extends BaseController
                 session()->forget(SessionKey::PRODUCT_COMPARE_LIST);
                 session()->put(SessionKey::PRODUCT_COMPARE_LIST, $compareProductIds);
             }
+
             return redirect()->back();
         }
     }
 
-    /**
-     * @param Request $request
-     * @return RedirectResponse
-     */
-    public function delete(Request $request):RedirectResponse
+    public function delete(Request $request): RedirectResponse
     {
         $this->productCompareRepo->delete(params: ['id' => $request['id'], 'user_id' => auth('customer')->id()]);
         $compareLists = $this->productCompareRepo->getListWhere(
@@ -173,13 +153,11 @@ class ProductCompareController extends BaseController
         )->pluck('product_id')->toArray();
         session()->forget(SessionKey::PRODUCT_COMPARE_LIST);
         session()->put(SessionKey::PRODUCT_COMPARE_LIST, $compareLists);
+
         return redirect()->back();
     }
 
-    /**
-     * @return RedirectResponse
-     */
-    public function deleteAllCompareProduct():RedirectResponse
+    public function deleteAllCompareProduct(): RedirectResponse
     {
         $customerId = auth('customer')->id();
         $this->productCompareRepo->delete(params: ['user_id' => $customerId]);
@@ -190,6 +168,7 @@ class ProductCompareController extends BaseController
         )->pluck('product_id')->toArray();
         session()->forget(SessionKey::PRODUCT_COMPARE_LIST);
         session()->put(SessionKey::PRODUCT_COMPARE_LIST, $compareLists);
+
         return redirect()->back();
     }
 }

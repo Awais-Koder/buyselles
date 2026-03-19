@@ -6,11 +6,11 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class TitleTemplate implements PromptTemplateInterface
 {
-
     public function build(mixed $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode = strtoupper($langCode);
         $topic = $context ?? 'a blog post';
+
         return <<<PROMPT
         You are an expert SEO content strategist and professional copywriter.
 
@@ -39,6 +39,6 @@ class TitleTemplate implements PromptTemplateInterface
 
     public function getType(): string
     {
-        return "blog_title";
+        return 'blog_title';
     }
 }

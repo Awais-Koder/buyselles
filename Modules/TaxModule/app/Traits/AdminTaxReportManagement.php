@@ -2,9 +2,7 @@
 
 namespace Modules\TaxModule\app\Traits;
 
-
 use Modules\TaxModule\app\Models\Tax;
-
 
 trait AdminTaxReportManagement
 {
@@ -35,23 +33,21 @@ trait AdminTaxReportManagement
         ];
     }
 
-
     public static function getTaxReportDateRange($type = '', $dates = null): string
     {
         if ($type == 'this_fiscal_year') {
-            $dateRange = now()->startOfYear()->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
+            $dateRange = now()->startOfYear()->format('m/d/Y').' - '.now()->format('m/d/Y');
         } else {
             if ($dates) {
                 [$start, $end] = explode(' - ', $dates);
                 $startFormatted = \Carbon\Carbon::parse($start)->format('m/d/Y');
                 $endFormatted = \Carbon\Carbon::parse($end)->format('m/d/Y');
-                $dateRange = $startFormatted . ' - ' . $endFormatted;
+                $dateRange = $startFormatted.' - '.$endFormatted;
             } else {
-                $dateRange = now()->subDays(6)->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
+                $dateRange = now()->subDays(6)->format('m/d/Y').' - '.now()->format('m/d/Y');
             }
         }
+
         return $dateRange;
     }
-
-
 }

@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use Gregwar\Captcha\PhraseBuilder;
 use Gregwar\Captcha\CaptchaBuilder;
+use Gregwar\Captcha\PhraseBuilder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 
@@ -31,11 +31,12 @@ trait RecaptchaTrait
         $builder->setMaxBehindLines(0);
         $builder->setMaxFrontLines(0);
         $builder->build($width = 100, $height = 40, $font = null);
+
         return $builder;
     }
 
-
-    public function saveRecaptchaValueInSession(string $sessionKey, string $sessionValue):void{
+    public function saveRecaptchaValueInSession(string $sessionKey, string $sessionValue): void
+    {
         if (Session::has($sessionKey)) {
             Session::forget($sessionKey);
         }

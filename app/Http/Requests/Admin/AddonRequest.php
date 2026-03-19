@@ -16,7 +16,7 @@ class AddonRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file_upload' => 'required|mimes:zip'
+            'file_upload' => 'required|mimes:zip',
         ];
     }
 
@@ -27,5 +27,4 @@ class AddonRequest extends FormRequest
             'file_upload.mimes' => translate('the_file_must_be_a_zip_file'),
         ];
     }
-
 }

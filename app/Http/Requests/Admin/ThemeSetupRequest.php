@@ -19,7 +19,7 @@ class ThemeSetupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'theme_upload' => 'required|mimes:zip'
+            'theme_upload' => 'required|mimes:zip',
         ];
     }
 
@@ -30,5 +30,4 @@ class ThemeSetupRequest extends FormRequest
             'theme_upload.mimes' => translate('The_theme_must_be_a_ZIP_file.'),
         ];
     }
-
 }

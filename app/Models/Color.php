@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id
  * @property string $name
  * @property string $code
- *
- * @package App\Models
  */
 class Color extends Model
 {

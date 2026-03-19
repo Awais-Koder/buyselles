@@ -25,20 +25,22 @@ class SellWithUsUpdateSectionRequest extends FormRequest
             'title' => 'required|string|max:50',
             'sub_title' => 'required|string|max:50',
             'image' => getRulesStringForImageValidation(
-                rules: ['sometimes','file'],
-                skipMimes: ['.svg','.gif'],
+                rules: ['sometimes', 'file'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed: 'true'
             ),
         ];
     }
-    public function messages(): array{
+
+    public function messages(): array
+    {
         return [
             'title.required' => translate('title_is_required'),
             'sub_title.required' => translate('sub_title_is_required'),
             'image.required' => translate('image_is_required'),
-            'image.mimes' => translate('image_type_must_be'). ' ' . getFileUploadFormats(skip: '.svg,.gif'),
-            'image.max' => translate('image_max_size_is'). ' ' . getFileUploadMaxSize() . ' MB',
+            'image.mimes' => translate('image_type_must_be').' '.getFileUploadFormats(skip: '.svg,.gif'),
+            'image.max' => translate('image_max_size_is').' '.getFileUploadMaxSize().' MB',
         ];
     }
 }

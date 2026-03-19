@@ -1,104 +1,103 @@
 <?php
 
 use App\Http\Controllers\Admin\AdvancedSearchController;
+use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\BusinessSettings\WebsiteSetupController;
+use App\Http\Controllers\Admin\CategoryShippingCostController;
+use App\Http\Controllers\Admin\ChattingController;
+use App\Http\Controllers\Admin\Customer\CustomerController;
+use App\Http\Controllers\Admin\Customer\CustomerLoyaltyController;
+use App\Http\Controllers\Admin\Customer\CustomerWalletController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Deliveryman\DeliveryManCashCollectController;
+use App\Http\Controllers\Admin\Deliveryman\DeliveryManController;
+use App\Http\Controllers\Admin\Deliveryman\DeliverymanWithdrawController;
+use App\Http\Controllers\Admin\Deliveryman\EmergencyContactController;
+use App\Http\Controllers\Admin\EmailTemplatesController;
+use App\Http\Controllers\Admin\Employee\CustomRoleController;
+use App\Http\Controllers\Admin\Employee\EmployeeController;
 use App\Http\Controllers\Admin\ExpenseTransactionReportController;
+use App\Http\Controllers\Admin\HelpAndSupport\ContactController;
+use App\Http\Controllers\Admin\HelpAndSupport\HelpTopicController;
+use App\Http\Controllers\Admin\HelpAndSupport\SupportTicketController;
+use App\Http\Controllers\Admin\InhouseProductSaleController;
+use App\Http\Controllers\Admin\Notification\NotificationController;
+use App\Http\Controllers\Admin\Notification\PushNotificationSettingsController;
+use App\Http\Controllers\Admin\Order\OrderController;
 use App\Http\Controllers\Admin\Order\OrderEditController;
+use App\Http\Controllers\Admin\Order\RefundController;
+use App\Http\Controllers\Admin\OrderReportController;
+use App\Http\Controllers\Admin\Payment\OfflinePaymentMethodController;
+use App\Http\Controllers\Admin\POS\CartController;
+use App\Http\Controllers\Admin\POS\POSController;
+use App\Http\Controllers\Admin\POS\POSOrderController;
+use App\Http\Controllers\Admin\Product\AttributeController;
+use App\Http\Controllers\Admin\Product\BrandController;
+use App\Http\Controllers\Admin\Product\CategoryController;
+use App\Http\Controllers\Admin\Product\ProductController;
+use App\Http\Controllers\Admin\Product\ReviewController;
+use App\Http\Controllers\Admin\Product\SubCategoryController;
+use App\Http\Controllers\Admin\Product\SubSubCategoryController;
+use App\Http\Controllers\Admin\ProductReportController;
+use App\Http\Controllers\Admin\ProductStockReportController;
+use App\Http\Controllers\Admin\ProductWishlistReportController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\Promotion\BannerController;
 use App\Http\Controllers\Admin\Promotion\ClearanceSaleController;
 use App\Http\Controllers\Admin\Promotion\ClearanceSalePrioritySetupController;
 use App\Http\Controllers\Admin\Promotion\ClearanceSaleVendorOfferController;
-use App\Http\Controllers\Admin\Settings\AddonActivationController;
-use App\Http\Controllers\Admin\Settings\FirebaseOTPVerificationController;
-use App\Http\Controllers\FirebaseController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SharedController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\POS\POSController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\ChattingController;
-use App\Http\Controllers\Admin\POS\CartController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\Auth\LoginController;
-use App\Http\Controllers\Admin\Order\OrderController;
-use App\Http\Controllers\Admin\OrderReportController;
-use App\Http\Controllers\Admin\Order\RefundController;
-use App\Http\Controllers\Admin\POS\POSOrderController;
-use App\Http\Controllers\Admin\Product\BrandController;
-use App\Http\Controllers\Admin\ProductReportController;
-use App\Http\Controllers\Admin\Vendor\VendorController;
-use App\Http\Controllers\Admin\EmailTemplatesController;
-use App\Http\Controllers\Admin\Product\ReviewController;
-use App\Http\Controllers\Admin\Settings\AddonController;
-use App\Http\Controllers\Admin\Settings\PagesController;
-use App\Http\Controllers\Admin\Settings\ThemeController;
-use App\Http\Controllers\Admin\Product\ProductController;
-use App\Http\Controllers\Admin\ThirdParty\MailController;
-use App\Http\Controllers\Admin\Product\CategoryController;
-use App\Http\Controllers\Admin\Promotion\BannerController;
 use App\Http\Controllers\Admin\Promotion\CouponController;
-use App\Http\Controllers\Admin\Settings\SiteMapController;
-use App\Http\Controllers\Admin\Customer\CustomerController;
-use App\Http\Controllers\Admin\Employee\EmployeeController;
-use App\Http\Controllers\Admin\Product\AttributeController;
-use App\Http\Controllers\Admin\Settings\CurrencyController;
-use App\Http\Controllers\Admin\Settings\LanguageController;
-use App\Http\Controllers\Admin\TransactionReportController;
-use App\Http\Controllers\Admin\InhouseProductSaleController;
-use App\Http\Controllers\Admin\ProductStockReportController;
-use App\Http\Controllers\Admin\Settings\ErrorLogsController;
-use App\Http\Controllers\Admin\Employee\CustomRoleController;
-use App\Http\Controllers\Admin\Product\SubCategoryController;
-use App\Http\Controllers\Admin\Promotion\FlashDealController;
-use App\Http\Controllers\Admin\CategoryShippingCostController;
-use App\Http\Controllers\Admin\Settings\FileManagerController;
-use App\Http\Controllers\Admin\Settings\InhouseShopController;
-use App\Http\Controllers\Admin\Settings\SEOSettingsController;
-use App\Http\Controllers\Admin\ThirdParty\RecaptchaController;
-use App\Http\Controllers\Admin\ThirdParty\SMSModuleController;
-use App\Http\Controllers\Admin\ProductWishlistReportController;
-use App\Http\Controllers\Admin\Shipping\ShippingTypeController;
-use App\Http\Controllers\Admin\HelpAndSupport\ContactController;
-use App\Http\Controllers\Admin\Product\SubSubCategoryController;
 use App\Http\Controllers\Admin\Promotion\DealOfTheDayController;
 use App\Http\Controllers\Admin\Promotion\FeaturedDealController;
+use App\Http\Controllers\Admin\Promotion\FlashDealController;
 use App\Http\Controllers\Admin\Promotion\MostDemandedController;
-use App\Http\Controllers\Admin\Settings\OrderSettingsController;
-use App\Http\Controllers\Admin\Settings\PrioritySetupController;
-use App\Http\Controllers\Admin\Customer\CustomerWalletController;
-use App\Http\Controllers\Admin\Deliveryman\DeliveryManController;
-use App\Http\Controllers\Admin\Settings\SoftwareUpdateController;
-use App\Http\Controllers\Admin\Settings\VendorSettingsController;
-use App\Http\Controllers\Admin\Shipping\ShippingMethodController;
-use App\Http\Controllers\Admin\ThirdParty\GoogleMapAPIController;
-use App\Http\Controllers\Admin\Vendor\WithdrawalMethodController;
-use App\Http\Controllers\Admin\VendorProductSaleReportController;
-use App\Http\Controllers\Admin\Customer\CustomerLoyaltyController;
-use App\Http\Controllers\Admin\HelpAndSupport\HelpTopicController;
 use App\Http\Controllers\Admin\Report\RefundTransactionController;
-use App\Http\Controllers\Admin\Settings\DatabaseSettingController;
-use App\Http\Controllers\Admin\Settings\FeaturesSectionController;
-use App\Http\Controllers\Admin\Settings\InvoiceSettingsController;
-use App\Http\Controllers\Admin\ThirdParty\PaymentMethodController;
-use App\Http\Controllers\Admin\Notification\NotificationController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\Settings\AddonActivationController;
+use App\Http\Controllers\Admin\Settings\AddonController;
 use App\Http\Controllers\Admin\Settings\BusinessSettingsController;
-use App\Http\Controllers\Admin\Settings\RobotsMetaContentController;
-use App\Http\Controllers\Admin\ThirdParty\SocialMediaChatController;
-use App\Http\Controllers\Admin\Deliveryman\EmergencyContactController;
-use App\Http\Controllers\Admin\HelpAndSupport\SupportTicketController;
-use App\Http\Controllers\Admin\Payment\OfflinePaymentMethodController;
+use App\Http\Controllers\Admin\Settings\CurrencyController;
+use App\Http\Controllers\Admin\Settings\DatabaseSettingController;
 use App\Http\Controllers\Admin\Settings\DeliverymanSettingsController;
 use App\Http\Controllers\Admin\Settings\DeliveryRestrictionController;
 use App\Http\Controllers\Admin\Settings\EnvironmentSettingsController;
+use App\Http\Controllers\Admin\Settings\ErrorLogsController;
+use App\Http\Controllers\Admin\Settings\FeaturesSectionController;
+use App\Http\Controllers\Admin\Settings\FileManagerController;
+use App\Http\Controllers\Admin\Settings\FirebaseOTPVerificationController;
+use App\Http\Controllers\Admin\Settings\InhouseShopController;
+use App\Http\Controllers\Admin\Settings\InvoiceSettingsController;
+use App\Http\Controllers\Admin\Settings\LanguageController;
+use App\Http\Controllers\Admin\Settings\OrderSettingsController;
+use App\Http\Controllers\Admin\Settings\PagesController;
+use App\Http\Controllers\Admin\Settings\PrioritySetupController;
+use App\Http\Controllers\Admin\Settings\RobotsMetaContentController;
+use App\Http\Controllers\Admin\Settings\SEOSettingsController;
+use App\Http\Controllers\Admin\Settings\SiteMapController;
 use App\Http\Controllers\Admin\Settings\SocialMediaSettingsController;
-use App\Http\Controllers\Admin\SystemSetup\SystemLoginSetupController;
-use App\Http\Controllers\Admin\ThirdParty\SocialLoginSettingsController;
-use App\Http\Controllers\Admin\Deliveryman\DeliverymanWithdrawController;
-use App\Http\Controllers\Admin\Settings\VendorRegistrationReasonController;
-use App\Http\Controllers\Admin\Deliveryman\DeliveryManCashCollectController;
+use App\Http\Controllers\Admin\Settings\SoftwareUpdateController;
 use App\Http\Controllers\Admin\Settings\StorageConnectionSettingsController;
+use App\Http\Controllers\Admin\Settings\ThemeController;
+use App\Http\Controllers\Admin\Settings\VendorRegistrationReasonController;
 use App\Http\Controllers\Admin\Settings\VendorRegistrationSettingController;
-use App\Http\Controllers\Admin\Notification\PushNotificationSettingsController;
-
+use App\Http\Controllers\Admin\Settings\VendorSettingsController;
+use App\Http\Controllers\Admin\Shipping\ShippingMethodController;
+use App\Http\Controllers\Admin\Shipping\ShippingTypeController;
+use App\Http\Controllers\Admin\SystemSetup\SystemLoginSetupController;
+use App\Http\Controllers\Admin\ThirdParty\GoogleMapAPIController;
+use App\Http\Controllers\Admin\ThirdParty\MailController;
+use App\Http\Controllers\Admin\ThirdParty\PaymentMethodController;
+use App\Http\Controllers\Admin\ThirdParty\RecaptchaController;
+use App\Http\Controllers\Admin\ThirdParty\SMSModuleController;
+use App\Http\Controllers\Admin\ThirdParty\SocialLoginSettingsController;
+use App\Http\Controllers\Admin\ThirdParty\SocialMediaChatController;
+use App\Http\Controllers\Admin\TransactionReportController;
+use App\Http\Controllers\Admin\Vendor\VendorController;
+use App\Http\Controllers\Admin\Vendor\WithdrawalMethodController;
+use App\Http\Controllers\Admin\VendorProductSaleReportController;
+use App\Http\Controllers\FirebaseController;
+use App\Http\Controllers\SharedController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('search', function () {
     return view('layouts.admin.partials._advance-search-result');
@@ -115,7 +114,6 @@ Route::controller(SharedController::class)->group(function () {
 Route::controller(FirebaseController::class)->group(function () {
     Route::post('system/subscribe-to-topic', 'subscribeToTopic')->name('system.subscribeToTopic');
 });
-
 
 Route::group(['prefix' => 'login'], function () {
     Route::get('{loginUrl}', [LoginController::class, 'index']);
@@ -404,7 +402,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('sales-commission-update/{id}', 'updateSalesCommission')->name('sales-commission-update');
             Route::get('order-details/{order_id}/{vendor_id}', 'getOrderDetailsView')->name('order-details');
             Route::get('view/{id}/{tab?}', 'getView')->name('view');
-            Route::post( 'update_setting/{id}', 'updateSetting')->name('update-setting');
+            Route::post('update_setting/{id}', 'updateSetting')->name('update-setting');
 
             Route::get('withdraw-list', 'getWithdrawListView')->name('withdraw_list');
             Route::get('withdraw-list-export-excel', 'exportWithdrawList')->name('withdraw-list-export-excel');
@@ -427,7 +425,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             });
         });
     });
-
 
     Route::group(['prefix' => 'employee', 'as' => 'employee.', 'middleware' => ['module:user_section']], function () {
         Route::controller(EmployeeController::class)->group(function () {
@@ -512,13 +509,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
 
     Route::group(['prefix' => 'stock', 'as' => 'stock.', 'middleware' => ['module:report']], function () {
         Route::controller(ProductStockReportController::class)->group(function () {
-            //product stock report
+            // product stock report
             Route::get('product-stock', 'index')->name('product-stock');
             Route::get('product-stock-export', 'export')->name('product-stock-export');
             Route::post('ps-filter', 'filter')->name('ps-filter');
         });
 
-        //product in wishlist report
+        // product in wishlist report
         Route::controller(ProductWishlistReportController::class)->group(function () {
             Route::get('product-in-wishlist', 'index')->name('product-in-wishlist');
             Route::get('wishlist-product-export', 'export')->name('wishlist-product-export');
@@ -680,7 +677,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::get('order-history-log/{id}', 'getOrderHistoryList')->name('order-history-log');
             Route::get('order-history-log-export/{id}', 'getOrderHistoryListExport')->name('order-history-log-export');
             Route::get('rating/{id}', 'getRatingView')->name('rating');
-            Route::get( 'ajax-order-status-history/{order}', 'getOrderStatusHistory')->name('ajax-order-status-history');
+            Route::get('ajax-order-status-history/{order}', 'getOrderStatusHistory')->name('ajax-order-status-history');
         });
 
         Route::controller(DeliveryManCashCollectController::class)->group(function () {
@@ -693,15 +690,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('withdraw-list', 'getFiltered');
             Route::get('withdraw-list-export', 'exportList')->name('withdraw-list-export');
             Route::get('withdraw-view/{withdraw_id}', 'getView')->name('withdraw-view');
-            Route::post( 'withdraw-update-status/{id}', 'updateStatus')->name('withdraw-update-status');
+            Route::post('withdraw-update-status/{id}', 'updateStatus')->name('withdraw-update-status');
         });
 
         Route::group(['prefix' => 'emergency-contact', 'as' => 'emergency-contact.'], function () {
             Route::controller(EmergencyContactController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('add', 'add')->name('add');
-                Route::get( 'update/{id}', 'getUpdateView')->name('update');
-                Route::post( 'update/{id}', 'update');
+                Route::get('update/{id}', 'getUpdateView')->name('update');
+                Route::post('update/{id}', 'update');
                 Route::post('ajax-status-change', 'updateStatus')->name('ajax-status-change');
                 Route::delete('destroy', 'delete')->name('destroy');
             });
@@ -834,9 +831,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::group(['prefix' => 'email-templates', 'as' => 'email-templates.', 'middleware' => ['module:system_settings']], function () {
                 Route::controller(EmailTemplatesController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
-                    Route::get('/' . '/{type}' . '/{tab}', 'getView')->name('view');
-                    Route::post('update/{type}' . '/{tab}', 'update')->name('update');
-                    Route::post( 'update-status/{type}' . '/{tab}', 'updateStatus')->name('update-status');
+                    Route::get('/'.'/{type}'.'/{tab}', 'getView')->name('view');
+                    Route::post('update/{type}'.'/{tab}', 'update')->name('update');
+                    Route::post('update-status/{type}'.'/{tab}', 'updateStatus')->name('update-status');
                 });
             });
 
@@ -952,7 +949,6 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::post('maintenance-mode', 'updateSystemMode')->name('maintenance-mode');
             });
 
-
             Route::controller(WebsiteSetupController::class)->group(function () {
                 Route::get('website-setup', 'getView')->name('website-setup');
                 Route::post('website-setup', 'updateWebsiteSetup');
@@ -1001,8 +997,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::controller(ShippingMethodController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
                     Route::post('index', 'add');
-                    Route::get('update' . '/{id}', 'getUpdateView')->name('update');
-                    Route::post('update' . '/{id}', 'update');
+                    Route::get('update'.'/{id}', 'getUpdateView')->name('update');
+                    Route::post('update'.'/{id}', 'update');
                     Route::post('update-status', 'updateStatus')->name('update-status');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('update-shipping-responsibility', 'updateShippingResponsibility')->name('update-shipping-responsibility');
@@ -1027,7 +1023,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                     Route::post('add-zip-code', 'addZipCode')->name('add-zip-code');
                     Route::delete('zip-code-delete', 'deleteZipCode')->name('zip-code-delete');
                     Route::post('country-restriction-status-change', 'countryRestrictionStatusChange')->name('country-restriction-status-change');
-                    Route::post("zipcode-restriction-status-change", 'zipcodeRestrictionStatusChange')->name('zipcode-restriction-status-change');
+                    Route::post('zipcode-restriction-status-change', 'zipcodeRestrictionStatusChange')->name('zipcode-restriction-status-change');
                 });
             });
 
@@ -1174,9 +1170,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::get('index', 'index')->name('list');
             Route::post('add-new', 'add')->name('add-new');
             Route::post('status/{id}', 'updateStatus')->name('status');
-            Route::get( 'update/{id}', 'getUpdateResponse')->name('update');
+            Route::get('update/{id}', 'getUpdateResponse')->name('update');
             Route::post('feature-status-update', 'updateFeatureStatus')->name('feature-status-update');
-            Route::post('update' . '/{id}', 'update');
+            Route::post('update'.'/{id}', 'update');
             Route::post('delete', 'delete')->name('delete');
         });
     });

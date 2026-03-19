@@ -13,8 +13,6 @@ class LoginRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -23,8 +21,6 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -36,7 +32,7 @@ class LoginRequest extends FormRequest
 
     /**
      * @return array
-     * Get the validation error message
+     *               Get the validation error message
      */
     public function messages(): array
     {

@@ -13,13 +13,15 @@ class VendorRegistrationHeaderRequest extends FormRequest
 
     public function rules(): array
     {
-        return  [
+        return [
             'title' => 'required|string|max:51',
             'sub_title' => 'required|string|max:161',
             'image' => 'nullable|image|'.getFileUploadFormats(skip: '.svg,.gif', asRule: 'true').'|max:'.getFileUploadMaxSize(unit: 'kb'),
         ];
     }
-    public function messages(): array{
+
+    public function messages(): array
+    {
         return [
             'title.required' => translate('title_is_required'),
             'title.max' => translate('title_may_not_be_greater_than_51_characters'),

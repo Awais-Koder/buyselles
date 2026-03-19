@@ -16,7 +16,8 @@ class GenerateTitleFromImageRequest extends FormRequest
         ];
     }
 
-    public function messages(): array{
+    public function messages(): array
+    {
         return [
             'image.required' => translate('Image is required for analysis.'),
             'image.image' => translate('The uploaded file must be an image.'),

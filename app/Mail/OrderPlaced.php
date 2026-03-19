@@ -15,7 +15,6 @@ class OrderPlaced extends Mailable
      *
      * @return void
      */
-
     protected $o_id;
 
     public function __construct($o_id)
@@ -31,6 +30,7 @@ class OrderPlaced extends Mailable
     public function build()
     {
         $o_id = $this->o_id;
-        return $this->subject(translate('Order_Placed'))->view('email-templates.order-placed-v2',['id'=>$o_id]);
+
+        return $this->subject(translate('Order_Placed'))->view('email-templates.order-placed-v2', ['id' => $o_id]);
     }
 }

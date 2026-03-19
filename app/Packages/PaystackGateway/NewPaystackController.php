@@ -8,9 +8,8 @@ use App\Traits\Processor;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Controller;
-
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
@@ -20,25 +19,26 @@ class NewPaystackController extends Controller
     use Processor;
 
     private PaymentRequest $payment;
+
     private User $user;
 
     public function __construct(PaymentRequest $payment, User $user)
     {
         $config = $this->payment_config('paystack', 'payment_config');
         $values = false;
-        if (!is_null($config) && $config->mode == 'live') {
+        if (! is_null($config) && $config->mode == 'live') {
             $values = json_decode($config->live_values);
-        } elseif (!is_null($config) && $config->mode == 'test') {
+        } elseif (! is_null($config) && $config->mode == 'test') {
             $values = json_decode($config->test_values);
         }
 
         if ($values) {
-            $config = array(
+            $config = [
                 'publicKey' => env('PAYSTACK_PUBLIC_KEY', $values->public_key),
                 'secretKey' => env('PAYSTACK_SECRET_KEY', $values->secret_key),
                 'paymentUrl' => env('PAYSTACK_PAYMENT_URL', 'https://api.paystack.co'),
                 'merchantEmail' => env('MERCHANT_EMAIL', $values->merchant_email),
-            );
+            ];
             Config::set('paystack', $config);
         }
 
@@ -46,11 +46,10 @@ class NewPaystackController extends Controller
         $this->user = $user;
     }
 
-
     public function index(Request $request): JsonResponse|Redirector|RedirectResponse
     {
         $validator = Validator::make($request->all(), [
-            'payment_id' => 'required|uuid'
+            'payment_id' => 'required|uuid',
         ]);
 
         if ($validator->fails()) {
@@ -58,36 +57,36 @@ class NewPaystackController extends Controller
         }
 
         $data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($data)) {
+        if (! isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
 
         $payer = json_decode($data['payer_information'], true);
 
-        $url = "https://api.paystack.co/transaction/initialize";
+        $url = 'https://api.paystack.co/transaction/initialize';
 
         $fields = [
-            'email' => $payer['email'] ?? "customer@email.com",
+            'email' => $payer['email'] ?? 'customer@email.com',
             'amount' => ($data['payment_amount'] ?? 0) * 100,
             'currency' => $data['currency'] ?? 'XOF',
-            'reference' => (string)('REF' . time() . 'RANDOM'),
+            'reference' => (string) ('REF'.time().'RANDOM'),
             'callback_url' => route('paystack.callback', ['payment_id' => $data['id']]),
             'metadata' => [
                 'payment_id' => $data['id'],
-            ]
+            ],
         ];
 
         $fields_string = http_build_query($fields);
         $ch = curl_init();
 
-        //set the url, number of POST vars, POST data
+        // set the url, number of POST vars, POST data
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-            "Authorization: Bearer " . Config::get('paystack.secretKey'),
-            "Cache-Control: no-cache",
-        ));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer '.Config::get('paystack.secretKey'),
+            'Cache-Control: no-cache',
+        ]);
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $response = json_decode(curl_exec($ch), true);
@@ -113,6 +112,7 @@ class NewPaystackController extends Controller
             if (isset($data) && function_exists($data->success_hook)) {
                 call_user_func($data->success_hook, $data);
             }
+
             return $this->payment_response($data, 'success');
         }
 
@@ -120,6 +120,7 @@ class NewPaystackController extends Controller
         if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
             call_user_func($payment_data->failure_hook, $payment_data);
         }
+
         return $this->payment_response($payment_data, 'fail');
     }
 
@@ -129,6 +130,7 @@ class NewPaystackController extends Controller
         if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
             call_user_func($payment_data->failure_hook, $payment_data);
         }
+
         return $this->payment_response($payment_data, 'fail');
     }
 
@@ -137,24 +139,25 @@ class NewPaystackController extends Controller
         $reference = $request->query('reference');
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => "https://api.paystack.co/transaction/verify/$reference",
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
+            CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => array(
-                "Authorization: Bearer " . Config::get('paystack.secretKey'),
-                "Cache-Control: no-cache",
-            ),
-        ));
+            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer '.Config::get('paystack.secretKey'),
+                'Cache-Control: no-cache',
+            ],
+        ]);
 
         $response = curl_exec($curl);
         $err = curl_error($curl);
 
         curl_close($curl);
+
         return json_decode($response, true);
     }
 }

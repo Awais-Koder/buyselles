@@ -3,35 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Contracts\Repositories\RecentSearchRepositoryInterface;
-use App\Services\AdvancedSearchService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Contracts\View\View;
-use Illuminate\Http\RedirectResponse;
 use App\Http\Controllers\BaseController;
 use App\Packages\AdvanceSearch\AdvanceSearch;
+use App\Services\AdvancedSearchService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class AdvancedSearchController extends BaseController
 {
-
     public function __construct(
         private readonly RecentSearchRepositoryInterface $recentSearchRepo,
-        private readonly AdvancedSearchService           $advancedSearchService,
-    )
-    {
-    }
+        private readonly AdvancedSearchService $advancedSearchService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View|RedirectResponse Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *                               Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View|RedirectResponse
+    public function index(?Request $request, ?string $type = null): View|RedirectResponse
     {
         //
     }
-
 
     public function getSearch(Request $request): JsonResponse
     {
@@ -40,7 +34,7 @@ class AdvancedSearchController extends BaseController
         $keyword = $request->input('keyword', '');
         $advanceSearch = new AdvanceSearch('admin', $keyword ?? '');
 
-        if (!empty($keyword)) {
+        if (! empty($keyword)) {
             $result = collect($advanceSearch->searchAllList());
 
             return response()->json([
@@ -50,16 +44,17 @@ class AdvancedSearchController extends BaseController
                     'result' => $result,
                     'keyword' => $keyword,
                     'recent' => false,
-                ])->render()
+                ])->render(),
             ]);
         }
 
         $recentSearches = $this->recentSearchRepo->getListWhere(orderBy: ['created_at' => 'desc'], filters: [
             'user_id' => $userId,
-            'user_type' => $userType
+            'user_type' => $userType,
         ], dataLimit: 10);
 
         $finalData = $this->advancedSearchService->getSortRecentSearchByType($recentSearches);
+
         return response()->json([
             'keyword' => $keyword,
             'result' => $finalData,
@@ -67,16 +62,15 @@ class AdvancedSearchController extends BaseController
                 'result' => $finalData,
                 'keyword' => $keyword,
                 'recent' => count($finalData) > 0 ? true : false,
-            ])->render()
+            ])->render(),
         ]);
 
     }
 
-
     public function recentSearch(Request $request): RedirectResponse
     {
         $userId = auth('admin')->id();
-        $userType = "admin";
+        $userType = 'admin';
         $title = $request['routeName'];
         $routeUri = $request['routeUri'];
         $routeFullUrl = $request['routeFullUrl'];
@@ -93,7 +87,7 @@ class AdvancedSearchController extends BaseController
             'title' => $title,
             'keyword' => $searchKeyword,
             'response' => json_encode($response),
-            'route_full_url' => isset($searchKeyword) ? $routeFullUrl . '?keyword=' . $searchKeyword : $routeFullUrl,
+            'route_full_url' => isset($searchKeyword) ? $routeFullUrl.'?keyword='.$searchKeyword : $routeFullUrl,
             'created_at' => now(),
             'updated_at' => now(),
         ];
@@ -107,7 +101,8 @@ class AdvancedSearchController extends BaseController
                 $this->recentSearchRepo->delete(params: ['id' => $recentItem->first()?->id]);
             }
         }
-        $redirectUrl = $request['routeFullUrl'] . '?keyword=' . urlencode($searchKeyword);
+        $redirectUrl = $request['routeFullUrl'].'?keyword='.urlencode($searchKeyword);
+
         return redirect($redirectUrl);
     }
 }

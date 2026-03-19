@@ -18,8 +18,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $total_withdraw
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DeliverymanWallet extends Model
 {
@@ -45,8 +43,9 @@ class DeliverymanWallet extends Model
     ];
 
     protected $guarded = [];
-    /*delivery_man ->deliveryMan*/
-    public function deliveryMan():BelongsTo
+
+    /* delivery_man ->deliveryMan */
+    public function deliveryMan(): BelongsTo
     {
         return $this->belongsTo(DeliveryMan::class, 'delivery_man_id');
     }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class ErrorLogs
+ *
  * @property int $id Primary
  * @property int $status_code
  * @property int $hit_counts
@@ -16,7 +17,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $redirect_status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @package App\Models
  */
 class ErrorLogs extends Model
 {

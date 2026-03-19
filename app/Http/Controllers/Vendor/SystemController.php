@@ -15,9 +15,7 @@ class SystemController extends BaseController
 {
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -33,8 +31,7 @@ class SystemController extends BaseController
 
         return response()->json([
             'success' => 1,
-            'data' => ['new_order' => $newOrder]
+            'data' => ['new_order' => $newOrder],
         ]);
     }
-
 }

@@ -19,8 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property string $reply
- *
- * @package App\Models
  */
 class Contact extends Model
 {

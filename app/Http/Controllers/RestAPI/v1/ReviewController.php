@@ -5,7 +5,6 @@ namespace App\Http\Controllers\RestAPI\v1;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Contracts\Repositories\ReviewRepositoryInterface;
 use App\Http\Controllers\Controller;
-use App\Models\Review;
 use App\Traits\FileManagerTrait;
 use App\Utils\Helpers;
 use Illuminate\Http\JsonResponse;
@@ -18,15 +17,13 @@ class ReviewController extends Controller
 
     public function __construct(
         private readonly ReviewRepositoryInterface $reviewRepo,
-        private readonly OrderRepositoryInterface  $orderRepo,
-    )
-    {
-    }
+        private readonly OrderRepositoryInterface $orderRepo,
+    ) {}
 
     public function getReview(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'order_id' => 'required'
+            'order_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -35,7 +32,7 @@ class ReviewController extends Controller
 
         $user = Helpers::getCustomerInformation($request);
         $order = $this->orderRepo->getFirstWhere(params: ['id' => $request['order_id'], 'customer_id' => $user['id'], 'payment_status' => 'paid']);
-        if (!isset($order)) {
+        if (! isset($order)) {
             return response()->json(['message' => translate('Invalid_order')], 403);
         }
 
@@ -62,7 +59,7 @@ class ReviewController extends Controller
 
         $user = Helpers::getCustomerInformation($request);
         $order = $this->orderRepo->getFirstWhere(params: ['id' => $request['order_id'], 'customer_id' => $user['id'], 'payment_status' => 'paid']);
-        if (!isset($order->delivery_man_id)) {
+        if (! isset($order->delivery_man_id)) {
             return response()->json(['message' => translate('Invalid_review')], 403);
         }
 
@@ -81,20 +78,19 @@ class ReviewController extends Controller
             'updated_at' => now(),
         ];
 
-        if (!$review) {
+        if (! $review) {
             $dataArray['created_at'] = now();
         }
 
         $this->reviewRepo->updateOrInsert(params: [
             'delivery_man_id' => $order['delivery_man_id'],
             'customer_id' => $user['id'],
-            'order_id' => $request['order_id']
+            'order_id' => $request['order_id'],
         ], data: $dataArray
         );
 
         return response()->json([
-            'message' => $review ? translate('successfully_update_review') : translate('successfully_added_review')
+            'message' => $review ? translate('successfully_update_review') : translate('successfully_added_review'),
         ], 200);
     }
-
 }

@@ -13,7 +13,7 @@ class RememberScope implements Scope
      */
     public function apply(Builder $builder, Model $model): void
     {
-//        $builder->remember(now()->addDay());
+        //        $builder->remember(now()->addDay());
         $builder->cacheFor(now()->addDays(1));
     }
 }

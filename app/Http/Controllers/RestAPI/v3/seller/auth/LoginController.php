@@ -20,7 +20,7 @@ class LoginController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required',
-            'password' => 'required|min:6'
+            'password' => 'required|min:6',
         ]);
 
         if ($validator->fails()) {
@@ -29,7 +29,7 @@ class LoginController extends Controller
 
         $data = [
             'email' => $request['email'],
-            'password' => $request['password']
+            'password' => $request['password'],
         ];
 
         $seller = Seller::where(['email' => $request['email']])->first();
@@ -62,20 +62,23 @@ class LoginController extends Controller
                     'updated_at' => now(),
                 ]);
             }
+
             return response()->json(['token' => $token], 200);
-        }elseif(isset($seller) && $seller['status'] == 'pending'){
+        } elseif (isset($seller) && $seller['status'] == 'pending') {
             $errors = [];
             $errors[] = ['code' => 'auth-001', 'message' => translate('your_account_is_in_review_process').'. '.translate('please_wait_for_admin_approval')];
+
             return response()->json([
                 'errors' => $errors,
-                'loginStatus' => 'pending'
+                'loginStatus' => 'pending',
             ], 401);
         } else {
             $errors = [];
             $errors[] = ['code' => 'auth-001', 'message' => translate('invalid_credential')];
+
             return response()->json([
                 'errors' => $errors,
-                'loginStatus' => 'unauthorized'
+                'loginStatus' => 'unauthorized',
             ], 401);
         }
     }

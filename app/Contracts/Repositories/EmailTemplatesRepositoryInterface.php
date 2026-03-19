@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface EmailTemplatesRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface EmailTemplatesRepositoryInterface extends RepositoryInterface {}

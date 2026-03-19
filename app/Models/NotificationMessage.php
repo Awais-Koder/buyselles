@@ -12,21 +12,23 @@ use Illuminate\Support\Carbon;
  * @property string $user_type
  * @property string $key
  * @property string $message
- * @property integer $status
+ * @property int $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
  **/
 class NotificationMessage extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_type',
         'key',
         'message',
         'status',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
+
     protected $casts = [
         'user_type' => 'string',
         'key' => 'string',
@@ -35,6 +37,7 @@ class NotificationMessage extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
     public function translations(): MorphMany
     {
         return $this->morphMany('App\Models\Translation', 'translationable');

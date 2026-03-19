@@ -6,22 +6,15 @@ use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Enums\ExportFileNames\Admin\Report;
 use App\Exports\ExpenseTransactionReportExport;
-use App\Exports\OrderTransactionReportExport;
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessSetting;
 use App\Models\Order;
-use App\Models\OrderTransaction;
-use App\Models\Product;
-use App\Models\Seller;
-use App\Models\Shop;
-use App\Models\User;
+use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View as ViewResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -29,11 +22,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class ExpenseTransactionReportController extends Controller
 {
     public function __construct(
-        private readonly VendorRepositoryInterface   $vendorRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-    )
-    {
-    }
+    ) {}
 
     private static function getExpenseTransactionTable($request, $query): LengthAwarePaginator
     {
@@ -88,7 +79,7 @@ class ExpenseTransactionReportController extends Controller
         return Order::with(['orderTransaction', 'coupon'])
             ->where([
                 'order_type' => 'default_type',
-                'order_status' => 'delivered'
+                'order_status' => 'delivered',
             ])
             ->where(function ($query) {
                 return $query->where('coupon_discount_bearer', 'inhouse')
@@ -99,12 +90,13 @@ class ExpenseTransactionReportController extends Controller
                     ->orWhere(function ($query) {
                         return $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'admin'
+                            'free_delivery_bearer' => 'admin',
                         ]);
                     })->orWhere('refer_and_earn_discount', '>', 0);
             })
-            ->when(!empty($request['search']), function ($query) use ($request) {
+            ->when(! empty($request['search']), function ($query) use ($request) {
                 $searchKeyword = $request['search'];
+
                 return $query->where(function ($query) use ($searchKeyword) {
                     return $query->where('id', 'like', "%{$searchKeyword}%")
                         ->orWhereHas('orderTransaction', function ($query) use ($searchKeyword) {
@@ -118,6 +110,7 @@ class ExpenseTransactionReportController extends Controller
     public function getExpenseChartCommonQuery($request)
     {
         $baseQuery = self::getBaseQueryForExpenseTransactionQuery($request);
+
         return self::getFormatDateWiseQueryFilter(
             query: $baseQuery,
             dateType: ($request['date_type'] ?? 'this_year'),
@@ -129,8 +122,8 @@ class ExpenseTransactionReportController extends Controller
     public function getFormatDateWiseQueryFilter($query, $dateType, $from, $to)
     {
         return $query->when(($dateType == 'this_year'), function ($query) {
-                return $query->whereYear('created_at', date('Y'));
-            })
+            return $query->whereYear('created_at', date('Y'));
+        })
             ->when(($dateType == 'this_month'), function ($query) {
                 return $query->whereMonth('created_at', date('m'))
                     ->whereYear('created_at', date('Y'));
@@ -141,7 +134,7 @@ class ExpenseTransactionReportController extends Controller
             ->when(($dateType == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($dateType == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($dateType == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });
@@ -203,6 +196,7 @@ class ExpenseTransactionReportController extends Controller
             'dateType' => $dateType,
             'transactions' => $transactions,
         ];
+
         return Excel::download(new ExpenseTransactionReportExport($data), Report::EXPENSE_TRANSACTION_REPORT_LIST);
     }
 
@@ -220,7 +214,7 @@ class ExpenseTransactionReportController extends Controller
 
         $duration = str_replace('_', ' ', $date_type);
         if ($date_type == 'custom_date') {
-            $duration = 'From ' . $from . ' To ' . $to;
+            $duration = 'From '.$from.' To '.$to;
         }
 
         $baseQuery = self::getBaseQueryForExpenseTransactionQuery(request: $request);
@@ -250,25 +244,27 @@ class ExpenseTransactionReportController extends Controller
         $to = $request['to'];
         $date_type = $request['date_type'] ?? 'this_year';
 
-        if ($date_type == 'this_year') { //this year table
+        if ($date_type == 'this_year') { // this year table
             $number = 12;
             $default_inc = 1;
             $currentStartYear = date('Y-01-01');
             $currentEndYear = date('Y-12-31');
             $from_year = Carbon::parse($from)->format('Y');
+
             return self::expense_transaction_same_year($request, $currentStartYear, $currentEndYear, $from_year, $number, $default_inc);
-        } elseif ($date_type == 'this_month') { //this month table
+        } elseif ($date_type == 'this_month') { // this month table
             $current_month_start = date('Y-m-01');
             $current_month_end = date('Y-m-t');
             $inc = 1;
             $month = date('m');
             $number = date('d', strtotime($current_month_end));
+
             return self::expense_transaction_same_month($request, $current_month_start, $current_month_end, $month, $number, $inc);
         } elseif ($date_type == 'this_week') {
             return self::expense_transaction_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getExpenseTransactionForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -291,7 +287,7 @@ class ExpenseTransactionReportController extends Controller
     public function expense_transaction_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc)
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = substr(date("F", strtotime("$year_month")), 0, 3);
+        $month = substr(date('F', strtotime("$year_month")), 0, 3);
         $orders = self::getExpenseChartCommonQuery($request)
             ->selectRaw("*, DATE_FORMAT(created_at, '%d') as day")
             ->latest('created_at')->get();
@@ -310,22 +306,22 @@ class ExpenseTransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discountAmount,
-        );
+        ];
     }
 
     public function expense_transaction_this_week($request)
     {
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             $day_name[] = $date->format('l');
         }
 
         $orders = self::getExpenseChartCommonQuery($request)
-            ->selectRaw("*, ((DAYOFWEEK(created_at) + 5) % 7) as day")
+            ->selectRaw('*, ((DAYOFWEEK(created_at) + 5) % 7) as day')
             ->latest('created_at')->get();
 
         $discountAmount = [];
@@ -342,9 +338,9 @@ class ExpenseTransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discountAmount,
-        );
+        ];
     }
 
     public function getExpenseTransactionForToday($request): array
@@ -381,10 +377,10 @@ class ExpenseTransactionReportController extends Controller
 
         $discountAmount = [];
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = date("F", strtotime("2023-$inc-01"));
+            $month = date('F', strtotime("2023-$inc-01"));
             $discountAmount[$month] = 0;
             foreach ($orders as $match) {
-                if ((int)$match['month'] == $inc) {
+                if ((int) $match['month'] == $inc) {
                     if ($match->is_shipping_free && $match->free_delivery_bearer == 'admin') {
                         $discountAmount[$month] += $match->extra_discount; // freeDeliveryDiscount
                     }
@@ -395,7 +391,7 @@ class ExpenseTransactionReportController extends Controller
         }
 
         return [
-            'discount_amount' => $discountAmount
+            'discount_amount' => $discountAmount,
         ];
     }
 
@@ -420,7 +416,7 @@ class ExpenseTransactionReportController extends Controller
         }
 
         return [
-            'discount_amount' => $discountAmount
+            'discount_amount' => $discountAmount,
         ];
 
     }

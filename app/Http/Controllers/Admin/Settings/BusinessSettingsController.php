@@ -3,63 +3,58 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Contracts\Repositories\AnalyticScriptRepositoryInterface;
+use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use App\Contracts\Repositories\CurrencyRepositoryInterface;
 use App\Contracts\Repositories\DeliveryManRepositoryInterface;
 use App\Contracts\Repositories\OfflinePaymentMethodRepositoryInterface;
 use App\Contracts\Repositories\SettingRepositoryInterface;
 use App\Contracts\Repositories\SocialMediaRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Enums\GlobalConstant;
+use App\Http\Controllers\BaseController;
+use App\Http\Requests\Admin\BusinessSettingRequest;
 use App\Http\Requests\Admin\DeepLinkRequest;
 use App\Http\Requests\Admin\ProductSettingsUpdateRequest;
+use App\Services\BusinessSettingService;
 use App\Services\SettingService;
 use App\Traits\CalculatorTrait;
-use App\Traits\PaymentGatewayTrait;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Traits\SettingsTrait;
 use App\Traits\FileManagerTrait;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Contracts\View\View;
+use App\Traits\PaymentGatewayTrait;
+use App\Traits\SettingsTrait;
+use Carbon\Carbon;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use App\Http\Controllers\BaseController;
-use App\Services\BusinessSettingService;
-use App\Http\Requests\Admin\BusinessSettingRequest;
-use App\Contracts\Repositories\CurrencyRepositoryInterface;
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class BusinessSettingsController extends BaseController
 {
-
-    use SettingsTrait, CalculatorTrait, PaymentGatewayTrait;
+    use CalculatorTrait, PaymentGatewayTrait, SettingsTrait;
     use FileManagerTrait {
         delete as deleteFile;
         update as updateFile;
     }
 
     public function __construct(
-        private readonly BusinessSettingRepositoryInterface      $businessSettingRepo,
-        private readonly AnalyticScriptRepositoryInterface       $analyticScriptRepo,
-        private readonly VendorRepositoryInterface               $vendorRepo,
-        private readonly DeliveryManRepositoryInterface          $deliveryManRepo,
-        private readonly CurrencyRepositoryInterface             $currencyRepo,
-        private readonly SocialMediaRepositoryInterface          $socialMediaRepo,
-        private readonly BusinessSettingService                  $businessSettingService,
-        private readonly SettingService                          $settingService,
-        private readonly SettingRepositoryInterface              $settingRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+        private readonly AnalyticScriptRepositoryInterface $analyticScriptRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
+        private readonly CurrencyRepositoryInterface $currencyRepo,
+        private readonly SocialMediaRepositoryInterface $socialMediaRepo,
+        private readonly BusinessSettingService $businessSettingService,
+        private readonly SettingService $settingService,
+        private readonly SettingRepositoryInterface $settingRepo,
         private readonly OfflinePaymentMethodRepositoryInterface $offlinePaymentMethodRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $web = $this->businessSettingRepo->getListWhere(dataLimit: 'all');
         $settings = $this->getSettings($web, 'colors');
@@ -69,7 +64,6 @@ class BusinessSettingsController extends BaseController
         $systemCurrency = $this->currencyRepo->getFirstWhere(params: ['id' => $systemDefaultCurrency]);
 
         $currencySupportGateway = $this->checkCurrencySupportGateway(currencyCode: $systemCurrency);
-
 
         $businessSetting = [
             'primary_color' => $data['primary'] ?? '',
@@ -121,7 +115,7 @@ class BusinessSettingsController extends BaseController
             'offlinePayment' => getWebConfig(name: 'offline_payment'),
             'cookieSetting' => getWebConfig(name: 'cookie_setting'),
             'systemCurrency' => $systemCurrency,
-            'checkMinimumOneDigitalPayment' => $this->checkMinimumOneDigitalPayment()
+            'checkMinimumOneDigitalPayment' => $this->checkMinimumOneDigitalPayment(),
         ]);
     }
 
@@ -155,7 +149,6 @@ class BusinessSettingsController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'business_mode', value: $request['business_mode']);
         $this->businessSettingRepo->updateOrInsert(type: 'sales_commission', value: $request->get('sales_commission', 0));
 
-
         $this->businessSettingRepo->updateOrInsert(type: 'company_copyright_text', value: $request['company_copyright_text']);
         $this->businessSettingRepo->updateOrInsert(type: 'cookie_setting', value: json_encode([
             'status' => $request->get('cookie_status', 0),
@@ -170,6 +163,7 @@ class BusinessSettingsController extends BaseController
         }
 
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->route('admin.business-settings.web-config.index');
     }
 
@@ -199,10 +193,11 @@ class BusinessSettingsController extends BaseController
         if (env('APP_MODE') == 'demo') {
             if ($request->ajax()) {
                 return response()->json([
-                    'message' => translate('you_can_not_update_this_on_demo_mode'), 401
+                    'message' => translate('you_can_not_update_this_on_demo_mode'), 401,
                 ]);
             } else {
                 ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
                 return back();
             }
         }
@@ -219,10 +214,11 @@ class BusinessSettingsController extends BaseController
             if ($request->ajax()) {
                 return response()->json([
                     'message' => translate('Please_select_minimum_one_system'),
-                    'status' => 'error'
+                    'status' => 'error',
                 ]);
             } else {
                 ToastMagic::error(translate('Please_select_minimum_one_system'));
+
                 return back();
             }
         }
@@ -236,7 +232,7 @@ class BusinessSettingsController extends BaseController
             'business_number' => $request->has('business_number') ? 1 : 0,
             'business_email' => $request->has('business_email') ? 1 : 0,
             'maintenance_message' => $request['maintenance_message'],
-            'message_body' => $request['message_body']
+            'message_body' => $request['message_body'],
         ];
 
         $maintenanceModeStatus = $request->get('maintenance_mode', 0);
@@ -277,10 +273,11 @@ class BusinessSettingsController extends BaseController
         if ($request->ajax()) {
             return response()->json([
                 'message' => $maintenanceModeStatus ? translate('Maintenance_mode_is_on') : translate('Maintenance_mode_is_off'),
-                'status' => 'success'
+                'status' => 'success',
             ]);
         } else {
             ToastMagic::success($maintenanceModeStatus ? translate('Maintenance_mode_is_on') : translate('Maintenance_mode_is_off'));
+
             return back();
         }
     }
@@ -306,6 +303,7 @@ class BusinessSettingsController extends BaseController
             ]));
         }
         ToastMagic::success(translate('updated_successfully'));
+
         return back();
     }
 
@@ -319,13 +317,15 @@ class BusinessSettingsController extends BaseController
             'base_writable' => is_writable(base_path()),
             'public_writable' => is_writable(public_path()),
         ];
-        return view('admin-views.system-setup.app-deep-link', compact('deeplink','fileStatus'));
+
+        return view('admin-views.system-setup.app-deep-link', compact('deeplink', 'fileStatus'));
     }
 
     public function updateAppDeepLink(DeepLinkRequest $request): RedirectResponse
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
         try {
@@ -344,7 +344,7 @@ class BusinessSettingsController extends BaseController
             $this->createDeepLinkFiles($request);
             ToastMagic::success(translate('updated_successfully'));
         } catch (\Exception $e) {
-            ToastMagic::error(translate('update_failed') . ': ' . $e->getMessage());
+            ToastMagic::error(translate('update_failed').': '.$e->getMessage());
         }
 
         return back();
@@ -352,23 +352,24 @@ class BusinessSettingsController extends BaseController
 
     /**
      * Create deep link files in both base and public directories
+     *
      * @throws \Exception
      */
     protected function createDeepLinkFiles($request): void
     {
         $filePaths = [
             base_path('.well-known'),
-            public_path('.well-known')
+            public_path('.well-known'),
         ];
 
         foreach ($filePaths as $wellKnownPath) {
-            if (!file_exists($wellKnownPath)) {
-                if (!mkdir($wellKnownPath, 0755, true)) {
-                    throw new \Exception('Failed to create .well-known directory at: ' . $wellKnownPath);
+            if (! file_exists($wellKnownPath)) {
+                if (! mkdir($wellKnownPath, 0755, true)) {
+                    throw new \Exception('Failed to create .well-known directory at: '.$wellKnownPath);
                 }
             }
-            if (!is_writable($wellKnownPath)) {
-                throw new \Exception('.well-known directory is not writable at: ' . $wellKnownPath);
+            if (! is_writable($wellKnownPath)) {
+                throw new \Exception('.well-known directory is not writable at: '.$wellKnownPath);
             }
             $this->createAssetLinksFile($wellKnownPath, $request);
             $this->createAppleAppSiteAssociation($wellKnownPath, $request);
@@ -384,14 +385,14 @@ class BusinessSettingsController extends BaseController
                     'namespace' => 'android_app',
                     'package_name' => $request['android_package_name'],
                     'sha256_cert_fingerprints' => [
-                        $request['android_sha256_fingerprint']
-                    ]
-                ]
-            ]
+                        $request['android_sha256_fingerprint'],
+                    ],
+                ],
+            ],
         ];
-        $filePath = $path . '/assetlinks.json';
+        $filePath = $path.'/assetlinks.json';
         if (file_put_contents($filePath, json_encode($assetLinks, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)) === false) {
-            throw new \Exception('Failed to create assetlinks.json at: ' . $filePath);
+            throw new \Exception('Failed to create assetlinks.json at: '.$filePath);
         }
         chmod($filePath, 0644);
     }
@@ -403,16 +404,16 @@ class BusinessSettingsController extends BaseController
                 'apps' => [],
                 'details' => [
                     [
-                        'appID' => $request['ios_team_id'] . '.' . $request['ios_bundle_id'],
-                        'paths' => config('deeplinks.ios_paths', ['*'])
-                    ]
-                ]
-            ]
+                        'appID' => $request['ios_team_id'].'.'.$request['ios_bundle_id'],
+                        'paths' => config('deeplinks.ios_paths', ['*']),
+                    ],
+                ],
+            ],
         ];
 
-        $filePath = $path . '/apple-app-site-association';
+        $filePath = $path.'/apple-app-site-association';
         if (file_put_contents($filePath, json_encode($appleAppSiteAssociation, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)) === false) {
-            throw new \Exception('Failed to create apple-app-site-association at: ' . $filePath);
+            throw new \Exception('Failed to create apple-app-site-association at: '.$filePath);
         }
         chmod($filePath, 0644);
     }
@@ -424,6 +425,7 @@ class BusinessSettingsController extends BaseController
             'cookie_text' => $request['cookie_text'],
         ]));
         ToastMagic::success(translate('cookie_settings_updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -434,20 +436,23 @@ class BusinessSettingsController extends BaseController
         foreach ($analytics as $analytic) {
             $analyticsData[$analytic['type']] = $analytic;
         }
+
         return view('admin-views.third-party.analytics.index', compact('analyticsData'));
     }
 
     public function updateAnalytics(Request $request): RedirectResponse
     {
         $analyticScriptsTypes = ['meta_pixel', 'linkedin_insight', 'tiktok_tag', 'snapchat_tag', 'twitter_tag', 'pinterest_tag', 'google_tag_manager', 'google_analytics'];
-        if (!in_array($request['type'], $analyticScriptsTypes)) {
+        if (! in_array($request['type'], $analyticScriptsTypes)) {
             ToastMagic::error(translate('Update_failed'));
+
             return back();
         }
 
         if (empty($request['script_id']) && $request['is_active'] == 1) {
             $type = str_replace(' ', '_', ucwords(str_replace('_', ' ', $request['type'])));
-            ToastMagic::error(translate('Please_ensure_you_have_filled_in_the_' . $type . '_script_ID.'));
+            ToastMagic::error(translate('Please_ensure_you_have_filled_in_the_'.$type.'_script_ID.'));
+
             return back();
         }
 
@@ -459,6 +464,7 @@ class BusinessSettingsController extends BaseController
         ]);
 
         ToastMagic::success(translate('Update_successfully'));
+
         return back();
     }
 
@@ -467,6 +473,7 @@ class BusinessSettingsController extends BaseController
         $digitalProduct = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'digital_product']);
         $brand = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'product_brand']);
         $stockLimit = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'stock_limit']);
+
         return view('admin-views.business-settings.product-settings', compact('digitalProduct', 'brand', 'stockLimit'));
     }
 
@@ -480,21 +487,24 @@ class BusinessSettingsController extends BaseController
 
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('updated_successfully'));
+
         return back();
     }
 
     public function getAnnouncementView(): View
     {
         $announcement = getWebConfig(name: 'announcement');
+
         return view('admin-views.business-settings.website-announcement', compact('announcement'));
     }
 
     public function updateAnnouncement(Request $request): RedirectResponse
     {
         $value = json_encode(['status' => $request['announcement_status'], 'color' => $request['announcement_color'],
-            'text_color' => $request['text_color'], 'announcement' => $request['announcement'],]);
+            'text_color' => $request['text_color'], 'announcement' => $request['announcement'], ]);
         $this->businessSettingRepo->updateOrInsert(type: 'announcement', value: $value);
         ToastMagic::success(translate('announcement_updated_successfully'));
+
         return back();
     }
 
@@ -508,10 +518,11 @@ class BusinessSettingsController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'refund_day_limit', value: $request->get('refund_day_limit', 0));
         $this->businessSettingRepo->updateOrInsert(type: 'wallet_add_refund', value: $request->get('wallet_add_refund', 0));
         ToastMagic::success(translate('Refund_config_updated_successfully'));
+
         return back();
     }
 
-    private function checkCurrencySupportGateway(object|null $currencyCode): bool
+    private function checkCurrencySupportGateway(?object $currencyCode): bool
     {
         $digitalPayment = getWebConfig(name: 'digital_payment');
         if (isset($digitalPayment['status']) && $digitalPayment['status']) {
@@ -527,8 +538,10 @@ class BusinessSettingsController extends BaseController
                     return true;
                 }
             }
+
             return false;
         }
+
         return true;
     }
 
@@ -538,28 +551,31 @@ class BusinessSettingsController extends BaseController
 
         $gatewayKeys = [];
         foreach (GATEWAYS_PAYMENT_METHODS as $method) {
-            $gatewayKeys[] = $method["key"];
+            $gatewayKeys[] = $method['key'];
         }
         $paymentGatewaysList = $this->settingRepo->getListWhereIn(
             filters: ['is_active' => 1],
             whereInFilters: [
                 'settings_type' => ['payment_config'],
-                'key_name' => $paymentGatewayStatus ? $gatewayKeys : GlobalConstant::DEFAULT_PAYMENT_GATEWAYS
+                'key_name' => $paymentGatewayStatus ? $gatewayKeys : GlobalConstant::DEFAULT_PAYMENT_GATEWAYS,
             ],
             dataLimit: 'all',
         );
-        return !(count($paymentGatewaysList) == 0);
+
+        return ! (count($paymentGatewaysList) == 0);
     }
 
     private function updatePaymentOption(mixed $request): ?RedirectResponse
     {
-        if ($request['digital_payment'] == 1 && !$this->checkMinimumOneDigitalPayment() && $request['offline_payment'] != 1) {
+        if ($request['digital_payment'] == 1 && ! $this->checkMinimumOneDigitalPayment() && $request['offline_payment'] != 1) {
             ToastMagic::warning(translate('you_must_active_one_of_digital_payment_methods'));
+
             return redirect()->back();
         }
 
         if ($request['offline_payment'] == 1 && $this->offlinePaymentMethodRepo->getListWhere(filters: ['status' => 'active'])->count() <= 0) {
             ToastMagic::warning(translate('you_must_active_one_of_offline_payment_methods'));
+
             return redirect()->back();
         }
 

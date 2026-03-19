@@ -12,9 +12,7 @@ class AdminWalletRepository implements AdminWalletRepositoryInterface
 {
     public function __construct(
         private readonly AdminWallet $adminWallet,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,9 +27,9 @@ class AdminWalletRepository implements AdminWalletRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->adminWallet->with($relations)
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-                });
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
@@ -39,11 +37,12 @@ class AdminWalletRepository implements AdminWalletRepositoryInterface
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->adminWallet
-                ->when($filters['admin_id'], function($query)use($filters){
-                    $query->where('admin_id', $filters['admin_id']);
-                });
+            ->when($filters['admin_id'], function ($query) use ($filters) {
+                $query->where('admin_id', $filters['admin_id']);
+            });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -55,13 +54,14 @@ class AdminWalletRepository implements AdminWalletRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->adminWallet->where($params)->update($data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->adminWallet->where($params)->delete();
+
         return true;
     }
-
 }

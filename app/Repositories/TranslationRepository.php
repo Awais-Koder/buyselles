@@ -9,9 +9,7 @@ class TranslationRepository implements TranslationRepositoryInterface
 {
     public function __construct(
         private readonly Translation $translation
-    )
-    {
-    }
+    ) {}
 
     public function add(object $request, string $model, int|string $id): bool
     {
@@ -24,12 +22,13 @@ class TranslationRepository implements TranslationRepositoryInterface
                             'translationable_id' => $id,
                             'locale' => $key,
                             'key' => $type,
-                            'value' => $request[$type][$index]
+                            'value' => $request[$type][$index],
                         ]
                     );
                 }
             }
         }
+
         return true;
     }
 
@@ -43,15 +42,16 @@ class TranslationRepository implements TranslationRepositoryInterface
                             'translationable_type' => $model,
                             'translationable_id' => $id,
                             'locale' => $key,
-                            'key' => $type
+                            'key' => $type,
                         ],
                         [
-                            'value' => $request[$type][$index]
+                            'value' => $request[$type][$index],
                         ]
                     );
                 }
             }
         }
+
         return true;
     }
 
@@ -62,18 +62,20 @@ class TranslationRepository implements TranslationRepositoryInterface
                 'translationable_type' => $model,
                 'translationable_id' => $id,
                 'locale' => $lang,
-                'key' => $key
+                'key' => $key,
             ],
             [
-                'value' => $value
+                'value' => $value,
             ]
         );
+
         return true;
     }
 
     public function delete(string $model, int|string $id): bool
     {
         $this->translation->where('translationable_type', $model)->where('translationable_id', $id)->delete();
+
         return true;
     }
 }

@@ -2,23 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\OrderStatusHistory;
-
 class OrderStatusHistoryService
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
-     * @param string|int $orderId
-     * @param string|int $userId
-     * @param string $userType
-     * @param string $status
-     * @param null $cause
-     * @return array
+     * @param  null  $cause
      */
-
     public function getOrderHistoryData(string|int $orderId, string|int $userId, string $userType, string $status, $cause = null): array
     {
         return [
@@ -29,6 +19,4 @@ class OrderStatusHistoryService
             'cause' => $cause,
         ];
     }
-
-
 }

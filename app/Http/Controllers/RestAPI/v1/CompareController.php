@@ -12,9 +12,7 @@ class CompareController extends Controller
 {
     public function __construct(
         private readonly ProductCompare $product_compare,
-    )
-    {
-    }
+    ) {}
 
     public function list(Request $request): JsonResponse
     {
@@ -31,6 +29,7 @@ class CompareController extends Controller
 
         $compare_lists->map(function ($data) {
             $data['product'] = Helpers::product_data_formatting($data['product']);
+
             return $data;
         });
 
@@ -43,6 +42,7 @@ class CompareController extends Controller
         if ($compareList) {
             $compareList->delete();
             $productCount = $this->product_compare->where(['product_id' => $request['product_id']])->count();
+
             return response()->json(['total_product_add' => $productCount, 'message' => 'Product removed from the compare list'], 200);
         } else {
             $countCompareListExist = $this->product_compare->where('user_id', $request->user()->id)->count();
@@ -56,6 +56,7 @@ class CompareController extends Controller
             $compareList->save();
 
             $productCount = $this->product_compare->where(['product_id' => $request['product_id']])->count();
+
             return response()->json(['total_product_add' => $productCount, 'message' => 'Successfully added'], 200);
         }
     }
@@ -74,15 +75,17 @@ class CompareController extends Controller
 
             $this->product_compare->insert([
                 'user_id' => auth('customer')->id(),
-                'product_id' => $request['product_id']
+                'product_id' => $request['product_id'],
             ]);
         }
+
         return response()->json(['message' => 'Successfully added'], 200);
     }
 
     public function clear_all(Request $request): JsonResponse
     {
         $this->product_compare->where('user_id', $request->user()->id)->delete();
+
         return response()->json(['message' => 'Compare list removed'], 200);
     }
 }

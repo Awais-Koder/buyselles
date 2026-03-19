@@ -18,9 +18,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class CategoryListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class CategoryListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
+
     protected $data;
 
     public function __construct($data)
@@ -56,9 +57,10 @@ class CategoryListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
         ]);
 
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:F' . ($this->data['categories']->count() + 4) => [
+            'A1:F'.($this->data['categories']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -68,22 +70,23 @@ class CategoryListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
             ],
         ];
     }
+
     public function setImage($workSheet): void
     {
         $this->data['categories']->each(/**
          * @throws Exception
          */ function ($item, $index) use ($workSheet) {
             $tempImagePath = null;
-            $filePath = 'category/' . $item->icon_full_url['key'];
+            $filePath = 'category/'.$item->icon_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item->icon_full_url['path'] && !$fileCheck) {
+            if ($item->icon_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item->icon_full_url['path']);
                 $imagePath = getImageForExport($item->icon_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/placeholder/category.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/placeholder/category.png'));
             }
             $drawing->setName($item->name);
             $drawing->setDescription($item->name);
@@ -108,7 +111,7 @@ class CategoryListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:F' . ($this->data['categories']->count() + 4)) // Adjust the range as per your needs
+                $event->sheet->getStyle('A4:F'.($this->data['categories']->count() + 4)) // Adjust the range as per your needs
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
@@ -142,10 +145,11 @@ class CategoryListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
             },
         ];
     }
+
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

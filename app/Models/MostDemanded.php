@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 /**
  * Class MostDemanded
  *
- * @package App\Models
  *
  * @property int $id
  * @property string $banner
@@ -48,27 +47,29 @@ class MostDemanded extends Model
 
     /**
      * Get the related product for the most demanded item.
-     *
-     * @return BelongsTo
      */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
-    public function getBannerFullUrlAttribute():array|null
+
+    public function getBannerFullUrlAttribute(): ?array
     {
         $value = $this->banner;
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'banner')->first();
         }
-        return $this->storageLink('most-demanded',$value,$storage['value'] ?? 'public');
+
+        return $this->storageLink('most-demanded', $value, $storage['value'] ?? 'public');
     }
+
     protected $appends = ['banner_full_url'];
+
     protected static function boot(): void
     {
         parent::boot();
         static::saved(function ($model) {
-            if($model->isDirty('banner')){
+            if ($model->isDirty('banner')) {
                 $storage = config('filesystems.disks.default') ?? 'public';
                 DB::table('storages')->updateOrInsert([
                     'data_type' => get_class($model),

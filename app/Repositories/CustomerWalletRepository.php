@@ -11,11 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class CustomerWalletRepository implements CustomerWalletRepositoryInterface
 {
     public function __construct(
-        private readonly CustomerWallet           $customerWallet,
-    )
-    {
-    }
-
+        private readonly CustomerWallet $customerWallet,
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,8 +27,8 @@ class CustomerWalletRepository implements CustomerWalletRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->customerWallet->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -43,11 +40,12 @@ class CustomerWalletRepository implements CustomerWalletRepositoryInterface
             ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where(['id' => $filters['id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -59,6 +57,7 @@ class CustomerWalletRepository implements CustomerWalletRepositoryInterface
     public function delete(array $params): bool
     {
         $this->customerWallet->where($params)->delete();
+
         return true;
     }
 }

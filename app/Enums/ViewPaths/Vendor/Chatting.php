@@ -8,6 +8,7 @@ enum Chatting
         URI => 'index',
         VIEW => 'vendor-views.chatting.index',
     ];
+
     const MESSAGE = [
         URI => 'message',
         VIEW => 'vendor-views.chatting.index',

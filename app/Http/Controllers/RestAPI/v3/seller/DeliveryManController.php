@@ -16,12 +16,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
-
 class DeliveryManController extends Controller
 {
     use CommonTrait;
 
     private $shippingMethod;
+
     public function __construct()
     {
         $this->shippingMethod = getWebConfig(name: 'shipping_method');
@@ -30,23 +30,24 @@ class DeliveryManController extends Controller
     public function list(Request $request): JsonResponse
     {
         $seller = $request->seller;
-        $delivery_men = DeliveryMan::with(['rating', 'orders'=>function($query){
-                $query->select('delivery_man_id', DB::raw('COUNT(delivery_man_id) as count'));
-            }])
+        $delivery_men = DeliveryMan::with(['rating', 'orders' => function ($query) {
+            $query->select('delivery_man_id', DB::raw('COUNT(delivery_man_id) as count'));
+        }])
             ->where(['seller_id' => $seller['id']])
-            ->when(!empty($request['search']), function($query) use($request){
-                $query->where(function($query) use ($request){
+            ->when(! empty($request['search']), function ($query) use ($request) {
+                $query->where(function ($query) use ($request) {
                     $query->where('f_name', 'like', "%{$request['search']}%")
                         ->orWhere('l_name', 'like', "%{$request['search']}%");
                 });
             })
             ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $delivery_men->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
         $data['delivery_man'] = $delivery_men->items();
+
         return response()->json($data, 200);
     }
 
@@ -54,16 +55,16 @@ class DeliveryManController extends Controller
     {
         $seller = $request->seller;
         $identity_images = [];
-        if (!empty($request->file('identity_image'))) {
+        if (! empty($request->file('identity_image'))) {
             foreach ($request->identity_image as $img) {
-                $identity_images[] =[
-                    'image_name'=> ImageManager::upload('delivery-man/', 'webp', $img),
+                $identity_images[] = [
+                    'image_name' => ImageManager::upload('delivery-man/', 'webp', $img),
                     'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
                 ];
             }
         }
 
-        $dm = new DeliveryMan();
+        $dm = new DeliveryMan;
         $dm->seller_id = $seller->id;
         $dm->f_name = $request->f_name;
         $dm->l_name = $request->l_name;
@@ -89,17 +90,17 @@ class DeliveryManController extends Controller
         $validator = Validator::make($request->all(), [
             'f_name' => 'required',
             'l_name' => 'required',
-            'email' => 'required|email|unique:delivery_men,email,' . $id,
+            'email' => 'required|email|unique:delivery_men,email,'.$id,
             'phone' => 'required',
             'country_code' => 'required',
         ], [
             'f_name.required' => 'First name is required!',
-            'l_name.required' => 'Last name is required!'
+            'l_name.required' => 'Last name is required!',
         ]);
 
         if ($request->password) {
             $validator = Validator::make($request->all(), [
-                'password' => 'required|min:8|same:confirm_password'
+                'password' => 'required|min:8|same:confirm_password',
             ]);
         }
         $delivery_man = DeliveryMan::where(['id' => $id, 'seller_id' => $seller->id])->first();
@@ -117,14 +118,14 @@ class DeliveryManController extends Controller
             return response()->json(['message' => translate('This_phone_number_is_already_taken')], 403);
         }
 
-        if (!empty($request->file('identity_image'))) {
+        if (! empty($request->file('identity_image'))) {
             foreach ($delivery_man['identity_image'] as $image) {
                 ImageManager::delete(full_path: 'delivery-man/'.(isset($image['image_name']) ? $image['image_name'] : $image));
             }
             $identityImage = [];
             foreach ($request['identity_image'] as $img) {
                 $identityImage[] = [
-                    'image_name'=>ImageManager::upload(dir: 'delivery-man/', format: 'webp', image: $img),
+                    'image_name' => ImageManager::upload(dir: 'delivery-man/', format: 'webp', image: $img),
                     'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
                 ];
             }
@@ -152,7 +153,7 @@ class DeliveryManController extends Controller
     public function details(Request $request, $id): JsonResponse
     {
         $seller = $request->seller;
-        $delivery_man = DeliveryMan::with(['wallet'])->where(['seller_id'=>$seller->id])->find($id);
+        $delivery_man = DeliveryMan::with(['wallet'])->where(['seller_id' => $seller->id])->find($id);
 
         if (isset($delivery_man->wallet)) {
             $withdrawbale_balance = CommonTrait::delivery_man_withdrawable_balance($id);
@@ -160,9 +161,10 @@ class DeliveryManController extends Controller
             $withdrawbale_balance = 0;
         }
 
-        $data = array();
+        $data = [];
         $data['delivery_man'] = $delivery_man;
         $data['withdrawbale_balance'] = $withdrawbale_balance;
+
         return response()->json($data, 200);
     }
 
@@ -170,17 +172,18 @@ class DeliveryManController extends Controller
     {
         $seller = $request->seller;
         $delivery_man = DeliveryMan::where(['seller_id' => $seller->id, 'id' => $id])->first();
-        if (!$delivery_man) {
+        if (! $delivery_man) {
             return response()->json(['message' => translate('Invalid delivery-man!')], 403);
         }
 
-        ImageManager::delete('delivery-man/' . $delivery_man['image']);
+        ImageManager::delete('delivery-man/'.$delivery_man['image']);
         foreach ($delivery_man['identity_image'] as $img) {
             $imageName = is_string($img) ? $img : $img['image_name'];
             ImageManager::delete('delivery-man/'.$imageName);
         }
 
         $delivery_man->delete();
+
         return response()->json(['message' => translate('Deliveryman deleted successfully!')], 200);
     }
 
@@ -189,7 +192,7 @@ class DeliveryManController extends Controller
         $seller = $request->seller;
 
         $delivery_man = DeliveryMan::where(['seller_id' => $seller->id])->with(['review'])->find($id);
-        if (!$delivery_man) {
+        if (! $delivery_man) {
             return response()->json(['message' => translate('invalid_deliveryman!')], 403);
         }
 
@@ -200,7 +203,7 @@ class DeliveryManController extends Controller
 
         $average_rating = Review::where(['delivery_man_id' => $id])->avg('rating');
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $reviews->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
@@ -214,13 +217,13 @@ class DeliveryManController extends Controller
     {
         $seller = $request->seller;
         $orders = Order::where('delivery_man_id', $id)
-            ->whereHas('deliveryMan', function($query) use($seller){
-                $query->where('seller_id',$seller->id);
+            ->whereHas('deliveryMan', function ($query) use ($seller) {
+                $query->where('seller_id', $seller->id);
             })
             ->latest('updated_at')
             ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $orders->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
@@ -241,25 +244,25 @@ class DeliveryManController extends Controller
     public function earning(Request $request, $id): JsonResponse
     {
         $seller = $request->seller;
-        $delivery_man = DeliveryMan::with('wallet')->where('seller_id',$seller->id)->find($id);
+        $delivery_man = DeliveryMan::with('wallet')->where('seller_id', $seller->id)->find($id);
         $total_earn = 0;
         $withdrawable_balance = 0;
-        if($delivery_man){
+        if ($delivery_man) {
             $total_earn = self::delivery_man_total_earn($id);
             $withdrawable_balance = self::delivery_man_withdrawable_balance($id);
-        }else{
+        } else {
             return response()->json(['message' => translate('invalid_deliveryman!')], 403);
         }
 
         $orders = Order::select('id', 'deliveryman_charge', 'order_status', 'delivery_man_id', 'updated_at')
             ->where(['delivery_man_id' => $id])
-            ->whereHas('deliveryMan', function($query) use($seller){
-                $query->where('seller_id',$seller->id);
+            ->whereHas('deliveryMan', function ($query) use ($seller) {
+                $query->where('seller_id', $seller->id);
             })
             ->latest('updated_at')
             ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $orders->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
@@ -274,12 +277,13 @@ class DeliveryManController extends Controller
     public function status(Request $request): JsonResponse
     {
         $seller = $request->seller;
-        $delivery_man = DeliveryMan::where(['seller_id'=>$seller->id])->find($request->id);
-        if(!$delivery_man){
+        $delivery_man = DeliveryMan::where(['seller_id' => $seller->id])->find($request->id);
+        if (! $delivery_man) {
             return response()->json(['message' => translate('invalid_deliveryman')], 403);
         }
         $delivery_man->is_active = $request->status;
         $delivery_man->save();
+
         return response()->json(['message' => translate('status_update_successfully')], 200);
     }
 }

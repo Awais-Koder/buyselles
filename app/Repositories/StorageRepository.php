@@ -12,9 +12,7 @@ class StorageRepository implements StorageRepositoryInterface
 {
     public function __construct(
         private readonly Storage $storage,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class StorageRepository implements StorageRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->storage->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -50,11 +48,12 @@ class StorageRepository implements StorageRepositoryInterface
                 return $query->where(['key' => $filters['key']]);
             })->when(isset($filters['value']), function ($query) use ($filters) {
                 return $query->where(['value' => $filters['value']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -74,11 +73,12 @@ class StorageRepository implements StorageRepositoryInterface
             return $query->where(['key' => $filters['key']]);
         })->when(isset($filters['value']), function ($query) use ($filters) {
             return $query->where(['value' => $filters['value']]);
-        })->when(!empty($orderBy), function ($query) use ($orderBy) {
+        })->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -95,6 +95,7 @@ class StorageRepository implements StorageRepositoryInterface
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->storage->updateOrInsert($params, $data);
+
         return true;
     }
 
@@ -102,5 +103,4 @@ class StorageRepository implements StorageRepositoryInterface
     {
         return $this->storage->where($params)->delete();
     }
-
 }

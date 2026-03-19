@@ -17,29 +17,27 @@ use App\Utils\Helpers;
 use App\Utils\SMSModule;
 use Carbon\CarbonInterval;
 use Firebase\JWT\JWT;
+use GuzzleHttp\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Http\JsonResponse;
-use GuzzleHttp\Client;
-use Illuminate\Support\Carbon;
 
 class CustomerAPIAuthController extends Controller
 {
     use CustomerTrait;
 
     public function __construct(
-        private readonly CustomerRepositoryInterface                 $customerRepo,
-        private readonly BusinessSettingRepositoryInterface          $businessSettingRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
         private readonly PhoneOrEmailVerificationRepositoryInterface $phoneOrEmailVerificationRepo,
-        private readonly LoginSetupRepositoryInterface               $loginSetupRepo,
-        private readonly CustomerAuthService                         $customerAuthService,
-        private readonly ReferByEarnCustomerService                  $referByEarnCustomerService,
-    )
-    {
-    }
+        private readonly LoginSetupRepositoryInterface $loginSetupRepo,
+        private readonly CustomerAuthService $customerAuthService,
+        private readonly ReferByEarnCustomerService $referByEarnCustomerService,
+    ) {}
 
     public function register(Request $request): JsonResponse
     {
@@ -63,7 +61,7 @@ class CustomerAPIAuthController extends Controller
         $temporaryToken = Str::random(40);
 
         $user = $this->customerRepo->add([
-            'name' => $request['f_name'] . ' ' . $request['l_name'],
+            'name' => $request['f_name'].' '.$request['l_name'],
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
             'email' => $request['email'],
@@ -76,7 +74,7 @@ class CustomerAPIAuthController extends Controller
 
         $referralData = getWebConfig(name: 'ref_earning_customer');
         $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
-        if (!empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
+        if (! empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
             $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(
                 referralData: $referralData,
                 referralEarningRate: $referralEarningRate,
@@ -89,7 +87,7 @@ class CustomerAPIAuthController extends Controller
         $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
         $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
 
-        if ($phoneVerification && !$user->is_phone_verified) {
+        if ($phoneVerification && ! $user->is_phone_verified) {
             return response()->json(['temporary_token' => $temporaryToken], 200);
         }
         if ($emailVerification && $user->email_verified_at == null) {
@@ -97,6 +95,7 @@ class CustomerAPIAuthController extends Controller
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token], 200);
     }
 
@@ -105,7 +104,7 @@ class CustomerAPIAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email_or_phone' => 'required',
             'password' => 'required|min:6',
-            'type' => 'required|in:phone,email'
+            'type' => 'required|in:phone,email',
         ]);
 
         if ($validator->fails()) {
@@ -123,8 +122,9 @@ class CustomerAPIAuthController extends Controller
 
                 $errors = [];
                 $errors[] = ['code' => 'login_block_time',
-                    'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                    'message' => translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans(),
                 ];
+
                 return response()->json(['errors' => $errors], 403);
             }
 
@@ -137,11 +137,11 @@ class CustomerAPIAuthController extends Controller
                 $temporaryToken = Str::random(40);
                 $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
                 $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
-                $emailVerification = !$phoneVerification ? $emailVerification : 0;
+                $emailVerification = ! $phoneVerification ? $emailVerification : 0;
 
                 if (
-                    ($phoneVerification && !$user['is_phone_verified']) ||
-                    ($emailVerification && !$user['is_email_verified'])
+                    ($phoneVerification && ! $user['is_phone_verified']) ||
+                    ($emailVerification && ! $user['is_email_verified'])
                 ) {
                     return response()->json([
                         'temporary_token' => $temporaryToken,
@@ -155,7 +155,7 @@ class CustomerAPIAuthController extends Controller
 
                 if ($user['is_active'] != 1) {
                     return response()->json(['errors' => [
-                        ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                        ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
                     ]], 403);
                 }
 
@@ -165,7 +165,7 @@ class CustomerAPIAuthController extends Controller
                     'login_hit_count' => 0,
                     'is_temp_blocked' => 0,
                     'temp_block_time' => null,
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]);
 
                 return response()->json(['token' => $token, 'status' => true], 200);
@@ -176,7 +176,7 @@ class CustomerAPIAuthController extends Controller
                 if (isset($user->temp_block_time) && Carbon::parse($user->temp_block_time)->diffInSeconds() <= $tempBlockTime) {
                     $time = $tempBlockTime - Carbon::parse($user->temp_block_time)->diffInSeconds();
                     $code = 'login_block_time';
-                    $errorMsg = translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $errorMsg = translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
                 } elseif ($user['is_temp_blocked'] == 1 && Carbon::parse($user['temp_block_time'])->diffInSeconds() >= $tempBlockTime) {
                     $this->customerRepo->updateWhere(params: ['id' => $user['id']], data: $this->customerAuthService->getCustomerLoginDataReset());
                     $errorMsg = translate('credentials_doesnt_match');
@@ -184,46 +184,47 @@ class CustomerAPIAuthController extends Controller
                     $this->customerRepo->updateWhere(params: ['id' => $user['id']], data: [
                         'is_temp_blocked' => 1,
                         'temp_block_time' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
                     $time = $tempBlockTime - Carbon::parse($user['temp_block_time'])->diffInSeconds();
                     $code = 'login_temp_blocked';
-                    $errorMsg = translate('too_many_attempts._please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $errorMsg = translate('too_many_attempts._please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
                 }
                 $user = $this->customerRepo->getByIdentity(filters: ['identity' => $request['email_or_phone']]);
                 $this->customerRepo->updateWhere(params: ['id' => $user['id']], data: [
                     'login_hit_count' => ($user['login_hit_count'] + 1),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]);
 
                 $errors = [];
                 $errors[] = [
                     'code' => $code,
-                    'message' => $errorMsg
+                    'message' => $errorMsg,
                 ];
+
                 return response()->json([
-                    'errors' => $errors
+                    'errors' => $errors,
                 ], 403);
             }
         }
 
         $errors = [];
         $errors[] = ['code' => 'auth-001', 'message' => translate('Invalid_credentials')];
+
         return response()->json(['errors' => $errors], 401);
     }
-
 
     public function checkPhone(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|min:6|max:20'
+            'phone' => 'required|min:6|max:20',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60;// seconds
+        $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
         $OTPVerificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $request['phone']]);
 
         if (isset($OTPVerificationData) && Carbon::parse($OTPVerificationData['created_at'])->DiffInSeconds() < $OTPIntervalTime) {
@@ -231,10 +232,11 @@ class CustomerAPIAuthController extends Controller
             $errors = [];
             $errors[] = [
                 'code' => 'otp',
-                'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                'message' => translate('please_try_again_after_').$time.' '.translate('seconds'),
             ];
+
             return response()->json([
-                'errors' => $errors
+                'errors' => $errors,
             ], 403);
         }
 
@@ -252,20 +254,20 @@ class CustomerAPIAuthController extends Controller
         if ($response == 'success') {
             return response()->json([
                 'message' => $response,
-                'token' => 'active'
+                'token' => 'active',
             ], 200);
         }
+
         return response()->json([
             'message' => translate('OTP_sending_failed'),
-            'token' => 'inactive'
+            'token' => 'inactive',
         ], 401);
     }
-
 
     public function checkEmail(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required'
+            'email' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -274,7 +276,7 @@ class CustomerAPIAuthController extends Controller
 
         $emailVerification = $this->loginSetupRepo->getFirstWhere(params: ['key' => 'email_verification'])?->value ?? 0;
         if ($emailVerification == 1) {
-            $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60;// seconds
+            $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
             $OTPVerificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $request['email']]);
 
             if (isset($OTPVerificationData) && Carbon::parse($OTPVerificationData['created_at'])->DiffInSeconds() < $OTPIntervalTime) {
@@ -283,10 +285,11 @@ class CustomerAPIAuthController extends Controller
                 $errors = [];
                 $errors[] = [
                     'code' => 'otp',
-                    'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                    'message' => translate('please_try_again_after_').$time.' '.translate('seconds'),
                 ];
+
                 return response()->json([
-                    'errors' => $errors
+                    'errors' => $errors,
                 ], 403);
             }
 
@@ -317,30 +320,29 @@ class CustomerAPIAuthController extends Controller
             } catch (\Exception $exception) {
                 return response()->json([
                     'errors' => [
-                        ['code' => 'otp', 'message' => translate('Token_sent_failed')]
-                    ]
+                        ['code' => 'otp', 'message' => translate('Token_sent_failed')],
+                    ],
                 ], 403);
             }
 
             return response()->json([
                 'message' => translate('Email is ready to register'),
-                'token' => 'active'
+                'token' => 'active',
             ], 200);
 
         } else {
             return response()->json([
                 'message' => translate('Email is ready to register'),
-                'token' => 'inactive'
+                'token' => 'inactive',
             ], 200);
         }
     }
-
 
     public function verifyPhone(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required',
-            'token' => 'required'
+            'token' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -354,39 +356,39 @@ class CustomerAPIAuthController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
         if (isset($verify)) {
             $this->customerRepo->updateWhere(params: ['phone' => $request['phone']], data: [
-                'is_phone_verified' => 1
+                'is_phone_verified' => 1,
             ]);
 
             $user = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
             $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $request['phone']]);
             if ($user['is_active'] != 1) {
                 return response()->json(['errors' => [
-                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
                 ]], 403);
             }
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['message' => translate('OTP verified!'), 'token' => $token, 'status' => true], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'token', 'message' => translate('OTP_is_not_matched')]
+            ['code' => 'token', 'message' => translate('OTP_is_not_matched')],
         ]], 403);
     }
-
 
     public function verifyEmail(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required',
-            'token' => 'required'
+            'token' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -394,7 +396,7 @@ class CustomerAPIAuthController extends Controller
         }
 
         $maxOTPHit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
-        $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60;// seconds
+        $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
         $tempBlockTime = getWebConfig(name: 'temporary_block_time') ?? 600; // seconds
 
         $verify = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $request['email'], 'token' => $request['token']]);
@@ -404,34 +406,34 @@ class CustomerAPIAuthController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
         if (isset($verify)) {
             $this->customerRepo->updateWhere(params: ['email' => $request['email']], data: [
                 'email_verified_at' => now(),
-                'is_email_verified' => 1
+                'is_email_verified' => 1,
             ]);
             $user = $this->customerRepo->getFirstWhere(params: ['email' => $request['email']]);
             $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $request['email']]);
 
             if ($user['is_active'] != 1) {
                 return response()->json(['errors' => [
-                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
                 ]], 403);
             }
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['message' => translate('OTP_verified'), 'token' => $token, 'status' => true], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'otp', 'message' => translate('OTP_is_not_matched!')]
+            ['code' => 'otp', 'message' => translate('OTP_is_not_matched!')],
         ]], 403);
     }
-
 
     public function registration(Request $request): JsonResponse
     {
@@ -470,7 +472,7 @@ class CustomerAPIAuthController extends Controller
         $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
         $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
 
-        if ($phoneVerification && !$user->is_phone_verified) {
+        if ($phoneVerification && ! $user->is_phone_verified) {
             return response()->json(['temporary_token' => $temporaryToken], 200);
         }
         if ($emailVerification && $user->email_verified_at == null) {
@@ -478,9 +480,9 @@ class CustomerAPIAuthController extends Controller
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token], 200);
     }
-
 
     public function remove_account(Request $request): JsonResponse
     {
@@ -491,6 +493,7 @@ class CustomerAPIAuthController extends Controller
         } else {
             return response()->json(['status_code' => 404, 'message' => translate('Not found')], 200);
         }
+
         return response()->json(['status_code' => 200, 'message' => translate('Successfully deleted')], 200);
     }
 
@@ -511,15 +514,15 @@ class CustomerAPIAuthController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
         $firebaseOTPVerification = getWebConfig(name: 'firebase_otp_verification');
         $webApiKey = $firebaseOTPVerification ? $firebaseOTPVerification['web_api_key'] : '';
 
-        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=' . $webApiKey, [
+        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key='.$webApiKey, [
             'sessionInfo' => $request['sessionInfo'],
             'phoneNumber' => $request['phoneNumber'],
             'code' => $request['code'],
@@ -529,7 +532,8 @@ class CustomerAPIAuthController extends Controller
 
         if (isset($responseData['error'])) {
             $errors = [];
-            $errors[] = ['code' => "403", 'message' => translate(strtolower($responseData['error']['message']))];
+            $errors[] = ['code' => '403', 'message' => translate(strtolower($responseData['error']['message']))];
+
             return response()->json(['errors' => $errors], 403);
         }
 
@@ -548,11 +552,13 @@ class CustomerAPIAuthController extends Controller
                 $token = $user->createToken('LaravelAuthApp')->accessToken;
                 $user['is_phone_verified'] = 1;
                 $user->save();
+
                 return response()->json(['errors' => null, 'token' => $token], 200);
             }
         }
 
         $tempToken = Str::random(120);
+
         return response()->json(['errors' => null, 'temp_token' => $tempToken], 200);
     }
 
@@ -560,7 +566,7 @@ class CustomerAPIAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required',
-            'token' => 'required'
+            'token' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -574,8 +580,8 @@ class CustomerAPIAuthController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
@@ -584,26 +590,27 @@ class CustomerAPIAuthController extends Controller
             $temporaryToken = Str::random(40);
 
             $isUserExist = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
-            if (!$isUserExist) {
+            if (! $isUserExist) {
                 return response()->json(['temporary_token' => $temporaryToken, 'status' => false], 200);
             }
 
             $this->customerRepo->updateWhere(params: ['phone' => $request['phone']], data: [
-                'is_phone_verified' => 1
+                'is_phone_verified' => 1,
             ]);
 
             if ($isUserExist['is_active'] != 1) {
                 return response()->json(['errors' => [
-                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                    ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
                 ]], 403);
             }
 
             $token = $isUserExist->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['token' => $token, 'status' => true], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'token', 'message' => translate('OTP is not matched!')]
+            ['code' => 'token', 'message' => translate('OTP is not matched!')],
         ]], 403);
     }
 
@@ -624,7 +631,7 @@ class CustomerAPIAuthController extends Controller
 
             if ($isEmailExist) {
                 return response()->json(['errors' => [
-                    ['code' => 'email', 'message' => translate('this_email_has_already_been_used_in_another_account!')]
+                    ['code' => 'email', 'message' => translate('this_email_has_already_been_used_in_another_account!')],
                 ]], 403);
             }
         }
@@ -645,6 +652,7 @@ class CustomerAPIAuthController extends Controller
         ]);
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token], 200);
     }
 
@@ -661,17 +669,17 @@ class CustomerAPIAuthController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $client = new Client();
+        $client = new Client;
         $token = $request['token'];
         $email = $request['email'];
         $uniqueId = $request['unique_id'];
 
         try {
             if ($request['medium'] == 'google') {
-                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token=' . $token);
+                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'facebook') {
-                $res = $client->request('GET', 'https://graph.facebook.com/' . $uniqueId . '?access_token=' . $token . '&&fields=name,email');
+                $res = $client->request('GET', 'https://graph.facebook.com/'.$uniqueId.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
             } elseif ($request['medium'] == 'apple') {
                 $apple_login = getWebConfig(name: 'apple_login');
@@ -681,7 +689,7 @@ class CustomerAPIAuthController extends Controller
                 $aud = 'https://appleid.apple.com';
                 $iat = strtotime('now');
                 $exp = strtotime('+60days');
-                $keyContent = file_get_contents('storage/app/public/apple-login/' . $apple_login['service_file']);
+                $keyContent = file_get_contents('storage/app/public/apple-login/'.$apple_login['service_file']);
                 $token = JWT::encode([
                     'iss' => $teamId,
                     'iat' => $iat,
@@ -706,12 +714,13 @@ class CustomerAPIAuthController extends Controller
         } catch (\Exception $exception) {
             $errors = [];
             $errors[] = ['code' => 'auth-001', 'message' => 'Invalid Token'];
+
             return response()->json([
-                'errors' => $errors
+                'errors' => $errors,
             ], 401);
         }
 
-        if (!isset($claims) && isset($data)) {
+        if (! isset($claims) && isset($data)) {
             if (strcmp($email, $data['email']) != 0) {
                 return response()->json(['error' => translate('email_does_not_match')], 403);
             }
@@ -720,18 +729,19 @@ class CustomerAPIAuthController extends Controller
         $existingUser = $this->customerRepo->getFirstWhere(params: ['email' => $data['email']]);
         $temporaryToken = Str::random(40);
 
-        if (!$existingUser) {
+        if (! $existingUser) {
             return response()->json(['temp_token' => $temporaryToken, 'status' => false], 200);
         }
 
         if ($existingUser['is_active'] != 1) {
             return response()->json(['errors' => [
-                ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
             ]], 403);
         }
 
         if ($existingUser->email_verified_at != null) {
             $token = $existingUser->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['token' => $token, 'status' => true], 200);
         } else {
             return response()->json(['user' => $existingUser, 'status' => false], 200);
@@ -753,13 +763,13 @@ class CustomerAPIAuthController extends Controller
         $user = $this->customerRepo->getFirstWhere(params: ['email' => $request['email']]);
 
         $temporaryToken = Str::random(40);
-        if (!$user) {
+        if (! $user) {
             return response()->json(['temp_token' => $temporaryToken, 'status' => false], 200);
         }
 
         if ($user['is_active'] != 1) {
             return response()->json(['errors' => [
-                ['code' => 'active', 'message' => translate('This_user_is_not_active!')]
+                ['code' => 'active', 'message' => translate('This_user_is_not_active!')],
             ]], 403);
         }
 
@@ -769,6 +779,7 @@ class CustomerAPIAuthController extends Controller
             $user->save();
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json(['token' => $token, 'status' => true], 200);
         }
 
@@ -795,7 +806,7 @@ class CustomerAPIAuthController extends Controller
 
         if ($isPhoneExist) {
             return response()->json(['errors' => [
-                ['code' => 'email', 'message' => translate('This phone has already been used in another account!')]
+                ['code' => 'email', 'message' => translate('This phone has already been used in another account!')],
             ]], 403);
         }
 
@@ -819,6 +830,7 @@ class CustomerAPIAuthController extends Controller
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token]);
     }
 
@@ -849,8 +861,9 @@ class CustomerAPIAuthController extends Controller
                 $errors = [];
                 $errors[] = [
                     'code' => 'otp',
-                    'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                    'message' => translate('please_try_again_after_').$time.' '.translate('seconds'),
                 ];
+
                 return response()->json(['errors' => $errors], 403);
             }
 
@@ -872,14 +885,15 @@ class CustomerAPIAuthController extends Controller
 
                 if ($response != 'success') {
                     return response()->json(['errors' => [
-                        ['code' => 'config-missing', 'message' => translate('Unable_to_send_the_verification_code.')]
+                        ['code' => 'config-missing', 'message' => translate('Unable_to_send_the_verification_code.')],
                     ]], 400);
                 }
+
                 return response()->json([
                     'message' => translate('OTP_sent_successfully'),
-                    'type' => 'sent_to_phone'
+                    'type' => 'sent_to_phone',
                 ], 200);
-            } else if ($request['type'] == 'email') {
+            } elseif ($request['type'] == 'email') {
                 try {
                     $emailServices = getWebConfig(name: 'mail_config');
                     if ($emailServices['status'] == 0) {
@@ -902,19 +916,19 @@ class CustomerAPIAuthController extends Controller
 
                 } catch (\Exception $exception) {
                     return response()->json(['errors' => [
-                        ['code' => 'config-missing', 'message' => translate('Email_configuration_issue.')]
+                        ['code' => 'config-missing', 'message' => translate('Email_configuration_issue.')],
                     ]], 400);
                 }
             }
 
             return response()->json([
                 'message' => translate('Email_sent_successfully.'),
-                'type' => 'sent_to_mail'
+                'type' => 'sent_to_mail',
             ], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => translate('Customer_not_found!')]
+            ['code' => 'not-found', 'message' => translate('Customer_not_found!')],
         ]], 401);
     }
 
@@ -923,7 +937,7 @@ class CustomerAPIAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:phone,email',
             'email_or_phone' => 'required',
-            'token' => 'required'
+            'token' => 'required',
         ]);
 
         $user = $this->customerRepo->getByIdentity(filters: ['identity' => $request['email_or_phone']]);
@@ -937,15 +951,15 @@ class CustomerAPIAuthController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
         $verify = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $request['email_or_phone'], 'token' => $request['token']]);
-        if (!$verify) {
+        if (! $verify) {
             return response()->json(['errors' => [
-                ['code' => 'token', 'message' => translate('OTP_is_not_matched')]
+                ['code' => 'token', 'message' => translate('OTP_is_not_matched')],
             ]], 403);
         }
         $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $request['email_or_phone']]);
@@ -955,18 +969,20 @@ class CustomerAPIAuthController extends Controller
                 'phone' => $request['email_or_phone'],
                 'is_phone_verified' => 1,
             ]);
+
             return response()->json(['message' => translate('Phone_number_is_successfully_verified')], 200);
-        } else if ($request['type'] == 'email') {
+        } elseif ($request['type'] == 'email') {
             $this->customerRepo->updateWhere(['id' => $user?->id], data: [
                 'email' => $request['email_or_phone'],
                 'is_email_verified' => 1,
                 'email_verified_at' => now(),
             ]);
+
             return response()->json(['message' => translate('Email_is_successfully_verified')], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'token', 'message' => translate('Type_missing')]
+            ['code' => 'token', 'message' => translate('Type_missing')],
         ]], 403);
     }
 
@@ -976,7 +992,7 @@ class CustomerAPIAuthController extends Controller
             'phone_or_email' => $request['identity'],
             'token' => $request['token'],
         ]);
+
         return response()->json(['message' => translate('Token_is_successfully_Saved')], 200);
     }
-
 }

@@ -13,14 +13,13 @@ class StockClearanceProductRepository implements StockClearanceProductRepository
 {
     public function __construct(
         private readonly StockClearanceProduct $stockClearanceProduct,
-        private readonly Translation           $translation,
-    )
-    {
-    }
+        private readonly Translation $translation,
+    ) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'business_settings');
+
         return $this->stockClearanceProduct->create($data);
     }
 
@@ -32,7 +31,7 @@ class StockClearanceProductRepository implements StockClearanceProductRepository
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->stockClearanceProduct->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -47,15 +46,16 @@ class StockClearanceProductRepository implements StockClearanceProductRepository
                     ->where('key', 'name')
                     ->where('value', 'like', "%{$searchValue}%")
                     ->pluck('translationable_id');
+
                 return $query->whereHas('product', function ($query) use ($searchValue, $product_ids) {
                     $query->where('name', 'like', "%{$searchValue}%")
                         ->orWhereIn('id', $product_ids);
                 });
             })
-            ->when(is_array($relations) && in_array('product', $relations), function ($query) use ($relations) {
+            ->when(is_array($relations) && in_array('product', $relations), function ($query) {
                 return $query->whereHas('product');
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             })
             ->when(isset($filters['added_by']), function ($query) use ($filters) {
@@ -69,31 +69,35 @@ class StockClearanceProductRepository implements StockClearanceProductRepository
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         cacheRemoveByType(type: 'business_settings');
+
         return $this->stockClearanceProduct->where('id', $id)->update($data);
     }
 
     public function updateByParams(array $params, array $data): bool
     {
         cacheRemoveByType(type: 'business_settings');
+
         return $this->stockClearanceProduct->where($params)->update($data);
     }
 
     public function updateOrCreate(array $params, array $value): mixed
     {
         cacheRemoveByType(type: 'business_settings');
+
         return $this->stockClearanceProduct->updateOrCreate($params, $value);
     }
 
     public function delete(array $params): bool
     {
         cacheRemoveByType(type: 'business_settings');
+
         return $this->stockClearanceProduct->where($params)->delete();
     }
-
 }

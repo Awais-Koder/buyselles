@@ -11,9 +11,7 @@ class CurrencyController extends Controller
 {
     public function __construct(
         private readonly CurrencyRepositoryInterface $currencyRepo
-    )
-    {
-    }
+    ) {}
 
     public function changeCurrency(Request $request): JsonResponse
     {
@@ -23,7 +21,8 @@ class CurrencyController extends Controller
         session()->put('currency_exchange_rate', $currency['exchange_rate']);
         session()->forget('default');
         session()->forget('usd');
-        $message = translate('currency_changed_to') . ' ' . $currency['name'];
+        $message = translate('currency_changed_to').' '.$currency['name'];
+
         return response()->json(['message' => $message]);
     }
 }

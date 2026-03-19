@@ -5,17 +5,17 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SubscriberListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class SubscriberListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -54,8 +54,9 @@ class SubscriberListExport implements FromView, ShouldAutoSize, WithStyles, With
             'color' => ['rgb' => '063C93'],
         ]);
         $sheet->setShowGridlines(false);
+
         return [
-            'A1:C' . ($this->data['subscription']->count() + 4) => [
+            'A1:C'.($this->data['subscription']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -74,7 +75,7 @@ class SubscriberListExport implements FromView, ShouldAutoSize, WithStyles, With
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:C' . ($this->data['subscription']->count() + 4))
+                $event->sheet->getStyle('A4:C'.($this->data['subscription']->count() + 4))
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
@@ -89,14 +90,14 @@ class SubscriberListExport implements FromView, ShouldAutoSize, WithStyles, With
                 $event->sheet->getRowDimension(2)->setRowHeight(60);
                 $event->sheet->getRowDimension(3)->setRowHeight(100);
                 $event->sheet->getDefaultRowDimension()->setRowHeight(50);
-            }
+            },
         ];
     }
 
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

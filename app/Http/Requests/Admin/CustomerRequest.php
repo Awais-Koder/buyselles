@@ -4,7 +4,6 @@ namespace App\Http\Requests\Admin;
 
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 

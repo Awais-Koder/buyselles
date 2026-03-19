@@ -33,13 +33,15 @@ class WithdrawController extends Controller
                 'amount' => Convert::usd($request['amount']),
                 'transaction_note' => $request['note'],
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
 
             $wallet->pending_withdraw += Convert::usd($request['amount']);
             $wallet->save();
+
             return response()->json(['message' => translate('Withdraw_request_sent_successfully!')], 200);
         }
+
         return response()->json(['message' => translate('Invalid_withdraw_request')], 403);
     }
 
@@ -69,6 +71,7 @@ class WithdrawController extends Controller
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
         $data['withdraws'] = $withdraws->items();
+
         return response()->json($data, 200);
     }
 }

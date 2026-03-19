@@ -22,7 +22,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class SystemLoginSetupController extends BaseController
 {
-    use SettingsTrait, CacheManagerTrait;
+    use CacheManagerTrait, SettingsTrait;
     use FileManagerTrait {
         delete as deleteFile;
         update as updateFile;
@@ -30,12 +30,10 @@ class SystemLoginSetupController extends BaseController
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly SettingRepositoryInterface         $settingRepo,
-        private readonly LoginSetupRepositoryInterface      $loginSetupRepo,
-        private readonly CurrencyRepositoryInterface        $currencyRepo,
-    )
-    {
-    }
+        private readonly SettingRepositoryInterface $settingRepo,
+        private readonly LoginSetupRepositoryInterface $loginSetupRepo,
+        private readonly CurrencyRepositoryInterface $currencyRepo,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -60,6 +58,7 @@ class SystemLoginSetupController extends BaseController
         $phoneVerification = $this->loginSetupRepo->getFirstWhere(params: ['key' => 'phone_verification'])?->value ?? 0;
 
         $configStatus = $this->checkCustomerSocialMediaLoginAbility();
+
         return view('admin-views.system-setup.login-settings.customer-login-setup', [
             'socialMediaLoginOptions' => $socialMediaLoginOptions,
             'loginOptions' => $loginOptions,
@@ -73,6 +72,7 @@ class SystemLoginSetupController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
         $this->loginSetupRepo->updateOrInsert(key: 'login_options', value: json_encode([
@@ -91,6 +91,7 @@ class SystemLoginSetupController extends BaseController
 
         updateSetupGuideCacheKey(key: 'customer_login', panel: 'admin');
         ToastMagic::success(translate('Login_settings_updated'));
+
         return redirect()->route('admin.system-setup.login-settings.customer-login-setup');
     }
 
@@ -128,16 +129,17 @@ class SystemLoginSetupController extends BaseController
             }
 
             $firebaseOTPVerification = getWebConfig(name: 'firebase_otp_verification');
-            $firebaseOTPVerificationStatus = (int)($firebaseOTPVerification && $firebaseOTPVerification['status'] && $firebaseOTPVerification['web_api_key']);
-            $status = (int)($firebaseOTPVerificationStatus || $status);
+            $firebaseOTPVerificationStatus = (int) ($firebaseOTPVerification && $firebaseOTPVerification['status'] && $firebaseOTPVerification['web_api_key']);
+            $status = (int) ($firebaseOTPVerificationStatus || $status);
         }
 
         $data = [
             'type' => $request['key'],
         ];
+
         return response()->json([
             'status' => $status,
-            'htmlView' => view('admin-views.system-setup.login-settings.partials._config-validation', ['data' => $data])->render()
+            'htmlView' => view('admin-views.system-setup.login-settings.partials._config-validation', ['data' => $data])->render(),
         ]);
     }
 
@@ -148,6 +150,7 @@ class SystemLoginSetupController extends BaseController
         $temporaryBlockTime = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'temporary_block_time'])->value ?? 0;
         $maximumLoginHit = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'maximum_login_hit'])->value ?? 0;
         $temporaryLoginBlockTime = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'temporary_login_block_time'])->value ?? 0;
+
         return view('admin-views.system-setup.login-settings.otp-setup', compact('maximumOtpHit', 'otpResendTime',
             'temporaryBlockTime', 'maximumLoginHit', 'temporaryLoginBlockTime'));
     }
@@ -161,6 +164,7 @@ class SystemLoginSetupController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'temporary_login_block_time', value: $request['temporary_login_block_time']);
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('Settings_updated'));
+
         return back();
     }
 
@@ -187,5 +191,4 @@ class SystemLoginSetupController extends BaseController
 
         return back();
     }
-
 }

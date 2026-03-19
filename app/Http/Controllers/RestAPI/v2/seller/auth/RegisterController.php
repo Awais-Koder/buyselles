@@ -1,32 +1,31 @@
 <?php
 
 namespace App\Http\Controllers\RestAPI\v2\seller\auth;
+
 use App\Http\Controllers\Controller;
 use App\Models\Seller;
 use App\Models\Shop;
 use App\Utils\Helpers;
 use App\Utils\ImageManager;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'         => 'required|unique:sellers',
-            'shop_address'  => 'required',
-            'f_name'        => 'required',
-            'l_name'        => 'required',
-            'shop_name'     => 'required',
-            'phone'         => 'required',
-            'password'      => 'required|min:8',
-            'image'         => 'required|mimes: jpg,jpeg,png,,gif',
-            'logo'          => 'required|mimes: jpg,jpeg,png,,gif',
-            'banner'        => 'required|mimes: jpg,jpeg,png,,gif',
+            'email' => 'required|unique:sellers',
+            'shop_address' => 'required',
+            'f_name' => 'required',
+            'l_name' => 'required',
+            'shop_name' => 'required',
+            'phone' => 'required',
+            'password' => 'required|min:8',
+            'image' => 'required|mimes: jpg,jpeg,png,,gif',
+            'logo' => 'required|mimes: jpg,jpeg,png,,gif',
+            'banner' => 'required|mimes: jpg,jpeg,png,,gif',
         ]);
 
         if ($validator->fails()) {
@@ -35,17 +34,17 @@ class RegisterController extends Controller
 
         DB::beginTransaction();
         try {
-            $seller = new Seller();
+            $seller = new Seller;
             $seller->f_name = $request->f_name;
             $seller->l_name = $request->l_name;
             $seller->phone = $request->phone;
             $seller->email = $request->email;
             $seller->image = ImageManager::upload('seller/', 'webp', $request->file('image'));
             $seller->password = bcrypt($request->password);
-            $seller->status =  $request->status == 'approved'?'approved': "pending";
+            $seller->status = $request->status == 'approved' ? 'approved' : 'pending';
             $seller->save();
 
-            $shop = new Shop();
+            $shop = new Shop;
             $shop->seller_id = $seller->id;
             $shop->name = $request->shop_name;
             $shop->address = $request->shop_address;
@@ -68,6 +67,7 @@ class RegisterController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
+
             return response()->json(['message' => translate('Shop apply fail!')], 403);
         }
 

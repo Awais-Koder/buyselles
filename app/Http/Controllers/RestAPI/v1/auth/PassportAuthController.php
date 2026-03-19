@@ -7,7 +7,6 @@ use App\Models\BusinessSetting;
 use App\Models\LoginSetup;
 use App\Models\PhoneOrEmailVerification;
 use App\Models\User;
-use App\Utils\CartManager;
 use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -19,13 +18,11 @@ use Illuminate\Support\Str;
 class PassportAuthController extends Controller
 {
     public function __construct(
-        private readonly User                     $user,
-        private readonly BusinessSetting          $businessSetting,
+        private readonly User $user,
+        private readonly BusinessSetting $businessSetting,
         private readonly PhoneOrEmailVerification $phoneVerification,
-        private readonly LoginSetup               $loginSetup
-    )
-    {
-    }
+        private readonly LoginSetup $loginSetup
+    ) {}
 
     public function register(Request $request)
     {
@@ -50,7 +47,7 @@ class PassportAuthController extends Controller
 
         $temporary_token = Str::random(40);
         $user = User::create([
-            'name' => $request['f_name'] . ' ' . $request['l_name'],
+            'name' => $request['f_name'].' '.$request['l_name'],
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
             'email' => $request['email'],
@@ -64,14 +61,15 @@ class PassportAuthController extends Controller
 
         $phoneVerification = getLoginConfig(key: 'phone_verification');
         $emailVerification = getLoginConfig(key: 'email_verification');
-        if ($phoneVerification && !$user->is_phone_verified) {
+        if ($phoneVerification && ! $user->is_phone_verified) {
             return response()->json(['temporary_token' => $temporary_token], 200);
         }
-        if ($emailVerification && !$user->is_email_verified) {
+        if ($emailVerification && ! $user->is_email_verified) {
             return response()->json(['temporary_token' => $temporary_token], 200);
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
+
         return response()->json(['token' => $token], 200);
     }
 
@@ -80,7 +78,7 @@ class PassportAuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email_or_phone' => 'required',
             'password' => 'required|min:6',
-            'type' => 'required|in:phone,email'
+            'type' => 'required|in:phone,email',
         ]);
 
         $userId = $request['email_or_phone'];
@@ -93,21 +91,22 @@ class PassportAuthController extends Controller
         if (filter_var($userId, FILTER_VALIDATE_EMAIL)) {
             $medium = 'email';
         } else {
-            $count = strlen(preg_replace("/[^\d]/", "", $userId));
+            $count = strlen(preg_replace("/[^\d]/", '', $userId));
             if ($count >= 9 && $count <= 15) {
                 $medium = 'phone';
             } else {
                 $errors = [];
                 $errors[] = ['code' => 'email', 'message' => translate('credentials_doesnt_match')];
+
                 return response()->json([
-                    'errors' => $errors
+                    'errors' => $errors,
                 ], 403);
             }
         }
 
         $data = [
             $medium => $userId,
-            'password' => $request['password']
+            'password' => $request['password'],
         ];
         $user = User::where([$medium => $userId])->first();
 
@@ -120,8 +119,9 @@ class PassportAuthController extends Controller
 
                 $errors = [];
                 $errors[] = ['code' => 'login_block_time',
-                    'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                    'message' => translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans(),
                 ];
+
                 return response()->json(['errors' => $errors], 403);
             }
 
@@ -131,7 +131,7 @@ class PassportAuthController extends Controller
                 $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
                 $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
 
-                if ($type == 'phone' && $phoneVerification && !$user->is_phone_verified) {
+                if ($type == 'phone' && $phoneVerification && ! $user->is_phone_verified) {
                     return response()->json(['temporary_token' => $temporaryToken, 'status' => false], 200);
                 }
                 if ($type == 'email' && $emailVerification && $user->email_verified_at == null) {
@@ -154,10 +154,11 @@ class PassportAuthController extends Controller
                     $errors = [];
                     $errors[] = [
                         'code' => 'login_block_time',
-                        'message' => translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                        'message' => translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans(),
                     ];
+
                     return response()->json([
-                        'errors' => $errors
+                        'errors' => $errors,
                     ], 403);
                 }
 
@@ -181,10 +182,11 @@ class PassportAuthController extends Controller
                     $errors = [];
                     $errors[] = [
                         'code' => 'login_temp_blocked',
-                        'message' => translate('Too_many_attempts. please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans()
+                        'message' => translate('Too_many_attempts. please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans(),
                     ];
+
                     return response()->json([
-                        'errors' => $errors
+                        'errors' => $errors,
                     ], 403);
                 }
             }
@@ -197,22 +199,25 @@ class PassportAuthController extends Controller
 
         $errors = [];
         $errors[] = ['code' => 'auth-001', 'message' => 'Invalid credentials.'];
+
         return response()->json(['errors' => $errors], 401);
     }
 
-    public function logout(Request $request):JsonResponse
+    public function logout(Request $request): JsonResponse
     {
         $user = Helpers::getCustomerInformation($request);
         if ($user !== 'offline' && $user?->id) {
             User::where('id', $user->id)->update([
-               'cm_firebase_token' => null,
+                'cm_firebase_token' => null,
             ]);
         }
 
         if (auth()->check()) {
             auth()->user()->token()->revoke();
+
             return response()->json(['message' => translate('logged_out_successfully')], 200);
         }
+
         return response()->json(['message' => translate('logged_out_fail')], 403);
     }
 }

@@ -10,9 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class CartRepository implements CartRepositoryInterface
 {
-    public function __construct(private readonly Cart $cart)
-    {
-    }
+    public function __construct(private readonly Cart $cart) {}
 
     public function add(array $data): string|object
     {
@@ -24,15 +22,12 @@ class CartRepository implements CartRepositoryInterface
         return $this->cart->where($params)->first();
     }
 
-    public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
-    {
+    public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator {}
 
-    }
-
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->cart->whereIn('seller_id', [auth('seller')->id(), '0'])
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 $key = explode(' ', $searchValue);
                 foreach ($key as $value) {
                     $query->where('title', 'like', "%{$value}%")
@@ -40,11 +35,12 @@ class CartRepository implements CartRepositoryInterface
                         ->orWhere('discount_type', 'like', "%{$value}%");
                 }
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -57,6 +53,4 @@ class CartRepository implements CartRepositoryInterface
     {
         return $this->cart->where($params)->delete();
     }
-
-
 }

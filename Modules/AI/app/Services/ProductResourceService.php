@@ -12,23 +12,29 @@ use App\Models\PublishingHouse;
 class ProductResourceService
 {
     protected Category $category;
+
     protected Brand $brand;
+
     protected Attribute $attribute;
+
     protected Color $color;
+
     protected Author $author;
+
     protected PublishingHouse $publishingHouse;
 
-    private array $productType = ["physical", "digital"];
-    private array $deliveryTypes = ["ready_product", "ready_after_sell"];
+    private array $productType = ['physical', 'digital'];
+
+    private array $deliveryTypes = ['ready_product', 'ready_after_sell'];
 
     public function __construct()
     {
-        $this->category = new Category();
-        $this->brand = new Brand();
-        $this->attribute = new Attribute();
-        $this->color = new Color();
-        $this->author = new Author();
-        $this->publishingHouse = new PublishingHouse();
+        $this->category = new Category;
+        $this->brand = new Brand;
+        $this->attribute = new Attribute;
+        $this->color = new Color;
+        $this->author = new Author;
+        $this->publishingHouse = new PublishingHouse;
     }
 
     private function getCategoryEntitiyData($position = 0)
@@ -36,7 +42,7 @@ class ProductResourceService
         return $this->category
             ->where(['position' => $position])
             ->get(['id', 'name'])
-            ->mapWithKeys(fn($item) => [strtolower($item->name) => $item->id])
+            ->mapWithKeys(fn ($item) => [strtolower($item->name) => $item->id])
             ->toArray();
     }
 
@@ -44,7 +50,7 @@ class ProductResourceService
     {
         return $this->brand->active()
             ->get(['id', 'name'])
-            ->mapWithKeys(fn($item) => [strtolower($item->name) => $item->id])
+            ->mapWithKeys(fn ($item) => [strtolower($item->name) => $item->id])
             ->toArray();
     }
 
@@ -67,16 +73,16 @@ class ProductResourceService
         return [
             'attributes' => $this->attribute
                 ->get(['id', 'name'])
-                ->mapWithKeys(fn($item) => [strtolower($item->name) => $item->id])
+                ->mapWithKeys(fn ($item) => [strtolower($item->name) => $item->id])
                 ->toArray(),
             'color' => $this->color
                 ->get(['id', 'name', 'code'])
-                ->mapWithKeys(fn($item) => [
+                ->mapWithKeys(fn ($item) => [
                     strtolower($item->name) => [
                         'id' => $item->id,
                         'name' => $item->name,
-                        'code' => $item->code
-                    ]
+                        'code' => $item->code,
+                    ],
                 ])
                 ->toArray(),
         ];

@@ -12,9 +12,7 @@ class CurrencyRepository implements CurrencyRepositoryInterface
 {
     public function __construct(
         private readonly Currency $currency,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,7 +28,7 @@ class CurrencyRepository implements CurrencyRepositoryInterface
     {
         $query = $this->currency
             ->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -38,11 +36,11 @@ class CurrencyRepository implements CurrencyRepositoryInterface
     }
 
     public function getListWhere(
-        array       $orderBy = [],
-        string|null $searchValue = null,
-        array       $filters = [], array $relations = [],
-        int|string  $dataLimit = DEFAULT_DATA_LIMIT,
-        int|null    $offset = null): Collection|LengthAwarePaginator
+        array $orderBy = [],
+        ?string $searchValue = null,
+        array $filters = [], array $relations = [],
+        int|string $dataLimit = DEFAULT_DATA_LIMIT,
+        ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->currency
             ->when($searchValue, function ($query) use ($searchValue) {
@@ -51,11 +49,12 @@ class CurrencyRepository implements CurrencyRepositoryInterface
             ->when($filters && $filters['status'], function ($query) use ($filters) {
                 return $query->where(['status' => $filters['status']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -67,12 +66,14 @@ class CurrencyRepository implements CurrencyRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->currency->where($params)->update($data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->currency->where($params)->delete();
+
         return true;
     }
 }

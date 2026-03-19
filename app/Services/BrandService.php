@@ -13,6 +13,7 @@ class BrandService
     {
         $storage = config('filesystems.disks.default') ?? 'public';
         $name = $request['name'][array_search('en', $request['lang'])];
+
         return [
             'name' => $name,
             'slug' => $this->generateModelUniqueSlug(name: $name, type: 'brand'),
@@ -26,22 +27,25 @@ class BrandService
     public function getUpdateData(object $request, object $data): array
     {
         $storage = config('filesystems.disks.default') ?? 'public';
-        $image = $request->file('image') ? $this->update('brand/', $data['image'],'webp', $request->file('image')) : $data['image'];
+        $image = $request->file('image') ? $this->update('brand/', $data['image'], 'webp', $request->file('image')) : $data['image'];
         $name = $request->name[array_search('en', $request['lang'])];
-        return  [
+
+        return [
             'name' => $name,
             'slug' => $this->generateModelUniqueSlug(name: $name, type: 'brand', id: $data['id']),
             'status' => $request['status'],
             'image' => $image,
             'image_storage_type' => $request->file('image') ? $storage : $data['image_storage_type'],
-            'image_alt_text' => $request['image_alt_text']?? $data['image_alt_text' ],
+            'image_alt_text' => $request['image_alt_text'] ?? $data['image_alt_text'],
         ];
     }
 
     public function deleteImage(object $data): bool
     {
-        if ($data['image']) {$this->delete('profile/'.$data['image']);}
+        if ($data['image']) {
+            $this->delete('profile/'.$data['image']);
+        }
+
         return true;
     }
-
 }

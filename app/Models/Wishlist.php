@@ -14,12 +14,9 @@ use Illuminate\Support\Carbon;
  * @property int $product_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class Wishlist extends Model
 {
-
     /**
      * The attributes that are mass assignable.
      *

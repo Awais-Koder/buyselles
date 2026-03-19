@@ -24,26 +24,15 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class FlashDealController extends BaseController
 {
-    /**
-     * @param ProductRepositoryInterface $productRepo
-     * @param FlashDealProductRepositoryInterface $flashDealProductRepo
-     * @param FlashDealRepositoryInterface $flashDealRepo
-     * @param TranslationRepositoryInterface $translationRepo
-     * @param BusinessSettingRepositoryInterface $businessSettingRepo
-     * @param SeoMetaInfoService $seoMetaInfoService
-     * @param SeoMetaInfoRepositoryInterface $seoMetaInfoRepo
-     */
     public function __construct(
-        private readonly ProductRepositoryInterface          $productRepo,
+        private readonly ProductRepositoryInterface $productRepo,
         private readonly FlashDealProductRepositoryInterface $flashDealProductRepo,
-        private readonly FlashDealRepositoryInterface        $flashDealRepo,
-        private readonly TranslationRepositoryInterface      $translationRepo,
-        private readonly BusinessSettingRepositoryInterface  $businessSettingRepo,
-        private readonly SeoMetaInfoService                  $seoMetaInfoService,
-        private readonly SeoMetaInfoRepositoryInterface      $seoMetaInfoRepo
-    )
-    {
-    }
+        private readonly FlashDealRepositoryInterface $flashDealRepo,
+        private readonly TranslationRepositoryInterface $translationRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+        private readonly SeoMetaInfoService $seoMetaInfoService,
+        private readonly SeoMetaInfoRepositoryInterface $seoMetaInfoRepo
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -55,6 +44,7 @@ class FlashDealController extends BaseController
             dataLimit: getWebConfig('pagination_limit')
         );
         $flashDealPriority = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'flash_deal_priority'])['value']);
+
         return view('admin-views.deal.flash-index', compact('flashDeals', 'flashDealPriority'));
     }
 
@@ -62,6 +52,7 @@ class FlashDealController extends BaseController
     {
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.deal.flash-add', compact('language', 'defaultLanguage'));
     }
 
@@ -79,6 +70,7 @@ class FlashDealController extends BaseController
         if ($request['deal_type'] == 'flash_deal') {
             return redirect()->route('admin.deal.flash');
         }
+
         return redirect()->route('admin.deal.feature');
     }
 
@@ -87,6 +79,7 @@ class FlashDealController extends BaseController
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
         $deal = $this->flashDealRepo->getFirstWhereWithoutGlobalScope(params: ['id' => $deal_id], relations: ['translations', 'seo']);
+
         return view('admin-views.deal.flash-update', compact('language', 'defaultLanguage', 'deal'));
     }
 
@@ -104,8 +97,10 @@ class FlashDealController extends BaseController
             ToastMagic::success(translate('feature_deal_updated_successfully'));
         } else {
             ToastMagic::success(translate('deal_updated_successfully'));
+
             return redirect()->route('admin.deal.flash');
         }
+
         return back();
     }
 
@@ -114,13 +109,14 @@ class FlashDealController extends BaseController
         $this->flashDealRepo->updateWhere(params: ['status' => 1, 'deal_type' => 'flash_deal'], data: ['status' => 0]);
         $this->flashDealRepo->update(id: $request['id'], data: ['status' => $request->get('status', 0)]);
         ToastMagic::success(translate('Flash_deal_status_updated'));
+
         return redirect()->route('admin.deal.flash');
     }
 
     public function getAddProductView($deal_id): View
     {
         $products = $this->productRepo->getListWithScope(
-            scope: "active",
+            scope: 'active',
             relations: ['brand', 'category', 'seller.shop'],
             dataLimit: 'all');
 
@@ -132,18 +128,19 @@ class FlashDealController extends BaseController
 
         $dealProducts = $this->productRepo->getListWithScope(
             orderBy: ['id' => 'desc'],
-            scope: "active",
+            scope: 'active',
             whereIn: ['id' => $flashDealProducts],
             relations: ['brand', 'category', 'seller.shop'],
             dataLimit: getWebConfig('pagination_limit'));
 
-        if (!empty($deal_id)) {
+        if (! empty($deal_id)) {
             $assignedProductIds = $this->flashDealProductRepo->getListWhere(filters: ['flash_deal_id' => $deal_id])->pluck('product_id')->toArray();
             $productsNotInDeal = $products->filter(function ($product) use ($assignedProductIds) {
-                return !in_array($product->id, $assignedProductIds);
+                return ! in_array($product->id, $assignedProductIds);
             });
             $products = $productsNotInDeal;
         }
+
         return view('admin-views.deal.add-product', compact('deal', 'products', 'dealProducts', 'deal_id'));
     }
 
@@ -151,19 +148,21 @@ class FlashDealController extends BaseController
     {
         foreach ($request['product_id'] as $key => $productId) {
             $flashDealProducts = $this->flashDealProductRepo->getFirstWhere(params: ['flash_deal_id' => $deal_id, 'product_id' => $productId]);
-            if (!$flashDealProducts) {
+            if (! $flashDealProducts) {
                 $dataArray = $flashDealService->getAddProduct(request: $request, productId: $productId, id: $deal_id);
                 $this->flashDealProductRepo->add(data: $dataArray);
             }
         }
         cacheRemoveByType(type: 'products');
         ToastMagic::success(translate('product_added_successfully'));
+
         return back();
     }
 
     public function delete(Request $request): JsonResponse
     {
         $this->flashDealProductRepo->delete(params: ['product_id' => $request['id']]);
+
         return response()->json(['message' => translate('product_removed_successfully')], 200);
     }
 
@@ -172,13 +171,12 @@ class FlashDealController extends BaseController
         $products = $this->productRepo->getListWithScope(
             orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
-            scope: "active",
+            scope: 'active',
             relations: ['brand', 'category', 'seller.shop'],
             dataLimit: 'all');
+
         return response()->json([
             'result' => view('admin-views.partials._search-product', compact('products'))->render(),
         ]);
     }
-
-
 }

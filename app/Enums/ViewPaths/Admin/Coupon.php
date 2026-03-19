@@ -7,26 +7,26 @@ enum Coupon
     const ADD = [
         URI => 'add',
         VIEW => 'admin-views.coupon.add-new',
-        ROUTE => 'admin.coupon.add'
+        ROUTE => 'admin.coupon.add',
     ];
 
     const DELETE = [
         URI => 'delete',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const STATUS = [
         URI => 'status',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const UPDATE = [
         URI => 'update',
-        VIEW => 'admin-views.coupon.edit'
+        VIEW => 'admin-views.coupon.edit',
     ];
 
     const EXPORT = [
         URI => 'export',
-        VIEW => ''
+        VIEW => '',
     ];
 }

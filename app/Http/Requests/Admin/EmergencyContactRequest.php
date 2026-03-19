@@ -19,7 +19,7 @@ class EmergencyContactRequest extends FormRequest
         return [
             'name' => 'required',
             'country_code' => 'required',
-            'phone' => 'required|max:20|min:4'
+            'phone' => 'required|max:20|min:4',
         ];
     }
 
@@ -33,5 +33,4 @@ class EmergencyContactRequest extends FormRequest
             'phone.min' => translate('phone_number_with_a_minimum_length_requirement_of_4_characters'),
         ];
     }
-
 }

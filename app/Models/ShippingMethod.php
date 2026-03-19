@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Seller;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -19,8 +18,6 @@ use Illuminate\Support\Carbon;
  * @property bool $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class ShippingMethod extends Model
 {
@@ -48,8 +45,8 @@ class ShippingMethod extends Model
         'cost' => 'float',
     ];
 
-    public function seller():BelongsTo
+    public function seller(): BelongsTo
     {
-        return $this->belongsTo(Seller::class,'creator_id');
+        return $this->belongsTo(Seller::class, 'creator_id');
     }
 }

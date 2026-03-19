@@ -16,13 +16,12 @@ class ErrorLogsController extends BaseController
 {
     public function __construct(
         private readonly ErrorLogsRepository $errorLogsRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $errorLogs = $this->errorLogsRepo->getListWhere(orderBy: ['id' => 'desc'], dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT));
+
         return view('admin-views.seo-settings.error-logs', compact('errorLogs'));
     }
 
@@ -30,13 +29,15 @@ class ErrorLogsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         $this->errorLogsRepo->update(id: $request['id'], data: [
             'redirect_url' => $request['redirect_url'],
-            'redirect_status' => $request->get('redirect_status', '301')
+            'redirect_status' => $request->get('redirect_status', '301'),
         ]);
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -44,6 +45,7 @@ class ErrorLogsController extends BaseController
     {
         $this->errorLogsRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('deleted_successfully'));
+
         return redirect()->back();
     }
 
@@ -51,6 +53,7 @@ class ErrorLogsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         if ($request->has('selected-ids') && count($request['selected-ids']) > 0) {
@@ -61,7 +64,7 @@ class ErrorLogsController extends BaseController
         } else {
             ToastMagic::warning(translate('please_select_logs_for_delete'));
         }
+
         return redirect()->back();
     }
-
 }

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface EmergencyContactRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface EmergencyContactRepositoryInterface extends RepositoryInterface {}

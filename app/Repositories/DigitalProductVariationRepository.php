@@ -12,9 +12,7 @@ class DigitalProductVariationRepository implements DigitalProductVariationReposi
 {
     public function __construct(
         private readonly DigitalProductVariation $digitalProductVariation,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,8 +27,8 @@ class DigitalProductVariationRepository implements DigitalProductVariationReposi
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->digitalProductVariation->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -46,11 +44,12 @@ class DigitalProductVariationRepository implements DigitalProductVariationReposi
                 return $query->where(['variant_key' => $filters['variant_key']]);
             })->when(isset($filters['sku']), function ($query) use ($filters) {
                 return $query->where(['sku' => $filters['sku']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -68,5 +67,4 @@ class DigitalProductVariationRepository implements DigitalProductVariationReposi
     {
         return $this->digitalProductVariation->where($params)->delete();
     }
-
 }

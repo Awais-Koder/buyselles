@@ -32,5 +32,4 @@ class LoginSetupRequest extends FormRequest
             'url.required' => translate('The_url_is_required'),
         ];
     }
-
 }

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface DeliveryCountryCodeRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface DeliveryCountryCodeRepositoryInterface extends RepositoryInterface {}

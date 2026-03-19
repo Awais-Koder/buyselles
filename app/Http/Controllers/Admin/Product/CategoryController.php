@@ -30,24 +30,20 @@ class CategoryController extends BaseController
     use VatTaxManagement;
 
     public function __construct(
-        private readonly CategoryRepositoryInterface    $categoryRepo,
-        private readonly ProductRepositoryInterface     $productRepo,
-        private readonly ProductService                 $productService,
-        private readonly SeoMetaInfoService             $seoMetaInfoService,
-        private readonly CategoryService                $categoryService,
+        private readonly CategoryRepositoryInterface $categoryRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly ProductService $productService,
+        private readonly SeoMetaInfoService $seoMetaInfoService,
+        private readonly CategoryService $categoryService,
         private readonly SeoMetaInfoRepositoryInterface $seoMetaInfoRepo,
         private readonly TranslationRepositoryInterface $translationRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $taxData = $this->getTaxSystemType();
         $categoryWiseTax = $taxData['categoryWiseTax'];
@@ -79,6 +75,7 @@ class CategoryController extends BaseController
 
         $languages = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $languages[0];
+
         return view('admin-views.category.view', [
             'categories' => $categories,
             'categoriesWithTrans' => $categoriesWithTrans,
@@ -95,6 +92,7 @@ class CategoryController extends BaseController
         $category = $this->categoryRepo->getFirstWhere(params: ['id' => $request['id']], relations: ['translations']);
         $languages = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $languages[0];
+
         return view('admin-views.category.category-edit', [
             'category' => $category,
             'languages' => $languages,
@@ -130,6 +128,7 @@ class CategoryController extends BaseController
         }
 
         ToastMagic::success(translate('category_added_successfully'));
+
         return back();
     }
 
@@ -142,7 +141,7 @@ class CategoryController extends BaseController
                 ['sub_category_id' => $category['id']],
                 [
                     'category_id' => $request['parent_id'],
-                    'category_ids' => DB::raw("JSON_SET(CAST(category_ids AS JSON), '$[0].id', '{$request['parent_id']}')")
+                    'category_ids' => DB::raw("JSON_SET(CAST(category_ids AS JSON), '$[0].id', '{$request['parent_id']}')"),
                 ]
             );
         }
@@ -171,6 +170,7 @@ class CategoryController extends BaseController
         } else {
             ToastMagic::success(translate('category_updated_successfully'));
         }
+
         return back();
     }
 
@@ -181,6 +181,7 @@ class CategoryController extends BaseController
         ];
         $this->categoryRepo->update(id: $request['id'], data: $data);
         updateSetupGuideCacheKey(key: 'category_setup', panel: 'admin');
+
         return response()->json(['success' => 1, 'message' => translate('Status_updated_successfully!')], 200);
     }
 
@@ -191,6 +192,7 @@ class CategoryController extends BaseController
         $this->categoryService->deleteImages(data: $category);
         $this->categoryRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('deleted_successfully'));
+
         return redirect()->back();
     }
 
@@ -212,6 +214,7 @@ class CategoryController extends BaseController
             dataLimit: 'all');
         $active = $categories->where('home_status', 1)->count();
         $inactive = $categories->where('home_status', 0)->count();
+
         return Excel::download(new CategoryListExport([
             'categories' => $categories,
             'title' => 'category',

@@ -4,19 +4,19 @@ namespace App\Http\Requests\API\v3;
 
 use App\Traits\ResponseHandler;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Rules\DisallowedExtension;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\UploadedFile;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class ProductAddRequest extends FormRequest
 {
     use ResponseHandler;
     use VatTaxManagement;
+
     public function authorize(): bool
     {
         return true;
     }
+
     /**
      * Get the validation rules that apply to the request.
      */
@@ -43,6 +43,7 @@ class ProductAddRequest extends FormRequest
             'minimum_order_qty' => 'required|numeric|min:1',
         ];
     }
+
     /**
      * Get custom messages for validator errors.
      */
@@ -55,13 +56,14 @@ class ProductAddRequest extends FormRequest
             'shipping_cost.required_if' => translate('Shipping Cost is required!'),
             'images.required' => translate('Product images is required!'),
             'image.required' => translate('Product thumbnail is required!'),
-            'thumbnail.max' => translate('Maximum image size cannot exceed getter then '). ' '.getFileUploadMaxSize().'MB',
-            'thumbnail.mimes' => translate('Only allowed image types are '). ' ' . getFileUploadFormats(skip: '.svg' , asMessage: 'true'),
+            'thumbnail.max' => translate('Maximum image size cannot exceed getter then ').' '.getFileUploadMaxSize().'MB',
+            'thumbnail.mimes' => translate('Only allowed image types are ').' '.getFileUploadFormats(skip: '.svg', asMessage: 'true'),
             'code.required' => translate('Code is required!'),
             'minimum_order_qty.required' => translate('The minimum order quantity is required!'),
             'minimum_order_qty.min' => translate('The minimum order quantity must be positive!'),
         ];
     }
+
     /**
      * Configure the validator instance.
      */
@@ -69,10 +71,10 @@ class ProductAddRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $taxData = $this->getTaxSystemType();
-            $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+            $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
 
-            if ($productWiseTax && (!isset($this->tax_ids) || empty(json_decode($this->tax_ids, true)))) {
-                $validator->errors()->add('tax', translate('Please_add_your_product_tax') . '!');
+            if ($productWiseTax && (! isset($this->tax_ids) || empty(json_decode($this->tax_ids, true)))) {
+                $validator->errors()->add('tax', translate('Please_add_your_product_tax').'!');
             }
             if ($this->preview_file) {
                 $disallowedExtensions = ['php', 'java', 'js', 'html', 'exe', 'sh'];
@@ -81,9 +83,9 @@ class ProductAddRequest extends FormRequest
                 $fileSize = $this->preview_file->getSize();
 
                 if ($fileSize > $maxFileSize) {
-                    $validator->errors()->add('files', translate('File_size_exceeds_the_maximum_limit_of_10MB') . '!');
+                    $validator->errors()->add('files', translate('File_size_exceeds_the_maximum_limit_of_10MB').'!');
                 } elseif (in_array($extension, $disallowedExtensions)) {
-                    $validator->errors()->add('files', translate('Files_with_extensions_like') . (' .php,.java,.js,.html,.exe,.sh ') . translate('are_not_supported') . '!');
+                    $validator->errors()->add('files', translate('Files_with_extensions_like').(' .php,.java,.js,.html,.exe,.sh ').translate('are_not_supported').'!');
                 }
             }
             $discount = $this->discount_type == 'percent' ? (($this->unit_price / 100) * $this->discount) : $this->discount;
@@ -92,6 +94,7 @@ class ProductAddRequest extends FormRequest
             }
         });
     }
+
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         throw new HttpResponseException(

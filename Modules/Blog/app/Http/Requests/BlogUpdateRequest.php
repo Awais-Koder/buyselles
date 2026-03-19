@@ -31,6 +31,7 @@ class BlogUpdateRequest extends FormRequest
             'category_id' => 'nullable|integer|exists:blog_categories,id',
             'publish_date' => 'nullable|date',
         ];
+
         return $rules;
     }
 
@@ -61,10 +62,12 @@ class BlogUpdateRequest extends FormRequest
             $messages["title.$locale.max"] = translate("The_title_in_{$languageName}_may_not_be_greater_than_255_characters");
             $messages["description.$locale.string"] = translate("The_description_in_{$languageName}_must_be_a_string");
         }
+
         return $messages;
     }
 
-    public function after(): array {
+    public function after(): array
+    {
         return [
             function (Validator $validator) {
                 $description = $this->input('description');
@@ -77,18 +80,19 @@ class BlogUpdateRequest extends FormRequest
                 }
                 if (is_null($this['title'][array_search('en', $this['lang'])])) {
                     $validator->errors()->add(
-                        'title', translate('title_field_is_required') . '!'
+                        'title', translate('title_field_is_required').'!'
                     );
                 }
                 if (empty($cleanedDescription)) {
                     $validator->errors()->add(
                         'description',
-                        translate('Description_is_required') . '!'
+                        translate('Description_is_required').'!'
                     );
                 }
-            }
+            },
         ];
     }
+
     public function getLanguageName($code): mixed
     {
         $name = 'english';
@@ -97,6 +101,7 @@ class BlogUpdateRequest extends FormRequest
                 $name = $language['name'];
             }
         }
+
         return $name;
     }
 

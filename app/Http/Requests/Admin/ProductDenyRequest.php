@@ -11,6 +11,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class ProductDenyRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -30,12 +31,14 @@ class ProductDenyRequest extends FormRequest
             'denied_note' => 'required',
         ];
     }
+
     public function messages(): array
     {
         return [
             'denied_note.required' => translate('The_denied_note_field_is_required').'.',
         ];
     }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));

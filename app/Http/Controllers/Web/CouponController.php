@@ -2,11 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
-use App\Models\Coupon;
-use App\Models\Order;
-use App\Utils\CartManager;
 use App\Utils\OrderManager;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +21,7 @@ class CouponController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'status' => 1,
-                    'messages' => $result['messages']
+                    'messages' => $result['messages'],
                 ]);
             }
             Toastr::success($result['messages']);
@@ -34,10 +30,11 @@ class CouponController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'status' => 0,
-                'messages' => ['0' => $result['messages'] ?? translate('invalid_coupon')]
+                'messages' => ['0' => $result['messages'] ?? translate('invalid_coupon')],
             ]);
         }
         Toastr::error($result['messages'] ?? translate('invalid_coupon'));
+
         return back();
     }
 
@@ -49,10 +46,11 @@ class CouponController extends Controller
             return response()->json(['messages' => translate('coupon_removed')]);
         }
         Toastr::success(translate('coupon_removed'));
+
         return back();
     }
 
-    function removeCurrentCouponActivity(): void
+    public function removeCurrentCouponActivity(): void
     {
         session()->forget('coupon_code');
         session()->forget('coupon_type');

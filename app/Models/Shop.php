@@ -4,10 +4,10 @@ namespace App\Models;
 
 use App\Traits\CacheManagerTrait;
 use App\Traits\StorageTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 /**
  * Class YourModel
@@ -37,12 +37,10 @@ use Carbon\Carbon;
  * @property Carbon|null $tin_expire_date
  * @property string|null $tin_certificate
  * @property string|null $tin_certificate_storage_type
- *
- * @package App\Models
  */
 class Shop extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -116,46 +114,52 @@ class Shop extends Model
     public function getImageFullUrlAttribute(): string|null|array
     {
         $value = $this->image;
+
         return $this->storageLink('shop', $value, $this->image_storage_type ?? 'public');
     }
 
     public function getBannerFullUrlAttribute(): string|null|array
     {
         $value = $this->banner;
+
         return $this->storageLink('shop/banner', $value, $this->banner_storage_type ?? 'public');
     }
 
     public function getBottomBannerFullUrlAttribute(): string|null|array
     {
         $value = $this->bottom_banner;
+
         return $this->storageLink('shop/banner', $value, $this->bottom_banner_storage_type ?? 'public');
     }
 
     public function getOfferBannerFullUrlAttribute(): string|null|array
     {
         $value = $this->offer_banner;
+
         return $this->storageLink('shop/banner', $value, $this->offer_banner_storage_type ?? 'public');
     }
 
     public function getTinCertificateFullUrlAttribute(): string|null|array
     {
         $value = $this->tin_certificate;
+
         return $this->storageLink('shop/documents', $value, $this->tin_certificate_storage_type ?? 'public');
     }
 
     public function scopeApplyNameFilter($query, $shopName)
     {
-        if (!$shopName) return $query;
+        if (! $shopName) {
+            return $query;
+        }
 
         $keywords = explode(' ', $shopName);
+
         return $query->where(function ($q) use ($keywords) {
             foreach ($keywords as $word) {
                 $q->orWhere('name', 'like', "%{$word}%");
             }
         });
     }
-
-
 
     protected static function boot(): void
     {

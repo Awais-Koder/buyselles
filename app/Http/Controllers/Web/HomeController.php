@@ -2,12 +2,6 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Traits\CacheManagerTrait;
-use App\Traits\EmailTemplateTrait;
-use App\Traits\InHouseTrait;
-use App\Utils\BrandManager;
-use App\Utils\CategoryManager;
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use App\Models\Category;
@@ -16,8 +10,14 @@ use App\Models\DealOfTheDay;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
-use App\Models\Seller;
 use App\Models\Review;
+use App\Models\Seller;
+use App\Traits\CacheManagerTrait;
+use App\Traits\EmailTemplateTrait;
+use App\Traits\InHouseTrait;
+use App\Utils\BrandManager;
+use App\Utils\CategoryManager;
+use App\Utils\Helpers;
 use App\Utils\ProductManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -26,26 +26,24 @@ use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
-    use InHouseTrait, EmailTemplateTrait;
     use CacheManagerTrait;
+    use EmailTemplateTrait, InHouseTrait;
 
     public function __construct(
-        private readonly Product      $product,
-        private readonly Order        $order,
-        private readonly OrderDetail  $orderDetails,
-        private readonly Category     $category,
-        private readonly Seller       $seller,
-        private readonly Review       $review,
+        private readonly Product $product,
+        private readonly Order $order,
+        private readonly OrderDetail $orderDetails,
+        private readonly Category $category,
+        private readonly Seller $seller,
+        private readonly Review $review,
         private readonly DealOfTheDay $dealOfTheDay,
-        private readonly Banner       $banner,
-    )
-    {
-    }
-
+        private readonly Banner $banner,
+    ) {}
 
     public function index(): View
     {
         $themeName = theme_root_path();
+
         return match ($themeName) {
             'default' => self::default_theme(),
             'theme_aster' => self::theme_aster(),
@@ -92,6 +90,7 @@ class HomeController extends Controller
             ->where('products.status', 1)
             ->where('deal_of_the_days.status', 1)
             ->first();
+
         return view(VIEW_FILE_NAMES['home'],
             compact(
                 'flashDeal', 'featuredProductsList', 'topRatedProducts', 'bestSellProduct', 'latestProductsList', 'categories', 'brands',
@@ -137,6 +136,7 @@ class HomeController extends Controller
                 $sub_category->subCategoryProduct_count = $sub_category->subCategoryProduct->count();
                 unset($sub_category->subCategoryProduct);
             });
+
             return $category;
         });
         $findWhatYouNeedCategories = $findWhatYouNeedCategoriesData->toArray();
@@ -177,6 +177,7 @@ class HomeController extends Controller
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flash_deal_end_date;
+
             return $product;
         });
         $bestSellProduct = Product::active()->with([
@@ -211,6 +212,7 @@ class HomeController extends Controller
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
@@ -226,6 +228,7 @@ class HomeController extends Controller
                         if ($category) {
                             $detail['category_id'] = $category;
                         }
+
                         return $detail;
                     });
                     try {
@@ -246,7 +249,7 @@ class HomeController extends Controller
                 }
                 $ids = array_unique($orderCategories);
 
-                $justForYouProducts = $this->product->active()->with(['reviews' => fn($q) => $q->active()])
+                $justForYouProducts = $this->product->active()->with(['reviews' => fn ($q) => $q->active()])
                     ->where(function ($query) use ($ids) {
                         foreach ($ids as $id) {
                             $query->orWhere('category_ids', 'like', "%{$id}%");
@@ -254,7 +257,7 @@ class HomeController extends Controller
                     })->inRandomOrder()->take(8)->get()->each(function ($product) {
                         $product->reviews_count = $product->reviews->count();
                         $product->average_rating = $product->reviews->avg('rating');
-                        $product->total_rating   = $product->reviews->sum('rating');
+                        $product->total_rating = $product->reviews->sum('rating');
                     });
             }
         }
@@ -308,7 +311,7 @@ class HomeController extends Controller
         $bannerTypeFooterBanner = $bannerTypeFooterBanner ? array_slice($bannerTypeFooterBanner, 0, 2) : [];
 
         $decimal_point = getWebConfig(name: 'decimal_point_settings');
-        $decimal_point_settings = !empty($decimal_point) ? $decimal_point : 0;
+        $decimal_point_settings = ! empty($decimal_point) ? $decimal_point : 0;
         $user = Helpers::getCustomerInformation();
 
         $order_again = $user != 'offline' ?
@@ -372,6 +375,7 @@ class HomeController extends Controller
                 ->active()
                 ->where('featured', 1)
                 ->withCount(['reviews']);
+
             return ProductManager::getPriorityWiseFeaturedProductsQuery(query: $featuredProductsList, dataLimit: 15);
         });
 
@@ -418,6 +422,7 @@ class HomeController extends Controller
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
@@ -447,6 +452,7 @@ class HomeController extends Controller
         ];
 
         $data = [];
+
         return view(VIEW_FILE_NAMES['home'],
             compact(
                 'activeBrands', 'latestProductsList', 'dealOfTheDay', 'topVendorsList', 'topRatedShops', 'bannerTypeMainBanner', 'mostVisitedCategories', 'randomSingleProduct', 'newSellers', 'bannerTypeSidebarBanner', 'bannerTypeTopSideBanner', 'recentOrderShopList',

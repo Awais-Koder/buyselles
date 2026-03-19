@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface VendorRegistrationReasonInterface extends RepositoryInterface
-{
-
-}
+interface VendorRegistrationReasonInterface extends RepositoryInterface {}

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 class StorageConnectionSettingsController extends BaseController
 {
     use FileManagerTrait;
+
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
     ) {}
@@ -27,7 +28,7 @@ class StorageConnectionSettingsController extends BaseController
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $storageConnectionType = getWebConfig(name: 'storage_connection_type');
-        if (!$storageConnectionType) {
+        if (! $storageConnectionType) {
             $this->businessSettingRepo->updateOrInsert(type: 'storage_connection_type', value: 'local');
             $storageConnectionType = getWebConfig(name: 'storage_connection_type');
         }
@@ -45,14 +46,14 @@ class StorageConnectionSettingsController extends BaseController
         if (env('APP_MODE') == 'demo') {
             if ($request->ajax()) {
                 return response()->json([
-                    'message' => translate('you_can_not_update_this_on_demo_mode.')
+                    'message' => translate('you_can_not_update_this_on_demo_mode.'),
                 ]);
             } else {
                 ToastMagic::warning(translate('you_can_not_update_this_on_demo_mode'));
             }
         }
 
-        $type = $request['status'] == "1" ? $request['type'] : ($request['type'] == 'public' ? 's3' : 'public');
+        $type = $request['status'] == '1' ? $request['type'] : ($request['type'] == 'public' ? 's3' : 'public');
 
         $this->updateStorageConnectionType($type);
         if ($type == 's3') {
@@ -62,7 +63,7 @@ class StorageConnectionSettingsController extends BaseController
                 $this->updateStorageConnectionType('public');
                 if ($request->ajax()) {
                     return response()->json([
-                        'message' => translate('storage_connection_type_unable_to_changed_due_to_s3_wrong_credential.')
+                        'message' => translate('storage_connection_type_unable_to_changed_due_to_s3_wrong_credential.'),
                     ]);
                 } else {
                     ToastMagic::error(translate('storage_connection_type_unable_to_changed_due_to_s3_wrong_credential'));
@@ -73,11 +74,12 @@ class StorageConnectionSettingsController extends BaseController
         if ($request->ajax()) {
             return response()->json([
                 'status' => 1,
-                'message' => translate('storage_connection_type_successfully_changed.')
+                'message' => translate('storage_connection_type_successfully_changed.'),
             ]);
         }
 
         ToastMagic::success(translate('storage_connection_type_successfully_changed'));
+
         return back();
     }
 
@@ -92,7 +94,7 @@ class StorageConnectionSettingsController extends BaseController
     private function checkS3Credential(): void
     {
         $this->setStorageConnectionEnvironment();
-        $content = "This is a test file uploaded to S3.";
+        $content = 'This is a test file uploaded to S3.';
         $fileName = 'test_file.txt';
         Storage::disk('s3')->put($fileName, $content);
         if (Storage::disk('s3')->exists($fileName)) {
@@ -105,7 +107,7 @@ class StorageConnectionSettingsController extends BaseController
         if (env('APP_MODE') == 'demo') {
             return response()->json([
                 'status' => 0,
-                'error' => translate('you_can_not_update_this_on_demo_mode') . '.'
+                'error' => translate('you_can_not_update_this_on_demo_mode').'.',
             ]);
         }
         $data = [
@@ -128,7 +130,7 @@ class StorageConnectionSettingsController extends BaseController
             'region' => $data['region'],
             'credentials' => $credentials,
         ];
-        if (!empty($data['endpoint']) && !str_contains($data['endpoint'], 'amazonaws.com')) {
+        if (! empty($data['endpoint']) && ! str_contains($data['endpoint'], 'amazonaws.com')) {
             $s3ClientData['endpoint'] = $data['endpoint'];
         }
         $s3Client = new S3Client($s3ClientData);
@@ -137,15 +139,16 @@ class StorageConnectionSettingsController extends BaseController
         } catch (\Exception $exception) {
             return response()->json([
                 'status' => 0,
-                'error' => translate('s3_wrong_credentials_are_not_acceptable') . '.',
-                'exception' => $exception->getMessage()
+                'error' => translate('s3_wrong_credentials_are_not_acceptable').'.',
+                'exception' => $exception->getMessage(),
             ]);
         }
         $this->businessSettingRepo->updateOrInsert(type: 'storage_connection_s3_credential', value: json_encode($data));
         ToastMagic::success(translate('Credential_update_successfully'));
+
         return response()->json([
             'status' => 1,
-            'message' => translate('Credential_update_successfully') . '.'
+            'message' => translate('Credential_update_successfully').'.',
         ]);
     }
 }

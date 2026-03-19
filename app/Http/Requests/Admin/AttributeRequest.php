@@ -14,8 +14,6 @@ use Illuminate\Validation\Validator;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class AttributeRequest extends FormRequest
 {
@@ -48,10 +46,10 @@ class AttributeRequest extends FormRequest
             function (Validator $validator) {
                 if (is_null($this['name'][array_search('en', $this['lang'])])) {
                     $validator->errors()->add(
-                        'name', translate('name_field_is_required') . '!'
+                        'name', translate('name_field_is_required').'!'
                     );
                 }
-            }
+            },
         ];
     }
 }

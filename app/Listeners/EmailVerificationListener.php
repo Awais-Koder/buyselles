@@ -5,10 +5,10 @@ namespace App\Listeners;
 use App\Events\EmailVerificationEvent;
 use App\Traits\EmailTemplateTrait;
 
-
 class EmailVerificationListener
 {
     use EmailTemplateTrait;
+
     /**
      * Create the event listener.
      */
@@ -25,9 +25,10 @@ class EmailVerificationListener
         $this->sendMail($event);
     }
 
-    private function sendMail(EmailVerificationEvent $event):void{
+    private function sendMail(EmailVerificationEvent $event): void
+    {
         $email = $event->email;
         $data = $event->data;
-        $this->sendingMail(sendMailTo: $email,userType: $data['userType'],templateName: $data['templateName'],data: $data);
+        $this->sendingMail(sendMailTo: $email, userType: $data['userType'], templateName: $data['templateName'], data: $data);
     }
 }

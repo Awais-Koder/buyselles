@@ -27,7 +27,7 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
     public function getFirstWhereNotNull(array $params, array $filters = [], array $orderBy = [], array $relations = []): ?Model
     {
         return $this->withdrawRequest->where($params)->whereNotNull($filters)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             })
             ->first();
@@ -36,7 +36,7 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->withdrawRequest->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -47,10 +47,10 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
     {
         $query = $this->withdrawRequest->with($relations)
             ->when($searchValue, function ($query) use ($searchValue, $relations) {
-                if (!empty($relations)) {
+                if (! empty($relations)) {
                     $query->whereHas(current($relations), function ($query) use ($searchValue) {
                         $searchTerms = explode(' ', $searchValue);
-                        $amount = (int)$searchValue;
+                        $amount = (int) $searchValue;
                         foreach ($searchTerms as $term) {
                             $query->where(function ($query) use ($term, $amount) {
                                 $query->where('f_name', 'like', "%$term%")
@@ -63,7 +63,6 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
                     });
                 }
             })
-
 
             ->when(isset($filters['vendorId']), function ($query) use ($filters) {
                 $query->where(['seller_id' => $filters['vendorId']]);
@@ -82,11 +81,12 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
             ->when(isset($filters['status']) && $filters['status'] == 'pending', function ($query) {
                 return $query->where('approved', 0);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -104,7 +104,7 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
             })
             ->when(isset($filters) && $filters['approved'] == 'pending', function ($query) {
                 return $query->where('approved', 0);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -114,6 +114,7 @@ class WithdrawRequestRepository implements WithdrawRequestRepositoryInterface
     public function update(string $id, array $data): bool
     {
         $this->withdrawRequest->where(['id' => $id])->update($data);
+
         return true;
     }
 

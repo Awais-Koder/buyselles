@@ -9,21 +9,24 @@ enum Notification
         VIEW => 'admin-views.notification.index',
         ROUTE => 'admin.notification.index',
     ];
+
     const UPDATE = [
         URI => 'update',
-        VIEW => 'admin-views.notification.update-view'
-    ];
-    const UPDATE_STATUS = [
-        URI => 'update-status',
-        VIEW => ''
-    ];
-    const DELETE = [
-        URI => 'delete',
-        VIEW => ''
-    ];
-    const RESEND_NOTIFICATION = [
-        URI => 'resend-notification',
-        VIEW => ''
+        VIEW => 'admin-views.notification.update-view',
     ];
 
+    const UPDATE_STATUS = [
+        URI => 'update-status',
+        VIEW => '',
+    ];
+
+    const DELETE = [
+        URI => 'delete',
+        VIEW => '',
+    ];
+
+    const RESEND_NOTIFICATION = [
+        URI => 'resend-notification',
+        VIEW => '',
+    ];
 }

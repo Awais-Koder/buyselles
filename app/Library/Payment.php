@@ -5,16 +5,27 @@ namespace App\Library;
 class Payment
 {
     private $success_hook;
+
     private $failure_hook;
+
     private $currency_code;
+
     private $payment_method;
+
     private $payer_id;
+
     private $receiver_id;
+
     private $additional_data;
+
     private $payment_amount;
+
     private $external_redirect_link;
+
     private $attribute;
+
     private $attribute_id;
+
     private $payment_platform;
 
     public function __construct($success_hook, $failure_hook, $currency_code, $payment_method, $payment_platform, $payer_id = null, $receiver_id = null, $additional_data = [], $payment_amount = 0, $external_redirect_link = null, $attribute = null, $attribute_id = null)

@@ -20,9 +20,11 @@ trait BlogTrait
             while (Blog::where('readable_id', $readableId)->exists()) {
                 $readableId++;
             }
+
             return $readableId;
         } catch (\Throwable $th) {
             $lastReadable = Blog::max('readable_id') ?? 100000;
+
             return $lastReadable + 1;
         }
     }
@@ -35,7 +37,7 @@ trait BlogTrait
 
             if ($blogPriority['sort_by'] == 'most_clicked') {
                 $query = $query->sortByDesc('click_count');
-            }  elseif ($blogPriority['sort_by'] == 'a_to_z') {
+            } elseif ($blogPriority['sort_by'] == 'a_to_z') {
                 $query = $query->sortBy('title', SORT_NATURAL | SORT_FLAG_CASE);
             } elseif ($blogPriority['sort_by'] == 'z_to_a') {
                 $query = $query->sortByDesc('title', SORT_NATURAL | SORT_FLAG_CASE);
@@ -45,6 +47,7 @@ trait BlogTrait
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator($results, $totalSize, $dataLimit, $currentPage, [
                     'path' => Paginator::resolveCurrentPath(),
                     'query' => request()->all(),
@@ -61,5 +64,4 @@ trait BlogTrait
 
         return $query->get();
     }
-
 }

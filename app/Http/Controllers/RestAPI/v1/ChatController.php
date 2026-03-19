@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-    public function list(Request $request, $type):JsonResponse
+    public function list(Request $request, $type): JsonResponse
     {
         $admin_size = 0;
         $admin_chat_id = [];
@@ -39,11 +39,11 @@ class ChatController extends Controller
         }
 
         $total_size = Chatting::where(['user_id' => $request->user()->id])
-                ->whereNotNull($id_param)
-                ->select($id_param)
-                ->distinct()
-                ->get()
-                ->count() + $admin_size;
+            ->whereNotNull($id_param)
+            ->select($id_param)
+            ->distinct()
+            ->get()
+            ->count() + $admin_size;
 
         $all_chat_ids = Chatting::where(['user_id' => $request->user()->id])
             ->whereNotNull($id_param)
@@ -55,7 +55,7 @@ class ChatController extends Controller
 
         $unique_chat_ids = array_slice(array_values($all_chat_ids), $request->offset - 1, $request->limit);
 
-        $chats = array();
+        $chats = [];
         if ($type == 'seller' && $admin_chat_id) {
             $user_chatting = Chatting::with([$with])
                 ->where(['user_id' => $request->user()->id, 'admin_id' => '0'])
@@ -80,7 +80,7 @@ class ChatController extends Controller
             }
         }
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $total_size;
         $data['limit'] = $request->limit;
         $data['offset'] = $request->offset;
@@ -104,15 +104,15 @@ class ChatController extends Controller
         ];
     }
 
-    public function search(Request $request, $type):JsonResponse
+    public function search(Request $request, $type): JsonResponse
     {
-        $terms = explode(" ", $request->input('search'));
+        $terms = explode(' ', $request->input('search'));
         if ($type == 'seller') {
             $id_param = 'seller_id';
             $with_param = 'sellerInfo.shops';
             $users = Shop::when($request->search, function ($query) use ($terms) {
                 foreach ($terms as $term) {
-                    $query->where('name', 'like', '%' . $term . '%');
+                    $query->where('name', 'like', '%'.$term.'%');
                 }
             })->pluck('seller_id')->toArray();
 
@@ -121,8 +121,8 @@ class ChatController extends Controller
             $id_param = 'delivery_man_id';
             $users = DeliveryMan::when($request->search, function ($query) use ($terms) {
                 foreach ($terms as $term) {
-                    $query->where('f_name', 'like', '%' . $term . '%')
-                        ->orWhere('l_name', 'like', '%' . $term . '%');
+                    $query->where('f_name', 'like', '%'.$term.'%')
+                        ->orWhere('l_name', 'like', '%'.$term.'%');
                 }
             })->pluck('id')->toArray();
         } else {
@@ -135,10 +135,10 @@ class ChatController extends Controller
             ->get()
             ->toArray();
         $unique_chat_ids = call_user_func_array('array_merge', $unique_chat_ids);
-        $chats = array();
+        $chats = [];
         if ($unique_chat_ids) {
             foreach ($unique_chat_ids as $unique_chat_id) {
-                if (!is_array($unique_chat_id)) {
+                if (! is_array($unique_chat_id)) {
                     $user_chatting = Chatting::with([$with_param])
                         ->where(['user_id' => $request->user()->id, $id_param => $unique_chat_id])
                         ->whereNotNull($id_param)
@@ -152,10 +152,11 @@ class ChatController extends Controller
                 }
             }
         }
+
         return response()->json($chats, 200);
     }
 
-    public function get_message(Request $request, $type, $id):JsonResponse
+    public function get_message(Request $request, $type, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'offset' => 'required',
@@ -180,13 +181,13 @@ class ChatController extends Controller
 
         $query = Chatting::with($with)->where(['user_id' => $request->user()->id, $id_param => $id])->latest();
 
-        if (!empty($query->get())) {
+        if (! empty($query->get())) {
             $message = $query->paginate($request->limit, ['*'], 'page', $request->offset);
             $message?->map(function ($conversation) {
-                if (!is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
+                if (! is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
                     $attachmentData = [];
                     foreach ($conversation->attachment_full_url as $key => $attachment) {
-                        $attachmentData[] = (object)$this->getAttachmentData($attachment);
+                        $attachmentData[] = (object) $this->getAttachmentData($attachment);
                     }
                     $conversation->attachment = $attachmentData;
                 } else {
@@ -200,21 +201,23 @@ class ChatController extends Controller
             $data['limit'] = $request->limit;
             $data['offset'] = $request->offset;
             $data['message'] = $message->items();
+
             return response()->json($data, 200);
         }
+
         return response()->json(['message' => translate('no messages found!')], 200);
 
     }
 
-    public function send_message(CustomerSendMessageRequest $request, $type):JsonResponse
+    public function send_message(CustomerSendMessageRequest $request, $type): JsonResponse
     {
         $uploadMaxFileSize = ini_get('upload_max_filesize');
         if (strpos($uploadMaxFileSize, 'G') !== false) {
             $uploadMaxFileSize = str_replace('G', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         } elseif (strpos($uploadMaxFileSize, 'M') !== false) {
             $uploadMaxFileSize = str_replace('M', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         }
 
         $attachment = [];
@@ -241,7 +244,7 @@ class ChatController extends Controller
                 ];
             }
         }
-        $chatting = new Chatting();
+        $chatting = new Chatting;
         $chatting->user_id = $request->user()->id;
         $chatting->message = $request['message'];
         $chatting->attachment = json_encode($attachment);
@@ -275,7 +278,7 @@ class ChatController extends Controller
         }
     }
 
-    public function seen_message(Request $request, $type):JsonResponse
+    public function seen_message(Request $request, $type): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'id' => 'required',
@@ -311,11 +314,12 @@ class ChatController extends Controller
         }
         $path = $attachment['status'] == 200 ? $attachment['path'] : null;
         $size = $attachment['status'] == 200 ? FileManagerLogic::getFileSize(path: $path) : null;
+
         return [
             'type' => $type,
             'key' => $attachment['key'],
             'path' => $path,
-            'size' => $size
+            'size' => $size,
         ];
     }
 }

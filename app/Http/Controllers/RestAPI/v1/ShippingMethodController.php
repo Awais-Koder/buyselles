@@ -20,6 +20,7 @@ class ShippingMethodController extends Controller
     {
         try {
             $shipping = ShippingMethod::find($id);
+
             return response()->json($shipping, 200);
         } catch (\Exception $e) {
             return response()->json(['errors' => $e], 403);
@@ -29,6 +30,7 @@ class ShippingMethodController extends Controller
     public function shipping_methods_by_seller(Request $request, $id, $seller_is)
     {
         $seller_is = $seller_is == 'admin' ? 'admin' : 'seller';
+
         return response()->json(Helpers::getShippingMethods($id, $seller_is), 200);
     }
 
@@ -36,9 +38,9 @@ class ShippingMethodController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'cart_group_id' => 'required',
-            'id' => 'required'
+            'id' => 'required',
         ], [
-            'id.required' => translate('shipping_id_is_required')
+            'id.required' => translate('shipping_id_is_required'),
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -57,11 +59,11 @@ class ShippingMethodController extends Controller
         return response()->json(translate('successfully_added'));
     }
 
-    public static function insert_into_cart_shipping($request):void
+    public static function insert_into_cart_shipping($request): void
     {
         $shipping = CartShipping::where(['cart_group_id' => $request['cart_group_id']])->first();
         if (isset($shipping) == false) {
-            $shipping = new CartShipping();
+            $shipping = new CartShipping;
         }
         $shipping['cart_group_id'] = $request['cart_group_id'];
         $shipping['shipping_method_id'] = $request['id'];
@@ -79,6 +81,7 @@ class ShippingMethodController extends Controller
             $freeDeliveryStatus = OrderManager::getFreeDeliveryOrderAmountArray($data['cart_group_id'])['status'];
             $data['free_delivery_status'] = $freeDeliveryStatus;
             $data['is_check_item_exist'] = $isCheckedItemExist ? 1 : 0;
+
             return $data;
         });
 
@@ -89,24 +92,23 @@ class ShippingMethodController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'seller_is' => 'required',
-            'seller_id' => 'required'
+            'seller_id' => 'required',
         ]);
 
         if ($validator->errors()->count() > 0) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)]);
         }
 
-        if($request->seller_is == 'admin')
-        {
-            $admin_shipping = ShippingType::where('seller_id',0)->first();
-            $shipping_type = isset($admin_shipping)==true?$admin_shipping->shipping_type:'order_wise';
+        if ($request->seller_is == 'admin') {
+            $admin_shipping = ShippingType::where('seller_id', 0)->first();
+            $shipping_type = isset($admin_shipping) == true ? $admin_shipping->shipping_type : 'order_wise';
+
+        } else {
+            $seller_shipping = ShippingType::where('seller_id', $request->seller_id)->first();
+            $shipping_type = isset($seller_shipping) == true ? $seller_shipping->shipping_type : 'order_wise';
 
         }
-        else{
-            $seller_shipping = ShippingType::where('seller_id',$request->seller_id)->first();
-            $shipping_type = isset($seller_shipping)==true? $seller_shipping->shipping_type:'order_wise';
 
-        }
-        return response()->json(['shipping_type'=>$shipping_type], 200);
+        return response()->json(['shipping_type' => $shipping_type], 200);
     }
 }

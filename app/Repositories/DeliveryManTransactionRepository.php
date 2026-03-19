@@ -12,9 +12,8 @@ class DeliveryManTransactionRepository implements DeliveryManTransactionReposito
 {
     public function __construct(
         private readonly DeliveryManTransaction $deliveryManTransaction
-    )
-    {
-    }
+    ) {}
+
     public function add(array $data): string|object
     {
         return $this->deliveryManTransaction->newInstance()->create($data);
@@ -22,14 +21,14 @@ class DeliveryManTransactionRepository implements DeliveryManTransactionReposito
 
     public function getFirstWhere(array $params, array $relations = []): ?Model
     {
-       return $this->deliveryManTransaction->where($params)->first();
+        return $this->deliveryManTransaction->where($params)->first();
     }
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->deliveryManTransaction->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -38,19 +37,20 @@ class DeliveryManTransactionRepository implements DeliveryManTransactionReposito
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->deliveryManTransaction->with($relations)
-            ->when($searchValue, function ($query)use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 $query->orWhere('f_name', 'like', "%$searchValue%")
                     ->orWhere('l_name', 'like', "%$searchValue%")
                     ->orWhere('phone', 'like', "%$searchValue%");
             })
-            ->when(isset($filters['delivery_man_id']), function($query) use($filters){
+            ->when(isset($filters['delivery_man_id']), function ($query) use ($filters) {
                 return $query->where(['delivery_man_id' => $filters['delivery_man_id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -62,6 +62,7 @@ class DeliveryManTransactionRepository implements DeliveryManTransactionReposito
     public function delete(array $params): bool
     {
         $this->deliveryManTransaction->where($params)->delete();
+
         return true;
     }
 }

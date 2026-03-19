@@ -12,9 +12,8 @@ class NotificationRepository implements NotificationRepositoryInterface
 {
     public function __construct(
         private readonly Notification $notification,
-    ){
+    ) {}
 
-    }
     public function add(array $data): string|object
     {
         return $this->notification->create($data);
@@ -22,14 +21,14 @@ class NotificationRepository implements NotificationRepositoryInterface
 
     public function getFirstWhere(array $params, array $relations = []): ?Model
     {
-       return $this->notification->where($params)->first();
+        return $this->notification->where($params)->first();
     }
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->notification->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -37,25 +36,26 @@ class NotificationRepository implements NotificationRepositoryInterface
 
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query =  $this->notification->with($relations)
-            ->when(isset($filters['send_to']),function ($query)use($filters){
-                return $query->where('send_to',$filters['send_to']);
+        $query = $this->notification->with($relations)
+            ->when(isset($filters['send_to']), function ($query) use ($filters) {
+                return $query->where('send_to', $filters['send_to']);
             })
-            ->when(isset($searchValue),function ($query)use($searchValue){
+            ->when(isset($searchValue), function ($query) use ($searchValue) {
                 return $query->where('title', 'like', "%{$searchValue}%");
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
+
     public function getListWhereBetween(array $params = [], array $filters = [], array|string|null $relations = null, int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        return $this->notification->whereBetween('created_at',$params)->where($filters)->whereDoesntHave($relations)->get();
+        return $this->notification->whereBetween('created_at', $params)->where($filters)->whereDoesntHave($relations)->get();
     }
-
 
     public function update(string $id, array $data): bool
     {

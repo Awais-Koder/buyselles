@@ -11,6 +11,7 @@ class BrandController extends Controller
     public function getBrands(): JsonResponse
     {
         $brands = Brand::all();
-        return response()->json($brands,200);
+
+        return response()->json($brands, 200);
     }
 }

@@ -3,10 +3,9 @@
 namespace Modules\Blog\app\Models;
 
 use App\Traits\StorageTrait;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Modules\Blog\Database\factories\BlogSeoFactory;
 
 class BlogSeo extends Model
 {
@@ -53,9 +52,10 @@ class BlogSeo extends Model
     public function getImageFullUrlAttribute(): array
     {
         $value = $this->image;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','image')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('blog/meta', $value, $storage['value'] ?? 'public');
     }
 
@@ -64,10 +64,12 @@ class BlogSeo extends Model
         $blogSeo = $this->firstOrNew($params);
         $blogSeo->fill($data);
         $blogSeo->save();
+
         return true;
     }
 
     protected $appends = ['image_full_url'];
+
     protected static function boot(): void
     {
         parent::boot();

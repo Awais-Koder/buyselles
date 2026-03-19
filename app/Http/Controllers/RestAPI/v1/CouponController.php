@@ -8,8 +8,6 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Shop;
-use App\Utils\CartManager;
-use App\Utils\Helpers;
 use App\Utils\OrderManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,9 +33,9 @@ class CouponController extends Controller
 
         return [
             'total_size' => $coupons->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'coupons' => $coupons->items()
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'coupons' => $coupons->items(),
         ];
     }
 
@@ -67,7 +65,6 @@ class CouponController extends Controller
             if ($productGroup->where('added_by', 'admin')->count() > 0) {
                 $adminCoupon = $couponQuery->where('coupon_bearer', 'inhouse');
             }
-
 
             if ($productGroup->where('added_by', 'seller')->count() > 0) {
                 $sellerIds = $productGroup->pluck('user_id')->unique()->toArray();
@@ -104,9 +101,10 @@ class CouponController extends Controller
         if ($result['status']) {
             return response()->json([
                 'coupon_discount' => $result['discount'],
-                'coupon_type' => $result['coupon_type']
+                'coupon_type' => $result['coupon_type'],
             ], 200);
         }
+
         return response()->json($result['messages'] ?? translate('invalid_coupon'), 202);
     }
 
@@ -119,11 +117,12 @@ class CouponController extends Controller
             ->where(['status' => 1])
             ->whereDate('start_date', '<=', date('Y-m-d'))
             ->whereDate('expire_date', '>=', date('Y-m-d'))
-            ->when($shop && $shop['author_type'] == 'admin', function ($query) use ($sellerIds) {
+            ->when($shop && $shop['author_type'] == 'admin', function ($query) {
                 return $query->whereNull('seller_id');
             })
             ->when($shop && $shop['author_type'] != 'admin', function ($query) use ($sellerIds, $shop) {
                 $sellerIds[] = $shop['seller_id'];
+
                 return $query->whereIn('seller_id', $sellerIds);
             })
             ->when($customerId == '0', function ($query) {
@@ -135,9 +134,9 @@ class CouponController extends Controller
 
         return [
             'total_size' => $coupons->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'coupons' => $coupons->items()
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'coupons' => $coupons->items(),
         ];
     }
 }

@@ -20,25 +20,24 @@ use Modules\TaxModule\app\Traits\VatTaxConfiguration;
 
 class TaxReportController extends Controller
 {
-    use VatTaxConfiguration, AdminTaxReportManagement;
+    use AdminTaxReportManagement, VatTaxConfiguration;
 
     private Tax $taxVat;
+
     private SystemTaxSetup $systemTaxVat;
 
     public function __construct(
-        private readonly TaxService              $taxService,
-        private readonly SystemTaxSetupService   $systemTaxSetupService,
-        private readonly TaxAdditionalSetup      $taxAdditionalSetup,
+        private readonly TaxService $taxService,
+        private readonly SystemTaxSetupService $systemTaxSetupService,
+        private readonly TaxAdditionalSetup $taxAdditionalSetup,
         private readonly ShopRepositoryInterface $shopRepo
-    )
-    {
-    }
+    ) {}
 
     public function vendorTaxReportList(Request $request)
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -53,17 +52,17 @@ class TaxReportController extends Controller
             ->whereHas('order', function ($query) {
                 return $query->where(['order_status' => 'delivered', 'order_type' => 'default_type']);
             })
-            ->when($shop, function ($query) use ($request, $shop) {
+            ->when($shop, function ($query) use ($shop) {
                 return $query->where('shop_id', $shop['id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('order', function ($query) use ($request) {
                     return $query->where('id', 'like', "%{$request['search']}%");
                 })->orWhereHas('orderTaxes', function ($query) use ($request) {
                     return $query->where('tax_name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->orderBy('created_at', 'desc')
@@ -73,7 +72,7 @@ class TaxReportController extends Controller
         foreach ($orderTransactions->pluck('orderTaxes')->flatten()->groupBy('tax_on')->sortKeys() as $type => $orderTaxItem) {
             $typeName = $type == 'basic' ? 'Order Tax' : ucwords(str_replace('_', ' ', $type));
 
-            foreach($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
+            foreach ($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
                 $typeWiseTaxesList[$typeName][] = [
                     'name' => ucwords($taxItemKey),
                     'tax_rate' => $orderTax->first()->tax_rate,
@@ -81,7 +80,6 @@ class TaxReportController extends Controller
                 ];
             }
         }
-
 
         $totalOrders = count($orderTransactions);
         $totalOrderAmount = $orderTransactions->sum('order_amount');
@@ -96,7 +94,7 @@ class TaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -117,7 +115,7 @@ class TaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -131,15 +129,15 @@ class TaxReportController extends Controller
             ->whereHas('order', function ($query) {
                 return $query->where(['order_status' => 'delivered', 'order_type' => 'default_type']);
             })
-            ->when($shop, function ($query) use ($request, $shop) {
+            ->when($shop, function ($query) use ($shop) {
                 return $query->where('shop_id', $shop['id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('shop', function ($query) use ($request) {
                     return $query->where('name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -160,10 +158,9 @@ class TaxReportController extends Controller
         ];
 
         if ($request->export_type == 'excel') {
-            return Excel::download(new VendorTaxExport($data), $shop['name'] . 's TaxExport.xlsx');
-        } else if ($request->export_type == 'csv') {
-            return Excel::download(new VendorTaxExport($data), $shop['name'] . 's TaxExport.csv');
+            return Excel::download(new VendorTaxExport($data), $shop['name'].'s TaxExport.xlsx');
+        } elseif ($request->export_type == 'csv') {
+            return Excel::download(new VendorTaxExport($data), $shop['name'].'s TaxExport.csv');
         }
     }
-
 }

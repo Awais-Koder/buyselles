@@ -12,7 +12,9 @@ use Illuminate\Queue\SerializesModels;
 class CustomerRegistrationMail extends Mailable
 {
     use Queueable, SerializesModels;
+
     protected $data;
+
     /**
      * Create a new message instance.
      */
@@ -37,7 +39,7 @@ class CustomerRegistrationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'email-templates.customer-registration',with: ['data'=>$this->data]
+            view: 'email-templates.customer-registration', with: ['data' => $this->data]
         );
     }
 

@@ -9,16 +9,12 @@ class ChattingService
 {
     use FileManagerTrait;
 
-    /**
-     * @param object $request
-     * @return array
-     */
     public function getAttachment(object $request): array
     {
         $attachment = [];
         if ($request->file('media')) {
             foreach ($request['media'] as $file) {
-                if (in_array('.' . $file->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
+                if (in_array('.'.$file->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
                     $attachment[] = [
                         'file_name' => $this->fileUpload(dir: 'chatting/', format: $file->getClientOriginalExtension(), file: $file),
                         'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
@@ -40,15 +36,10 @@ class ChattingService
 
             }
         }
+
         return $attachment;
     }
 
-    /**
-     * @param object $request
-     * @param string|int $shopId
-     * @param string|int $vendorId
-     * @return array
-     */
     public function getDeliveryManChattingData(object $request, string|int $shopId, string|int $vendorId): array
     {
         return [
@@ -65,12 +56,6 @@ class ChattingService
         ];
     }
 
-    /**
-     * @param object $request
-     * @param string|int $shopId
-     * @param string|int $vendorId
-     * @return array
-     */
     public function getCustomerChattingData(object $request, string|int $shopId, string|int $vendorId): array
     {
         return [
@@ -87,14 +72,10 @@ class ChattingService
         ];
     }
 
-    /**
-     * @param object $request
-     * @param string $type
-     * @return array
-     */
     public function addChattingData(object $request, string $type): array
     {
         $attachment = $this->getAttachment(request: $request);
+
         return [
             'delivery_man_id' => $type == 'delivery-man' ? $request['delivery_man_id'] : null,
             'user_id' => $type == 'customer' ? $request['user_id'] : null,

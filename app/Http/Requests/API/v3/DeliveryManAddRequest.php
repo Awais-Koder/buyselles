@@ -39,8 +39,8 @@ class DeliveryManAddRequest extends Request
         return [
             'f_name.required' => translate('First name is required!'),
             'l_name.required' => translate('Last name is required!'),
-            'identity_image.*.mimes' => translate('The image must be a file of type.'). getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'identity_image.*.max'   => translate('The image must not exceed '). getFileUploadMaxSize() . ' MB.',
+            'identity_image.*.mimes' => translate('The image must be a file of type.').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'identity_image.*.max' => translate('The image must not exceed ').getFileUploadMaxSize().' MB.',
 
         ];
     }
@@ -49,7 +49,7 @@ class DeliveryManAddRequest extends Request
     {
         throw new HttpResponseException(
             response()->json([
-                'errors' => $this->errorProcessor($validator)
+                'errors' => $this->errorProcessor($validator),
             ], 403)
         );
     }

@@ -3,44 +3,43 @@
 namespace App\Utils;
 
 use App\Events\OrderEditDuePaymentEvent;
+use App\Events\OrderPlacedEvent;
+use App\Models\Admin;
+use App\Models\AdminWallet;
+use App\Models\BusinessSetting;
+use App\Models\Cart;
+use App\Models\CartShipping;
+use App\Models\Color;
+use App\Models\Coupon;
+use App\Models\DigitalProductVariation;
+use App\Models\OfflinePayments;
+use App\Models\Order;
+use App\Models\OrderDetail;
 use App\Models\OrderDetailsRewards;
 use App\Models\OrderEditHistory;
 use App\Models\OrderStatusHistory;
-use App\Models\ShippingMethod;
-use Carbon\Carbon;
-use App\Models\Cart;
-use App\Models\Shop;
-use App\Models\User;
-use App\Models\Admin;
-use App\Models\Color;
-use App\Models\Order;
-use App\Models\Coupon;
-use App\Models\Seller;
+use App\Models\OrderTransaction;
 use App\Models\Product;
+use App\Models\ReferralCustomer;
+use App\Models\Seller;
+use App\Models\SellerWallet;
+use App\Models\ShippingAddress;
+use App\Models\ShippingMethod;
+use App\Models\ShippingType;
+use App\Models\Shop;
 use App\Models\Storage;
-use App\Models\AdminWallet;
-use App\Models\OrderDetail;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Models\WalletTransaction;
 use App\Traits\CommonTrait;
+use App\Traits\CustomerTrait;
+use App\Traits\PdfGenerator;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use App\Models\CartShipping;
-use App\Models\SellerWallet;
-use App\Models\ShippingType;
-use App\Traits\PdfGenerator;
-use App\Traits\CustomerTrait;
-use App\Models\BusinessSetting;
-use App\Models\OfflinePayments;
-use App\Models\ShippingAddress;
-use App\Events\OrderPlacedEvent;
-use App\Models\OrderTransaction;
-use App\Models\ReferralCustomer;
-use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\DB;
-use App\Models\DigitalProductVariation;
+use Illuminate\Support\Str;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
-
 
 class OrderManager
 {
@@ -50,7 +49,7 @@ class OrderManager
 
     public static function generateUniqueOrderID(): string
     {
-        return rand(1000, 9999) . '-' . Str::random(5) . '-' . time();
+        return rand(1000, 9999).'-'.Str::random(5).'-'.time();
     }
 
     public static function getOrderSummaryBeforePlaceOrder($cart, $coupon_discount): array
@@ -61,7 +60,7 @@ class OrderManager
         $subTotal = 0;
         $totalDiscountOnProduct = 0;
 
-        if ($coupon && ($coupon->seller_id == NULL || $coupon->seller_id == '0' || $coupon->seller_id == $cart[0]->seller_id)) {
+        if ($coupon && ($coupon->seller_id == null || $coupon->seller_id == '0' || $coupon->seller_id == $cart[0]->seller_id)) {
             $coupon_discount = $coupon->coupon_type == 'free_delivery' ? 0 : $coupon_discount;
         } else {
             $coupon_discount = 0;
@@ -73,8 +72,9 @@ class OrderManager
         }
 
         $orderTotal = $subTotal - $totalDiscountOnProduct - $coupon_discount;
+
         return [
-            'order_total' => $orderTotal
+            'order_total' => $orderTotal,
         ];
     }
 
@@ -98,7 +98,7 @@ class OrderManager
                     ]);
                     OrderDetail::where(['id' => $detail['id']])->update([
                         'is_stock_decreased' => 0,
-                        'delivery_status' => $status
+                        'delivery_status' => $status,
                     ]);
                 }
             }
@@ -121,7 +121,7 @@ class OrderManager
                     ]);
                     OrderDetail::where(['id' => $detail['id']])->update([
                         'is_stock_decreased' => 1,
-                        'delivery_status' => $status
+                        'delivery_status' => $status,
                     ]);
                 }
             }
@@ -138,7 +138,7 @@ class OrderManager
 
         OrderManager::getCheckOrCreateAdminWallet();
 
-        if (!SellerWallet::where('seller_id', $order['seller_id'])->first()) {
+        if (! SellerWallet::where('seller_id', $order['seller_id'])->first()) {
             DB::table('seller_wallets')->insert([
                 'seller_id' => $order['seller_id'],
                 'withdrawn' => 0,
@@ -170,7 +170,7 @@ class OrderManager
             }
 
             if (isset($payer_id) && isset($payment_receiver_id) && isset($paid_by) && isset($paid_to)) {
-                $transaction = new Transaction();
+                $transaction = new Transaction;
                 $transaction->order_id = $order->id;
                 $transaction->payment_for = 'coupon_discount';
                 $transaction->payer_id = $payer_id;
@@ -227,7 +227,7 @@ class OrderManager
             $seller_wallet->save();
             $admin_wallet->save();
 
-            $transaction = new Transaction();
+            $transaction = new Transaction;
             $transaction->order_id = $order->id;
             $transaction->payment_for = 'free_shipping_over_order_amount';
             $transaction->payer_id = $payer_id;
@@ -283,7 +283,7 @@ class OrderManager
 
             $wallet = AdminWallet::where('admin_id', 1)->first();
             $wallet->commission_earned += $commission;
-            if ($shipping_model === 'inhouse_shipping' && !$order['is_shipping_free']) {
+            if ($shipping_model === 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
             $wallet->save();
@@ -291,7 +291,7 @@ class OrderManager
             if ($order['seller_is'] == 'admin') {
                 $wallet = AdminWallet::where('admin_id', 1)->first();
                 $wallet->inhouse_earning += $order_amount;
-                if ($shipping_model === 'sellerwise_shipping' && !$order['is_shipping_free']) {
+                if ($shipping_model === 'sellerwise_shipping' && ! $order['is_shipping_free']) {
                     $wallet->delivery_charge_earned += $order['shipping_cost'];
                 }
                 $wallet->total_tax_collected += $order_summary['total_tax'];
@@ -301,7 +301,7 @@ class OrderManager
                 $wallet->total_tax_collected += $order_summary['total_tax'];
 
                 if ($shipping_model == 'sellerwise_shipping') {
-                    if (!$order['is_shipping_free']) {
+                    if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
                     }
                     $currentOrderAmount = $order['order_amount'];
@@ -340,7 +340,7 @@ class OrderManager
             }
             $wallet->pending_amount -= $currentOrderAmount;
 
-            if ($shipping_model == 'inhouse_shipping' && !$order['is_shipping_free']) {
+            if ($shipping_model == 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
             $wallet->save();
@@ -348,7 +348,7 @@ class OrderManager
             if ($order['seller_is'] == 'admin') {
                 $wallet = AdminWallet::where('admin_id', 1)->first();
                 $wallet->inhouse_earning += $order_amount;
-                if ($shipping_model == 'sellerwise_shipping' && !$order['is_shipping_free']) {
+                if ($shipping_model == 'sellerwise_shipping' && ! $order['is_shipping_free']) {
                     $wallet->delivery_charge_earned += $order['shipping_cost'];
                 }
             } else {
@@ -356,7 +356,7 @@ class OrderManager
                 $wallet->commission_given += $commission;
 
                 if ($shipping_model == 'sellerwise_shipping') {
-                    if (!$order['is_shipping_free']) {
+                    if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
                     }
                     $currentOrderAmount = ($order_amount - $commission) + $order_summary['total_tax'] + ($order['is_shipping_free'] ? 0 : $order['shipping_cost']);
@@ -377,23 +377,24 @@ class OrderManager
         }
     }
 
-    public static function getOrderAddressId(string|null $type = 'shipping_address', int|null $id = null): int|null
+    public static function getOrderAddressId(?string $type = 'shipping_address', ?int $id = null): ?int
     {
         $addressId = 0;
         if ($type == 'shipping_address') {
             $addressId = session('address_id') ? session('address_id') : 0;
-            if (!is_null($id) && !session()->has('address_id')) {
+            if (! is_null($id) && ! session()->has('address_id')) {
                 $addressId = $id;
             }
         }
 
         if ($type == 'billing_address') {
             $addressId = session('billing_address_id') ? session('billing_address_id') : 0;
-            if (!is_null($id) && !session()->has('billing_address_id')) {
+            if (! is_null($id) && ! session()->has('billing_address_id')) {
                 $addressId = $id;
             }
             $addressId = getWebConfig('billing_input_by_customer') ? $addressId : null;
         }
+
         return $addressId;
     }
 
@@ -420,10 +421,10 @@ class OrderManager
             ->whereDate('start_date', '<=', date('Y-m-d'))
             ->whereDate('expire_date', '>=', date('Y-m-d'))->first();
 
-        if (!$firstCoupon) {
+        if (! $firstCoupon) {
             return [
                 'status' => false,
-                'messages' => translate('invalid_coupon')
+                'messages' => translate('invalid_coupon'),
             ];
         }
 
@@ -433,7 +434,7 @@ class OrderManager
             if (Order::where(['customer_id' => $user['id']])->count() > 0) {
                 return [
                     'status' => false,
-                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user') . '!',
+                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user').'!',
                 ];
             }
         }
@@ -442,7 +443,7 @@ class OrderManager
         if (count($cartList) <= 0) {
             return [
                 'status' => false,
-                'messages' => translate('Please_add_item_to_cart')
+                'messages' => translate('Please_add_item_to_cart'),
             ];
         }
 
@@ -453,7 +454,7 @@ class OrderManager
         if ($coupon['customer_id'] != 0 && $coupon['customer_id'] != $user['id']) {
             return [
                 'status' => false,
-                'messages' => translate('coupon_not_valid')
+                'messages' => translate('coupon_not_valid'),
             ];
         }
 
@@ -471,10 +472,10 @@ class OrderManager
                     $couponVendorsApplicable = true;
                 }
             }
-            if (!$couponVendorsApplicable) {
+            if (! $couponVendorsApplicable) {
                 return [
                     'status' => false,
-                    'messages' => translate('coupon_not_applicable_to_selected_vendors')
+                    'messages' => translate('coupon_not_applicable_to_selected_vendors'),
                 ];
             }
         }
@@ -492,7 +493,7 @@ class OrderManager
             if ($onlyProductTotalAmount <= 0 || $couponDiscount > $onlyProductTotalAmount || $coupon['min_purchase'] > $onlyProductTotalAmount) {
                 return [
                     'status' => false,
-                    'messages' => translate('minimum_purchase_amount_not_reached_for_this_coupon.')
+                    'messages' => translate('minimum_purchase_amount_not_reached_for_this_coupon.'),
                 ];
             }
 
@@ -521,7 +522,7 @@ class OrderManager
             if ($discount <= 0) {
                 return [
                     'status' => false,
-                    'messages' => translate('Not_applicable_for_current_shipping_cost')
+                    'messages' => translate('Not_applicable_for_current_shipping_cost'),
                 ];
             }
         }
@@ -538,13 +539,13 @@ class OrderManager
                 'discount' => $discount,
                 'coupon_type' => $couponType,
                 'total_cart_amount' => $onlyProductTotalAmount,
-                'messages' => translate('coupon_applied_successfully') . '!'
+                'messages' => translate('coupon_applied_successfully').'!',
             ];
         }
 
         return [
             'status' => false,
-            'messages' => translate('coupon_not_valid')
+            'messages' => translate('coupon_not_valid'),
         ];
     }
 
@@ -556,7 +557,7 @@ class OrderManager
                 'discount' => 0,
                 'coupon_bearer' => 'inhouse',
                 'coupon_code' => 0,
-                'coupon_type' => NULL,
+                'coupon_type' => null,
             ];
         }
 
@@ -614,6 +615,7 @@ class OrderManager
         }
 
         $couponBearer = $coupon->coupon_bearer;
+
         return [
             'discount' => $discount,
             'coupon_bearer' => $couponBearer,
@@ -678,12 +680,13 @@ class OrderManager
         if (Order::find($orderDetailsId)) {
             $orderDetailsId = Order::orderBy('id', 'DESC')->first()->id + 1;
         }
+
         return $orderDetailsId;
     }
 
     public static function getCheckOrCreateAdminWallet(): void
     {
-        if (!AdminWallet::where('admin_id', 1)->first()) {
+        if (! AdminWallet::where('admin_id', 1)->first()) {
             DB::table('admin_wallets')->insert([
                 'admin_id' => 1,
                 'withdrawn' => 0,
@@ -703,8 +706,10 @@ class OrderManager
         if ($user != 'offline') {
             $referralCustomer = ReferralCustomer::where('user_id', $user['id'])->where('is_used', 0)->first();
             $isFirstOrder = Order::where(['customer_id' => $user['id'], 'order_status' => 'delivered', 'payment_status' => 'paid', 'order_type' => 'default_type'])->count();
+
             return $referralCustomer && $isFirstOrder <= 0 ? $referralCustomer : null;
         }
+
         return null;
     }
 
@@ -718,9 +723,9 @@ class OrderManager
             $expirationDate = Carbon::parse($referralCustomer->created_at);
             if ($type == 'day') {
                 $expirationDate->addDays($validity);
-            } else if ($type == 'week') {
+            } elseif ($type == 'week') {
                 $expirationDate->addWeeks($validity);
-            } else if ($type == 'month') {
+            } elseif ($type == 'month') {
                 $expirationDate->addMonths($validity);
             } else {
                 return 0;
@@ -733,8 +738,10 @@ class OrderManager
             if ($referralCustomer->customer_discount_amount_type === 'percentage') {
                 return ($groupAmount * $discountAmount) / 100;
             }
+
             return ($discountAmount * $groupAmount) / $totalAmount;
         }
+
         return 0;
     }
 
@@ -744,7 +751,7 @@ class OrderManager
         $refEarningExchangeRate = getWebConfig(name: 'ref_earning_exchange_rate') ?? 0;
         $order = Order::with(['customer', 'seller.shop', 'deliveryMan'])->where(['id' => $orderId])->first();
 
-        if (!$order['is_guest'] && $refEarningStatus == 1 && $order['order_status'] == 'delivered') {
+        if (! $order['is_guest'] && $refEarningStatus == 1 && $order['order_status'] == 'delivered') {
             $customer = User::where(['id' => $order['customer_id']])->first();
             $isFirstOrder = Order::where(['customer_id' => $order['customer_id'], 'order_status' => 'delivered', 'payment_status' => 'paid'])->count();
             $referredByUser = User::where(['id' => $customer['referred_by']])->first();
@@ -803,7 +810,7 @@ class OrderManager
 
             if ($shippingModel == 'inhouse_shipping' || $firstCartItem['seller_is'] == 'admin') {
                 $shippingType = $adminShipping;
-            } else if ($firstCartItem['seller_is'] != 'admin') {
+            } elseif ($firstCartItem['seller_is'] != 'admin') {
                 $shippingType = ShippingType::where(['seller_id' => $firstCartItem['seller_id']])->first();
             }
 
@@ -934,7 +941,8 @@ class OrderManager
     public static function getOrderAddData(int $orderId, string $orderGroupId, object|array $customerData = [], object|array $cartData = [], object|array $orderData = [], object|array $totalTax = []): array
     {
         $taxConfig = self::getTaxSystemType();
-        $adminCommission = (float)str_replace(",", "", Helpers::sales_commission_before_order($cartData['cart_group_id'], $cartData['coupon_discount']));
+        $adminCommission = (float) str_replace(',', '', Helpers::sales_commission_before_order($cartData['cart_group_id'], $cartData['coupon_discount']));
+
         return [
             'id' => $orderId,
             'verification_code' => rand(100000, 999999),
@@ -947,8 +955,8 @@ class OrderManager
             'order_status' => $orderData['order_status'],
             'payment_method' => $orderData['payment_method'],
             'transaction_ref' => $orderData['transaction_ref'] ?? null,
-            'payment_by' => $orderData['payment_by'] ?? NULL,
-            'payment_note' => $orderData['payment_note'] ?? NULL,
+            'payment_by' => $orderData['payment_by'] ?? null,
+            'payment_note' => $orderData['payment_note'] ?? null,
             'order_group_id' => $orderGroupId,
             'discount_amount' => $cartData['coupon_discount'],
             'discount_type' => $cartData['discount_type'],
@@ -999,7 +1007,7 @@ class OrderManager
             unset($product['reviews']);
             unset($product['translations']);
 
-            if (!isset($product['digital_variation'])) {
+            if (! isset($product['digital_variation'])) {
                 $allDigitalVariation = DigitalProductVariation::with(['storage'])->where(['product_id' => $cartSingleItem['product_id']])->get()->toArray() ?? [];
                 $product['digital_variation'] = $allDigitalVariation;
             }
@@ -1008,12 +1016,12 @@ class OrderManager
             if ($product['digital_product_type'] == 'ready_product' && $digitalProductVariation) {
                 $getStoragePath = Storage::where([
                     'data_id' => $digitalProductVariation['id'],
-                    "data_type" => "App\Models\DigitalProductVariation",
+                    'data_type' => "App\Models\DigitalProductVariation",
                 ])->first();
 
                 $product['digital_file_ready'] = $digitalProductVariation['file'];
                 $product['storage_path'] = $getStoragePath ? $getStoragePath['value'] : 'public';
-            } elseif ($product['digital_product_type'] == 'ready_product' && !empty($product['digital_file_ready'])) {
+            } elseif ($product['digital_product_type'] == 'ready_product' && ! empty($product['digital_file_ready'])) {
                 $product['storage_path'] = $product['digital_file_ready_storage_type'] ?? 'public';
             }
 
@@ -1033,7 +1041,7 @@ class OrderManager
                 'shipping_method_id' => null,
                 'payment_status' => 'unpaid',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ];
 
             $appliedTaxAmount = 0;
@@ -1069,7 +1077,7 @@ class OrderManager
                 ]);
             }
             Product::where(['id' => $product['id']])->update([
-                'current_stock' => $product['current_stock'] - $cartSingleItem['quantity']
+                'current_stock' => $product['current_stock'] - $cartSingleItem['quantity'],
             ]);
             $orderDetailsId = DB::table('order_details')->insertGetId($orderDetails);
 
@@ -1122,13 +1130,13 @@ class OrderManager
     {
         $loyaltyPointKeys = self::getLoyaltyPointKeys();
         $businessSettings = BusinessSetting::whereIn('type', $loyaltyPointKeys)->pluck('value', 'type')->toArray();
-        $loyaltyPointStatus = (int)($businessSettings['loyalty_point_status'] ?? 0);
-        $loyaltyPointForEachOrder = (int)($businessSettings['loyalty_point_for_each_order'] ?? 0);
+        $loyaltyPointStatus = (int) ($businessSettings['loyalty_point_status'] ?? 0);
+        $loyaltyPointForEachOrder = (int) ($businessSettings['loyalty_point_for_each_order'] ?? 0);
 
-        if (!empty($couponCode)) {
+        if (! empty($couponCode)) {
             $coupon = Coupon::where('code', $couponCode)->where('status', 1)->first();
             if ($couponDiscount > 0) {
-                $individualCouponDiscount = ((float)$couponDiscount * (float)$price) / $totalPrice;
+                $individualCouponDiscount = ((float) $couponDiscount * (float) $price) / $totalPrice;
                 $coupon['individual_coupon_discount'] = $individualCouponDiscount;
             }
             $orderRewardDetails = self::getOrderRewardDetails(
@@ -1137,18 +1145,18 @@ class OrderManager
                 orderId: $orderId,
                 orderDetailsId: $orderDetailsId
             );
-            if (!empty($orderRewardDetails)) {
+            if (! empty($orderRewardDetails)) {
                 OrderDetailsRewards::updateOrCreate([
                     'order_id' => $orderId,
                     'order_details_id' => $orderDetailsId,
-                    'reward_type' => 'coupon'
+                    'reward_type' => 'coupon',
                 ], $orderRewardDetails);
             }
         }
         if ($loyaltyPointStatus && $loyaltyPointForEachOrder) {
             if (isset($businessSettings['loyalty_point_item_purchase_point']) && $businessSettings['loyalty_point_item_purchase_point'] > 0) {
-                $loyaltyPointCredit = (float)($price * $businessSettings['loyalty_point_item_purchase_point'] / 100);
-                $individualLoyaltyPoint = ($loyaltyPointCredit * (float)$price) / $totalPrice;
+                $loyaltyPointCredit = (float) ($price * $businessSettings['loyalty_point_item_purchase_point'] / 100);
+                $individualLoyaltyPoint = ($loyaltyPointCredit * (float) $price) / $totalPrice;
                 $businessSettings['individual_loyalty_point'] = $individualLoyaltyPoint;
                 $orderRewardDetails = self::getOrderRewardDetails(
                     type: 'loyalty_point',
@@ -1156,11 +1164,11 @@ class OrderManager
                     orderId: $orderId,
                     orderDetailsId: $orderDetailsId
                 );
-                if (!empty($orderRewardDetails)) {
+                if (! empty($orderRewardDetails)) {
                     OrderDetailsRewards::updateOrCreate([
                         'order_id' => $orderId,
                         'order_details_id' => $orderDetailsId,
-                        'reward_type' => 'loyalty_point'
+                        'reward_type' => 'loyalty_point',
                     ], $orderRewardDetails);
                 }
             }
@@ -1301,13 +1309,13 @@ class OrderManager
 
         $notificationSent = false;
         foreach ($orderPlacedIds as $orderPlacedId) {
-            if (!$notificationSent && $user != 'offline') {
+            if (! $notificationSent && $user != 'offline') {
                 $getOrder = Order::where('id', $orderPlacedId)->first();
                 $referralUser = ReferralCustomer::where('user_id', $user['id'])->first();
                 if ($referralUser && $referralUser->is_used != 1 && $referralUser->ordered_notify != 1) {
                     $orderPlacedNotificationEvents[] = [
                         'notification' => true,
-                        'notificationData' => (object)[
+                        'notificationData' => (object) [
                             'key' => 'your_referred_customer_has_been_place_order',
                             'type' => 'promoter',
                             'order' => $getOrder,
@@ -1322,10 +1330,9 @@ class OrderManager
             ReferralCustomer::where('user_id', $user['id'])->update(['is_used' => 1]);
         }
 
-
         foreach ($orderPlacedNotificationEvents as $orderPlacedEventGroup) {
             foreach ($orderPlacedEventGroup as $orderPlacedEvent) {
-                if (!empty($orderPlacedEvent)) {
+                if (! empty($orderPlacedEvent)) {
                     event(new OrderPlacedEvent(notification: $orderPlacedEvent['notificationData']));
                 }
             }
@@ -1372,7 +1379,7 @@ class OrderManager
                 'reward_type' => 'coupon',
                 'reward_amount' => $data['individual_coupon_discount'] ?? 0,
                 'reward_details' => $data,
-                'reward_delivered' => 1
+                'reward_delivered' => 1,
             ];
         }
         if ($type === 'loyalty_point' && is_array($data) && isset($data['individual_loyalty_point'])) {
@@ -1382,9 +1389,10 @@ class OrderManager
                 'reward_type' => 'loyalty_point',
                 'reward_amount' => $data['individual_loyalty_point'] ?? 0,
                 'reward_details' => $data,
-                'reward_delivered' => 0
+                'reward_delivered' => 0,
             ];
         }
+
         return [];
     }
 
@@ -1433,7 +1441,7 @@ class OrderManager
             if ($seller) {
                 $orderPlacedNotificationEvents[] = [
                     'notification' => true,
-                    'notificationData' => (object)[
+                    'notificationData' => (object) [
                         'key' => 'new_order_message',
                         'type' => 'seller',
                         'order' => $order,
@@ -1445,7 +1453,7 @@ class OrderManager
             if ($order['payment_method'] != 'cash_on_delivery' && $order['payment_method'] != 'offline_payment') {
                 $orderPlacedNotificationEvents[] = [
                     'notification' => true,
-                    'notificationData' => (object)[
+                    'notificationData' => (object) [
                         'key' => 'confirmed',
                         'type' => 'customer',
                         'order' => $order,
@@ -1454,7 +1462,7 @@ class OrderManager
             } else {
                 $orderPlacedNotificationEvents[] = [
                     'notification' => true,
-                    'notificationData' => (object)[
+                    'notificationData' => (object) [
                         'key' => 'pending',
                         'type' => 'customer',
                         'order' => $order,
@@ -1462,6 +1470,7 @@ class OrderManager
                 ];
             }
         }
+
         return $orderPlacedNotificationEvents;
     }
 
@@ -1475,7 +1484,7 @@ class OrderManager
         if ($emailServicesSmtp['status'] == 1) {
             if ($customer == 'offline') {
                 $offlineUser = ShippingAddress::where('id', $vendorWiseCart['shipping_address_id'])->first();
-                if (!$offlineUser) {
+                if (! $offlineUser) {
                     $offlineUser = ShippingAddress::find($vendorWiseCart['billing_address_id']);
                 }
                 $email = $offlineUser['email'];
@@ -1501,7 +1510,7 @@ class OrderManager
                     'vendorName' => $vendorType == 'admin' ? getInHouseShopConfig(key: 'name') : $vendor?->shop?->name ?? getWebConfig('company_name'),
                     'shopId' => $vendor?->shop?->id ?? 0,
                     'attachmentPath' => self::storeInvoice($order['id']),
-                ]
+                ],
             ];
 
             $orderPlacedMailEvents[] = [
@@ -1515,12 +1524,12 @@ class OrderManager
                     'orderId' => $order['id'],
                     'vendorName' => $vendor?->f_name,
                     'adminName' => $vendor?->name,
-                ]
+                ],
             ];
         }
+
         return $orderPlacedMailEvents;
     }
-
 
     public static function getEditOrderNotificationInfo(string $vendorType, int $vendorId, object|array $order = [], object|array $data = [], mixed $customer = null): array
     {
@@ -1530,7 +1539,7 @@ class OrderManager
             if ($seller) {
                 $orderPlacedNotificationEvents[] = [
                     'notification' => true,
-                    'notificationData' => (object)[
+                    'notificationData' => (object) [
                         'key' => 'order_edit_message',
                         'type' => 'seller',
                         'order' => $order,
@@ -1541,24 +1550,26 @@ class OrderManager
         if ($customer != 'offline') {
             $orderPlacedNotificationEvents[] = [
                 'notification' => true,
-                'notificationData' => (object)[
+                'notificationData' => (object) [
                     'key' => 'order_edit_message',
                     'type' => 'customer',
                     'order' => $order,
                 ],
             ];
         }
+
         return $orderPlacedNotificationEvents;
     }
 
-
     public static function createWalletTransaction($user_id, float $amount, $transaction_type, $reference, $payment_data = []): bool|WalletTransaction
     {
-        if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) return false;
+        if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) {
+            return false;
+        }
         $user = User::find($user_id);
         $currentBalance = $user->wallet_balance;
 
-        $walletTransaction = new WalletTransaction();
+        $walletTransaction = new WalletTransaction;
         $walletTransaction->user_id = $user->id;
         $walletTransaction->transaction_id = \Str::uuid();
         $walletTransaction->reference = $reference;
@@ -1574,10 +1585,10 @@ class OrderManager
             if ($transaction_type == 'add_fund') {
                 $walletTransaction->admin_bonus = Helpers::add_fund_to_wallet_bonus(Convert::usd($amount ?? 0));
                 $addFundToWalletBonus = Helpers::add_fund_to_wallet_bonus(Convert::usd($amount ?? 0));
-            } else if ($transaction_type == 'loyalty_point') {
+            } elseif ($transaction_type == 'loyalty_point') {
                 $credit = (($amount / BusinessSetting::where('type', 'loyalty_point_exchange_rate')->first()->value) * Convert::default(1));
             }
-        } else if ($transaction_type == 'order_place') {
+        } elseif ($transaction_type == 'order_place') {
             $debit = $amount;
         }
 
@@ -1595,11 +1606,15 @@ class OrderManager
             $user->save();
             $walletTransaction->save();
             DB::commit();
-            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin'])) return $walletTransaction;
+            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin'])) {
+                return $walletTransaction;
+            }
+
             return true;
         } catch (Exception $ex) {
             info($ex);
             DB::rollback();
+
             return false;
         }
     }
@@ -1612,18 +1627,17 @@ class OrderManager
         $failedAddToCartCount = 0;
         $errorMessages = [];
 
-
         foreach ($orderProducts as $key => $orderProduct) {
             $productDetails = json_decode($orderProduct->product_details, true);
             $product = Product::active()->where(['id' => $orderProduct->product_id])->with(['digitalVariation'])->first();
-            if (!$product) {
-                $errorMessages[] = $productDetails['name'] ?? '' . translate(' currently_not_available');
+            if (! $product) {
+                $errorMessages[] = $productDetails['name'] ?? ''.translate(' currently_not_available');
             }
             if ($product) {
                 $productValid = true;
                 if (($product['product_type'] == 'physical') && (($product['current_stock'] < $orderProduct['qty']) || ($product['minimum_order_qty'] > $product['current_stock']))) {
                     $productValid = false;
-                    $errorMessages[] = $productDetails['name'] ?? '' . translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
+                    $errorMessages[] = $productDetails['name'] ?? ''.translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
                 }
                 if ($productValid) {
                     $color = null;
@@ -1636,7 +1650,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $variationKey => $var) {
                                 if ($variationKey != 'color') {
-                                    $choices['choice_' . $i] = $var;
+                                    $choices['choice_'.$i] = $var;
                                     $i++;
                                 }
                             }
@@ -1644,7 +1658,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $index => $var) {
                                 if ($var) {
-                                    $choices['choice_' . $i] = $var;
+                                    $choices['choice_'.$i] = $var;
                                 }
                                 $i++;
                             }
@@ -1656,13 +1670,13 @@ class OrderManager
                     $cartCheck = Cart::where([
                         'customer_id' => $user['id'],
                         'seller_id' => ($product->added_by == 'admin') ? 1 : $product->user_id,
-                        'seller_is' => $product->added_by
+                        'seller_is' => $product->added_by,
                     ])->first();
 
                     if (isset($cartCheck)) {
                         $cartGroupId = $cartCheck['cart_group_id'];
                     } else {
-                        $cartGroupId = $user['id'] . '-' . Str::random(5) . '-' . time();
+                        $cartGroupId = $user['id'].'-'.Str::random(5).'-'.time();
                     }
                     // Generate Group ID End
 
@@ -1674,7 +1688,7 @@ class OrderManager
                                 $price = json_decode($product->variation)[$i]->price;
                                 if (json_decode($product->variation)[$i]->qty < $orderProduct->qty) {
                                     $productValid = false;
-                                    $errorMessages[] = $productDetails['name'] . translate(' variation does not have enough stock to fulfill the requested quantity.');
+                                    $errorMessages[] = $productDetails['name'].translate(' variation does not have enough stock to fulfill the requested quantity.');
                                 }
                             }
                         }
@@ -1683,11 +1697,11 @@ class OrderManager
                     }
 
                     if ($product->product_type == 'digital') {
-                        if ($product->digital_product_type == "ready_after_sell") {
+                        if ($product->digital_product_type == 'ready_after_sell') {
                             $price = $product->unit_price;
-                        } elseif ($product->digital_product_type == "ready_product" && !empty($product->digital_file_ready)) {
+                        } elseif ($product->digital_product_type == 'ready_product' && ! empty($product->digital_file_ready)) {
                             $price = $product->unit_price;
-                        } elseif ($product->digital_product_type == "ready_product" && empty($product->digital_file_ready) && $product->digitalVariation) {
+                        } elseif ($product->digital_product_type == 'ready_product' && empty($product->digital_file_ready) && $product->digitalVariation) {
                             $productValid = false;
                             $errorMessages[] = translate('This digital ready product is missing its associated file. Please upload the ready file before proceeding.');
                             foreach ($product->digitalVariation as $digitalVariation) {
@@ -1704,14 +1718,14 @@ class OrderManager
                         $cartExist = Cart::where(['customer_id' => $user['id'], 'variations' => $orderProduct->variation, 'product_id' => $orderProduct->product_id])->first();
                         $orderProductQuantity = $orderProduct->qty < $product['minimum_order_qty'] ? $product['minimum_order_qty'] : $orderProduct->qty;
 
-                        if (!$cartExist) {
-                            $cart = new Cart();
+                        if (! $cartExist) {
+                            $cart = new Cart;
                             $cart['cart_group_id'] = $cartGroupId;
                             $cart['color'] = $color;
                             $cart['product_id'] = $orderProduct->product_id;
                             $cart['product_type'] = $product->product_type;
                             $cart['choices'] = json_encode($choices);
-                            $cart['variations'] = !is_null($color) || !empty($choices) ? $orderProduct->variation : json_encode([]);
+                            $cart['variations'] = ! is_null($color) || ! empty($choices) ? $orderProduct->variation : json_encode([]);
                             $cart['variant'] = $orderProduct->variant;
                             $cart['customer_id'] = $user->id ?? 0;
                             $cart['quantity'] = $orderProductQuantity;
@@ -1768,7 +1782,7 @@ class OrderManager
             'order_product_count' => $orderProductCount,
             'add_to_cart_count' => $addToCartCount,
             'failedAddToCartCount' => $failedAddToCartCount,
-            'errorMessages' => $errorMessages
+            'errorMessages' => $errorMessages,
         ];
     }
 
@@ -1815,9 +1829,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $cartItem->allProducts->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $cartItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1840,9 +1854,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $seller == 'admin' ? getInHouseShopConfig(key: 'name') : $cartGroupFirstItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1856,7 +1870,7 @@ class OrderManager
             'status' => $status,
             'messages' => $messages,
             'shippingCost' => $shippingCost ?? 0,
-            'cart_group_id' => $cart_group_id ?? null
+            'cart_group_id' => $cart_group_id ?? null,
         ];
     }
 
@@ -1879,7 +1893,7 @@ class OrderManager
 
             if ($minimumOrderAmount > $totalAmount) {
                 $shopIdentity = $product->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $product->seller->shop->name;
-                $message = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
+                $message = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
             }
         }
 
@@ -1899,13 +1913,13 @@ class OrderManager
             'percentage' => 0, // completed percentage
             'amount_need' => 0, // need amount for free delivery
             'shipping_cost_saved' => 0,
-            'cart_id' => $cart_group_id
+            'cart_id' => $cart_group_id,
         ];
 
-        $freeDeliveryData['status'] = (int)(getWebConfig(name: 'free_delivery_status') ?? 0);
-        $freeDeliveryData['responsibility'] = (string)getWebConfig(name: 'free_delivery_responsibility');
-        $freeDeliveryOverAmount = (float)getWebConfig(name: 'free_delivery_over_amount');
-        $freeDeliveryOverAmountSeller = (float)getWebConfig(name: 'free_delivery_over_amount_seller');
+        $freeDeliveryData['status'] = (int) (getWebConfig(name: 'free_delivery_status') ?? 0);
+        $freeDeliveryData['responsibility'] = (string) getWebConfig(name: 'free_delivery_responsibility');
+        $freeDeliveryOverAmount = (float) getWebConfig(name: 'free_delivery_over_amount');
+        $freeDeliveryOverAmountSeller = (float) getWebConfig(name: 'free_delivery_over_amount_seller');
 
         if ($freeDeliveryData['status'] && $cart_group_id) {
             $getCartList = Cart::whereHas('product', function ($query) {
@@ -1955,6 +1969,7 @@ class OrderManager
             $totalDiscountOnProduct += $detail->discount;
         }
         $totalShippingCost = $order['shipping_cost'];
+
         return [
             'subtotal' => $subTotal,
             'total_tax' => $totalTax,
@@ -2002,6 +2017,7 @@ class OrderManager
             $rate = (($orderDetails['price'] - $orderDetails->discount) * $orderDetails['qty'] * 100) / $totalProductPriceWithOutDiscount;
         }
         $orderReferralDiscount = ($order?->refer_and_earn_discount ?? 0);
+
         return $orderReferralDiscount > 0 ? ($rate * $orderReferralDiscount) / 100 : 0;
     }
 
@@ -2015,6 +2031,7 @@ class OrderManager
         }
         $subtotal = ($orderDetails->price * $orderDetails->qty) - $orderDetails->discount + $orderDetails->tax;
         $couponDiscount = ($orderDetails->discount_amount * $subtotal) / $totalProductPrice;
+
         return $subtotal - $couponDiscount - OrderManager::getReferDiscountAmountForSingleOrderDetails($orderDetailsId);
     }
 
@@ -2023,9 +2040,9 @@ class OrderManager
         $order = Order::with('seller')->with('shipping')->where('id', $id)->first();
         $invoiceSettings = getWebConfig('invoice_settings');
         $mpdf_view = \View::make(VIEW_FILE_NAMES['order_invoice'], compact('order', 'invoiceSettings'));
+
         return self::storePdf(view: $mpdf_view, filePrefix: 'order_invoice_', filePostfix: $order['id'], pdfType: 'invoice', requestFrom: 'web');
     }
-
 
     public static function checkValidationForCheckoutPages(Request $request): array
     {
@@ -2084,14 +2101,14 @@ class OrderManager
                 return $query->active();
             }])->groupBy('cart_group_id')->where(['cart_group_id' => $groupId, 'is_checked' => 1])->get();
             $productStockCheck = CartManager::product_stock_check($cartList);
-            if (!$productStockCheck) {
+            if (! $productStockCheck) {
                 $productStockStatus = false;
             }
 
             foreach ($cartList as $cartKey => $cart) {
                 if ($cartKey == 0) {
-                    $vendorType = $cart->seller_is == "seller" ? 'vendor' : 'inhouse';
-                    $vendorInfo = $cart->seller_is == "seller" ? Shop::where('seller_id', $cart?->seller_id)->first() : null;
+                    $vendorType = $cart->seller_is == 'seller' ? 'vendor' : 'inhouse';
+                    $vendorInfo = $cart->seller_is == 'seller' ? Shop::where('seller_id', $cart?->seller_id)->first() : null;
                     $temporaryClose = checkVendorAbility(type: $vendorType, status: 'temporary_close', vendor: $vendorInfo);
                     $vacationStatus = checkVendorAbility(type: $vendorType, status: 'vacation_status', vendor: $vendorInfo);
                     if ($temporaryClose || $vacationStatus) {
@@ -2120,7 +2137,7 @@ class OrderManager
                         if ($shippingMethod == 'inhouse_shipping') {
                             $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                             if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                $message[] = translate('shipping_Not_Available_for') . ' ' . getWebConfig(name: 'company_name');
+                                $message[] = translate('shipping_Not_Available_for').' '.getWebConfig(name: 'company_name');
                                 $response['status'] = 0;
                                 $response['redirect'] = route('shop-cart');
                             }
@@ -2128,14 +2145,14 @@ class OrderManager
                             if ($cart->seller_is == 'admin') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for') . ' ' . getInHouseShopConfig(key: 'name');
+                                    $message[] = translate('shipping_Not_Available_for').' '.getInHouseShopConfig(key: 'name');
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
-                            } else if ($cart->seller_is == 'seller') {
+                            } elseif ($cart->seller_is == 'seller') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_id' => $cart->seller_id, 'creator_type' => 'seller'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for') . ' ' . $cart->seller->shop->name;
+                                    $message[] = translate('shipping_Not_Available_for').' '.$cart->seller->shop->name;
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
@@ -2144,7 +2161,7 @@ class OrderManager
 
                         if ($sellerShippingCount > 0 && $shippingMethod == 'inhouse_shipping' && $inhouseShippingMsgCount < 1) {
                             $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
-                            if (!isset($cartShipping)) {
+                            if (! isset($cartShipping)) {
                                 $response['status'] = 0;
                                 $response['errorType'] = 'empty-shipping';
                                 $response['redirect'] = route('shop-cart');
@@ -2153,12 +2170,12 @@ class OrderManager
                             $inhouseShippingMsgCount++;
                         } elseif ($sellerShippingCount > 0 && $shippingMethod != 'inhouse_shipping') {
                             $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
-                            if (!isset($cartShipping)) {
+                            if (! isset($cartShipping)) {
                                 $response['status'] = 0;
                                 $response['errorType'] = 'empty-shipping';
                                 $response['redirect'] = route('shop-cart');
                                 $shopIdentity = $cart->seller_is == 'admin' ? getInHouseShopConfig(key: 'name') : $cart->seller->shop->name;
-                                $message[] = translate('select') . ' ' . $shopIdentity . ' ' . translate('shipping_method');
+                                $message[] = translate('select').' '.$shopIdentity.' '.translate('shipping_method');
                             }
                         }
                     }
@@ -2172,13 +2189,14 @@ class OrderManager
             $response['redirect'] = route('shop-cart');
         }
 
-        if (!$productStockStatus) {
+        if (! $productStockStatus) {
             $message[] = translate('Please_remove_this_unavailable_product_for_continue');
             $response['status'] = 0;
             $response['redirect'] = route('shop-cart');
         }
 
         $response['message'] = $message;
+
         return $response ?? [];
     }
 
@@ -2204,6 +2222,7 @@ class OrderManager
                 break;
             }
         }
+
         return $response ?? [];
     }
 
@@ -2248,9 +2267,9 @@ class OrderManager
         $totalAmount = ($total + $shipping - $extraDiscount - $couponDiscount - $referAndEarnDiscount + $order['total_tax_amount']);
 
         if ($order['edit_due_amount'] > 0) {
-            $editedTotalPaidAmount =  $totalAmount - $order['edit_due_amount'];
-        } else if ($order['edit_return_amount'] > 0) {
-            $editedTotalPaidAmount =  $totalAmount + $order['edit_return_amount'];
+            $editedTotalPaidAmount = $totalAmount - $order['edit_due_amount'];
+        } elseif ($order['edit_return_amount'] > 0) {
+            $editedTotalPaidAmount = $totalAmount + $order['edit_return_amount'];
         }
 
         return [
@@ -2284,7 +2303,7 @@ class OrderManager
 
         $order = Order::where('id', $orderId)->select('created_at')->first();
 
-        if (!$isOrderOnlyDigital) {
+        if (! $isOrderOnlyDigital) {
             $orderTracking = [
                 'order_placed' => ['key' => 'order_placed', 'label' => translate('order_placed'), 'status' => true, 'date_time' => $order->created_at],
                 'order_confirmed' => ['key' => 'order_confirmed', 'label' => translate('order_confirmed'), 'status' => false, 'date_time' => null],
@@ -2350,7 +2369,7 @@ class OrderManager
             $lastActualCompletedIndex = -1;
 
             for ($i = 0; $i < $terminalIndex; $i++) {
-                if (!in_array($statusKeys[$i], $terminalStatuses)
+                if (! in_array($statusKeys[$i], $terminalStatuses)
                     && $statusKeys[$i] !== 'order_delivered'
                     && isset($orderTracking[$statusKeys[$i]])
                     && is_array($orderTracking[$statusKeys[$i]])
@@ -2367,23 +2386,21 @@ class OrderManager
                     if (is_array($orderTracking[$statusKeys[$j]])
                         && $orderTracking[$statusKeys[$j]]['status'] === false
                         && $statusKeys[$j] !== 'order_delivered'
-                        && !in_array($statusKeys[$j], $terminalStatuses)) {
+                        && ! in_array($statusKeys[$j], $terminalStatuses)) {
                         $orderTracking[$statusKeys[$j]]['status'] = true;
                         $orderTracking[$statusKeys[$j]]['date_time'] = $backfillDateTime;
                     }
                 }
             }
 
-
             if ($lastActualCompletedIndex >= 0) {
                 for ($j = $lastActualCompletedIndex + 1; $j < $terminalIndex; $j++) {
-                    if ($statusKeys[$j] !== 'order_delivered' && !in_array($statusKeys[$j], $terminalStatuses)) {
+                    if ($statusKeys[$j] !== 'order_delivered' && ! in_array($statusKeys[$j], $terminalStatuses)) {
                         $orderTracking[$statusKeys[$j]]['status'] = false;
                         $orderTracking[$statusKeys[$j]]['date_time'] = null;
                     }
                 }
             }
-
 
             foreach ($terminalStatuses as $terminalStatus) {
                 if ($terminalStatus !== $activeTerminalStatus && isset($orderTracking[$terminalStatus])) {
@@ -2413,7 +2430,6 @@ class OrderManager
             }
         }
 
-
         $withDate = [];
         $withoutDate = [];
         foreach ($statusKeys as $statusKey) {
@@ -2426,7 +2442,7 @@ class OrderManager
 
         return [
             'history' => $withDate + $withoutDate,
-            'is_digital_order' => $isOrderOnlyDigital
+            'is_digital_order' => $isOrderOnlyDigital,
         ];
     }
 
@@ -2469,14 +2485,16 @@ class OrderManager
             }
         }
     }
-    public static function sendPushNotificationAfterDuePayment($order):void{
+
+    public static function sendPushNotificationAfterDuePayment($order): void
+    {
         $orderEditNotificationEvent = [];
         if ($order['seller_is'] == 'seller') {
             $seller = Seller::find($order['seller_id']);
             if ($seller) {
                 $orderEditNotificationEvent[] = [
                     'notification' => true,
-                    'notificationData' => (object)[
+                    'notificationData' => (object) [
                         'key' => 'order_edit_due_payment_message',
                         'type' => 'seller',
                         'order' => $order,
@@ -2486,7 +2504,7 @@ class OrderManager
         }
 
         foreach ($orderEditNotificationEvent as $orderEditDuePaymentEvent) {
-            if (!empty($orderEditDuePaymentEvent)) {
+            if (! empty($orderEditDuePaymentEvent)) {
                 event(new OrderEditDuePaymentEvent(notification: $orderEditDuePaymentEvent['notificationData']));
             }
         }

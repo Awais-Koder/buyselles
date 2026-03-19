@@ -33,7 +33,7 @@ class VendorOtherSetupRequest extends FormRequest
         ];
 
         $shop = Shop::where(['seller_id' => auth('seller')->id()])->first();
-        if ($shop && !empty($shop['tin_expire_date']) && Carbon::parse($this['tin_expire_date']) != Carbon::parse($shop['tin_expire_date'])) {
+        if ($shop && ! empty($shop['tin_expire_date']) && Carbon::parse($this['tin_expire_date']) != Carbon::parse($shop['tin_expire_date'])) {
             $data += [
                 'tin_expire_date' => 'nullable|date|after_or_equal:today',
             ];

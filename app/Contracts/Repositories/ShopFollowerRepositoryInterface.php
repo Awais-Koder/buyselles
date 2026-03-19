@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface ShopFollowerRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface ShopFollowerRepositoryInterface extends RepositoryInterface {}

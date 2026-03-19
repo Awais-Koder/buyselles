@@ -3,82 +3,77 @@
 namespace App\Http\Controllers\Admin\Vendor;
 
 use App\Contracts\Repositories\AdminRepositoryInterface;
-use App\Http\Requests\Admin\VendorAddRequest;
-use App\Services\OrderService;
-use Exception;
+use App\Contracts\Repositories\DeliveryManRepositoryInterface;
+use App\Contracts\Repositories\DeliveryZipCodeRepositoryInterface;
+use App\Contracts\Repositories\OrderRepositoryInterface;
+use App\Contracts\Repositories\OrderTransactionRepositoryInterface;
+use App\Contracts\Repositories\ProductRepositoryInterface;
+use App\Contracts\Repositories\ReviewRepositoryInterface;
+use App\Contracts\Repositories\ShippingAddressRepositoryInterface;
+use App\Contracts\Repositories\ShopRepositoryInterface;
+use App\Contracts\Repositories\StockClearanceProductRepositoryInterface;
+use App\Contracts\Repositories\StockClearanceSetupRepositoryInterface;
+use App\Contracts\Repositories\VendorRepositoryInterface;
+use App\Contracts\Repositories\VendorWalletRepositoryInterface;
+use App\Contracts\Repositories\WithdrawRequestRepositoryInterface;
 use App\Enums\WebConfigKey;
-use App\Traits\CommonTrait;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Services\ShopService;
-use App\Traits\PaginatorTrait;
-use App\Services\VendorService;
+use App\Events\VendorRegistrationEvent;
+use App\Events\WithdrawStatusUpdateEvent;
 use App\Exports\VendorListExport;
-use Illuminate\Http\JsonResponse;
-use App\Traits\EmailTemplateTrait;
-use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Traits\PushNotificationTrait;
-use Illuminate\Http\RedirectResponse;
 use App\Exports\VendorOrderListExport;
 use App\Exports\VendorWithdrawRequest;
-use App\Events\VendorRegistrationEvent;
 use App\Http\Controllers\BaseController;
-use App\Events\WithdrawStatusUpdateEvent;
+use App\Http\Requests\Admin\VendorAddRequest;
+use App\Services\OrderService;
+use App\Services\ShopService;
+use App\Services\VendorService;
+use App\Traits\CommonTrait;
+use App\Traits\EmailTemplateTrait;
+use App\Traits\PaginatorTrait;
+use App\Traits\PushNotificationTrait;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
-use App\Contracts\Repositories\ShopRepositoryInterface;
-use App\Contracts\Repositories\OrderRepositoryInterface;
+use Exception;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use App\Contracts\Repositories\ReviewRepositoryInterface;
-use App\Contracts\Repositories\VendorRepositoryInterface;
-use App\Contracts\Repositories\ProductRepositoryInterface;
-use App\Enums\ExportFileNames\Admin\Vendor as VendorExport;
-use App\Contracts\Repositories\DeliveryManRepositoryInterface;
-use App\Contracts\Repositories\VendorWalletRepositoryInterface;
-use App\Contracts\Repositories\DeliveryZipCodeRepositoryInterface;
-use App\Contracts\Repositories\ShippingAddressRepositoryInterface;
-use App\Contracts\Repositories\WithdrawRequestRepositoryInterface;
-use App\Contracts\Repositories\OrderTransactionRepositoryInterface;
-use App\Contracts\Repositories\StockClearanceSetupRepositoryInterface;
-use App\Contracts\Repositories\StockClearanceProductRepositoryInterface;
 
 class VendorController extends BaseController
 {
-    use PaginatorTrait;
     use CommonTrait;
-    use PushNotificationTrait;
     use EmailTemplateTrait;
+    use PaginatorTrait;
+    use PushNotificationTrait;
     use VatTaxManagement;
 
     public function __construct(
-        private readonly VendorRepositoryInterface                $vendorRepo,
-        private readonly OrderRepositoryInterface                 $orderRepo,
-        private readonly ProductRepositoryInterface               $productRepo,
-        private readonly ReviewRepositoryInterface                $reviewRepo,
-        private readonly DeliveryManRepositoryInterface           $deliveryManRepo,
-        private readonly OrderTransactionRepositoryInterface      $orderTransactionRepo,
-        private readonly ShippingAddressRepositoryInterface       $shippingAddressRepo,
-        private readonly DeliveryZipCodeRepositoryInterface       $deliveryZipCodeRepo,
-        private readonly WithdrawRequestRepositoryInterface       $withdrawRequestRepo,
-        private readonly VendorWalletRepositoryInterface          $vendorWalletRepo,
-        private readonly ShopRepositoryInterface                  $shopRepo,
-        private readonly VendorService                            $vendorService,
-        private readonly ShopService                              $shopService,
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly ReviewRepositoryInterface $reviewRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
+        private readonly OrderTransactionRepositoryInterface $orderTransactionRepo,
+        private readonly ShippingAddressRepositoryInterface $shippingAddressRepo,
+        private readonly DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo,
+        private readonly WithdrawRequestRepositoryInterface $withdrawRequestRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
+        private readonly VendorService $vendorService,
+        private readonly ShopService $shopService,
         private readonly StockClearanceProductRepositoryInterface $stockClearanceProductRepo,
-        private readonly StockClearanceSetupRepositoryInterface   $stockClearanceSetupRepo,
-        private readonly AdminRepositoryInterface                 $adminRepo,
-    )
-    {
-    }
+        private readonly StockClearanceSetupRepositoryInterface $stockClearanceSetupRepo,
+        private readonly AdminRepositoryInterface $adminRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $orderBy = $request['sort_by'] == 'orders_count' ? ['orders_count' => 'desc'] : ['id' => 'desc'];
 
@@ -95,9 +90,9 @@ class VendorController extends BaseController
             relations: ['orders', 'product', 'shop', 'wallet'],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
         );
+
         return view('admin-views.vendor.index', compact('vendors', 'current_date'));
     }
-
 
     public function getAddView(Request $request): View
     {
@@ -129,6 +124,7 @@ class VendorController extends BaseController
             event(new VendorRegistrationEvent(email: $request['email'], data: $data));
         } catch (Exception $e) {
         }
+
         return response()->json(['message' => translate('vendor_added_successfully')]);
     }
 
@@ -136,16 +132,16 @@ class VendorController extends BaseController
     {
         $vendor = $this->vendorRepo->getFirstWhere(params: ['id' => $request['id']]);
         $this->vendorRepo->update(id: $request['id'], data: ['status' => $request['status']]);
-        if ($request['status'] == "approved") {
+        if ($request['status'] == 'approved') {
             ToastMagic::success(translate('Vendor_has_been_approved_successfully'));
-        } else if ($request['status'] == "rejected") {
+        } elseif ($request['status'] == 'rejected') {
             ToastMagic::info(translate('Vendor_has_been_rejected_successfully'));
-        } else if ($request['status'] == "suspended") {
+        } elseif ($request['status'] == 'suspended') {
             $this->vendorRepo->update(id: $request['id'], data: ['auth_token' => Str::random(80)]);
             ToastMagic::info(translate('Vendor_has_been_suspended_successfully'));
         }
         if ($vendor['status'] == 'pending') {
-            if ($request['status'] == "approved") {
+            if ($request['status'] == 'approved') {
                 $data = [
                     'vendorName' => $vendor['f_name'],
                     'status' => 'approved',
@@ -154,7 +150,7 @@ class VendorController extends BaseController
                     'userType' => 'vendor',
                     'templateName' => 'registration-approved',
                 ];
-            } elseif ($request['status'] == "rejected") {
+            } elseif ($request['status'] == 'rejected') {
                 $data = [
                     'vendorName' => $vendor['f_name'],
                     'status' => 'denied',
@@ -165,7 +161,7 @@ class VendorController extends BaseController
                 ];
             }
         } else {
-            if ($request['status'] == "suspended") {
+            if ($request['status'] == 'suspended') {
                 $data = [
                     'vendorName' => $vendor['f_name'],
                     'status' => 'suspended',
@@ -186,6 +182,7 @@ class VendorController extends BaseController
             }
         }
         event(new VendorRegistrationEvent(email: $vendor['email'], data: $data));
+
         return back();
     }
 
@@ -206,6 +203,7 @@ class VendorController extends BaseController
             'active' => $active,
             'inactive' => $inactive,
         ];
+
         return Excel::download(new VendorListExport($data), 'Seller-list.xlsx');
     }
 
@@ -233,6 +231,7 @@ class VendorController extends BaseController
             'statusArray' => $statusArray,
             'orders' => $orders,
         ];
+
         return Excel::download(new VendorOrderListExport($data), 'Order-List.xlsx');
     }
 
@@ -241,10 +240,12 @@ class VendorController extends BaseController
 
         if ($request['status'] == 1 && $request['commission'] == null) {
             ToastMagic::error(translate('you_did_not_set_commission_percentage_field'));
+
             return back();
         }
         $this->vendorRepo->update(id: $id, data: ['sales_commission_percentage' => $request['commission_status'] == 1 ? $request['commission'] : null]);
         ToastMagic::success(translate('Commission_percentage_for_this_seller_has_been_updated'));
+
         return back();
     }
 
@@ -261,8 +262,9 @@ class VendorController extends BaseController
             relations: ['shipping', 'customer'],
         );
 
-        if (!$order) {
+        if (! $order) {
             ToastMagic::error(translate('Order_not_found'));
+
             return redirect()->back();
         }
 
@@ -273,7 +275,7 @@ class VendorController extends BaseController
             }
         }
         $shipping_method = getWebConfig(name: 'shipping_method');
-        $delivery_men = $this->deliveryManRepo->getListWhereIn(filters: ['is_active' => 1, 'seller_id' => $order['seller_id'], 'shipping_method' => $shipping_method], dataLimit: 'all',);
+        $delivery_men = $this->deliveryManRepo->getListWhereIn(filters: ['is_active' => 1, 'seller_id' => $order['seller_id'], 'shipping_method' => $shipping_method], dataLimit: 'all');
         $isOrderOnlyDigital = $orderService->getCheckIsOrderOnlyDigital(order: $order);
         $shipping_address = $this->shippingAddressRepo->getFirstWhere(params: ['id' => $order['shipping_address']]);
         $total_delivered = $this->orderRepo->getListWhere(
@@ -291,14 +293,15 @@ class VendorController extends BaseController
         } else {
             $orderCount = $this->orderRepo->getListWhereCount(filters: ['customer_id' => $order['customer_id'], 'order_type' => 'POS']);
         }
-        return view('admin-views.vendor.order-details', compact('order', 'seller_id', 'delivery_men', 'isOrderOnlyDigital','linked_orders', 'physical_product',
+
+        return view('admin-views.vendor.order-details', compact('order', 'seller_id', 'delivery_men', 'isOrderOnlyDigital', 'linked_orders', 'physical_product',
             'shipping_address', 'total_delivered', 'countries', 'zip_codes', 'zip_restrict_status', 'country_restrict_status', 'orderCount'));
     }
 
     public function getView(Request $request, $id, $tab = null): View|RedirectResponse
     {
         $taxData = $this->getTaxSystemType();
-        $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+        $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
 
         $seller = $this->vendorRepo->getFirstWhere(
             params: ['id' => $id, 'withCount' => ['product', 'orders' => function ($query) use ($id) {
@@ -313,7 +316,7 @@ class VendorController extends BaseController
             }]
         );
 
-        if (!$seller) {
+        if (! $seller) {
             return redirect()->route('admin.vendors.vendor-list');
         }
         $seller?->product?->map(function ($product) {
@@ -347,22 +350,23 @@ class VendorController extends BaseController
         $seller['average_rating'] = $seller['total_rating'] / ($seller['rating_count'] == 0 ? 1 : $seller['rating_count']);
         $seller['average_rating'] = $seller['total_rating'] / ($seller['rating_count'] == 0 ? 1 : $seller['rating_count']);
 
-        if (!isset($seller)) {
+        if (! isset($seller)) {
             ToastMagic::error(translate('vendor_not_found_It_may_be_deleted'));
+
             return back();
         }
 
         if ($tab == 'order') {
             return $this->getOrderListTabView(request: $request, seller: $seller);
-        } else if ($tab == 'product') {
+        } elseif ($tab == 'product') {
             return $this->getProductListTabView(request: $request, seller: $seller);
-        } else if ($tab == 'setting') {
+        } elseif ($tab == 'setting') {
             return $this->getSettingListTabView(request: $request, seller: $seller, id: $id);
-        } else if ($tab == 'transaction') {
+        } elseif ($tab == 'transaction') {
             return $this->getTransactionListTabView(request: $request, seller: $seller);
-        } else if ($tab == 'review') {
+        } elseif ($tab == 'review') {
             return $this->getReviewListTabView(request: $request, seller: $seller);
-        } else if ($tab == 'clearance_sale') {
+        } elseif ($tab == 'clearance_sale') {
             return $this->getClearanceSaleTabView(request: $request, seller: $seller);
         }
 
@@ -400,7 +404,7 @@ class VendorController extends BaseController
     public function getProductListTabView(Request $request, $seller): View
     {
         $taxData = $this->getTaxSystemType();
-        $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+        $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
 
         $products = $this->productRepo->getListWhere(
             orderBy: ['id' => 'desc'],
@@ -409,6 +413,7 @@ class VendorController extends BaseController
             relations: ['translations'],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
         );
+
         return view('admin-views.vendor.view.product', [
             'seller' => $seller,
             'products' => $products,
@@ -446,6 +451,7 @@ class VendorController extends BaseController
             $this->vendorRepo->update(id: $id, data: ['pos_status' => $request->get('seller_pos', 0)]);
             ToastMagic::success(translate('vendor_pos_permission_updated'));
         }
+
         return redirect()->back();
     }
 
@@ -454,7 +460,7 @@ class VendorController extends BaseController
         $filters = [
             'seller_is' => 'seller',
             'seller_id' => $seller['id'],
-            'status' => $request['status'] ?? 'all'
+            'status' => $request['status'] ?? 'all',
 
         ];
         $transactions = $this->orderTransactionRepo->getListWhere(
@@ -464,6 +470,7 @@ class VendorController extends BaseController
             relations: ['order.customer'],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
+
         return view('admin-views.vendor.view.transaction', compact('seller', 'transactions'));
     }
 
@@ -475,7 +482,7 @@ class VendorController extends BaseController
                 filters: ['added_by' => 'seller', 'seller_id' => $seller['id']],
                 dataLimit: 'all')->pluck('id')->toArray();
             $filtersBy = [
-                'product_id' => !empty($product_id) ? $product_id : [0],
+                'product_id' => ! empty($product_id) ? $product_id : [0],
             ];
 
             $reviews = $this->reviewRepo->getListWhereIn(
@@ -492,6 +499,7 @@ class VendorController extends BaseController
                 relations: ['product'],
                 dataLimit: getWebConfig(name: 'pagination_limit'));
         }
+
         return view('admin-views.vendor.view.review', [
             'seller' => $seller,
             'reviews' => $reviews,
@@ -508,6 +516,7 @@ class VendorController extends BaseController
             filters: ['added_by' => 'vendor', 'user_id' => $seller->id],
             relations: ['product']
         );
+
         return view('admin-views.vendor.view.clearance_sale', [
             'seller' => $seller,
             'stockClearanceProduct' => $stockClearanceProduct,
@@ -521,9 +530,11 @@ class VendorController extends BaseController
         if ($withdrawRequest) {
             $withdrawalMethod = is_array($withdrawRequest['withdrawal_method_fields']) ? $withdrawRequest['withdrawal_method_fields'] : json_decode($withdrawRequest['withdrawal_method_fields']);
             $direction = session('direction');
+
             return view('admin-views.vendor.withdraw-view', compact('withdrawRequest', 'withdrawalMethod', 'direction'));
         }
         ToastMagic::error(translate('withdraw_request_not_found'));
+
         return back();
     }
 
@@ -537,6 +548,7 @@ class VendorController extends BaseController
             relations: ['seller'],
             dataLimit: getWebConfig(name: 'pagination_limit')
         );
+
         return view('admin-views.vendor.withdraw', compact('withdrawRequests'));
     }
 
@@ -559,7 +571,7 @@ class VendorController extends BaseController
             $query->status = $query->approved == 0 ? 'Pending' : ($query->approved == 1 ? 'Approved' : 'Denied');
             $query->note = $query->transaction_note;
             $query->withdraw_method_name = isset($query->withdraw_method) ? $query->withdraw_method->method_name : '';
-            if (!empty($query->withdrawal_method_fields)) {
+            if (! empty($query->withdrawal_method_fields)) {
                 $withdrawal_method_fields = is_array($query->withdrawal_method_fields) ? $query->withdrawal_method_fields : json_decode($query->withdrawal_method_fields);
                 foreach ($withdrawal_method_fields as $key => $field) {
                     $query[$key] = $field;
@@ -582,7 +594,6 @@ class VendorController extends BaseController
         );
     }
 
-
     public function withdrawStatus(Request $request, $id): RedirectResponse
     {
         $withdrawData = [
@@ -601,6 +612,7 @@ class VendorController extends BaseController
 
             $this->withdrawRequestRepo->update(id: $id, data: $withdrawData);
             ToastMagic::success(translate('Vendor_Payment_has_been_approved_successfully'));
+
             return redirect()->route('admin.vendors.withdraw_list');
         }
 
@@ -609,10 +621,10 @@ class VendorController extends BaseController
         $this->withdrawRequestRepo->update(id: $id, data: $withdrawData);
 
         ToastMagic::info(translate('Vendor_Payment_request_has_been_Denied_successfully'));
+
         return redirect()->route('admin.vendors.withdraw_list');
 
     }
-
 
     public function loadMoreStores(Request $request): JsonResponse
     {
@@ -637,6 +649,4 @@ class VendorController extends BaseController
             'totalShops' => $totalShops,
         ]);
     }
-
-
 }

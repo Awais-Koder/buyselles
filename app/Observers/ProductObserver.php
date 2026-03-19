@@ -11,7 +11,7 @@ class ProductObserver
      */
     public function created(Product $product): void
     {
-//        $product->flushQueryCache();
+        //        $product->flushQueryCache();
     }
 
     /**
@@ -19,7 +19,7 @@ class ProductObserver
      */
     public function updated(Product $product): void
     {
-//        $product->flushQueryCache();
+        //        $product->flushQueryCache();
     }
 
     /**
@@ -27,7 +27,7 @@ class ProductObserver
      */
     public function deleted(Product $product): void
     {
-//        $product->flushCache();
+        //        $product->flushCache();
     }
 
     /**
@@ -35,7 +35,7 @@ class ProductObserver
      */
     public function restored(Product $product): void
     {
-//        $product->flushCache();
+        //        $product->flushCache();
     }
 
     /**
@@ -43,6 +43,6 @@ class ProductObserver
      */
     public function forceDeleted(Product $product): void
     {
-//        $product->flushCache();
+        //        $product->flushCache();
     }
 }

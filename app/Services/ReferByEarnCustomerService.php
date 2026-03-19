@@ -4,11 +4,8 @@ namespace App\Services;
 
 use App\Models\ReferralCustomer;
 
-
 class ReferByEarnCustomerService
 {
-
-
     public function getEarnByReferralData(array $data): array
     {
 
@@ -20,7 +17,6 @@ class ReferByEarnCustomerService
             'validity_type' => $data['validity_type'] ?? '',
         ];
     }
-
 
     public function addReferralCustomerData($referralData, $referralEarningRate, $referUser, $userId): mixed
     {
@@ -39,6 +35,7 @@ class ReferByEarnCustomerService
             'is_used_by_refer' => 0,
             'is_checked' => 0,
         ];
+
         return ReferralCustomer::create($data);
     }
 }

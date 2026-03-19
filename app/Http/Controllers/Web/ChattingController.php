@@ -7,7 +7,6 @@ use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\DeliveryManRepositoryInterface;
 use App\Contracts\Repositories\ShopRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
-use App\Enums\ViewPaths\Web\Chatting;
 use App\Events\ChattingEvent;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Web\ChattingRequest;
@@ -25,30 +24,15 @@ class ChattingController extends BaseController
 {
     use PushNotificationTrait;
 
-    /**
-     * @param ChattingRepositoryInterface $chattingRepo
-     * @param ShopRepositoryInterface $shopRepo
-     * @param ChattingService $chattingService
-     * @param DeliveryManRepositoryInterface $deliveryManRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     */
     public function __construct(
-        private readonly ChattingRepositoryInterface    $chattingRepo,
-        private readonly ShopRepositoryInterface        $shopRepo,
-        private readonly ChattingService                $chattingService,
+        private readonly ChattingRepositoryInterface $chattingRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
+        private readonly ChattingService $chattingService,
         private readonly DeliveryManRepositoryInterface $deliveryManRepo,
-        private readonly CustomerRepositoryInterface    $customerRepo,
-        private readonly VendorRepositoryInterface      $vendorRepo,
-    )
-    {
-    }
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|array|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, string|array|null $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return match ($type) {
@@ -58,8 +42,6 @@ class ChattingController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getMessageByUser(Request $request): JsonResponse
@@ -90,32 +72,31 @@ class ChattingController extends BaseController
         $this->updateAllUnseenMessageStatus(requestColumn: $requestColumn, requestId: $requestId);
         $chattingMessages = $this->getMessage(requestColumn: $requestColumn, requestId: $requestId, whereNotNull: $whereNotNull, relation: $relation);
         $data = self::getRenderMessagesView(user: $getUser, message: $chattingMessages, type: $type);
+
         return response()->json($data);
     }
 
     /**
-     * @param ChattingRequest $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function addMessage(ChattingRequest $request): JsonResponse
     {
-        if($request->hasFile('file')) {
+        if ($request->hasFile('file')) {
             foreach ($request->file('file') as $file) {
                 $extension = strtolower($file->getClientOriginalExtension());
                 if (in_array($extension, getDisallowedExtensionsListArray())) {
                     if (env('APP_MODE', 'dev') == 'demo') {
                         return response()->json([
                             'status' => 'error',
-                            'message' => translate('Uploading_ZIP_files_is_currently_unavailable_in_demo_mode')
+                            'message' => translate('Uploading_ZIP_files_is_currently_unavailable_in_demo_mode'),
                         ]);
                     }
 
                     return response()->json([
                         'status' => 'error',
-                        'message' => translate('Files_with_extensions_like') .
-                            ' (' . implode(', ', array_map(fn($ext) => '.' . $ext, getDisallowedExtensionsListArray())) . ') ' .
-                            translate('are_not_supported') . '!'
+                        'message' => translate('Files_with_extensions_like').
+                            ' ('.implode(', ', array_map(fn ($ext) => '.'.$ext, getDisallowedExtensionsListArray())).') '.
+                            translate('are_not_supported').'!',
                     ]);
                 }
             }
@@ -175,15 +156,10 @@ class ChattingController extends BaseController
         }
         $chattingMessages = $this->getMessage(requestColumn: $requestColumn, requestId: $requestId, whereNotNull: $whereNotNull, relation: $relation);
         $data = self::getRenderMessagesView(user: $getUser, message: $chattingMessages, type: $type);
+
         return response()->json($data);
     }
 
-    /**
-     * @param array $relation
-     * @param string $columnName
-     * @param string $type
-     * @return View
-     */
     private function getChatList(array $relation, string $columnName, string $type): View
     {
         $customerId = auth('customer')->id();
@@ -205,8 +181,8 @@ class ChattingController extends BaseController
             )->unique('admin_id');
             $allChattingUsers = $inHouseInfo->count() > 0 ? ($allChattingUsers->merge($inHouseInfo))->sortByDesc('id')->values() : $allChattingUsers;
         }
-        $allChattingUsers?->map(function ($chatting, $index) use ($allChattingUsers, $customerId) {
-            $filterColumn = !is_null($chatting?->admin_id) ? 'admin_id' : (!is_null($chatting?->seller_id) ? 'seller_id' : 'delivery_man_id');
+        $allChattingUsers?->map(function ($chatting, $index) use ($customerId) {
+            $filterColumn = ! is_null($chatting?->admin_id) ? 'admin_id' : (! is_null($chatting?->seller_id) ? 'seller_id' : 'delivery_man_id');
             $filterId = $chatting?->admin_id ?? ($chatting?->seller_id ? $chatting->shop->id : $chatting->deliveryMan->id);
             $filter = [
                 'user_id' => $customerId,
@@ -225,8 +201,8 @@ class ChattingController extends BaseController
         });
         $lastChatUser = null;
         foreach ($allChattingUsers as $key => $value) {
-            $lastChatUser = (!is_null($value->admin_id) ? ['id' => 0] : (!is_null($value->seller_id) ? $value->shop : $value->deliveryMan));
-            if (!is_null($value->admin_id)) {
+            $lastChatUser = (! is_null($value->admin_id) ? ['id' => 0] : (! is_null($value->seller_id) ? $value->shop : $value->deliveryMan));
+            if (! is_null($value->admin_id)) {
                 $columnName = 'admin_id';
                 $type = 'admin';
                 $relation = ['admin'];
@@ -239,6 +215,7 @@ class ChattingController extends BaseController
         } else {
             $chattingMessages = [];
         }
+
         return view(VIEW_FILE_NAMES['user_inbox'], [
             'userType' => $type,
             'userData' => $lastChatUser ? $this->getUserData(type: $type, user: ($lastChatUser['id'] == 0 ? 'admin' : $lastChatUser)) : '',
@@ -249,10 +226,6 @@ class ChattingController extends BaseController
     }
 
     /**
-     * @param object|string $user
-     * @param object $message
-     * @param string $type
-     * @return array
      * @throws Throwable
      */
     protected function getRenderMessagesView(object|string $user, object $message, string $type): array
@@ -262,7 +235,7 @@ class ChattingController extends BaseController
             'chattingMessages' => view(VIEW_FILE_NAMES['user_inbox_message'], [
                 'lastChatUser' => $user,
                 'userType' => $type,
-                'chattingMessages' => $message
+                'chattingMessages' => $message,
             ])->render(),
         ];
     }
@@ -272,16 +245,17 @@ class ChattingController extends BaseController
         if ($type == 'vendor') {
             $userData = ['name' => $user['name'], 'phone' => $user['contact']];
             $userData['image'] = getStorageImages(path: $user->image_full_url, type: 'shop');
-            $userData['temporary-close-status'] = (int)checkVendorAbility(type: 'vendor', status: 'temporary_close', vendor: $user);
+            $userData['temporary-close-status'] = (int) checkVendorAbility(type: 'vendor', status: 'temporary_close', vendor: $user);
         } elseif ($type == 'delivery-man') {
-            $userData = ['name' => $user['f_name'] . ' ' . $user['l_name'], 'phone' => $user['country_code'] . $user['phone']];
+            $userData = ['name' => $user['f_name'].' '.$user['l_name'], 'phone' => $user['country_code'].$user['phone']];
             $userData['image'] = getStorageImages(path: $user->image_full_url, type: 'avatar');
             $userData['temporary-close-status'] = '';
         } else {
             $userData = ['name' => getInHouseShopConfig(key: 'name'), 'phone' => ''];
             $userData['image'] = getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop');
-            $userData['temporary-close-status'] = (int)checkVendorAbility(type: 'inhouse', status: 'temporary_close');
+            $userData['temporary-close-status'] = (int) checkVendorAbility(type: 'inhouse', status: 'temporary_close');
         }
+
         return $userData;
     }
 
@@ -289,6 +263,7 @@ class ChattingController extends BaseController
     {
         $customerId = auth('customer')->id();
         $orderBy = theme_root_path() == 'default' ? ['id' => 'DESC'] : ['id' => 'ASC'];
+
         return $this->chattingRepo->getListWhereNotNull(
             orderBy: $orderBy,
             filters: ['user_id' => $customerId, $requestColumn => $requestId],

@@ -12,11 +12,12 @@ trait StorageTrait
     {
         return $this->morphMany(\App\Models\Storage::class, 'data');
     }
+
     public function storageLink($path, $data, $type): string|array
     {
         if ($type == 's3' && $this->storageConnectionCheck() == 's3') {
-            $fullPath = ltrim($path . '/' . $data, '/');
-            if ($this->fileCheck(disk: 's3', path: $fullPath) && !empty($data)) {
+            $fullPath = ltrim($path.'/'.$data, '/');
+            if ($this->fileCheck(disk: 's3', path: $fullPath) && ! empty($data)) {
                 return [
                     'key' => $data,
                     'path' => Storage::disk('s3')->url($fullPath),
@@ -24,14 +25,15 @@ trait StorageTrait
                 ];
             }
         } else {
-            if ($this->fileCheck(disk: 'public', path: $path . '/' . $data) && !empty($data)) {
+            if ($this->fileCheck(disk: 'public', path: $path.'/'.$data) && ! empty($data)) {
                 return [
                     'key' => $data,
-                    'path' => dynamicStorage('storage/app/public/' . $path . '/' . $data),
+                    'path' => dynamicStorage('storage/app/public/'.$path.'/'.$data),
                     'status' => 200,
                 ];
             }
         }
+
         return [
             'key' => $data,
             'path' => null,
@@ -41,9 +43,9 @@ trait StorageTrait
 
     private function fileCheck($disk, $path): bool
     {
-        try{
+        try {
             return Storage::disk($disk)->exists($path);
-        }catch (Exception $exception){
+        } catch (Exception $exception) {
             return false;
         }
     }

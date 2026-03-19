@@ -5,7 +5,6 @@ namespace App\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-
 /**
  * @property int $id
  * @property string $name
@@ -30,7 +29,7 @@ class BrandUpdateRequest extends FormRequest
                 skipMimes: ['.svg', '.gif'],
             ),
             'name.0' => [
-                'required',Rule::unique('brands', 'name')->ignore($this->route('id')),
+                'required', Rule::unique('brands', 'name')->ignore($this->route('id')),
             ],
         ];
     }
@@ -45,5 +44,4 @@ class BrandUpdateRequest extends FormRequest
             'image.max' => translate('brand_image_must_not_exceed_2mb'),
         ];
     }
-
 }

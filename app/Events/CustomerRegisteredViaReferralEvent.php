@@ -5,10 +5,10 @@ namespace App\Events;
 use App\Models\ReferralCustomer;
 use App\Models\User;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Queue\SerializesModels;
 
 class CustomerRegisteredViaReferralEvent
 {
@@ -17,8 +17,8 @@ class CustomerRegisteredViaReferralEvent
     /**
      * Create a new event instance.
      */
-
     public ReferralCustomer $referralCustomer;
+
     public User $referredBy;
 
     public function __construct(ReferralCustomer $referralCustomer, User $referredBy)

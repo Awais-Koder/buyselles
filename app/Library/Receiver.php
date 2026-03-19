@@ -5,6 +5,7 @@ namespace App\Library;
 class Receiver
 {
     private $name;
+
     private $image;
 
     public function __construct($name, $image)

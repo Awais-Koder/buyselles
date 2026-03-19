@@ -28,5 +28,4 @@ class DeliveryManCashCollectRequest extends FormRequest
             'amount.gt' => translate('amount_must_be_greater_than_zero'),
         ];
     }
-
 }

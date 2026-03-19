@@ -7,7 +7,6 @@ use Modules\TaxModule\app\Models\SystemTaxSetup;
 
 trait VatTaxConfiguration
 {
-
     public static function getAddInitSystemVatTax()
     {
         return SystemTaxSetup::create([
@@ -65,7 +64,7 @@ trait VatTaxConfiguration
                 'tax_calculate_from' => ['Calculate_Tax_on_Billing_Address_Location', 'Calculate_Tax_on_Shipping_Address_Location'],
                 'tax_calculate_on' => ['order_wise', 'product_wise', 'category_wise'],
                 'additional_tax' => ['tax_on_delivery_charge'],
-            ]
+            ],
         ];
 
         return self::getDataFromProjectArray($allProjects, $key);
@@ -125,6 +124,7 @@ trait VatTaxConfiguration
         if ($project && array_key_exists($project, $array)) {
             return $key ? data_get($array[$project], $key, []) : $array[$project];
         }
+
         return $array;
     }
 
@@ -136,7 +136,7 @@ trait VatTaxConfiguration
             'successMessage' => 'success',
             'infoMessage' => 'info',
             'warningMessage' => 'warning',
-            'errorMessage' => 'error'
+            'errorMessage' => 'error',
         ];
 
         if (class_exists($class) && array_key_exists($type, $methodTypes)) {

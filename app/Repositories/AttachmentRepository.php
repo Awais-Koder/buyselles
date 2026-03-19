@@ -12,9 +12,7 @@ class AttachmentRepository implements AttachmentRepositoryInterface
 {
     public function __construct(
         private readonly Attachment $attachment,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class AttachmentRepository implements AttachmentRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->attachment->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -48,11 +46,12 @@ class AttachmentRepository implements AttachmentRepositoryInterface
             ->when(isset($filters['file_type']), function ($query) use ($filters) {
                 return $query->where(['file_type' => $filters['file_type']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -68,19 +67,20 @@ class AttachmentRepository implements AttachmentRepositoryInterface
             ->when(isset($filters['file_type']), function ($query) use ($filters) {
                 return $query->where(['file_type' => $filters['file_type']]);
             })
-            ->when(!empty($whereIn), function ($query) use ($whereIn) {
+            ->when(! empty($whereIn), function ($query) use ($whereIn) {
                 foreach ($whereIn as $key => $filterIndex) {
                     $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -92,19 +92,21 @@ class AttachmentRepository implements AttachmentRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->attachment->where($params)->update($data);
+
         return true;
     }
 
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->attachment->updateOrInsert($params, $data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->attachment->where($params)->delete();
+
         return true;
     }
-
 }

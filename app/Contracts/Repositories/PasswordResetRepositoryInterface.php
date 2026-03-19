@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface PasswordResetRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface PasswordResetRepositoryInterface extends RepositoryInterface {}

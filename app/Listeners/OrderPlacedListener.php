@@ -7,10 +7,9 @@ use App\Models\ReferralCustomer;
 use App\Traits\EmailTemplateTrait;
 use App\Traits\PushNotificationTrait;
 
-
 class OrderPlacedListener
 {
-    use PushNotificationTrait, EmailTemplateTrait;
+    use EmailTemplateTrait, PushNotificationTrait;
 
     /**
      * Create the event listener.
@@ -52,7 +51,7 @@ class OrderPlacedListener
         $order = $event->notification->order;
         $this->sendOrderNotification(key: $key, type: $type, order: $order);
 
-        if (!$order['is_guest'] && isset($order?->customer?->id)) {
+        if (! $order['is_guest'] && isset($order?->customer?->id)) {
             $getCustomer = ReferralCustomer::where('user_id', $order->customer->id)->first();
             if ($getCustomer && $getCustomer->ordered_notify != 1) {
                 $getCustomer->ordered_notify = 1;

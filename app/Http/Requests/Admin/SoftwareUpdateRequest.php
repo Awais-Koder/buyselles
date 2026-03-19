@@ -21,7 +21,7 @@ class SoftwareUpdateRequest extends FormRequest
         return [
             'update_file' => 'required|mimes:zip',
             'username' => 'required',
-            'purchase_key' => 'required|uuid'
+            'purchase_key' => 'required|uuid',
         ];
     }
 
@@ -35,5 +35,4 @@ class SoftwareUpdateRequest extends FormRequest
             'purchase_key.uuid' => translate('purchase_key_must_be_a_valid_uuid'),
         ];
     }
-
 }

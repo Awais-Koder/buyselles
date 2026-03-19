@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\API\v1;
 
-
-use App\Enums\GlobalConstant;
-use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class RefundStoreRequest extends FormRequest
 {
@@ -51,8 +46,8 @@ class RefundStoreRequest extends FormRequest
             'order_details_id.exists' => translate('Invalid order details.'),
             'amount.required' => translate('Refund amount is required.'),
             'refund_reason.required' => translate('Refund reason is required.'),
-            'images.*.mimes' => translate('Image type must be : '). getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'images.*.max' => translate('Image size must not exceed ') . getFileUploadMaxSize() . 'MB',
+            'images.*.mimes' => translate('Image type must be : ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'images.*.max' => translate('Image size must not exceed ').getFileUploadMaxSize().'MB',
         ];
     }
 

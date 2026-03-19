@@ -20,10 +20,10 @@ class SellerTableSeeder extends Seeder
             'email' => 'seller@seller.com',
             'image' => 'def.png',
             'password' => bcrypt(12345678),
-            'status'=>'pending',
-            'remember_token' =>Str::random(10),
-            'created_at'=>now(),
-            'updated_at'=>now()
+            'status' => 'pending',
+            'remember_token' => Str::random(10),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface OfflinePaymentMethodRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface OfflinePaymentMethodRepositoryInterface extends RepositoryInterface {}

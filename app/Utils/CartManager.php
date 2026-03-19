@@ -2,13 +2,13 @@
 
 namespace App\Utils;
 
-use App\Models\DigitalProductVariation;
-use App\Models\ShippingMethod;
 use App\Models\Cart;
 use App\Models\CartShipping;
 use App\Models\CategoryShippingCost;
 use App\Models\Color;
+use App\Models\DigitalProductVariation;
 use App\Models\Product;
+use App\Models\ShippingMethod;
 use App\Models\ShippingType;
 use App\Models\Shop;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,14 +22,14 @@ class CartManager
     public static function cartListSessionToDatabase($request = null): void
     {
         $user = Helpers::getCustomerInformation($request);
-        if (session()->has('guest_id') || (!is_null($request) && !is_null($request->guest_id)) ) {
+        if (session()->has('guest_id') || (! is_null($request) && ! is_null($request->guest_id))) {
             $guestId = session('guest_id') ?? $request->guest_id;
             $cartList = Cart::where(['is_guest' => 1, 'customer_id' => $guestId])->get();
             foreach ($cartList as $cart) {
                 $databaseCart = Cart::where([
                     'customer_id' => $user['id'],
                     'seller_id' => $cart['seller_id'],
-                    'seller_is' => $cart['seller_is']
+                    'seller_is' => $cart['seller_is'],
                 ])->first();
 
                 Cart::where([
@@ -37,7 +37,7 @@ class CartManager
                     'product_id' => $cart['product_id'],
                     'variant' => $cart['variant'],
                     'seller_id' => $cart['seller_id'],
-                    'seller_is' => $cart['seller_is']
+                    'seller_is' => $cart['seller_is'],
                 ])->delete();
 
                 $cart->cart_group_id = isset($databaseCart) ? $databaseCart['cart_group_id'] : str_replace('guest', $user['id'], $cart['cart_group_id']);
@@ -54,20 +54,20 @@ class CartManager
         self::updateOrderSummaryShippingCost($groupId, $type);
 
         $cartItems = Cart::with(['product' => function ($query) {
-                return $query->active()->with(['category' => function ($query) {
-                    return $query->with(['taxVats' => function ($query) {
-                        return $query->with(['tax'])->wherehas('tax', function ($query) {
-                            return $query->where('is_active', 1);
-                        });
-                    }]);
-                }, 'clearanceSale' => function ($query) {
-                    return $query->active();
-                }, 'taxVats' => function ($query) {
+            return $query->active()->with(['category' => function ($query) {
+                return $query->with(['taxVats' => function ($query) {
                     return $query->with(['tax'])->wherehas('tax', function ($query) {
                         return $query->where('is_active', 1);
                     });
                 }]);
-            }])
+            }, 'clearanceSale' => function ($query) {
+                return $query->active();
+            }, 'taxVats' => function ($query) {
+                return $query->with(['tax'])->wherehas('tax', function ($query) {
+                    return $query->where('is_active', 1);
+                });
+            }]);
+        }])
             ->whereHas('product', function ($query) {
                 return $query->active();
             })
@@ -99,10 +99,10 @@ class CartManager
         ProductManager::updateProductPriceInCartList(request: $request ?? request()->all());
 
         $cartItems = Cart::with(['product' => function ($query) {
-                return $query->active()->with(['clearanceSale' => function ($query) {
-                    return $query->active();
-                }]);
-            }])
+            return $query->active()->with(['clearanceSale' => function ($query) {
+                return $query->active();
+            }]);
+        }])
             ->whereHas('product', function ($query) {
                 return $query->active();
             })
@@ -116,24 +116,25 @@ class CartManager
                 return $query->where(['is_checked' => 1]);
             })->get();
 
-            foreach ($cartItems as $item) {
-                $item->discount = getProductPriceByType(
-                    product: $item->product,
-                    type: 'discounted_amount',
-                    result: 'value',
-                    price: $item->price
-                );
-            }
+        foreach ($cartItems as $item) {
+            $item->discount = getProductPriceByType(
+                product: $item->product,
+                type: 'discounted_amount',
+                result: 'value',
+                price: $item->price
+            );
+        }
+
         return $cartItems;
     }
 
     public static function getCartListGroupQuery($groupId = null, $type = null): Collection|array
     {
-        $cartItems =  Cart::with(['product' => function ($query) {
+        $cartItems = Cart::with(['product' => function ($query) {
             return $query->active()->with(['clearanceSale' => function ($query) {
-                    return $query->active();
-                }]);
-            }])
+                return $query->active();
+            }]);
+        }])
             ->whereHas('product', function ($query) {
                 return $query->active();
             })
@@ -156,20 +157,21 @@ class CartManager
                 price: $item->price
             );
         }
+
         return $cartItems->groupBy('cart_group_id');
     }
 
     public static function get_cart_group_ids($request = null, $type = null)
     {
-        $user = Helpers::getCustomerInformation(!is_null($request) ? $request : request());
+        $user = Helpers::getCustomerInformation(! is_null($request) ? $request : request());
 
         return Cart::whereHas('product', function ($query) {
-                return $query->active();
-            })->when($user == 'offline', function ($query) use ($request) {
-                return $query->where(['customer_id' => session('guest_id') ?? (request('guest_id') ?? 0), 'is_guest' => 1]);
-            })->when($user != 'offline', function ($query) use ($user) {
-                return $query->where(['customer_id' => $user['id'], 'is_guest' => '0']);
-            })
+            return $query->active();
+        })->when($user == 'offline', function ($query) {
+            return $query->where(['customer_id' => session('guest_id') ?? (request('guest_id') ?? 0), 'is_guest' => 1]);
+        })->when($user != 'offline', function ($query) use ($user) {
+            return $query->where(['customer_id' => $user['id'], 'is_guest' => '0']);
+        })
             ->when($type == 'checked', function ($query) {
                 return $query->where(['is_checked' => 1]);
             })
@@ -198,14 +200,14 @@ class CartManager
             })->sum('shipping_cost');
 
         $orderWiseShippingCostData = CartShipping::whereHas('cart', function ($query) use ($type) {
-                return $query->where(['product_type' => 'physical'])->whereHas('product', function ($query) {
-                    return $query->active();
-                })->when($type == 'checked', function ($query) {
-                    return $query->where(['is_checked' => 1]);
-                });
-            })->when(($groupId == null && $type != 'checked'), function ($query) {
-                return $query->whereIn('cart_group_id', CartManager::get_cart_group_ids());
-            })
+            return $query->where(['product_type' => 'physical'])->whereHas('product', function ($query) {
+                return $query->active();
+            })->when($type == 'checked', function ($query) {
+                return $query->where(['is_checked' => 1]);
+            });
+        })->when(($groupId == null && $type != 'checked'), function ($query) {
+            return $query->whereIn('cart_group_id', CartManager::get_cart_group_ids());
+        })
             ->when(($groupId == null && $type == 'checked'), function ($query) {
                 return $query->whereIn('cart_group_id', CartManager::get_cart_group_ids(type: 'checked'));
             })
@@ -219,7 +221,8 @@ class CartManager
             $data = $orderWiseShippingCostData->first();
             $orderWiseShippingCost = isset($data) ? $data->shipping_cost : 0;
         }
-        return ($orderWiseShippingCost + $cartShippingCost);
+
+        return $orderWiseShippingCost + $cartShippingCost;
     }
 
     public static function updateOrderSummaryShippingCost($groupId = null, $type = null): void
@@ -258,11 +261,11 @@ class CartManager
         $adminShipping = ShippingType::where('seller_id', 0)->first();
         $cartListGroup = $cartList?->groupBy('cart_group_id');
 
-        foreach($cartListGroup as $cartGroupItems) {
+        foreach ($cartListGroup as $cartGroupItems) {
             $shippingType = '';
             if ($shippingMethod == 'inhouse_shipping') {
                 $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
-            } else if ($shippingMethod == 'sellerwise_shipping') {
+            } elseif ($shippingMethod == 'sellerwise_shipping') {
                 if ($cartGroupItems?->first()?->seller_is == 'admin') {
                     $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
                 } else {
@@ -271,12 +274,12 @@ class CartManager
                 }
             }
 
-            foreach($cartGroupItems as $cartItem) {
+            foreach ($cartGroupItems as $cartItem) {
                 if ($shippingType != 'order_wise') {
                     CartShipping::where('cart_group_id', $cartItem?->cart_group_id)->delete();
 
                     if ($cartItem?->product) {
-                        Cart::where(['id' =>  $cartItem->id])->update([
+                        Cart::where(['id' => $cartItem->id])->update([
                             'shipping_cost' => $cartItem['product_type'] == 'physical' ? CartManager::get_shipping_cost_for_product_category_wise($cartItem->product, $cartItem['quantity']) : 0,
                             'shipping_type' => $shippingType,
                         ]);
@@ -284,7 +287,7 @@ class CartManager
                 }
 
                 if ($shippingType == 'order_wise') {
-                    Cart::where(['id' =>  $cartItem->id])->update(['shipping_cost' => 0, 'shipping_type' => $shippingType]);
+                    Cart::where(['id' => $cartItem->id])->update(['shipping_cost' => 0, 'shipping_type' => $shippingType]);
                 }
             }
         }
@@ -293,13 +296,14 @@ class CartManager
     public static function getCartListTotalAppliedDiscount($cart): float|int
     {
         $total = 0;
-        if (!empty($cart)) {
+        if (! empty($cart)) {
             foreach ($cart as $item) {
                 $discount = getProductPriceByType(product: $item['product'], type: 'discounted_amount', result: 'value', price: $item['price']);
                 $productSubtotal = ($item['price'] - $discount) * $item['quantity'];
                 $total += $productSubtotal;
             }
         }
+
         return $total;
     }
 
@@ -313,7 +317,7 @@ class CartManager
             $shippingCost = CartManager::get_shipping_cost(groupId: $cartGroupId);
         }
         $total = 0;
-        if (!empty($cart)) {
+        if (! empty($cart)) {
             foreach ($cart as $item) {
                 $discount = getProductPriceByType(product: $item['product'], type: 'discounted_amount', result: 'value', price: $item['price']);
                 $productSubtotal = ($item['price'] - $discount) * $item['quantity'];
@@ -321,6 +325,7 @@ class CartManager
             }
             $total += $shippingCost;
         }
+
         return $total;
     }
 
@@ -332,13 +337,14 @@ class CartManager
             $cart = CartManager::getCartListQuery(groupId: $cartGroupId);
         }
         $total = 0;
-        if (!empty($cart)) {
+        if (! empty($cart)) {
             foreach ($cart as $item) {
                 $discount = getProductPriceByType(product: $item['product'], type: 'discounted_amount', result: 'value', price: $item['price']);
                 $productSubtotal = ($item['price'] - $discount) * $item['quantity'];
                 $total += $productSubtotal;
             }
         }
+
         return $total;
     }
 
@@ -350,12 +356,13 @@ class CartManager
             $cart = CartManager::getCartListQuery(groupId: $cartGroupId);
         }
         $total = 0;
-        if (!empty($cart)) {
+        if (! empty($cart)) {
             foreach ($cart as $item) {
                 $productSubtotal = ($item['price'] * $item['quantity']) - $item['discount'] * $item['quantity'];
                 $total += $productSubtotal;
             }
         }
+
         return $total;
     }
 
@@ -392,7 +399,7 @@ class CartManager
         }
 
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '. $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         if ($user == 'offline') {
@@ -413,13 +420,13 @@ class CartManager
             $choices[$choice->name] = $request[$choice->name];
             $variations[$choice->title] = $request[$choice->name];
             if ($string != null) {
-                $string .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $string .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $string .= str_replace(' ', '', $request[$choice->name]);
             }
         }
 
-        if (!($request['buy_now'])) {
+        if (! ($request['buy_now'])) {
             if ($request['shipping_method_exist'] && $request->has('product_variation_code') && $request['product_variation_code']) {
                 $string = str_replace(' ', '', $request['product_variation_code']);
             }
@@ -475,7 +482,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request['id'], 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $string])->first();
@@ -504,7 +511,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
 
@@ -518,11 +525,11 @@ class CartManager
                     }
 
                     $shipping = CartShipping::where(['cart_group_id' => $cart['cart_group_id']])->first();
-                    if (!isset($shipping)) {
-                        $shipping = new CartShipping();
+                    if (! isset($shipping)) {
+                        $shipping = new CartShipping;
                     }
                     $getShippingCost = ShippingMethod::find($request['shipping_method_id']);
-                    if (!$getShippingCost) {
+                    if (! $getShippingCost) {
                         return ['status' => 0, 'message' => translate('Selected_shipping_method_not_found')];
                     }
                     $shipping['cart_group_id'] = $cart['cart_group_id'];
@@ -537,9 +544,10 @@ class CartManager
                         'redirect_to' => 'checkout',
                         'cart' => $cart,
                         'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                        'message' => translate('successfully_added') . '!',
+                        'message' => translate('successfully_added').'!',
                     ];
                 }
+
                 return [
                     'status' => $sellerShippingList && count($sellerShippingList) > 0 ? 2 : 0,
                     'message' => $sellerShippingList && count($sellerShippingList) > 0 ? translate('Please_select_shipping_method') : translate('Shipping_Not_Available_for_this_Shop'),
@@ -558,7 +566,7 @@ class CartManager
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
                     'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
             $cart->update(['is_checked' => 1]);
@@ -572,7 +580,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -580,7 +588,7 @@ class CartManager
     public static function addToCartDigitalProduct($request, $product, $shippingType, $sellerShippingList): array
     {
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '. $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         $price = $product->unit_price;
@@ -629,7 +637,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request->id, 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $request['variant_key']])->first();
@@ -657,7 +665,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
         }
@@ -666,7 +674,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -679,7 +687,7 @@ class CartManager
             return $query->active();
         }])->where(['id' => $request['id']])->first();
 
-        if($product['status'] == 0){
+        if ($product['status'] == 0) {
             return ['status' => 0, 'message' => translate('Product_is_unavailable')];
         }
 
@@ -687,9 +695,9 @@ class CartManager
         if ($authorType === 'vendor' && isset($product->seller->shop)) {
             $isTemporaryClose = (bool) checkVendorAbility(type: $authorType, status: 'temporary_close', vendor: $product->seller->shop);
             $isVacationMode = (bool) checkVendorAbility(type: $authorType, status: 'vacation_status', vendor: $product->seller->shop);
-        } else{
-            $isTemporaryClose =(bool) checkVendorAbility(type: $authorType, status: 'temporary_close');
-            $isVacationMode =(bool) checkVendorAbility(type: $authorType, status: 'vacation_status');
+        } else {
+            $isTemporaryClose = (bool) checkVendorAbility(type: $authorType, status: 'temporary_close');
+            $isVacationMode = (bool) checkVendorAbility(type: $authorType, status: 'vacation_status');
         }
         if ($isTemporaryClose || $isVacationMode) {
             return ['status' => 0, 'message' => translate('Shop_is_unavailable')];
@@ -728,7 +736,7 @@ class CartManager
         $qty = 0;
         $cart = Cart::where(['id' => $request->key, 'customer_id' => ($user == 'offline' ? $guest_id : $user['id'])])->first();
 
-        if (!$cart) {
+        if (! $cart) {
             return [
                 'status' => 0,
                 'qty' => $request['quantity'],
@@ -747,7 +755,7 @@ class CartManager
                     }
                 }
             }
-        } else if (($product['product_type'] == 'physical') && $product['current_stock'] < $request->quantity) {
+        } elseif (($product['product_type'] == 'physical') && $product['current_stock'] < $request->quantity) {
             $status = 0;
             $qty = $cart['quantity'];
         }
@@ -769,7 +777,7 @@ class CartManager
         return [
             'status' => $status,
             'qty' => $qty,
-            'message' => $status == 1 ? translate('successfully_updated!') : translate('sorry_stock_is_limited')
+            'message' => $status == 1 ? translate('successfully_updated!') : translate('sorry_stock_is_limited'),
         ];
     }
 
@@ -792,7 +800,7 @@ class CartManager
         }
 
         if ($shippingType == 'category_wise') {
-            $categoryID = 0;;
+            $categoryID = 0;
             foreach (json_decode($product['category_ids'] ?? '') as $ct) {
                 if ($ct->position == 1) {
                     $categoryID = $ct->id;
@@ -815,7 +823,7 @@ class CartManager
                 $cost = $categoryShippingCost->cost ?? 0;
             }
 
-        } else if ($shippingType == 'product_wise') {
+        } elseif ($shippingType == 'product_wise') {
             if ($product['multiply_qty'] == 1) {
                 $cost = $qty * $product['shipping_cost'];
             } else {
@@ -872,19 +880,20 @@ class CartManager
                             }
                         }
                     }
-                } else if (($product['product_type'] == 'physical') && $product['current_stock'] < $cart->quantity) {
+                } elseif (($product['product_type'] == 'physical') && $product['current_stock'] < $cart->quantity) {
                     $status = false;
                 }
             } else {
                 $status = false;
             }
         }
+
         return $status;
     }
 
     public static function getAppliedTaxIds($product = null, $taxConfig = []): array
     {
-        if (!isset($taxConfig['is_included']) || $taxConfig['is_included']) {
+        if (! isset($taxConfig['is_included']) || $taxConfig['is_included']) {
             return [];
         }
         $taxType = $taxConfig['SystemTaxVatType'] ?? 'order_wise';
@@ -906,7 +915,7 @@ class CartManager
 
     public static function getAppliedShippingTaxIds($taxConfig = []): array
     {
-        if (!isset($taxConfig['is_included']) || $taxConfig['is_included']) {
+        if (! isset($taxConfig['is_included']) || $taxConfig['is_included']) {
             return [];
         }
 
@@ -915,7 +924,7 @@ class CartManager
 
     public static function getAppliedTaxAmount($product = null, $taxConfig = [], $totalDiscountedPrice = 0, $appliedDiscountedAmount = 0): float|int
     {
-        if (!isset($taxConfig['is_included']) || $taxConfig['is_included']) {
+        if (! isset($taxConfig['is_included']) || $taxConfig['is_included']) {
             return 0;
         }
         $taxPercent = 0;
@@ -946,7 +955,7 @@ class CartManager
 
     public static function getAppliedShippingTaxAmount($taxConfig = [], $totalShippingCost = 0, $totalDiscountedPrice = 0, $applicableShippingAmount = 0): float|int
     {
-        if (!isset($taxConfig['is_included']) || $taxConfig['is_included']) {
+        if (! isset($taxConfig['is_included']) || $taxConfig['is_included']) {
             return 0;
         }
 
@@ -966,7 +975,7 @@ class CartManager
         return ((($totalShippingCost * $totalDiscountedPrice) / $applicableShippingAmount) * $taxRate) / 100;
     }
 
-    public static function getCartListTaxAmount(array $data  = [], ?string $cartGroupId = null): array
+    public static function getCartListTaxAmount(array $data = [], ?string $cartGroupId = null): array
     {
         $vendorWiseCartList = OrderManager::processOrderGenerateData(data: [
             'coupon_code' => $data['coupon_code'] ?? (session('coupon_code') ?? ''),

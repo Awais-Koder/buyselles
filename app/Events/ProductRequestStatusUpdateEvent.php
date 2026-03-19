@@ -15,7 +15,7 @@ class ProductRequestStatusUpdateEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(public string $key, public string $type, public string $lang,public string $fcmToken)
+    public function __construct(public string $key, public string $type, public string $lang, public string $fcmToken)
     {
         //
     }

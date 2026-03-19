@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SoftwareUpdateRequest;
 use App\Traits\ActivationClass;
@@ -19,16 +18,14 @@ use ZipArchive;
 class SoftwareUpdateController extends Controller
 {
     use ActivationClass;
-    use UpdateClass;
     use SettingsTrait;
+    use UpdateClass;
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return view('admin-views.system-setup.software-update');
     }
@@ -38,7 +35,7 @@ class SoftwareUpdateController extends Controller
         if (env('APP_MODE', 'dev') == 'demo') {
             return response()->json([
                 'status' => false,
-                'message' => translate('Uploading_ZIP_files_is_currently_unavailable_in_demo_mode')
+                'message' => translate('Uploading_ZIP_files_is_currently_unavailable_in_demo_mode'),
             ]);
         }
 
@@ -61,15 +58,16 @@ class SoftwareUpdateController extends Controller
             identifier: $request['email'],
         );
         $this->updateActivationConfig(app: 'admin_panel', response: $response);
-        $responseStatus = (int)($response['active'] ?? 0);
+        $responseStatus = (int) ($response['active'] ?? 0);
 
-        if (!$responseStatus) {
+        if (! $responseStatus) {
             ToastMagic::error(translate('verification_failed_try_again'));
+
             return back();
         }
 
         $file = $request->file('update_file');
-        $fileName = 'update.' . $file->getClientOriginalExtension();
+        $fileName = 'update.'.$file->getClientOriginalExtension();
         $file->storeAs('uploads', $fileName);
 
         $status = true;
@@ -77,9 +75,9 @@ class SoftwareUpdateController extends Controller
 
         $execute = 0;
         $zip = new ZipArchive;
-        if ($zip->open(base_path('storage/app/uploads/update.zip')) === TRUE) {
+        if ($zip->open(base_path('storage/app/uploads/update.zip')) === true) {
             for ($i = 0; $i < $zip->numFiles; $i++) {
-                if (strpos($zip->getNameIndex($i), 'Library/Constant.php') && !strpos($zip->getNameIndex($i), '.env')) {
+                if (strpos($zip->getNameIndex($i), 'Library/Constant.php') && ! strpos($zip->getNameIndex($i), '.env')) {
                     $matchesResult = [];
                     if (preg_match("/const\s+SOFTWARE_VERSION\s*=\s*'(\d+\.\d+)'/", $zip->getFromIndex($i), $matches)) {
                         $matchesResult = ['SOFTWARE_VERSION' => $matches[1]];
@@ -94,7 +92,7 @@ class SoftwareUpdateController extends Controller
 
         if ($execute) {
             $zip = new ZipArchive;
-            if ($zip->open(base_path('storage/app/uploads/update.zip')) === TRUE) {
+            if ($zip->open(base_path('storage/app/uploads/update.zip')) === true) {
                 $zip->open(base_path('storage/app/uploads/update.zip'));
                 $zip->extractTo(base_path());
                 $zip->close();
@@ -127,7 +125,7 @@ class SoftwareUpdateController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => $status,
-                'message' => $message
+                'message' => $message,
             ]);
         }
 

@@ -2,15 +2,12 @@
 
 namespace App\Http\Requests\API\v3;
 
-
 use App\Enums\GlobalConstant;
 use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SellerSendMessageRequest extends FormRequest
 {
@@ -38,15 +35,15 @@ class SellerSendMessageRequest extends FormRequest
             'message' => 'required_without_all:file,media',
             'media.*' => [
                 'file',
-                new DisallowedExtension(),
-                'max:' .$maximumUploadSize,
-                'mimes:' . str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
+                new DisallowedExtension,
+                'max:'.$maximumUploadSize,
+                'mimes:'.str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
             ],
             'file.*' => [
                 'file',
-                new DisallowedExtension(),
-                'max:' . $maximumUploadSize,
-                'mimes:' . str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
+                new DisallowedExtension,
+                'max:'.$maximumUploadSize,
+                'mimes:'.str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
             ],
         ];
     }
@@ -56,17 +53,17 @@ class SellerSendMessageRequest extends FormRequest
         $maximumUploadSize = getFileUploadMaxSize();
 
         return [
-            'required_without_all' => translate('type_something') . '!',
+            'required_without_all' => translate('type_something').'!',
 
-            'media.mimes' => translate('the_media_format_is_not_supported') . ' ' . translate('supported_format_are') . ' ' .
+            'media.mimes' => translate('the_media_format_is_not_supported').' '.translate('supported_format_are').' '.
                 str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
 
-            'media.max' => translate('media_maximum_size') . ' ' . $maximumUploadSize . ' MB',
+            'media.max' => translate('media_maximum_size').' '.$maximumUploadSize.' MB',
 
-            'file.mimes' => translate('the_file_format_is_not_supported') . ' ' . translate('supported_format_are') . ' ' .
+            'file.mimes' => translate('the_file_format_is_not_supported').' '.translate('supported_format_are').' '.
                 str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
 
-            'file.max' => translate('file_maximum_size_') . $maximumUploadSize . ' MB',
+            'file.max' => translate('file_maximum_size_').$maximumUploadSize.' MB',
         ];
     }
 

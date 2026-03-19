@@ -13,10 +13,10 @@ class BrandManager
 
     public static function getActiveBrandWithCountingAndPriorityWiseSorting()
     {
-        $cacheKey = 'cache_priority_wise_brands_list_' . (getDefaultLanguage() ?? 'en') . '_' . (request('offer_type') ?? 'default') . (request('data_form') ?? 'default');
+        $cacheKey = 'cache_priority_wise_brands_list_'.(getDefaultLanguage() ?? 'en').'_'.(request('offer_type') ?? 'default').(request('data_form') ?? 'default');
         $cacheKeys = Cache::get(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, []);
 
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -33,6 +33,7 @@ class BrandManager
             }])->when(request('offer_type') == 'flash-deals', function ($query) {
                 return $query->whereHas('brandProducts.flashDealProducts.flashDeal');
             });
+
             return self::getPriorityWiseBrandProductsQuery(query: $brandList);
         });
     }
@@ -46,6 +47,7 @@ class BrandManager
                     return $query->active()->withCount('orderDetails');
                 }])->get()->map(function ($brand) {
                     $brand['order_count'] = $brand?->brandProducts?->sum('order_details_count') ?? 0;
+
                     return $brand;
                 })->sortByDesc('order_count');
             } elseif ($brandProductSortBy['sort_by'] == 'latest_created') {
@@ -60,13 +62,15 @@ class BrandManager
         }
 
         $hasMissingSlug = (clone $query)->whereNull('slug')->orWhere('slug', '')->exists();
-        if (!$hasMissingSlug) {
+        if (! $hasMissingSlug) {
             return $query->latest()->get();
         }
+
         return $query->latest()->get()->map(function ($brand) {
             if (empty($brand->slug)) {
-                $brand->update(['slug' => Str::slug($brand?->name) . '-' . Str::random(4) . '-' . time()]);
+                $brand->update(['slug' => Str::slug($brand?->name).'-'.Str::random(4).'-'.time()]);
             }
+
             return $brand;
         });
 

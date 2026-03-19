@@ -9,9 +9,9 @@ class DeliveryCountryCodeService
 {
     use FileManagerTrait;
 
-    public function getDeliveryCountryArray(object|null $deliveryCountryCodes):array
+    public function getDeliveryCountryArray(?object $deliveryCountryCodes): array
     {
-        $data = array();
+        $data = [];
         foreach ($deliveryCountryCodes as $deliveryCountryCode) {
             foreach (GlobalConstant::COUNTRIES as $key => $country) {
                 if ($country['code'] == $deliveryCountryCode['country_code']) {
@@ -23,5 +23,4 @@ class DeliveryCountryCodeService
 
         return $data;
     }
-
 }

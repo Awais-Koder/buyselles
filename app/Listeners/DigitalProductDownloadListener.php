@@ -5,7 +5,6 @@ namespace App\Listeners;
 use App\Events\DigitalProductDownloadEvent;
 use App\Traits\EmailTemplateTrait;
 
-
 class DigitalProductDownloadListener
 {
     use EmailTemplateTrait;

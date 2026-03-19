@@ -8,5 +8,4 @@ enum Recaptcha
         URI => 'recaptcha',
         VIEW => 'admin-views.third-party.recaptcha-index',
     ];
-
 }

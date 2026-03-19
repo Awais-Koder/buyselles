@@ -554,7 +554,7 @@ $orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(ord
                     <td colspan="2" class="fs-10 border-left vertical-align-top" style="padding:8px 16px;">
                             <?php
                             $billingAddress = $order->billing_address_data
-                            ?>
+?>
                         <span class="font-bold fz-11">{{ translate('billed_To')}}</span>
                         ({{translate($billingAddress->address_type)}})
                         <div class="">
@@ -576,8 +576,8 @@ $orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(ord
                 <td colspan="2" class="fs-10 vertical-align-top  {{$direction === "rtl" ? '' : 'border-left'}}" style="padding:8px 16px;">
                     @if($order->shipping_address_data)
                             <?php
-                            $shipping_address = $order->shipping_address_data;
-                            ?>
+$shipping_address = $order->shipping_address_data;
+?>
                         <span class="font-bold fz-11">{{translate('shipping_To')}} </span>
                         ({{translate($shipping_address->address_type)}})
                         <div>
@@ -672,12 +672,12 @@ $orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(ord
                 </thead>
                     <?php
                     $total = 0;
-                    $itemPrice = 0;
-                    $subTotal = 0;
-                    $totalShippingCost = 0;
-                    $totalDiscountOnProduct = 0;
-                    $extraDiscount = 0;
-                    ?>
+$itemPrice = 0;
+$subTotal = 0;
+$totalShippingCost = 0;
+$totalDiscountOnProduct = 0;
+$extraDiscount = 0;
+?>
                     <tbody>
                     @foreach($order->details as $key=>$details)
                         @php($productDetails = $details?->product ?? json_decode($details->product_details) )
@@ -707,11 +707,11 @@ $orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(ord
                             </td>
                         </tr>
                             <?php
-                            $subTotal += ($details['price'] * $details['qty']) - $details['discount'];
-                            $totalShippingCost += $details->shipping ? $details->shipping->cost : 0;
-                            $totalDiscountOnProduct += $details['discount'];
-                            $total += $subTotal;
-                            ?>
+        $subTotal += ($details['price'] * $details['qty']) - $details['discount'];
+$totalShippingCost += $details->shipping ? $details->shipping->cost : 0;
+$totalDiscountOnProduct += $details['discount'];
+$total += $subTotal;
+?>
                     @endforeach
                 </tbody>
             </td>

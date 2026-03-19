@@ -2,40 +2,35 @@
 
 namespace App\Http\Controllers\Admin\BusinessSettings;
 
-use App\Http\Requests\Admin\WebsiteSetupRequest;
-use Illuminate\Http\Request;
-use App\Traits\SettingsTrait;
-use App\Traits\FileManagerTrait;
-use Illuminate\Contracts\View\View;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Illuminate\Http\RedirectResponse;
-use App\Http\Controllers\BaseController;
-use App\Services\BusinessSettingService;
 use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use App\Http\Controllers\BaseController;
+use App\Http\Requests\Admin\WebsiteSetupRequest;
+use App\Services\BusinessSettingService;
+use App\Traits\FileManagerTrait;
+use App\Traits\SettingsTrait;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class WebsiteSetupController extends BaseController
 {
-
-    use SettingsTrait;
     use FileManagerTrait {
         delete as deleteFile;
         update as updateFile;
     }
+    use SettingsTrait;
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly BusinessSettingService             $businessSettingService,
-    )
-    {
-    }
+        private readonly BusinessSettingService $businessSettingService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return $this->getView();
     }
@@ -54,6 +49,7 @@ class WebsiteSetupController extends BaseController
             'footer_logo' => getWebConfig(name: 'company_footer_logo') ?? '',
             'loader_gif' => getWebConfig(name: 'loader_gif') ?? '',
         ];
+
         return view('admin-views.business-settings.website-setup', ['businessSetting' => $businessSetting]);
     }
 
@@ -74,14 +70,14 @@ class WebsiteSetupController extends BaseController
         if ($request->has('company_web_logo')) {
             $webLogoImage = [
                 'image_name' => $this->updateFile(dir: 'company/', oldImage: (is_array($webLogo['value']) ? $webLogo['value']['image_name'] : $webLogo['value']), format: 'webp', image: $request->file('company_web_logo')),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateWhere(params: ['type' => 'company_web_logo'], data: ['value' => json_encode($webLogoImage)]);
 
             $webInvoiceLogoImagePath = $webInvoiceLogo && isset($webInvoiceLogo['value']) && isset($webInvoiceLogo['value']['image_name']) ? $webInvoiceLogo['value']['image_name'] : '';
             $webInvoiceLogoImage = [
                 'image_name' => $this->updateFile(dir: 'company/', oldImage: $webInvoiceLogoImagePath, format: 'png', image: $request->file('company_web_logo')),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateOrInsert(type: 'company_web_logo_png', value: json_encode($webInvoiceLogoImage));
         }
@@ -91,7 +87,7 @@ class WebsiteSetupController extends BaseController
         if ($request->has('company_footer_logo')) {
             $webFooterLogoImage = [
                 'image_name' => $this->updateFile(dir: 'company/', oldImage: (is_array($webFooterLogo['value']) ? $webFooterLogo['value']['image_name'] : $webFooterLogo['value']), format: 'webp', image: $request->file('company_footer_logo')),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateWhere(params: ['type' => 'company_footer_logo'], data: ['value' => json_encode($webFooterLogoImage)]);
         }
@@ -100,7 +96,7 @@ class WebsiteSetupController extends BaseController
         if ($request->has('company_fav_icon')) {
             $favIconImage = [
                 'image_name' => $this->updateFile(dir: 'company/', oldImage: (is_array($favIcon['value']) ? $favIcon['value']['image_name'] : $favIcon['value']), format: 'png', image: $request->file('company_fav_icon')),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateWhere(params: ['type' => 'company_fav_icon'], data: ['value' => json_encode($favIconImage)]);
         }
@@ -112,7 +108,7 @@ class WebsiteSetupController extends BaseController
 
             $loaderGifImageArray = [
                 'image_name' => $loaderGifImage,
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateOrInsert(type: 'loader_gif', value: json_encode($loaderGifImageArray));
         }
@@ -121,12 +117,12 @@ class WebsiteSetupController extends BaseController
         if ($request->has('company_mobile_logo')) {
             $mobileLogoImage = [
                 'image_name' => $this->updateFile(dir: 'company/', oldImage: (is_array($mobileLogo['value']) ? $mobileLogo['value']['image_name'] : $mobileLogo['value']), format: 'webp', image: $request->file('company_mobile_logo')),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateWhere(params: ['type' => 'company_mobile_logo'], data: ['value' => $mobileLogoImage]);
         }
         ToastMagic::success(translate('Website_setup_updated_successfully'));
+
         return back();
     }
-
 }

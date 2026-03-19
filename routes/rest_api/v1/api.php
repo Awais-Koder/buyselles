@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\RestAPI\v1\AttributeController;
 use App\Http\Controllers\RestAPI\v1\auth\CustomerAPIAuthController;
 use App\Http\Controllers\RestAPI\v1\auth\EmailVerificationController;
@@ -32,7 +33,6 @@ use App\Http\Controllers\RestAPI\v1\ShippingMethodController;
 use App\Http\Controllers\RestAPI\v1\UserLoyaltyController;
 use App\Http\Controllers\RestAPI\v1\UserWalletController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Customer\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -339,7 +339,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
             });
         });
 
-        //wallet
+        // wallet
         Route::group(['prefix' => 'wallet'], function () {
             Route::controller(UserWalletController::class)->group(function () {
                 Route::get('list', 'list');
@@ -347,7 +347,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
             });
         });
 
-        //loyalty
+        // loyalty
         Route::group(['prefix' => 'loyalty'], function () {
             Route::controller(UserLoyaltyController::class)->group(function () {
                 Route::get('list', 'list');
@@ -412,14 +412,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         });
     });
 
-
     Route::controller(CouponController::class)->group(function () {
         Route::get('coupon/list', 'list')->middleware('auth:api');
         Route::get('coupon/applicable-list', 'applicable_list')->middleware('auth:api');
         Route::get('coupons/{slug}/seller-wise-coupons', 'getSellerWiseCoupon');
     });
 
-    //map api
+    // map api
     Route::group(['prefix' => 'mapapi'], function () {
         Route::controller(MapApiController::class)->group(function () {
             Route::get('place-api-autocomplete', 'placeApiAutocomplete');

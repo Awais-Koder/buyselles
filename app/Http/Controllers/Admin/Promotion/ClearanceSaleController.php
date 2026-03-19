@@ -13,6 +13,7 @@ use App\Services\ClearanceSaleService;
 use App\Services\ProductService;
 use App\Services\SeoMetaInfoService;
 use App\Services\StockClearanceProductService;
+use App\Traits\InHouseTrait;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,31 +21,28 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Traits\InHouseTrait;
 
 class ClearanceSaleController extends BaseController
 {
     use InHouseTrait;
 
     public function __construct(
-        private readonly StockClearanceSetupRepositoryInterface   $stockClearanceSetupRepo,
+        private readonly StockClearanceSetupRepositoryInterface $stockClearanceSetupRepo,
         private readonly StockClearanceProductRepositoryInterface $stockClearanceProductRepo,
-        private readonly ProductRepositoryInterface               $productRepo,
-        private readonly ClearanceSaleService                     $clearanceSaleService,
-        private readonly StockClearanceProductService             $stockClearanceProductService,
-        private readonly ProductService                           $productService,
-        private readonly SeoMetaInfoService                       $seoMetaInfoService,
-        private readonly SeoMetaInfoRepositoryInterface           $seoMetaInfoRepo
-    )
-    {
-    }
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly ClearanceSaleService $clearanceSaleService,
+        private readonly StockClearanceProductService $stockClearanceProductService,
+        private readonly ProductService $productService,
+        private readonly SeoMetaInfoService $seoMetaInfoService,
+        private readonly SeoMetaInfoRepositoryInterface $seoMetaInfoRepo
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $clearanceProductIds = $this->stockClearanceProductRepo->getListWhere(filters: ['added_by' => 'admin'])->pluck('product_id')->toArray();
         $products = $this->productRepo->getListWithScope(
             orderBy: ['id' => 'desc'],
-            scope: "active",
+            scope: 'active',
             filters: ['added_by' => 'in_house'],
             whereNotIn: ['id' => $clearanceProductIds],
             relations: ['brand', 'category', 'seller.shop'],
@@ -59,9 +57,9 @@ class ClearanceSaleController extends BaseController
             relations: ['product'],
             dataLimit: 5
         );
+
         return view('admin-views.deal.clearance-sale.index', ['clearanceConfig' => $clearanceConfig, 'products' => $products, 'stockClearanceProduct' => $stockClearanceProduct, 'inhouseShop' => $inhouseShop]);
     }
-
 
     public function updateStatus(Request $request): JsonResponse
     {
@@ -71,11 +69,13 @@ class ClearanceSaleController extends BaseController
                 params: ['setup_by' => 'admin'],
                 data: ['is_active' => $request->get('status', 0)]
             );
+
             return response()->json([
                 'status' => 1,
                 'message' => translate('Status_updated_successfully'),
             ]);
         }
+
         return response()->json([
             'status' => 0,
             'message' => translate('Please_setup_the_configuration_first'),
@@ -95,6 +95,7 @@ class ClearanceSaleController extends BaseController
         }
 
         ToastMagic::success(translate('Setup_updated_successfully'));
+
         return back();
     }
 
@@ -110,6 +111,7 @@ class ClearanceSaleController extends BaseController
         } else {
             ToastMagic::error(translate('Please_setup_the_configuration_first'));
         }
+
         return back();
     }
 
@@ -120,11 +122,12 @@ class ClearanceSaleController extends BaseController
         $products = $this->productRepo->getListWithScope(
             orderBy: ['id' => 'desc'],
             searchValue: $searchValue,
-            scope: "active",
+            scope: 'active',
             filters: ['added_by' => 'in_house'],
             whereNotIn: ['id' => $clearanceProductIds],
             relations: ['brand', 'category', 'seller.shop'],
             dataLimit: 'all');
+
         return response()->json([
             'count' => $products->count(),
             'result' => view('admin-views.deal.clearance-sale.partials._search-product', compact('products'))->render(),
@@ -140,6 +143,7 @@ class ClearanceSaleController extends BaseController
             dataLimit: 'all'
         );
         $clearanceConfig = $this->stockClearanceSetupRepo->getFirstWhere(params: ['setup_by' => 'admin']);
+
         return response()->json([
             'result' => view('admin-views.deal.clearance-sale.partials._select-product', compact('selectedProducts', 'clearanceConfig'))->render(),
         ]);
@@ -157,19 +161,19 @@ class ClearanceSaleController extends BaseController
         $clearanceConfig = $this->stockClearanceSetupRepo->getFirstWhere(params: ['setup_by' => 'admin']);
         foreach ($clearanceProductLists as $clearanceProductList) {
             $stockClearanceProduct = $this->stockClearanceProductRepo->getFirstWhere(params: ['product_id' => $clearanceProductList->id]);
-            if (!$stockClearanceProduct) {
+            if (! $stockClearanceProduct) {
                 if ($clearanceConfig) {
                     $condition = $this->stockClearanceProductService->checkAddConditions(request: $request, product: $clearanceProductList, config: $clearanceConfig);
-                    if (!$condition['status']) {
+                    if (! $condition['status']) {
                         return response()->json([
                             'status' => $condition['status'],
-                            'message' => $condition['message']
+                            'message' => $condition['message'],
                         ], 200);
                     }
                 } else {
                     return response()->json([
                         'status' => false,
-                        'message' => translate('please_setup_the_configuration_first')
+                        'message' => translate('please_setup_the_configuration_first'),
                     ], 200);
                 }
             }
@@ -179,7 +183,7 @@ class ClearanceSaleController extends BaseController
             if ($clearanceConfig) {
                 $stockClearanceProduct = $this->stockClearanceProductRepo->getFirstWhere(params: ['product_id' => $clearanceProductList->id]);
                 $condition = $this->stockClearanceProductService->checkAddConditions(request: $request, product: $clearanceProductList, config: $clearanceConfig);
-                if (!$stockClearanceProduct && $condition['status']) {
+                if (! $stockClearanceProduct && $condition['status']) {
                     $dataArray = [
                         'added_by' => 'admin',
                         'user_id' => null,
@@ -194,9 +198,10 @@ class ClearanceSaleController extends BaseController
                 }
             }
         }
+
         return response()->json([
             'status' => $condition['status'],
-            'message' => $condition['message']
+            'message' => $condition['message'],
         ], 200);
     }
 
@@ -205,7 +210,7 @@ class ClearanceSaleController extends BaseController
         if ($request['discount_amount'] <= 0) {
             return response()->json([
                 'status' => 0,
-                'message' => translate('discount_amount_can_not_be_zero')
+                'message' => translate('discount_amount_can_not_be_zero'),
             ]);
         }
 
@@ -221,16 +226,17 @@ class ClearanceSaleController extends BaseController
 
             $this->stockClearanceProductRepo->updateByParams(params: ['product_id' => $request['product_id']], data: $dataArray);
         }
+
         return response()->json([
             'status' => $condition['status'],
-            'message' => $condition['message']
+            'message' => $condition['message'],
         ]);
     }
 
     public function updateProductStatus(Request $request): JsonResponse
     {
         $stockClearanceProduct = $this->stockClearanceProductRepo->getFirstWhere(params: ['product_id' => $request['product_id']], relations: ['setup']);
-        if ($request['status'] == 1 && !$this->productService->validateStockClearanceProductDiscount(stockClearanceProduct: $stockClearanceProduct)) {
+        if ($request['status'] == 1 && ! $this->productService->validateStockClearanceProductDiscount(stockClearanceProduct: $stockClearanceProduct)) {
             return response()->json([
                 'status' => 0,
                 'message' => translate('Your_products_unit_price_is_lower_then_offer_price'),
@@ -252,6 +258,7 @@ class ClearanceSaleController extends BaseController
     {
         $this->stockClearanceProductRepo->delete(params: ['product_id' => $productId]);
         ToastMagic::success(translate('stock_clearance_product_removed_successfully'));
+
         return back();
     }
 
@@ -259,6 +266,7 @@ class ClearanceSaleController extends BaseController
     {
         $this->stockClearanceProductRepo->delete(params: ['added_by' => 'admin']);
         ToastMagic::success(translate('all_stock_clearance_products_removed_successfully'));
+
         return back();
     }
 }

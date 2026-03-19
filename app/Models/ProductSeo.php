@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 /**
  * Class ProductSeo
  *
- * @package App\Models
  * @property int $id
  * @property int $product_id
  * @property string|null $title
@@ -76,9 +75,10 @@ class ProductSeo extends Model
     public function getImageFullUrlAttribute(): array
     {
         $value = $this->image;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','image')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('product/meta', $value, $storage['value'] ?? 'public');
     }
 

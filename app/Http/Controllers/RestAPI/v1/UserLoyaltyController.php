@@ -30,9 +30,9 @@ class UserLoyaltyController extends Controller
             $user = $request->user();
 
             $transactionTypes = json_decode($request['transaction_types'] ?? '', true) ?? [];
-            if (request()->has('start_date') && request()->has('end_date') && !checkDateFormatInMDY($request['start_date']) && !checkDateFormatInMDY($request['end_date'])) {
-                $startDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['start_date'])->format('Y-m-d') . ' 00:00:00';
-                $endDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['end_date'])->format('Y-m-d') . ' 23:59:59';
+            if (request()->has('start_date') && request()->has('end_date') && ! checkDateFormatInMDY($request['start_date']) && ! checkDateFormatInMDY($request['end_date'])) {
+                $startDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['start_date'])->format('Y-m-d').' 00:00:00';
+                $endDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['end_date'])->format('Y-m-d').' 23:59:59';
             } else {
                 $startDate = '';
                 $endDate = '';
@@ -45,25 +45,25 @@ class UserLoyaltyController extends Controller
                         $query->where('debit', '=', 0);
                     });
                 })
-                ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+                ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                     return $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
-                ->when(!empty($transactionTypes) && !in_array('all', $transactionTypes), function ($query) use ($transactionTypes) {
+                ->when(! empty($transactionTypes) && ! in_array('all', $transactionTypes), function ($query) use ($transactionTypes) {
                     return $query->whereIn('transaction_type', $transactionTypes);
                 })
                 ->latest()
                 ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
             return response()->json([
-                'limit' => (integer)$request['limit'],
-                'offset' => (integer)$request['offset'],
+                'limit' => (int) $request['limit'],
+                'offset' => (int) $request['offset'],
                 'total_loyalty_point' => $user->loyalty_point,
                 'total_size' => $loyaltyPointList->total(),
                 'loyalty_point_list' => $loyaltyPointList->items(),
                 'filter_by' => $request['filter_by'],
                 'start_date' => $request['start_date'],
                 'end_date' => $request['end_date'],
-                'transaction_types' => (array)$transactionTypes,
+                'transaction_types' => (array) $transactionTypes,
             ], 200);
         } else {
             return response()->json(['message' => translate('access_denied!')], 422);
@@ -77,12 +77,12 @@ class UserLoyaltyController extends Controller
 
         if ($walletStatus != 1 || $loyaltyPointStatus != 1) {
             return response()->json([
-                'message' => translate('transfer_loyalty_point_to_currency_is_not_possible_at_this_moment!')
+                'message' => translate('transfer_loyalty_point_to_currency_is_not_possible_at_this_moment!'),
             ], 422);
         }
 
         $validator = Validator::make($request->all(), [
-            'point' => 'required|integer|min:1'
+            'point' => 'required|integer|min:1',
         ]);
 
         if ($validator->errors()->count() > 0) {
@@ -90,9 +90,9 @@ class UserLoyaltyController extends Controller
         }
 
         $user = $request->user();
-        if ($request['point'] < (int)getWebConfig(name: 'loyalty_point_minimum_point') || $request['point'] > $user->loyalty_point) {
+        if ($request['point'] < (int) getWebConfig(name: 'loyalty_point_minimum_point') || $request['point'] > $user->loyalty_point) {
             return response()->json([
-                'message' => translate('insufficient_point!')
+                'message' => translate('insufficient_point!'),
             ], 422);
         }
 
@@ -105,7 +105,7 @@ class UserLoyaltyController extends Controller
         }
 
         return response()->json([
-            'message' => translate('point_to_wallet_transfer_successfully!')
+            'message' => translate('point_to_wallet_transfer_successfully!'),
         ], 200);
     }
 }

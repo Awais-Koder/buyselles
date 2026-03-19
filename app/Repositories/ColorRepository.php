@@ -10,10 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ColorRepository implements ColorRepositoryInterface
 {
-    public function __construct(private Color $color)
-    {
-    }
-
+    public function __construct(private Color $color) {}
 
     public function add(array $data): string|object
     {
@@ -30,14 +27,14 @@ class ColorRepository implements ColorRepositoryInterface
         $query = $this->color->when($relations, function ($query) use ($relations) {
             return $query->with($relations);
         })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy = [], string|null $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, int|null $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->color
             ->when($searchValue, function ($query) use ($searchValue) {
@@ -46,11 +43,12 @@ class ColorRepository implements ColorRepositoryInterface
             ->when($filters && $filters['code'], function ($query) use ($filters) {
                 return $query->where(['code' => $filters['code']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -63,16 +61,17 @@ class ColorRepository implements ColorRepositoryInterface
             ->when($filters && $filters['code'], function ($query) use ($filters) {
                 return $query->where(['code' => $filters['code']]);
             })
-            ->when(!empty($whereIn), function ($query) use ($whereIn) {
+            ->when(! empty($whereIn), function ($query) use ($whereIn) {
                 foreach ($whereIn as $key => $filterIndex) {
                     $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 

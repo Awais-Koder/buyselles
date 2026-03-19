@@ -11,10 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class BrandRepository implements BrandRepositoryInterface
 {
     public function __construct(
-        private readonly Brand         $brand,
-    )
-    {
-    }
+        private readonly Brand $brand,
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,62 +27,64 @@ class BrandRepository implements BrandRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->brand->with($relations)
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-                });
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query = $this->brand->when(!empty($relations), function ($query) use ($relations) {
+        $query = $this->brand->when(! empty($relations), function ($query) use ($relations) {
             $query->with($relations);
-        })->withCount('brandAllProducts')->with(['brandAllProducts'=> function($query){
-                $query->withCount('orderDetails');
-            }])->when($searchValue, function ($query) use($searchValue){
-                $query->Where('name', 'like', "%$searchValue%")->orWhere('id', $searchValue);
-            })
-            ->when(isset($filters['name']), function ($query) use($filters) {
+        })->withCount('brandAllProducts')->with(['brandAllProducts' => function ($query) {
+            $query->withCount('orderDetails');
+        }])->when($searchValue, function ($query) use ($searchValue) {
+            $query->Where('name', 'like', "%$searchValue%")->orWhere('id', $searchValue);
+        })
+            ->when(isset($filters['name']), function ($query) use ($filters) {
                 return $query->where(['name' => $filters['name']]);
             })
-            ->when(isset($filters['status']), function ($query) use($filters) {
+            ->when(isset($filters['status']), function ($query) use ($filters) {
                 return $query->where(['status' => $filters['status']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function getListWhereIn(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $whereIn = [], array $relations = [], array $nullFields = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->brand
-            ->withCount('brandAllProducts')->with(['brandAllProducts'=> function($query){
+            ->withCount('brandAllProducts')->with(['brandAllProducts' => function ($query) {
                 $query->withCount('orderDetails');
-            }])->when($searchValue, function ($query) use($searchValue){
+            }])->when($searchValue, function ($query) use ($searchValue) {
                 $query->Where('name', 'like', "%$searchValue%")->orWhere('id', $searchValue);
             })
-            ->when(isset($filters['name']), function ($query) use($filters) {
+            ->when(isset($filters['name']), function ($query) use ($filters) {
                 return $query->where(['name' => $filters['name']]);
             })
-            ->when(isset($filters['status']), function ($query) use($filters) {
+            ->when(isset($filters['status']), function ($query) use ($filters) {
                 return $query->where(['status' => $filters['status']]);
             })
-            ->when(!empty($whereIn), function ($query) use ($whereIn) {
-                foreach ($whereIn as $key => $filterIndex){
-                    $query->whereIn($key , $filterIndex);
+            ->when(! empty($whereIn), function ($query) use ($whereIn) {
+                foreach ($whereIn as $key => $filterIndex) {
+                    $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -96,7 +96,7 @@ class BrandRepository implements BrandRepositoryInterface
     public function delete(array $params): bool
     {
         $this->brand->where($params)->delete();
+
         return true;
     }
-
 }

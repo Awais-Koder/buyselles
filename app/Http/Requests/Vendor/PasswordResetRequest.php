@@ -3,12 +3,13 @@
 namespace App\Http\Requests\Vendor;
 
 use App\Traits\ResponseHandler;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
 
 class PasswordResetRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -28,11 +29,13 @@ class PasswordResetRequest extends FormRequest
             'identity' => 'required',
         ];
     }
+
     public function messages(): array
     {
         $verificationBy = getWebConfig('vendor_forgot_password_method') ?? 'phone';
+
         return [
-            'identity.required' => $verificationBy == 'email' ? translate('Please_enter_email_address') : translate('Please_enter_phone_number')
+            'identity.required' => $verificationBy == 'email' ? translate('Please_enter_email_address') : translate('Please_enter_phone_number'),
         ];
     }
 }

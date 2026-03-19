@@ -9,7 +9,6 @@ use Illuminate\Support\Carbon;
 /**
  * Class YourModel
  *
- * @package App\Models
  *
  * @property int $id
  * @property string $identity
@@ -26,6 +25,7 @@ use Illuminate\Support\Carbon;
 class PasswordReset extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'identity',
         'token',

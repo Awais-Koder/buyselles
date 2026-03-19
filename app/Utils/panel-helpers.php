@@ -6,7 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
 
-if (!function_exists('checkSetupGuideRequirements')) {
+if (! function_exists('checkSetupGuideRequirements')) {
     function checkSetupGuideRequirements($panel = 'admin'): array
     {
         $steps = getSetupGuideSteps(panel: $panel);
@@ -16,18 +16,18 @@ if (!function_exists('checkSetupGuideRequirements')) {
         });
 
         $checkedCount = count(array_filter($steps, function ($step) {
-            return !empty($step['checked']);
+            return ! empty($step['checked']);
         }));
 
         return [
-          'totalSteps' => count($steps) - $checkedCount,
-          'completePercent' => $checkedCount > 0 ? floor(($checkedCount / count($steps)) * 100) : 0,
-          'steps' => $steps,
+            'totalSteps' => count($steps) - $checkedCount,
+            'completePercent' => $checkedCount > 0 ? floor(($checkedCount / count($steps)) * 100) : 0,
+            'steps' => $steps,
         ];
     }
 }
 
-if (!function_exists('checkSetupGuideCacheKey')) {
+if (! function_exists('checkSetupGuideCacheKey')) {
     function checkSetupGuideCacheKey($key = '', $panel = null)
     {
         $checkSetupGuideCacheKeys = [];
@@ -47,11 +47,11 @@ if (!function_exists('checkSetupGuideCacheKey')) {
                 'inhouse_shop_setup' => 0,
                 'add_new_product' => Product::all()->count() > 0 ? 1 : 0,
             ];
-        } else if ($panel == 'vendor') {
+        } elseif ($panel == 'vendor') {
             $auth = auth('seller')->check() ? auth('seller')->user() : null;
             if ($auth) {
-                $setupGuide = session('setup_guide_requirements_for_vendor_'.$auth['id'], (array)($auth?->shop?->setup_guide ?? []));
-                $checkSetupGuideCacheKeys = !empty($setupGuide) ? $setupGuide : [
+                $setupGuide = session('setup_guide_requirements_for_vendor_'.$auth['id'], (array) ($auth?->shop?->setup_guide ?? []));
+                $checkSetupGuideCacheKeys = ! empty($setupGuide) ? $setupGuide : [
                     'shop_setup' => 0,
                     'add_new_product' => Product::where(['added_by' => 'seller', 'user_id' => $auth['id']])->count() > 0 ? 1 : 0,
                     'order_setup' => 0,
@@ -60,18 +60,19 @@ if (!function_exists('checkSetupGuideCacheKey')) {
                 ];
             }
         }
+
         return $checkSetupGuideCacheKeys[$key] ?? false;
     }
 }
 
-if (!function_exists('updateSetupGuideCacheKey')) {
+if (! function_exists('updateSetupGuideCacheKey')) {
     function updateSetupGuideCacheKey($key = '', $panel = null): void
     {
         if ($panel == 'admin') {
             $checkSetupGuideCacheKeys = getWebConfig(name: 'setup_guide_requirements_for_admin') ?? [];
             $checkSetupGuideCacheKeys = empty($checkSetupGuideCacheKeys) ? [] : $checkSetupGuideCacheKeys;
 
-            if (!isset($checkSetupGuideCacheKeys[$key]) || $checkSetupGuideCacheKeys[$key] !== true) {
+            if (! isset($checkSetupGuideCacheKeys[$key]) || $checkSetupGuideCacheKeys[$key] !== true) {
                 $newCacheKeys = [];
                 $newCacheKeys[$key] = true;
                 $checkSetupGuideCacheKeys = array_merge($checkSetupGuideCacheKeys, $newCacheKeys);
@@ -83,7 +84,7 @@ if (!function_exists('updateSetupGuideCacheKey')) {
                     BusinessSetting::create([
                         'type' => 'setup_guide_requirements_for_admin',
                         'value' => json_encode($checkSetupGuideCacheKeys),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]);
                 }
                 cacheRemoveByType(type: 'business_settings');
@@ -91,8 +92,8 @@ if (!function_exists('updateSetupGuideCacheKey')) {
         } elseif ($panel == 'vendor') {
             $auth = auth('seller')->check() ? auth('seller')->user() : null;
             if ($auth) {
-                $checkSetupGuideKeys = session('setup_guide_requirements_for_vendor_'.$auth['id'], (array)($auth?->shop?->setup_guide ?? []));
-                if (!isset($checkSetupGuideKeys[$key]) || $checkSetupGuideKeys[$key] !== true) {
+                $checkSetupGuideKeys = session('setup_guide_requirements_for_vendor_'.$auth['id'], (array) ($auth?->shop?->setup_guide ?? []));
+                if (! isset($checkSetupGuideKeys[$key]) || $checkSetupGuideKeys[$key] !== true) {
                     $newCacheKeys = [];
                     $newCacheKeys[$key] = true;
                     $newCacheKeys['add_new_product'] = checkSetupGuideCacheKey(key: 'add_new_product', panel: 'vendor');
@@ -107,8 +108,7 @@ if (!function_exists('updateSetupGuideCacheKey')) {
     }
 }
 
-
-if (!function_exists('getSetupGuideSteps')) {
+if (! function_exists('getSetupGuideSteps')) {
     function getSetupGuideSteps($panel = 'admin'): array
     {
         $steps = [];
@@ -239,6 +239,7 @@ if (!function_exists('getSetupGuideSteps')) {
                 'disabled' => checkSetupGuideCacheKey(key: 'withdraw_setup', panel: 'vendor'),
             ];
         }
+
         return $steps;
     }
 }

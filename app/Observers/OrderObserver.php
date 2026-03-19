@@ -8,12 +8,13 @@ use App\Traits\PushNotificationTrait;
 class OrderObserver
 {
     use PushNotificationTrait;
+
     /**
      * Handle the Order "created" event.
      */
     public function created(Order $order): void
     {
-//        $order->flushCache();
+        //        $order->flushCache();
     }
 
     /**
@@ -21,7 +22,7 @@ class OrderObserver
      */
     public function updated(Order $order): void
     {
-//        $order->flushCache();
+        //        $order->flushCache();
     }
 
     /**

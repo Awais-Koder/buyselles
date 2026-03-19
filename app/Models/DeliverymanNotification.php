@@ -15,8 +15,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $description
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DeliverymanNotification extends Model
 {
@@ -38,6 +36,6 @@ class DeliverymanNotification extends Model
 
     public function order()
     {
-        return $this->belongsTo(Order::class,'order_id');
+        return $this->belongsTo(Order::class, 'order_id');
     }
 }

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Traits\FileManagerTrait;
 use App\Traits\GeneratesUniqueSlug;
-use Illuminate\Support\Str;
 
 class CategoryService
 {
@@ -47,15 +46,17 @@ class CategoryService
         if ($data['position'] == 0) {
             $result['home_status'] = $request['home_status'] ?? 0;
         }
+
         return $result;
     }
 
     public function getSelectOptionHtml(object $data): string
     {
-        $output = '<option value="" disabled selected>' . (translate('select_sub_category')) . '</option>';
+        $output = '<option value="" disabled selected>'.(translate('select_sub_category')).'</option>';
         foreach ($data as $row) {
-            $output .= '<option value="' . $row->id . '">' . $row->defaultName . '</option>';
+            $output .= '<option value="'.$row->id.'">'.$row->defaultName.'</option>';
         }
+
         return $output;
     }
 
@@ -66,18 +67,19 @@ class CategoryService
                 if ($child->childes) {
                     foreach ($child->childes as $item) {
                         if ($item['icon']) {
-                            $this->delete('category/' . $item['icon']);
+                            $this->delete('category/'.$item['icon']);
                         }
                     }
                 }
                 if ($child['icon']) {
-                    $this->delete('category/' . $child['icon']);
+                    $this->delete('category/'.$child['icon']);
                 }
             }
         }
         if ($data['icon']) {
-            $this->delete('category/' . $data['icon']);
+            $this->delete('category/'.$data['icon']);
         }
+
         return true;
     }
 }

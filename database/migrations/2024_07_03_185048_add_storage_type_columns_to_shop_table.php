@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('shops', function (Blueprint $table) {
-            $table->string('image_storage_type',10)->default('public')->after('image')->nullable();
-            $table->string('banner_storage_type',10)->default('public')->after('banner')->nullable();
-            $table->string('bottom_banner_storage_type',10)->default('public')->after('bottom_banner')->nullable();
-            $table->string('offer_banner_storage_type',10)->default('public')->after('offer_banner')->nullable();
+            $table->string('image_storage_type', 10)->default('public')->after('image')->nullable();
+            $table->string('banner_storage_type', 10)->default('public')->after('banner')->nullable();
+            $table->string('bottom_banner_storage_type', 10)->default('public')->after('bottom_banner')->nullable();
+            $table->string('offer_banner_storage_type', 10)->default('public')->after('offer_banner')->nullable();
         });
     }
 

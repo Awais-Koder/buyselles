@@ -20,8 +20,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-
-    public function list(Request $request, $type):JsonResponse
+    public function list(Request $request, $type): JsonResponse
     {
         $seller = $request->seller;
 
@@ -66,30 +65,30 @@ class ChatController extends Controller
             }
         }
 
-        $data = array(
+        $data = [
             'data' => $seller,
             'total_size' => $total_size,
             'limit' => $request['limit'] ?? '',
             'offset' => $request['offset'] ?? '',
             'chat' => $chats,
-        );
+        ];
 
         return response()->json($data, 200);
     }
 
-    public function search(Request $request, $type):JsonResponse
+    public function search(Request $request, $type): JsonResponse
     {
         $seller = $request->seller;
 
-        $terms = explode(" ", $request->input('search'));
+        $terms = explode(' ', $request->input('search'));
         if ($type == 'customer') {
             $with_param = 'customer';
             $id_param = 'user_id';
             $users = User::where('id', '!=', 0)
                 ->when($request->search, function ($query) use ($terms) {
                     foreach ($terms as $term) {
-                        $query->where('f_name', 'like', '%' . $term . '%')
-                            ->orWhere('l_name', 'like', '%' . $term . '%');
+                        $query->where('f_name', 'like', '%'.$term.'%')
+                            ->orWhere('l_name', 'like', '%'.$term.'%');
                     }
                 })->pluck('id')->toArray();
 
@@ -99,8 +98,8 @@ class ChatController extends Controller
             $users = DeliveryMan::where(['seller_id' => $seller['id']])
                 ->when($request->search, function ($query) use ($terms) {
                     foreach ($terms as $term) {
-                        $query->where('f_name', 'like', '%' . $term . '%')
-                            ->orWhere('l_name', 'like', '%' . $term . '%');
+                        $query->where('f_name', 'like', '%'.$term.'%')
+                            ->orWhere('l_name', 'like', '%'.$term.'%');
                     }
                 })->pluck('id')->toArray();
         } else {
@@ -115,7 +114,7 @@ class ChatController extends Controller
             ->toArray();
         $unique_chat_ids = call_user_func_array('array_merge', $unique_chat_ids);
 
-        $chats = array();
+        $chats = [];
         if ($unique_chat_ids) {
             foreach ($unique_chat_ids as $unique_chat_id) {
                 $chats[] = Chatting::with([$with_param])
@@ -129,7 +128,7 @@ class ChatController extends Controller
         return response()->json($chats, 200);
     }
 
-    public function get_message(Request $request, $type, $id):JsonResponse
+    public function get_message(Request $request, $type, $id): JsonResponse
     {
 
         $seller = $request->seller;
@@ -155,13 +154,13 @@ class ChatController extends Controller
 
         $query = Chatting::with($with)->where(['seller_id' => $seller['id'], $id_param => $id])->latest();
 
-        if (!empty($query->get())) {
+        if (! empty($query->get())) {
             $message = $query->paginate($request->limit, ['*'], 'page', $request->offset);
             $message?->map(function ($conversation) {
-                if (!is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
+                if (! is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
                     $attachmentData = [];
                     foreach ($conversation->attachment_full_url as $key => $attachment) {
-                        $attachmentData[] = (object)$this->getAttachmentData($attachment);
+                        $attachmentData[] = (object) $this->getAttachmentData($attachment);
                     }
                     $conversation->attachment = $attachmentData;
                 } else {
@@ -174,26 +173,28 @@ class ChatController extends Controller
                     ->update(['seen_by_seller' => 1]);
             }
 
-            $data = array(
+            $data = [
                 'data' => $seller,
                 'total_size' => $message->total(),
                 'limit' => $request->limit,
                 'offset' => $request->offset,
                 'message' => $message->items(),
-            );
+            ];
+
             return response()->json($data, 200);
         }
+
         return response()->json(['message' => translate('no messages found!')], 200);
 
     }
 
-    public function send_message(SellerSendMessageRequest $request, $type):JsonResponse
+    public function send_message(SellerSendMessageRequest $request, $type): JsonResponse
     {
         $seller = $request->seller;
         $attachment = [];
         if ($request->file('media')) {
             foreach ($request['media'] as $image) {
-                if (in_array('.' . $image->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
+                if (in_array('.'.$image->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
                     $attachment[] = [
                         'file_name' => ImageManager::file_upload(dir: 'chatting/', format: $image->getClientOriginalExtension(), file: $image),
                         'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
@@ -218,7 +219,7 @@ class ChatController extends Controller
         $shop_id = Shop::where('seller_id', $seller['id'])->first()->id;
         $messageForm = Seller::find($seller['id']);
 
-        $chatting = new Chatting();
+        $chatting = new Chatting;
         $chatting->seller_id = $seller->id;
         $chatting->message = $request['message'];
         $chatting->attachment = json_encode($attachment);
@@ -261,11 +262,12 @@ class ChatController extends Controller
         }
         $path = $attachment['status'] == 200 ? $attachment['path'] : null;
         $size = $attachment['status'] == 200 ? FileManagerLogic::getFileSize(path: $path) : null;
+
         return [
             'type' => $type,
             'key' => $attachment['key'],
             'path' => $path,
-            'size' => $size
+            'size' => $size,
         ];
     }
 

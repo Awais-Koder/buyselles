@@ -26,22 +26,13 @@ class CartController extends BaseController
 {
     use CalculatorTrait;
 
-    /**
-     * @param ProductRepositoryInterface $productRepo
-     * @param ColorRepositoryInterface $colorRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param CartService $cartService
-     * @param POSService $POSService
-     */
     public function __construct(
-        private readonly ProductRepositoryInterface  $productRepo,
-        private readonly ColorRepositoryInterface    $colorRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly ColorRepositoryInterface $colorRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-        private readonly CartService                 $cartService,
-        private readonly POSService                  $POSService,
-    )
-    {
-    }
+        private readonly CartService $cartService,
+        private readonly POSService $POSService,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -65,12 +56,11 @@ class CartController extends BaseController
             request: $request, product: $product, colorName: $colorName
         );
         $data['productSubtotal'] = setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productSubtotal));
+
         return response()->json($data);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function updateQuantity(Request $request): JsonResponse
@@ -88,21 +78,22 @@ class CartController extends BaseController
                     'productSubtotal' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $cartItems['productSubtotal'])),
                     'productType' => $product['product_type'],
                     'productCounts' => $this->cartService->getProductCounts(),
-                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                 ]);
             } else {
                 return response()->json([
                     'quantityUpdate' => 1,
                     'productSubtotal' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $cartItems['productSubtotal'])),
                     'productCounts' => $this->cartService->getProductCounts(),
-                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                 ]);
             }
         } else {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
                 'upQty' => 'zeroNegative',
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
     }
@@ -155,21 +146,23 @@ class CartController extends BaseController
 
                     if ($request['quantity'] <= 0 || $request['quantity_in_cart'] <= 0) {
                         $cartItems = $this->getCartData(cartName: $cartId);
+
                         return response()->json([
                             'data' => 'custom-error',
                             'title' => translate('Invalid_quantity'),
                             'text' => translate('Please_provide_a_valid_quantity'),
-                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                         ]);
                     }
 
                     $currentQty = $this->cartService->checkCurrentStock(variant: $variant, variation: json_decode($product['variation']), productQty: $product['current_stock'], quantity: $request['quantity_in_cart']);
                     if ($product['product_type'] == 'physical' && $currentQty < 0) {
                         $cartItems = $this->getCartData(cartName: $cartId);
+
                         return response()->json([
                             'data' => 0,
                             'productCounts' => $this->cartService->getProductCounts(),
-                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                         ]);
                     }
                     $cartItem = $this->cartService->addCartDataOnSession(
@@ -186,6 +179,7 @@ class CartController extends BaseController
                     $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
                     $summaryData = array_merge($this->POSService->getSummaryData(), $getCurrentCustomerData);
                     $cartItems = $this->getCartData(cartName: $cartId);
+
                     return response()->json([
                         'data' => 1,
                         'inCartData' => 1,
@@ -214,10 +208,11 @@ class CartController extends BaseController
         $currentQty = $this->cartService->checkCurrentStock(variant: $variant, variation: json_decode($product['variation']), productQty: $product['current_stock'], quantity: $request['quantity']);
         if ($product['product_type'] == 'physical' && $currentQty < 0) {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
                 'data' => 0,
-                'productCounts' =>$this->cartService->getProductCounts(),
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'productCounts' => $this->cartService->getProductCounts(),
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
         $sessionData = $this->cartService->addCartDataOnSession(
@@ -229,16 +224,15 @@ class CartController extends BaseController
             variations: $variations
         );
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'data' => $sessionData,
             'productCounts' => $this->cartService->getProductCounts(),
-            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function removeCart(Request $request): JsonResponse
@@ -261,32 +255,31 @@ class CartController extends BaseController
         }
         session()->put($cartId, $cartKeeper);
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             'productCounts' => $this->cartService->getProductCounts(),
         ]);
     }
 
-    /**
-     * @return RedirectResponse
-     */
     public function clearSessionCartIds(): RedirectResponse
     {
         $cartId = session(SessionKey::CURRENT_USER);
         $cart = session()->get($cartId, []);
         if (empty($cart)) {
             ToastMagic::warning(translate('Cart is already empty'));
+
             return redirect()->route('admin.pos.index');
         }
         session()->forget(SessionKey::CART_NAME);
         session()->forget(session(SessionKey::CURRENT_USER));
         session()->forget(SessionKey::CURRENT_USER);
         ToastMagic::success(translate('Cart has been cleared'));
+
         return redirect()->route('admin.pos.index');
     }
 
     /**
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getCartIds(): JsonResponse
@@ -295,13 +288,13 @@ class CartController extends BaseController
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
         $summaryData = array_merge($this->POSService->getSummaryData(), $getCurrentCustomerData);
         $cartItems = $this->getCartData(cartName: session(SessionKey::CURRENT_USER));
+
         return response()->json([
             'view' => view('admin-views.pos.partials._cart-summary', compact('summaryData', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @return JsonResponse
      * @throws Throwable
      */
     public function emptyCart(): JsonResponse
@@ -312,14 +305,13 @@ class CartController extends BaseController
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
         $summaryData = array_merge($this->POSService->getSummaryData(), $getCurrentCustomerData);
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'view' => view('admin-views.pos.partials._cart-summary', compact('summaryData', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return RedirectResponse
      * @throws \Exception
      */
     public function changeCart(Request $request): RedirectResponse
@@ -327,12 +319,12 @@ class CartController extends BaseController
         $this->cartService->customerOnHoldStatus(status: true);
         session()->put(SessionKey::CURRENT_USER, $request['cart_id']);
         $this->cartService->customerOnHoldStatus(status: false);
-        ToastMagic::success($request['cart_id'] . ' ' . translate('order_is_now_resumed'));
+        ToastMagic::success($request['cart_id'].' '.translate('order_is_now_resumed'));
+
         return redirect()->route('admin.pos.index');
     }
 
     /**
-     * @return RedirectResponse
      * @throws \Exception
      */
     public function addNewCartId(): RedirectResponse
@@ -352,12 +344,10 @@ class CartController extends BaseController
             $this->cartService->customerOnHoldStatus(status: true);
             $this->cartService->getNewCartId();
         }
+
         return redirect()->route('admin.pos.index');
     }
 
-    /**
-     * @return array
-     */
     protected function getCustomerDataFromSessionForPOS(): array
     {
         if (Str::contains(session(SessionKey::CURRENT_USER), 'walk-in-customer')) {
@@ -366,17 +356,16 @@ class CartController extends BaseController
         } else {
             $userId = explode('-', session(SessionKey::CURRENT_USER))[2];
             $currentCustomerData = $this->customerRepo->getFirstWhere(params: ['id' => $userId]);
-            $currentCustomer = $currentCustomerData['f_name'] . ' ' . $currentCustomerData['l_name'] . ' (' . $currentCustomerData['phone'] . ')';
+            $currentCustomer = $currentCustomerData['f_name'].' '.$currentCustomerData['l_name'].' ('.$currentCustomerData['phone'].')';
         }
+
         return [
             'currentCustomer' => $currentCustomer,
-            'currentCustomerData' => $currentCustomerData
+            'currentCustomerData' => $currentCustomerData,
         ];
     }
 
     /**
-     * @param string $cartName
-     * @return array
      * @function getCustomerCartData ,used for process data
      */
     protected function getCustomerCartData(string $cartName): array
@@ -385,7 +374,7 @@ class CartController extends BaseController
         if (Str::contains($cartName, 'walk-in-customer')) {
             $currentCustomerInfo = [
                 'customerName' => 'Walk-In Customer',
-                'customerPhone' => "",
+                'customerPhone' => '',
             ];
             $customerId = 0;
         } else {
@@ -399,6 +388,7 @@ class CartController extends BaseController
             'customerPhone' => $currentCustomerInfo['customerPhone'],
             'customerId' => $customerId,
         ];
+
         return $customerCartData;
     }
 
@@ -451,6 +441,7 @@ class CartController extends BaseController
         $totalCalculation = $this->cartService->getTotalCalculation(
             subTotalCalculation: $subTotalCalculation, cartName: $cartName
         );
+
         return [
             'countItem' => $subTotalCalculation['countItem'],
             'total' => $totalCalculation['total'],
@@ -469,6 +460,7 @@ class CartController extends BaseController
     {
         $customerCartData = $this->getCustomerCartData(cartName: $cartName);
         $cartItemData = $this->calculateCartItemsData(cartName: $cartName, customerCartData: $customerCartData);
+
         return array_merge($customerCartData[$cartName], $cartItemData);
     }
 }

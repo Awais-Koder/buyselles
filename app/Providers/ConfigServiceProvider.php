@@ -11,8 +11,6 @@ class ConfigServiceProvider extends ServiceProvider
 {
     /**
      * Register services.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -21,8 +19,6 @@ class ConfigServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -32,6 +28,7 @@ class ConfigServiceProvider extends ServiceProvider
                 Config::set('timezone', $timezone->value);
                 date_default_timezone_set($timezone->value);
             }
-        } catch (Exception $ex) {}
+        } catch (Exception $ex) {
+        }
     }
 }

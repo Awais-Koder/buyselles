@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 
 class ClearanceSaleSEOSetupRequest extends FormRequest
 {

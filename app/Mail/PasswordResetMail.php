@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Mail;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -12,7 +14,9 @@ class PasswordResetMail extends Mailable
     use Queueable, SerializesModels;
 
     protected $data;
+
     protected $template;
+
     protected $socialMedia;
 
     /**

@@ -15,7 +15,7 @@ class PaymentMethodUpdateRequest extends FormRequest
     protected $stopOnFirstFailure = true;
 
     public function __construct(
-        private readonly SettingRepositoryInterface         $settingRepo,
+        private readonly SettingRepositoryInterface $settingRepo,
     ) {}
 
     public function authorize(): bool
@@ -31,6 +31,7 @@ class PaymentMethodUpdateRequest extends FormRequest
             'mode' => 'required|in:live,test',
         ];
         $additionalDataRules = $this->getAdditionalDataRules();
+
         return array_merge($validationRules, $additionalDataRules);
     }
 
@@ -45,37 +46,37 @@ class PaymentMethodUpdateRequest extends FormRequest
 
     protected function getAdditionalDataRules(): array
     {
-        collect(['status'])->each(fn($item, $key) => $this[$item] = $this->has($item) ? (int)$this[$item] : 0);
+        collect(['status'])->each(fn ($item, $key) => $this[$item] = $this->has($item) ? (int) $this[$item] : 0);
         $settings = $this->settingRepo->getFirstWhere(params: ['key_name' => $this['gateway'], 'settings_type' => 'payment_config']);
         $additionalDataImage = $settings['additional_data'] != null ? json_decode($settings['additional_data']) : null;
-        $gatewayImgPath = dynamicAsset(path: 'public/assets/back-end/img/modal/payment-methods/' . $settings['key_name'] . '.png');
+        $gatewayImgPath = dynamicAsset(path: 'public/assets/back-end/img/modal/payment-methods/'.$settings['key_name'].'.png');
         if ($additionalDataImage != null) {
-            $gatewayImgPath = $additionalDataImage->gateway_image ? dynamicStorage('storage/app/public/payment_modules/gateway_image/' . $additionalDataImage->gateway_image) : $gatewayImgPath;
-            $isFileExist = 'storage/app/public/payment_modules/gateway_image/' . $additionalDataImage->gateway_image;
+            $gatewayImgPath = $additionalDataImage->gateway_image ? dynamicStorage('storage/app/public/payment_modules/gateway_image/'.$additionalDataImage->gateway_image) : $gatewayImgPath;
+            $isFileExist = 'storage/app/public/payment_modules/gateway_image/'.$additionalDataImage->gateway_image;
         }
 
-        if ($this['gateway'] == 'paymob_accept' && !$this['supported_country'] && !$this['secret_key']) {
+        if ($this['gateway'] == 'paymob_accept' && ! $this['supported_country'] && ! $this['secret_key']) {
             Setting::updateOrCreate(['key_name' => 'paymob_accept', 'settings_type' => 'payment_config'], [
                 'key_name' => 'paymob_accept',
                 'live_values' => [
-                    'gateway' => "",
-                    'mode' => "live",
-                    'status' => "0",
-                    'supported_country' => "",
-                    'public_key' => "",
-                    'secret_key' => "",
-                    'integration_id' => "",
-                    'hmac' => "",
+                    'gateway' => '',
+                    'mode' => 'live',
+                    'status' => '0',
+                    'supported_country' => '',
+                    'public_key' => '',
+                    'secret_key' => '',
+                    'integration_id' => '',
+                    'hmac' => '',
                 ],
                 'test_values' => [
-                    'gateway' => "",
-                    'mode' => "test",
-                    'status' => "0",
-                    'supported_country' => "",
-                    'public_key' => "",
-                    'secret_key' => "",
-                    'integration_id' => "",
-                    'hmac' => "",
+                    'gateway' => '',
+                    'mode' => 'test',
+                    'status' => '0',
+                    'supported_country' => '',
+                    'public_key' => '',
+                    'secret_key' => '',
+                    'integration_id' => '',
+                    'hmac' => '',
                 ],
                 'settings_type' => 'payment_config',
                 'mode' => 'test',
@@ -89,13 +90,13 @@ class PaymentMethodUpdateRequest extends FormRequest
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'store_id' => 'required',
-                'store_password' => 'required'
+                'store_password' => 'required',
             ];
         } elseif ($this['gateway'] == 'paypal') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'client_id' => 'required',
-                'client_secret' => 'required'
+                'client_secret' => 'required',
             ];
         } elseif ($this['gateway'] == 'stripe') {
             $additionalDataRules = [
@@ -107,28 +108,28 @@ class PaymentMethodUpdateRequest extends FormRequest
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'api_key' => 'required',
-                'api_secret' => 'required'
+                'api_secret' => 'required',
             ];
         } elseif ($this['gateway'] == 'senang_pay') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'callback_url' => 'required',
                 'secret_key' => 'required',
-                'merchant_id' => 'required'
+                'merchant_id' => 'required',
             ];
         } elseif ($this['gateway'] == 'paytabs') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'profile_id' => 'required',
                 'server_key' => 'required',
-                'base_url' => 'required'
+                'base_url' => 'required',
             ];
         } elseif ($this['gateway'] == 'paystack') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'public_key' => 'required',
                 'secret_key' => 'required',
-                'merchant_email' => 'required'
+                'merchant_email' => 'required',
             ];
         } elseif ($this['gateway'] == 'paymob_accept') {
             $additionalDataRules = [
@@ -137,37 +138,37 @@ class PaymentMethodUpdateRequest extends FormRequest
                 'public_key' => 'required',
                 'secret_key' => 'required',
                 'integration_id' => 'required',
-                'hmac' => 'required'
+                'hmac' => 'required',
             ];
         } elseif ($this['gateway'] == 'mercadopago') {
-            if (!isset($this['supported_country']) || $this['supported_country'] == '') {
+            if (! isset($this['supported_country']) || $this['supported_country'] == '') {
                 $this->merge(['supported_country' => 'argentina']);
             }
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'supported_country' => 'required',
                 'access_token' => 'required',
-                'public_key' => 'required'
+                'public_key' => 'required',
             ];
         } elseif ($this['gateway'] == 'liqpay') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'private_key' => 'required',
-                'public_key' => 'required'
+                'public_key' => 'required',
             ];
         } elseif ($this['gateway'] == 'flutterwave') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'secret_key' => 'required',
                 'public_key' => 'required',
-                'hash' => 'required'
+                'hash' => 'required',
             ];
         } elseif ($this['gateway'] == 'paytm') {
             $additionalDataRules = [
                 'status' => 'required|in:1,0',
                 'merchant_key' => 'required',
                 'merchant_id' => 'required',
-                'merchant_website_link' => 'required'
+                'merchant_website_link' => 'required',
             ];
         } elseif ($this['gateway'] == 'bkash') {
             $additionalDataRules = [
@@ -179,11 +180,11 @@ class PaymentMethodUpdateRequest extends FormRequest
             ];
         } elseif ($this['gateway'] == 'cash_after_service') {
             $additionalDataRules = [
-                'status' => 'required|in:1,0'
+                'status' => 'required|in:1,0',
             ];
         } elseif ($this['gateway'] == 'digital_payment') {
             $additionalDataRules = [
-                'status' => 'required|in:1,0'
+                'status' => 'required|in:1,0',
             ];
         } elseif ($this['gateway'] == 'momo') {
             $additionalDataRules = [

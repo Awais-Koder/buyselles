@@ -26,29 +26,25 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class DashboardController extends BaseController
 {
     public function __construct(
-        private readonly AdminWalletRepositoryInterface      $adminWalletRepo,
-        private readonly CustomerRepositoryInterface         $customerRepo,
+        private readonly AdminWalletRepositoryInterface $adminWalletRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly OrderTransactionRepositoryInterface $orderTransactionRepo,
-        private readonly ProductRepositoryInterface          $productRepo,
-        private readonly DeliveryManRepositoryInterface      $deliveryManRepo,
-        private readonly OrderRepositoryInterface            $orderRepo,
-        private readonly BrandRepositoryInterface            $brandRepo,
-        private readonly VendorRepositoryInterface           $vendorRepo,
-        private readonly VendorWalletRepositoryInterface     $vendorWalletRepo,
-        private readonly RestockProductRepositoryInterface   $restockProductRepo,
-        private readonly DashboardService                    $dashboardService,
-        private readonly ChattingRepositoryInterface          $chattingRepo,
-    )
-    {
-    }
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly BrandRepositoryInterface $brandRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
+        private readonly DashboardService $dashboardService,
+        private readonly ChattingRepositoryInterface $chattingRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     * Index function is the starting point of a controller
+     *                                                                             Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
+    public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $mostRatedProducts = $this->productRepo->getTopRatedList(filters: ['added_by' => 'admin'])->take(DASHBOARD_DATA_LIMIT);
         $topSellProduct = $this->productRepo->getTopSellList(filters: ['added_by' => 'in_house'], relations: ['orderDetails', 'refundRequest'])->take(DASHBOARD_TOP_SELL_DATA_LIMIT);
@@ -78,7 +74,7 @@ class DashboardController extends BaseController
         $from = now()->startOfYear()->format('Y-m-d');
         $to = now()->endOfYear()->format('Y-m-d');
         $range = range(1, 12);
-        $label = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        $label = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $inHouseOrderEarningArray = $this->getOrderStatisticsData(from: $from, to: $to, range: $range, type: 'month', userType: 'admin');
         $vendorOrderEarningArray = $this->getOrderStatisticsData(from: $from, to: $to, range: $range, type: 'month', userType: 'seller');
         $inHouseEarning = $this->getEarning(from: $from, to: $to, range: $range, type: 'month', userType: 'admin');
@@ -106,6 +102,7 @@ class DashboardController extends BaseController
             'getTotalVendorCount' => $this->vendorRepo->getListWhere(dataLimit: 'all')->count(),
             'getTotalDeliveryManCount' => $this->deliveryManRepo->getListWhere(filters: ['seller_id' => 0], dataLimit: 'all')->count(),
         ];
+
         return view('admin-views.system.dashboard', compact('data', 'inHouseEarning', 'vendorEarning', 'commissionEarn', 'inHouseOrderEarningArray', 'vendorOrderEarningArray', 'label', 'dateType'));
     }
 
@@ -113,6 +110,7 @@ class DashboardController extends BaseController
     {
         session()->put('statistics_type', $request['statistics_type']);
         $data = self::getOrderStatusData();
+
         return response()->json(['view' => view('admin-views.partials._dashboard-order-status', compact('data'))->render()], 200);
     }
 
@@ -183,6 +181,7 @@ class DashboardController extends BaseController
         $label = $dateTypeArray['keyRange'] ?? [];
         $inHouseOrderEarningArray = array_values($inHouseOrderEarningArray);
         $vendorOrderEarningArray = array_values($vendorOrderEarningArray);
+
         return response()->json([
             'view' => view('admin-views.system.partials.order-statistics', compact('inHouseOrderEarningArray', 'vendorOrderEarningArray', 'label', 'dateType'))->render(),
         ]);
@@ -203,6 +202,7 @@ class DashboardController extends BaseController
         $inHouseEarning = array_values($inHouseEarning);
         $vendorEarning = array_values($vendorEarning);
         $commissionEarn = array_values($commissionEarn);
+
         return response()->json([
             'view' => view('admin-views.system.partials.earning-statistics', compact('inHouseEarning', 'vendorEarning', 'commissionEarn', 'label', 'dateType'))->render(),
         ]);
@@ -213,7 +213,7 @@ class DashboardController extends BaseController
         $orderEarnings = $this->orderRepo->getListWhereBetween(
             filters: [
                 'seller_is' => $userType,
-                'payment_status' => 'paid'
+                'payment_status' => 'paid',
             ],
             selectColumn: 'order_amount',
             whereBetween: 'created_at',
@@ -228,6 +228,7 @@ class DashboardController extends BaseController
                 $orderEarningArray[$value] = 0;
             }
         }
+
         return $orderEarningArray;
     }
 
@@ -243,16 +244,10 @@ class DashboardController extends BaseController
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
+
         return $this->dashboardService->getDateWiseAmount(range: $range, type: $type, amountArray: $earning);
     }
 
-    /**
-     * @param string|Carbon $from
-     * @param string|Carbon $to
-     * @param array $range
-     * @param string $type
-     * @return array
-     */
     protected function getAdminCommission(string|Carbon $from, string|Carbon $to, array $range, string $type): array
     {
         $commissionGiven = $this->orderTransactionRepo->getListWhereBetween(
@@ -265,6 +260,7 @@ class DashboardController extends BaseController
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
+
         return $this->dashboardService->getDateWiseAmount(range: $range, type: $type, amountArray: $commissionGiven);
     }
 
@@ -279,16 +275,16 @@ class DashboardController extends BaseController
             $count = $products?->sum('restock_product_customers_count') ?? 0;
             $restockProduct = [
                 'title' => $firstProduct?->product?->name ?? '',
-                'body' => $count < 100 ? translate('This_product_has') . ' ' . $count . ' ' . translate('restock_request') : translate('This_product_has') . ' 99+ ' . translate('restock_request'),
+                'body' => $count < 100 ? translate('This_product_has').' '.$count.' '.translate('restock_request') : translate('This_product_has').' 99+ '.translate('restock_request'),
                 'image' => getStorageImages(path: $firstProduct?->product?->thumbnail_full_url ?? '', type: 'product'),
-                'route' => route('admin.products.request-restock-list')
+                'route' => route('admin.products.request-restock-list'),
             ];
         } elseif (count($restockProductList) > 1) {
             $restockProduct = [
                 'title' => translate('Restock_Request'),
-                'body' => count($restockProductList) < 100 ? (count($restockProductList) . ' ' . translate('products_have_restock_request')) : ('99 +' . ' ' . translate('more_products_have_restock_request')),
+                'body' => count($restockProductList) < 100 ? (count($restockProductList).' '.translate('products_have_restock_request')) : ('99 +'.' '.translate('more_products_have_restock_request')),
                 'image' => dynamicAsset(path: 'public/assets/back-end/img/icons/restock-request-icon.svg'),
-                'route' => route('admin.products.request-restock-list')
+                'route' => route('admin.products.request-restock-list'),
             ];
         }
         $chatting = $this->chattingRepo->getListWhereNotNull(
@@ -308,7 +304,7 @@ class DashboardController extends BaseController
             'restockProductCount' => $restockProductList->count(),
             'restockProduct' => $restockProduct,
             'newMessagesExist' => $chatting,
-            'message' => $chatting > 1 ? $chatting . ' ' . translate('New_Message') : translate('New_Message'),
+            'message' => $chatting > 1 ? $chatting.' '.translate('New_Message') : translate('New_Message'),
         ]);
     }
 }

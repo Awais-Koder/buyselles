@@ -8,6 +8,7 @@ use App\Traits\ResponseHandler;
 class WithdrawalMethodRequest extends Request
 {
     use ResponseHandler;
+
     protected $stopOnFirstFailure = true;
 
     public function authorize(): bool

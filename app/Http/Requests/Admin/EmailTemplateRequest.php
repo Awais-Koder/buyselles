@@ -26,7 +26,7 @@ class EmailTemplateRequest extends FormRequest
             [
                 'logo' => 'sometimes|mimes:jpg,jpeg,png|max:1024',
                 'icon' => 'required|mimes:jpg,jpeg,png|max:1024',
-            ]
+            ],
         ];
 
     }
@@ -38,23 +38,22 @@ class EmailTemplateRequest extends FormRequest
 
                 $bodyEn = $this->body['en'] ?? null;
                 $cleaned = trim(strip_tags($bodyEn));
-                if (!array_key_exists('en', $this->title) || blank($this->title['en'])) {
-                    $validator->errors()->add('title', translate('title_field_is_required') . '!');
+                if (! array_key_exists('en', $this->title) || blank($this->title['en'])) {
+                    $validator->errors()->add('title', translate('title_field_is_required').'!');
                 }
                 if ($cleaned === '') {
-                    $validator->errors()->add('body', translate('Mail_Body_is_required') . '!');
+                    $validator->errors()->add('body', translate('Mail_Body_is_required').'!');
                 }
-            }
+            },
         ];
     }
-
 
     public function messages(): array
     {
         return [
-            'logo.mimes' => translate('logo_image_type_must_be') . ' jpg, jpeg, png',
+            'logo.mimes' => translate('logo_image_type_must_be').' jpg, jpeg, png',
             'logo.max' => translate('logo_image_max_size_is_1_MB'),
-            'icon.mimes' => translate('icon_image_type_must_be') . ' jpg, jpeg, png',
+            'icon.mimes' => translate('icon_image_type_must_be').' jpg, jpeg, png',
             'icon.max' => translate('icon_image_max_size_is_1_MB'),
         ];
     }

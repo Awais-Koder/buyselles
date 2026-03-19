@@ -2,22 +2,17 @@
 
 namespace App\Repositories;
 
-
 use App\Contracts\Repositories\OrderDetailsRewardsRepositoryInterface;
 use App\Models\OrderDetailsRewards;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-
 class OrderDetailsRewardsRepository implements OrderDetailsRewardsRepositoryInterface
 {
     public function __construct(
         private readonly OrderDetailsRewards $orderRewardDetails
-    )
-    {
-
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -32,7 +27,7 @@ class OrderDetailsRewardsRepository implements OrderDetailsRewardsRepositoryInte
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->orderRewardDetails->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -47,11 +42,12 @@ class OrderDetailsRewardsRepository implements OrderDetailsRewardsRepositoryInte
             ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where('id', $filters['id']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -63,6 +59,7 @@ class OrderDetailsRewardsRepository implements OrderDetailsRewardsRepositoryInte
     public function delete(array $params): bool
     {
         $this->orderRewardDetails->where($params)->delete();
+
         return true;
     }
 }

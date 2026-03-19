@@ -12,9 +12,7 @@ class NotificationSeenRepository implements NotificationSeenRepositoryInterface
 {
     public function __construct(
         private readonly NotificationSeen $notificationSeen
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class NotificationSeenRepository implements NotificationSeenRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->notificationSeen->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -45,11 +43,12 @@ class NotificationSeenRepository implements NotificationSeenRepositoryInterface
             ->when(isset($searchValue), function ($query) use ($searchValue) {
                 return $query->where('id', 'like', "%{$searchValue}%");
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -61,6 +60,7 @@ class NotificationSeenRepository implements NotificationSeenRepositoryInterface
     public function delete(array $params): bool
     {
         $this->notificationSeen->where($params)->delete();
+
         return true;
     }
 }

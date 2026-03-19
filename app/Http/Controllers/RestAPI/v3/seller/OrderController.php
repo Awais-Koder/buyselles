@@ -14,10 +14,9 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\OrderEditHistory;
 use App\Models\ReferralCustomer;
-use App\Traits\CommonTrait;
 use App\Models\User;
+use App\Traits\CommonTrait;
 use App\Traits\ProductTrait;
-use App\Utils\BackEndHelper;
 use App\Utils\Convert;
 use App\Utils\CustomerManager;
 use App\Utils\Helpers;
@@ -30,19 +29,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Uuid;
 
-
 class OrderController extends Controller
 {
     use CommonTrait;
     use ProductTrait;
 
     public function __construct(
-        private DeliveryZipCode                   $delivery_zip_code,
-        private Order                             $order,
+        private DeliveryZipCode $delivery_zip_code,
+        private Order $order,
         private readonly OrderRepositoryInterface $orderRepo,
-    )
-    {
-    }
+    ) {}
 
     public function list(Request $request): JsonResponse
     {
@@ -66,17 +62,17 @@ class OrderController extends Controller
         ];
         $orderAmountSettlement = json_decode($request['order_amount_settlement'] ?? '');
 
-        if (!empty($orderAmountSettlement)) {
+        if (! empty($orderAmountSettlement)) {
             $filters['has_order_edit_settlement'] = $orderAmountSettlement;
         }
 
         $filterWhereIn = [];
-        if (!empty($paymentPaidStatus)) {
+        if (! empty($paymentPaidStatus)) {
             $filterWhereIn['payment_status'] = $paymentPaidStatus;
         }
 
         $orderTypes = json_decode($request['order_types'] ?? '');
-        if (!empty($orderTypes)) {
+        if (! empty($orderTypes)) {
             $filterWhereIn['order_type'] = $orderTypes;
         }
 
@@ -105,14 +101,15 @@ class OrderController extends Controller
             $data['total_tax_amount'] = $totalTaxAmount;
             $data['total_product_price'] = $totalProductPrice;
             $data['total_product_discount'] = $totalProductDiscount;
+
             return $data;
         });
 
         return response()->json([
             'total_size' => $orders->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'orders' => $orders->items()
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'orders' => $orders->items(),
         ], 200);
     }
 
@@ -146,7 +143,7 @@ class OrderController extends Controller
         foreach ($detailsList as $detail) {
             $product = json_decode($detail['product_details'], true);
 
-            if (!isset($product['digital_variation'])) {
+            if (! isset($product['digital_variation'])) {
                 $product['digital_variation'] = [];
             }
 
@@ -156,7 +153,6 @@ class OrderController extends Controller
                 $product['digital_file_ready_full_url'] = $checkFilePath;
             }
             $detail['product_details'] = Helpers::product_data_formatting_for_json_data($product);
-
 
             $detailsVariation = is_array($detail['variation']) ? $detail['variation'] : json_decode($detail['variation'] ?? '', true);
             $modifiedVariation = [];
@@ -220,6 +216,7 @@ class OrderController extends Controller
         $order->third_party_delivery_tracking_id = null;
         $order->save();
         OrderStatusEvent::dispatch('new_order_assigned_message', 'delivery_man', $order);
+
         return response()->json(['success' => 1, 'message' => translate('order_deliveryman_assigned_successfully')], 200);
     }
 
@@ -238,7 +235,7 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            if (!empty($request->expected_delivery_date) && $db_expected_date != $request->expected_delivery_date) {
+            if (! empty($request->expected_delivery_date) && $db_expected_date != $request->expected_delivery_date) {
                 CommonTrait::add_expected_delivery_date_history($request->order_id, $seller['id'], $request->expected_delivery_date, 'seller');
             }
             $order->save();
@@ -246,10 +243,11 @@ class OrderController extends Controller
             DB::commit();
         } catch (\Exception $ex) {
             DB::rollback();
+
             return response()->json(['success' => 0, 'message' => translate('Update fail!')], 403);
         }
 
-        if (!empty($request->expected_delivery_date) && $db_expected_date != $request->expected_delivery_date) {
+        if (! empty($request->expected_delivery_date) && $db_expected_date != $request->expected_delivery_date) {
             OrderStatusEvent::dispatch('expected_delivery_date', 'delivery_man', $order);
         }
 
@@ -266,9 +264,10 @@ class OrderController extends Controller
         if ($order_details) {
             $order_details->digital_file_after_sell = ImageManager::update('product/digital-product/', $order_details->digital_file_after_sell, $request->digital_file_after_sell->getClientOriginalExtension(), $request->file('digital_file_after_sell'), 'file');
             $order_details->save();
+
             return response()->json(['success' => 1, 'message' => translate('File_upload_successfully')], 200);
         } else {
-            return response()->json(['success' => 0, 'message' => translate("File_upload_fail!")], 202);
+            return response()->json(['success' => 0, 'message' => translate('File_upload_fail!')], 202);
         }
     }
 
@@ -276,8 +275,8 @@ class OrderController extends Controller
     {
         $seller = $request->seller;
         $order = Order::with(['customer', 'seller.shop', 'deliveryMan', 'latestEditHistory'])->find($request['id']);
-        if (!$order->is_guest && empty($order->customer)) {
-            return response()->json(['success' => 0, 'message' => translate("Customer_account_has_been_deleted") . ' ' . translate("you_cant_update_status")], 202);
+        if (! $order->is_guest && empty($order->customer)) {
+            return response()->json(['success' => 0, 'message' => translate('Customer_account_has_been_deleted').' '.translate('you_cant_update_status')], 202);
         }
 
         if ($order['payment_method'] == 'offline_payment' && $order['payment_status'] == 'unpaid') {
@@ -347,12 +346,12 @@ class OrderController extends Controller
                     'user_type' => 'seller',
                     'credit' => $order?->deliveryman_charge ?? 0,
                     'transaction_id' => Uuid::uuid4(),
-                    'transaction_type' => 'deliveryman_charge'
+                    'transaction_type' => 'deliveryman_charge',
                 ]);
             }
         }
 
-        if (!$order->is_guest && $walletStatus == 1 && $loyaltyPointStatus == 1) {
+        if (! $order->is_guest && $walletStatus == 1 && $loyaltyPointStatus == 1) {
             if ($request->order_status == 'delivered') {
                 CustomerManager::create_loyalty_point_transaction($order->customer_id, $order->id, Convert::default($order->order_amount - $order->shipping_cost), 'order_place');
             }
@@ -361,7 +360,7 @@ class OrderController extends Controller
         $refEarningStatus = BusinessSetting::where('type', 'ref_earning_status')->first()->value ?? 0;
         $refEarningExchangeRate = BusinessSetting::where('type', 'ref_earning_exchange_rate')->first()->value ?? 0;
 
-        if (!$order->is_guest && $walletStatus == 1 && $refEarningStatus == 1 && $request->order_status == 'delivered') {
+        if (! $order->is_guest && $walletStatus == 1 && $refEarningStatus == 1 && $request->order_status == 'delivered') {
 
             $customer = User::find($order->customer_id);
             $isFirstOrder = Order::where(['customer_id' => $order->customer_id, 'order_status' => 'delivered', 'payment_status' => 'paid'])->count();
@@ -412,14 +411,14 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required',
-            'payment_status' => 'required|in:paid,unpaid'
+            'payment_status' => 'required|in:paid,unpaid',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
         if ($request->payment_status != 'paid') {
-            return response()->json(['success' => 0, 'message' => translate('When payment status paid then you can`t change payment status paid to unpaid') . '.'], 200);
+            return response()->json(['success' => 0, 'message' => translate('When payment status paid then you can`t change payment status paid to unpaid').'.'], 200);
         }
         $order = Order::find($request['order_id']);
         if (isset($order)) {
@@ -430,19 +429,21 @@ class OrderController extends Controller
             if ($order['payment_method'] == 'cash_on_delivery' && $order['order_status'] != 'delivered' && $request['payment_status'] == 'paid') {
                 return response()->json([
                     'errors' => [
-                        ['code' => 'order', 'message' => translate('Can not change payment status before order delivered!')]
-                    ]
+                        ['code' => 'order', 'message' => translate('Can not change payment status before order delivered!')],
+                    ],
                 ], 404);
             }
 
             $order->payment_status = $request['payment_status'];
             $order->save();
+
             return response()->json(['message' => translate('Payment status updated')], 200);
         }
+
         return response()->json([
             'errors' => [
-                ['code' => 'order', 'message' => translate('not found!')]
-            ]
+                ['code' => 'order', 'message' => translate('not found!')],
+            ],
         ], 404);
     }
 
@@ -477,7 +478,7 @@ class OrderController extends Controller
             $update_data['billing_address_data'] = json_encode($billing_address_data);
         }
 
-        if (!empty($update_data)) {
+        if (! empty($update_data)) {
             DB::table('orders')->where('id', $request->order_id)->update($update_data);
         }
 
@@ -522,7 +523,6 @@ class OrderController extends Controller
                 ], 403);
             }
 
-
             if ($request['order_status'] == 'delivered') {
                 foreach ($order['details'] as $orderDetail) {
                     $productDetails = json_decode($orderDetail?->product_details ?? '', true);
@@ -545,7 +545,7 @@ class OrderController extends Controller
                     'delivery_service_name' => $request['delivery_service_name'] ?? '',
                     'third_party_delivery_tracking_id' => $request['third_party_delivery_tracking_id'] ?? '',
                 ]);
-            } elseif ($request->has('delivery_man_id') && !empty($request['delivery_man_id']) && ($order['delivery_man_id'] != $request['delivery_man_id'])) {
+            } elseif ($request->has('delivery_man_id') && ! empty($request['delivery_man_id']) && ($order['delivery_man_id'] != $request['delivery_man_id'])) {
                 Order::where('id', $request['order_id'])->update([
                     'delivery_man_id' => $request['delivery_man_id'],
                     'delivery_type' => 'self_delivery',
@@ -555,14 +555,14 @@ class OrderController extends Controller
                 OrderStatusEvent::dispatch('new_order_assigned_message', 'delivery_man', $order);
             }
 
-            if ($request->has('deliveryman_charge') && !is_null($request['deliveryman_charge']) && ($order['deliveryman_charge'] != $request['deliveryman_charge'])) {
+            if ($request->has('deliveryman_charge') && ! is_null($request['deliveryman_charge']) && ($order['deliveryman_charge'] != $request['deliveryman_charge'])) {
                 Order::where(['id' => $request['order_id']])->update([
                     'deliveryman_charge' => $request['deliveryman_charge'],
                 ]);
             }
 
             $orderInfo = Order::with('deliveryMan')->find($request['order_id']);
-            if (!empty($request['expected_delivery_date']) && $orderInfo['expected_delivery_date'] != $request['expected_delivery_date']) {
+            if (! empty($request['expected_delivery_date']) && $orderInfo['expected_delivery_date'] != $request['expected_delivery_date']) {
                 $orderInfo->expected_delivery_date = $request['expected_delivery_date'];
                 try {
                     DB::beginTransaction();
@@ -577,20 +577,20 @@ class OrderController extends Controller
             }
 
             // Order Status
-            if ($request->has('order_status') && !empty($request['order_status'])) {
+            if ($request->has('order_status') && ! empty($request['order_status'])) {
                 $order = Order::with(['customer', 'seller.shop', 'deliveryMan'])->find($request['order_id']);
 
                 if ($order['is_guest'] == 0 && empty($order->customer)) {
                     return response()->json([
                         'success' => 0,
-                        'message' => translate("Customer_account_has_been_deleted") . ' ' . translate("you_cant_update_status")
+                        'message' => translate('Customer_account_has_been_deleted').' '.translate('you_cant_update_status'),
                     ], 202);
                 }
 
                 $walletStatus = getWebConfig(name: 'wallet_status');
                 $loyaltyPointStatus = getWebConfig(name: 'loyalty_point_status');
 
-                if ($order['order_status'] == 'delivered' && !in_array($request['order_status'], ['returned', 'failed', 'canceled'])) {
+                if ($order['order_status'] == 'delivered' && ! in_array($request['order_status'], ['returned', 'failed', 'canceled'])) {
                     return response()->json(['success' => 0, 'message' => translate('order_is_already_delivered')], 200);
                 }
 
@@ -639,12 +639,12 @@ class OrderController extends Controller
                             'user_type' => 'seller',
                             'credit' => $order?->deliveryman_charge ?? 0,
                             'transaction_id' => Uuid::uuid4(),
-                            'transaction_type' => 'deliveryman_charge'
+                            'transaction_type' => 'deliveryman_charge',
                         ]);
                     }
                 }
 
-                if (!$order['is_guest'] && $walletStatus == 1 && $loyaltyPointStatus == 1) {
+                if (! $order['is_guest'] && $walletStatus == 1 && $loyaltyPointStatus == 1) {
                     if ($request['order_status'] == 'delivered') {
                         CustomerManager::create_loyalty_point_transaction($order['customer_id'], $order['id'], Convert::default($order['order_amount'] - $order['shipping_cost']), 'order_place');
                     }
@@ -653,7 +653,7 @@ class OrderController extends Controller
                 $refEarningStatus = BusinessSetting::where('type', 'ref_earning_status')->first()->value ?? 0;
                 $refEarningExchangeRate = BusinessSetting::where('type', 'ref_earning_exchange_rate')->first()->value ?? 0;
 
-                if (!$order['is_guest'] && $walletStatus == 1 && $refEarningStatus == 1 && $request['order_status'] == 'delivered') {
+                if (! $order['is_guest'] && $walletStatus == 1 && $refEarningStatus == 1 && $request['order_status'] == 'delivered') {
                     $customer = User::find($order['customer_id']);
                     $isFirstOrder = Order::where(['customer_id' => $order['customer_id'], 'order_status' => 'delivered', 'payment_status' => 'paid'])->count();
                     $referredByUser = User::find($customer->referred_by);
@@ -671,7 +671,7 @@ class OrderController extends Controller
                 if ($order['is_guest'] == '0' && empty($order?->customer)) {
                     return response()->json([
                         'success' => 0,
-                        'message' => translate("customer_account_has_been_deleted.") . ' ' . translate('you_can_not_update_status.'),
+                        'message' => translate('customer_account_has_been_deleted.').' '.translate('you_can_not_update_status.'),
                     ], 200);
                 }
                 Order::where('id', $request['order_id'])->update(['payment_status' => $request['payment_status']]);
@@ -679,14 +679,14 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => 1,
-                'message' => translate("Order_updated_successfully")
+                'message' => translate('Order_updated_successfully'),
             ], 200);
         }
 
         return response()->json([
             'errors' => [
-                ['code' => 'order', 'message' => translate('not found!')]
-            ]
+                ['code' => 'order', 'message' => translate('not found!')],
+            ],
         ], 404);
     }
 }

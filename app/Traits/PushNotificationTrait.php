@@ -15,12 +15,8 @@ trait PushNotificationTrait
     use CommonTrait;
 
     /**
-     * @param string $key
-     * @param string $type
-     * @param object|array $order
-     * @param object|array $data
      * @return void
-     * push notification order related
+     *              push notification order related
      */
     protected function sendOrderNotification(string $key, string $type, object|array $order, object|array $data = []): void
     {
@@ -112,7 +108,7 @@ trait PushNotificationTrait
                         'deliveryman_charge' => usdToDefaultCurrency(amount: $order['deliveryman_charge']) ?? 0,
                         'expected_delivery_date' => $order['expected_delivery_date'] ?? '',
                         'image' => '',
-                        'type' => 'order'
+                        'type' => 'order',
                     ];
                     if ($order->delivery_man_id) {
                         self::add_deliveryman_push_notification($postData, $order->delivery_man_id);
@@ -128,11 +124,6 @@ trait PushNotificationTrait
 
     /**
      * chatting related push notification
-     * @param string $key
-     * @param string $type
-     * @param object $userData
-     * @param object $messageForm
-     * @return void
      */
     protected function chattingNotification(string $key, string $type, object $userData, object $messageForm): void
     {
@@ -185,7 +176,7 @@ trait PushNotificationTrait
         $value = $this->pushNotificationMessage($key, $type, $lang);
         if ($value) {
             $data = [
-                'title' => translate('withdraw_request_' . ($status == 1 ? 'approved' : 'denied')),
+                'title' => translate('withdraw_request_'.($status == 1 ? 'approved' : 'denied')),
                 'description' => $value,
                 'image' => '',
                 'type' => 'wallet_withdraw',
@@ -200,7 +191,7 @@ trait PushNotificationTrait
         $value = $this->pushNotificationMessage($key, $type, $lang);
         if ($value) {
             $data = [
-                'title' => translate('your_account_has_been' . '_' . $status),
+                'title' => translate('your_account_has_been'.'_'.$status),
                 'description' => $value,
                 'image' => '',
                 'type' => 'block',
@@ -230,7 +221,7 @@ trait PushNotificationTrait
         $value = $this->pushNotificationMessage($key, $type, $lang);
         if ($value) {
             $data = [
-                'title' => currencyConverter($amount) . ' ' . translate('_cash_deposit'),
+                'title' => currencyConverter($amount).' '.translate('_cash_deposit'),
                 'description' => $value,
                 'image' => '',
                 'type' => 'wallet',
@@ -248,20 +239,19 @@ trait PushNotificationTrait
         $data = $value;
         if ($data) {
             $order = $orderId ? Order::find($orderId) : null;
-            $data = $userName ? str_replace("{userName}", $userName, $data) : $data;
-            $data = $shopName ? str_replace("{shopName}", $shopName, $data) : $data;
-            $data = $deliveryManName ? str_replace("{deliveryManName}", $deliveryManName, $data) : $data;
-            $data = $key == 'expected_delivery_date' ? ($order ? str_replace("{time}", $order->expected_delivery_date, $data) : $data) : ($time ? str_replace("{time}", $time, $data) : $data);
-            $data = $orderId ? str_replace("{orderId}", $orderId, $data) : $data;
+            $data = $userName ? str_replace('{userName}', $userName, $data) : $data;
+            $data = $shopName ? str_replace('{shopName}', $shopName, $data) : $data;
+            $data = $deliveryManName ? str_replace('{deliveryManName}', $deliveryManName, $data) : $data;
+            $data = $key == 'expected_delivery_date' ? ($order ? str_replace('{time}', $order->expected_delivery_date, $data) : $data) : ($time ? str_replace('{time}', $time, $data) : $data);
+            $data = $orderId ? str_replace('{orderId}', $orderId, $data) : $data;
         }
+
         return $data;
     }
 
     /**
      * push notification variable message
-     * @param string $key
-     * @param string $userType
-     * @param string $lang
+     *
      * @return false|int|mixed|void
      */
     protected function pushNotificationMessage(string $key, string $userType, string $lang)
@@ -304,11 +294,12 @@ trait PushNotificationTrait
             ];
             $data = NotificationMessage::with(['translations' => function ($query) use ($lang) {
                 $query->where('locale', $lang);
-            }])->where(['key' => $notificationKey[$key], 'user_type' => $userType])->first() ?? ["status" => 0, "message" => "", "translations" => []];
+            }])->where(['key' => $notificationKey[$key], 'user_type' => $userType])->first() ?? ['status' => 0, 'message' => '', 'translations' => []];
             if ($data) {
                 if ($data['status'] == 0) {
                     return false;
                 }
+
                 return count($data->translations) > 0 ? $data->translations[0]->value : $data['message'];
             } else {
                 return false;
@@ -318,13 +309,12 @@ trait PushNotificationTrait
         }
     }
 
-
     protected function demoResetNotification(): void
     {
         try {
             $data = [
                 'title' => translate('demo_reset_alert'),
-                'description' => translate('demo_data_is_being_reset_to_default') . '.',
+                'description' => translate('demo_data_is_being_reset_to_default').'.',
                 'image' => '',
                 'order_id' => '',
                 'type' => 'demo_reset',
@@ -335,100 +325,89 @@ trait PushNotificationTrait
         }
     }
 
-
     /**
      * Device wise notification send
-     * @param string $fcmToken
-     * @param array $data
-     * @return bool|string
      */
-
     protected function sendPushNotificationToDevice(string $fcmToken, array $data): bool|string
     {
         $postData = [
             'message' => [
                 'token' => $fcmToken,
                 'data' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
                     'image' => $data['image'],
-                    'order_id' => (string)($data['order_id'] ?? ''),
-                    'order_details_id' => (string)($data['order_details_id'] ?? ''),
-                    'refund_id' => (string)($data['refund_id'] ?? ''),
-                    'deliveryman_charge' => (string)($data['deliveryman_charge'] ?? ''),
-                    'expected_delivery_date' => (string)($data['expected_delivery_date'] ?? ''),
-                    'type' => (string)$data['type'],
+                    'order_id' => (string) ($data['order_id'] ?? ''),
+                    'order_details_id' => (string) ($data['order_details_id'] ?? ''),
+                    'refund_id' => (string) ($data['refund_id'] ?? ''),
+                    'deliveryman_charge' => (string) ($data['deliveryman_charge'] ?? ''),
+                    'expected_delivery_date' => (string) ($data['expected_delivery_date'] ?? ''),
+                    'type' => (string) $data['type'],
                     'is_read' => '0',
-                    'message_key' => (string)($data['message_key'] ?? ''),
-                    'notification_key' => (string)($data['notification_key'] ?? ''),
-                    'notification_from' => (string)($data['notification_from'] ?? ''),
+                    'message_key' => (string) ($data['message_key'] ?? ''),
+                    'notification_key' => (string) ($data['notification_key'] ?? ''),
+                    'notification_from' => (string) ($data['notification_from'] ?? ''),
                 ],
                 'notification' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
                 ],
                 'apns' => [
                     'payload' => [
                         'aps' => [
                             'sound' => 'default',
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ];
+
         return $this->sendNotificationToHttp($postData);
     }
 
     /**
      * Device wise notification send
-     * @param string $fcmToken
-     * @param array $data
-     * @return bool|string
      */
-
     protected function sendChattingPushNotificationToDevice(string $fcmToken, array $data): bool|string
     {
         $postData = [
             'message' => [
                 'token' => $fcmToken,
                 'data' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
                     'image' => $data['image'],
-                    'order_id' => (string)($data['order_id'] ?? ''),
-                    'refund_id' => (string)($data['refund_id'] ?? ''),
-                    'deliveryman_charge' => (string)($data['deliveryman_charge'] ?? ''),
-                    'expected_delivery_date' => (string)($data['expected_delivery_date'] ?? ''),
+                    'order_id' => (string) ($data['order_id'] ?? ''),
+                    'refund_id' => (string) ($data['refund_id'] ?? ''),
+                    'deliveryman_charge' => (string) ($data['deliveryman_charge'] ?? ''),
+                    'expected_delivery_date' => (string) ($data['expected_delivery_date'] ?? ''),
                     'is_read' => '0',
-                    'type' => (string)$data['type'],
-                    'message_key' => (string)($data['message_key'] ?? ''),
-                    'notification_key' => (string)($data['notification_key'] ?? ''),
-                    'notification_from' => (string)($data['notification_from'] ?? ''),
+                    'type' => (string) $data['type'],
+                    'message_key' => (string) ($data['message_key'] ?? ''),
+                    'notification_key' => (string) ($data['notification_key'] ?? ''),
+                    'notification_from' => (string) ($data['notification_from'] ?? ''),
                 ],
                 'notification' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
-//                    'type' => (string)$data['type'],
-//                    'message_key' => (string)($data['message_key'] ?? ''),
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
+                    //                    'type' => (string)$data['type'],
+                    //                    'message_key' => (string)($data['message_key'] ?? ''),
                 ],
                 'apns' => [
                     'payload' => [
                         'aps' => [
                             'sound' => 'default',
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ];
+
         return $this->sendNotificationToHttp($postData);
     }
 
-
     /**
      * Device wise notification send
-     * @param array|object $data
-     * @param string $topic
-     * @return bool|string
      */
     protected function sendPushNotificationToTopic(array|object $data, string $topic = 'sixvalley'): bool|string
     {
@@ -436,47 +415,49 @@ trait PushNotificationTrait
             'message' => [
                 'topic' => $topic,
                 'data' => [
-                    'title' => (string)($data['title'] ?? ''),
-                    'body' => (string)($data['description'] ?? ''),
+                    'title' => (string) ($data['title'] ?? ''),
+                    'body' => (string) ($data['description'] ?? ''),
                     'image' => $data['image'] ?? '',
-                    'order_id' => (string)($data['order_id'] ?? ''),
-                    'type' => (string)($data['type'] ?? ''),
-                    'is_read' => '0'
+                    'order_id' => (string) ($data['order_id'] ?? ''),
+                    'type' => (string) ($data['type'] ?? ''),
+                    'is_read' => '0',
                 ],
                 'notification' => [
-                    'title' => (string)($data['title'] ?? ''),
-                    'body' => (string)($data['description'] ?? ''),
+                    'title' => (string) ($data['title'] ?? ''),
+                    'body' => (string) ($data['description'] ?? ''),
                 ],
                 'apns' => [
                     'payload' => [
                         'aps' => [
                             'sound' => 'default',
-                        ]
-                    ]
-                ]
-            ]
+                        ],
+                    ],
+                ],
+            ],
         ];
+
         return $this->sendNotificationToHttp($postData);
     }
 
-    protected function sendNotificationToHttp(array|null $data): bool|string|null
+    protected function sendNotificationToHttp(?array $data): bool|string|null
     {
         try {
-            $key = (array)getWebConfig('push_notification_key');
+            $key = (array) getWebConfig('push_notification_key');
             if (isset($key['project_id'])) {
-                $url = 'https://fcm.googleapis.com/v1/projects/' . $key['project_id'] . '/messages:send';
+                $url = 'https://fcm.googleapis.com/v1/projects/'.$key['project_id'].'/messages:send';
                 $headers = [
-                    'Authorization' => 'Bearer ' . $this->getAccessToken($key),
+                    'Authorization' => 'Bearer '.$this->getAccessToken($key),
                     'Content-Type' => 'application/json',
                 ];
             }
+
             return Http::withHeaders($headers)->post($url, $data);
         } catch (Exception $exception) {
             return false;
         }
     }
 
-    protected function getAccessToken($key): string|null
+    protected function getAccessToken($key): ?string
     {
         $jwtToken = [
             'iss' => $key['client_email'],
@@ -487,14 +468,15 @@ trait PushNotificationTrait
         ];
         $jwtHeader = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
         $jwtPayload = base64_encode(json_encode($jwtToken));
-        $unsignedJwt = $jwtHeader . '.' . $jwtPayload;
+        $unsignedJwt = $jwtHeader.'.'.$jwtPayload;
         openssl_sign($unsignedJwt, $signature, $key['private_key'], OPENSSL_ALGO_SHA256);
-        $jwt = $unsignedJwt . '.' . base64_encode($signature);
+        $jwt = $unsignedJwt.'.'.base64_encode($signature);
 
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion' => $jwt,
         ]);
+
         return $response->json('access_token') ?? null;
     }
 }

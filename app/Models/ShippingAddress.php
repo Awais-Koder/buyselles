@@ -25,8 +25,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $latitude
  * @property string|null $longitude
  * @property bool $is_billing
- *
- * @package App\Models
  */
 class ShippingAddress extends Model
 {

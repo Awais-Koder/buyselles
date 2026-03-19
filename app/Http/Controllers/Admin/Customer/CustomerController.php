@@ -2,71 +2,68 @@
 
 namespace App\Http\Controllers\Admin\Customer;
 
-use App\Http\Requests\Admin\CustomerProfileUpdateRequest;
-use Carbon\Carbon;
-use App\Enums\WebConfigKey;
-use Exception;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Traits\PaginatorTrait;
-use App\Services\CustomerService;
-use Illuminate\Http\JsonResponse;
-use App\Traits\EmailTemplateTrait;
-use App\Exports\CustomerListExport;
-use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\SubscriberListExport;
-use Illuminate\Http\RedirectResponse;
-use App\Services\PasswordResetService;
-use App\Services\ReferByEarnCustomerService;
-use App\Exports\CustomerOrderListExport;
-use App\Http\Controllers\BaseController;
-use App\Services\ShippingAddressService;
-use App\Events\CustomerRegistrationEvent;
-use App\Events\CustomerStatusUpdateEvent;
-use App\Http\Requests\Admin\CustomerRequest;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
-use App\Repositories\ShippingAddressRepository;
-use App\Contracts\Repositories\OrderRepositoryInterface;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use App\Http\Requests\Admin\CustomerUpdateSettingsRequest;
+use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Contracts\Repositories\CurrencyRepositoryInterface;
 use App\Contracts\Repositories\CustomerRepositoryInterface;
-use App\Contracts\Repositories\TranslationRepositoryInterface;
-use App\Contracts\Repositories\SubscriptionRepositoryInterface;
+use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Contracts\Repositories\PasswordResetRepositoryInterface;
 use App\Contracts\Repositories\RefundRequestRepositoryInterface;
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use App\Contracts\Repositories\SubscriptionRepositoryInterface;
+use App\Contracts\Repositories\TranslationRepositoryInterface;
+use App\Enums\WebConfigKey;
+use App\Events\CustomerRegistrationEvent;
+use App\Events\CustomerStatusUpdateEvent;
+use App\Exports\CustomerListExport;
+use App\Exports\CustomerOrderListExport;
+use App\Exports\SubscriberListExport;
+use App\Http\Controllers\BaseController;
+use App\Http\Requests\Admin\CustomerProfileUpdateRequest;
+use App\Http\Requests\Admin\CustomerRequest;
+use App\Http\Requests\Admin\CustomerUpdateSettingsRequest;
+use App\Repositories\ShippingAddressRepository;
+use App\Services\CustomerService;
+use App\Services\PasswordResetService;
+use App\Services\ReferByEarnCustomerService;
+use App\Services\ShippingAddressService;
+use App\Traits\EmailTemplateTrait;
+use App\Traits\PaginatorTrait;
+use Carbon\Carbon;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Exception;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CustomerController extends BaseController
 {
-    use PaginatorTrait, EmailTemplateTrait;
+    use EmailTemplateTrait, PaginatorTrait;
 
     public function __construct(
-        private readonly CustomerRepositoryInterface        $customerRepo,
-        private readonly TranslationRepositoryInterface     $translationRepo,
-        private readonly OrderRepositoryInterface           $orderRepo,
-        private readonly SubscriptionRepositoryInterface    $subscriptionRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly TranslationRepositoryInterface $translationRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly SubscriptionRepositoryInterface $subscriptionRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly RefundRequestRepositoryInterface   $refundRequestRepo,
-        private readonly PasswordResetRepositoryInterface   $passwordResetRepo,
-        private readonly PasswordResetService               $passwordResetService,
-        private readonly ShippingAddressRepository          $shippingAddressRepo,
-        private readonly ShippingAddressService             $shippingAddressService,
-        private readonly CurrencyRepositoryInterface        $currencyRepo,
-        private readonly ReferByEarnCustomerService         $referByEarnCustomerService,
-    )
-    {
-    }
+        private readonly RefundRequestRepositoryInterface $refundRequestRepo,
+        private readonly PasswordResetRepositoryInterface $passwordResetRepo,
+        private readonly PasswordResetService $passwordResetService,
+        private readonly ShippingAddressRepository $shippingAddressRepo,
+        private readonly ShippingAddressService $shippingAddressService,
+        private readonly CurrencyRepositoryInterface $currencyRepo,
+        private readonly ReferByEarnCustomerService $referByEarnCustomerService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View|RedirectResponse|JsonResponse Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *                                            Index function is the starting point of a controller
+     *
      * @throws Exception
      */
-    public function index(Request|null $request, ?string $type = null): View|RedirectResponse|JsonResponse
+    public function index(?Request $request, ?string $type = null): View|RedirectResponse|JsonResponse
     {
         $filters = [
             'is_active' => $request['is_active'] ?? null,
@@ -76,20 +73,22 @@ class CustomerController extends BaseController
         ];
         $takeItem = $request->get('choose_first');
 
-        if (isset($request['order_date']) && !empty($request['order_date'])) {
+        if (isset($request['order_date']) && ! empty($request['order_date'])) {
             $dates = explode(' - ', $request['order_date']);
-            if (count($dates) !== 2 || !checkDateFormatInMDY($dates[0]) || !checkDateFormatInMDY($dates[1])) {
+            if (count($dates) !== 2 || ! checkDateFormatInMDY($dates[0]) || ! checkDateFormatInMDY($dates[1])) {
                 ToastMagic::error(translate('Invalid_date_range_format'));
+
                 return back();
             }
         }
 
         $joiningStartDate = '';
         $joiningEndDate = '';
-        if (isset($request['customer_joining_date']) && !empty($request['customer_joining_date'])) {
+        if (isset($request['customer_joining_date']) && ! empty($request['customer_joining_date'])) {
             $dates = explode(' - ', $request['customer_joining_date']);
-            if (count($dates) !== 2 || !checkDateFormatInMDY($dates[0]) || !checkDateFormatInMDY($dates[1])) {
+            if (count($dates) !== 2 || ! checkDateFormatInMDY($dates[0]) || ! checkDateFormatInMDY($dates[1])) {
                 ToastMagic::error(translate('Invalid_date_range_format'));
+
                 return back();
             }
             $joiningStartDate = Carbon::createFromFormat('m/d/Y', $dates[0])->startOfDay();
@@ -107,12 +106,12 @@ class CustomerController extends BaseController
             appends: $request->all(),
         );
         $totalCustomers = $this->customerRepo->getListWhereBetween(filters: ['avoid_walking_customer' => 1], dataLimit: 'all')->count();
+
         return view('admin-views.customer.list', [
             'customers' => $customers,
             'totalCustomers' => $totalCustomers,
         ]);
     }
-
 
     public function updateStatus(Request $request): JsonResponse
     {
@@ -123,10 +122,11 @@ class CustomerController extends BaseController
             'userName' => $customer['f_name'],
             'userType' => 'customer',
             'templateName' => $customer['is_active'] ? 'account-unblock' : 'account-block',
-            'subject' => $customer['is_active'] ? translate('Account_Unblocked') . ' !' : translate('Account_Blocked') . ' !',
-            'title' => $customer['is_active'] ? translate('Account_Unblocked') . ' !' : translate('Account_Blocked') . ' !',
+            'subject' => $customer['is_active'] ? translate('Account_Unblocked').' !' : translate('Account_Blocked').' !',
+            'title' => $customer['is_active'] ? translate('Account_Unblocked').' !' : translate('Account_Blocked').' !',
         ];
         event(new CustomerStatusUpdateEvent(email: $customer['email'], data: $data));
+
         return response()->json(['message' => translate('update_successfully')]);
     }
 
@@ -155,9 +155,11 @@ class CustomerController extends BaseController
                 $orderStatusArray['total_order']++;
             });
             $orders = $this->orderRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $request['searchValue'], filters: ['customer_id' => $id, 'is_guest' => '0'], dataLimit: getWebConfig('pagination_limit'));
+
             return view('admin-views.customer.customer-view', compact('customer', 'orders', 'orderStatusArray'));
         }
         ToastMagic::error(translate('customer_Not_Found'));
+
         return back();
     }
 
@@ -168,15 +170,13 @@ class CustomerController extends BaseController
         $data = [
             'customer' => $customer,
             'searchValue' => $request->get('searchValue'),
-            'orders' => $orders
+            'orders' => $orders,
         ];
+
         return Excel::download(new CustomerOrderListExport($data), 'Customer-Order-List.xlsx');
     }
 
     /**
-     * @param $id
-     * @param CustomerService $customerService
-     * @return RedirectResponse
      * @throws Exception
      */
     public function deleteCustomer($id, CustomerService $customerService): RedirectResponse
@@ -185,6 +185,7 @@ class CustomerController extends BaseController
         $customerService->deleteImage(data: $customer);
         $this->customerRepo->delete(params: ['id' => $id]);
         ToastMagic::success(translate('customer_deleted_successfully'));
+
         return back();
     }
 
@@ -194,10 +195,11 @@ class CustomerController extends BaseController
         $takeItem = $request->get('choose_first');
         $startDate = '';
         $endDate = '';
-        if (isset($request['subscription_date']) && !empty($request['subscription_date'])) {
+        if (isset($request['subscription_date']) && ! empty($request['subscription_date'])) {
             $dates = explode(' - ', $request['subscription_date']);
-            if (count($dates) !== 2 || !checkDateFormatInMDY($dates[0]) || !checkDateFormatInMDY($dates[1])) {
+            if (count($dates) !== 2 || ! checkDateFormatInMDY($dates[0]) || ! checkDateFormatInMDY($dates[1])) {
                 ToastMagic::error(translate('Invalid_date_range_format'));
+
                 return back();
             }
             $startDate = Carbon::createFromFormat('m/d/Y', $dates[0])->startOfDay();
@@ -213,6 +215,7 @@ class CustomerController extends BaseController
             appends: $request->all(),
         );
         $totalSubscribers = $this->subscriptionRepo->getListWhere(dataLimit: 'all')->count();
+
         return view('admin-views.customer.subscriber-list', compact('subscriberList', 'totalSubscribers'));
     }
 
@@ -266,6 +269,7 @@ class CustomerController extends BaseController
             'joiningStartDate' => $joiningStartDate,
             'joiningEndDate' => $joiningEndDate,
         ];
+
         return Excel::download(new CustomerListExport($data), 'Customers.xlsx');
     }
 
@@ -299,6 +303,7 @@ class CustomerController extends BaseController
             'startDate' => $startDate,
             'endDate' => $endDate,
         ];
+
         return Excel::download(new SubscriberListExport($data), 'Subscriber-list.xlsx');
     }
 
@@ -308,7 +313,6 @@ class CustomerController extends BaseController
         $loyaltyPoint = $this->businessSettingRepo->getListWhere(filters: [['type', 'like', 'loyalty_point_%']]);
         $refEarning = $this->businessSettingRepo->getListWhere(filters: [['type', 'like', 'ref_earning_%']]);
         $currencySymbol = $this->currencyRepo->getFirstWhere(['id' => getWebConfig('system_default_currency')]);
-
 
         $data = [];
         $data['currency_symbol'] = $currencySymbol['symbol'];
@@ -330,6 +334,7 @@ class CustomerController extends BaseController
     {
         if (env('APP_MODE') === 'demo') {
             ToastMagic::info(translate('update_option_is_disable_for_demo'));
+
             return back();
         }
 
@@ -350,11 +355,13 @@ class CustomerController extends BaseController
                 $this->businessSettingRepo->updateOrInsert(type: 'maximum_add_fund_amount', value: currencyConverter(amount: $request->get('maximum_add_fund_amount', 0)));
             } else {
                 ToastMagic::error(translate('minimum_amount_cannot_be_greater_than_maximum_amount'));
+
                 return back();
             }
         }
 
         ToastMagic::success(translate('customer_settings_updated_successfully'));
+
         return back();
     }
 
@@ -363,12 +370,14 @@ class CustomerController extends BaseController
         $allCustomer = ['id' => 'all', 'text' => 'All Customer'];
         $customers = $this->customerRepo->getCustomerNameList(request: $request)->toArray();
         array_unshift($customers, $allCustomer);
+
         return response()->json($customers);
     }
 
     public function getCustomerListWithoutAllCustomerName(Request $request): JsonResponse
     {
         $customers = $this->customerRepo->getCustomerNameList(request: $request)->toArray();
+
         return response()->json($customers);
     }
 
@@ -385,20 +394,21 @@ class CustomerController extends BaseController
             'userType' => 'customer',
             'templateName' => 'registration-from-pos',
             'subject' => translate('Customer_Registration_Successfully_Completed'),
-            'title' => translate('welcome_to') . ' ' . getWebConfig(name: 'company_name') . '!',
+            'title' => translate('welcome_to').' '.getWebConfig(name: 'company_name').'!',
             'resetPassword' => $resetRoute,
-            'message' => translate('thank_you_for_joining') . ' ' . getWebConfig(name: 'company_name') . '.' . translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone') . ' ' . ($request['phone']) . '.' . translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer') . '.',
+            'message' => translate('thank_you_for_joining').' '.getWebConfig(name: 'company_name').'.'.translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone').' '.($request['phone']).'.'.translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer').'.',
         ];
         event(new CustomerRegistrationEvent(email: $request['email'], data: $data));
-       return response()->json(['success' => true, 'message' => translate('customer_added_successfully')]);
-    }
 
+        return response()->json(['success' => true, 'message' => translate('customer_added_successfully')]);
+    }
 
     public function updateProfile(CustomerProfileUpdateRequest $request, CustomerService $customerService): RedirectResponse
     {
         $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['id']]);
         $this->customerRepo->updateWhere(['id' => $request['id']], data: $customerService->getCustomerProfileUpdateData(request: $request, customer: $customer));
         ToastMagic::success(translate('Update_successfully'));
+
         return redirect()->back();
     }
 }

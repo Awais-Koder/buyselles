@@ -16,9 +16,8 @@ class MaintenanceModeNotificationEvent
      * Create a new event instance.
      */
     public function __construct(
-        public readonly array  $data,
-    )
-    {
+        public readonly array $data,
+    ) {
         //
     }
 

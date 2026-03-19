@@ -2,15 +2,13 @@
 
 namespace App\Listeners;
 
-use App\Events\OrderEditEvent;
 use App\Events\OrderEditReturnPaymentEvent;
 use App\Traits\EmailTemplateTrait;
 use App\Traits\PushNotificationTrait;
 
-
 class OrderEditReturnPaymentListener
 {
-    use PushNotificationTrait, EmailTemplateTrait;
+    use EmailTemplateTrait, PushNotificationTrait;
 
     /**
      * Create the event listener.

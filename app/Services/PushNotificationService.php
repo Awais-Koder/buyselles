@@ -26,7 +26,7 @@ class PushNotificationService
             'your_referred_customer_has_been_place_order',
             'your_referred_customer_order_has_been_delivered',
             'order_edit_message',
-            'order_edit_return_amount_message'
+            'order_edit_return_amount_message',
         ];
 
         $vendor = [
@@ -61,6 +61,7 @@ class PushNotificationService
             'cash_collect_by_seller_message',
             'withdraw_request_status_message',
         ];
+
         return match ($userType) {
             'customer' => $customer,
             'seller' => $vendor,
@@ -73,11 +74,12 @@ class PushNotificationService
         return [
             'user_type' => $userType,
             'key' => $value,
-            'message' => 'customize your' . ' ' . str_replace('_', ' ', $value) . ' ' . 'message',
+            'message' => 'customize your'.' '.str_replace('_', ' ', $value).' '.'message',
             'created_at' => now(),
             'updated_at' => now(),
         ];
     }
+
     public function getUpdateData(object $request, string $message, string $status, string $lang): array
     {
         $langArray = $request->$lang ?? [];
@@ -100,7 +102,6 @@ class PushNotificationService
             'updated_at' => now(),
         ];
     }
-
 
     public function getFCMCredentialsArray(object|array $request): array
     {
@@ -130,7 +131,7 @@ class PushNotificationService
 
         $filePaths = [
             base_path('firebase-messaging-sw.js'),
-            base_path('public/firebase-messaging-sw.js')
+            base_path('public/firebase-messaging-sw.js'),
         ];
 
         $fileContent = <<<JS
@@ -157,7 +158,6 @@ class PushNotificationService
             });
             JS;
 
-
         foreach ($filePaths as $filePath) {
             $this->writeToFile($filePath, $fileContent);
         }
@@ -169,13 +169,13 @@ class PushNotificationService
     private function writeToFile(string $filePath, string $fileContent): void
     {
         try {
-            if (!file_exists($filePath)) {
+            if (! file_exists($filePath)) {
                 if (file_put_contents($filePath, '') === false) {
                     throw new Exception("Failed to create file: $filePath");
                 }
             }
 
-            if (!is_writable($filePath)) {
+            if (! is_writable($filePath)) {
                 throw new Exception("File exists but is not writable: $filePath");
             }
 
@@ -187,5 +187,4 @@ class PushNotificationService
             throw $e;
         }
     }
-
 }

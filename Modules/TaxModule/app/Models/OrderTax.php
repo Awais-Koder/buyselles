@@ -26,7 +26,6 @@ class OrderTax extends Model
         'system_tax_setup_id' => 'integer',
     ];
 
-
     public function Orders(): HasMany
     {
         return $this->hasMany(Order::class, 'order_id');

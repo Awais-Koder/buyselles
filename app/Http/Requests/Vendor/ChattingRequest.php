@@ -12,35 +12,31 @@ class ChattingRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize():bool
+    public function authorize(): bool
     {
         return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
         $uploadMaxFileSize = ini_get('upload_max_filesize');
         if (str_contains($uploadMaxFileSize, 'G')) {
             $uploadMaxFileSize = str_replace('G', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         } elseif (str_contains($uploadMaxFileSize, 'M')) {
             $uploadMaxFileSize = str_replace('M', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         }
         $maximumUploadSize = checkServerUploadMaxFileSizeInMB();
 
-        return  [
+        return [
             'message' => 'required_without_all:file,media',
-            'media.*' => 'max:'.$maximumUploadSize.'|mimes:' . str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
-            'file.*' => 'file|max:2048|mimes:' . str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
+            'media.*' => 'max:'.$maximumUploadSize.'|mimes:'.str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
+            'file.*' => 'file|max:2048|mimes:'.str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
         ];
     }
 
@@ -49,21 +45,20 @@ class ChattingRequest extends FormRequest
         $uploadMaxFileSize = ini_get('upload_max_filesize');
         if (str_contains($uploadMaxFileSize, 'G')) {
             $uploadMaxFileSize = str_replace('G', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         } elseif (str_contains($uploadMaxFileSize, 'M')) {
             $uploadMaxFileSize = str_replace('M', '', $uploadMaxFileSize);
-            $uploadMaxFileSize = (int)$uploadMaxFileSize * 1024 * 1024;
+            $uploadMaxFileSize = (int) $uploadMaxFileSize * 1024 * 1024;
         }
 
         $maximumUploadSize = checkServerUploadMaxFileSizeInMB();
 
         return [
-            'required_without_all' => translate('type_something') . '!',
-            'media.mimes' => translate('the_media_format_is_not_supported') . ' ' . translate('supported_format_are') . ' ' . str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
-            'media.max' => translate('media_maximum_size') .' '.($maximumUploadSize / 1024).' MB',
-            'file.mimes' => translate('the_file_format_is_not_supported') . ' ' . translate('supported_format_are') . ' ' . str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
-            'file.max' => translate('file_maximum_size_') . MAXIMUM_MEDIA_UPLOAD_SIZE,
+            'required_without_all' => translate('type_something').'!',
+            'media.mimes' => translate('the_media_format_is_not_supported').' '.translate('supported_format_are').' '.str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
+            'media.max' => translate('media_maximum_size').' '.($maximumUploadSize / 1024).' MB',
+            'file.mimes' => translate('the_file_format_is_not_supported').' '.translate('supported_format_are').' '.str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
+            'file.max' => translate('file_maximum_size_').MAXIMUM_MEDIA_UPLOAD_SIZE,
         ];
     }
-
 }

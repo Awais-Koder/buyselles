@@ -17,12 +17,14 @@ class GeneralSetupRequest extends FormRequest
         ];
     }
 
-    public function messages(): array{
+    public function messages(): array
+    {
         return [
             'name.required' => translate('product_name_is_required_to_generate_general_setup'),
             'description.required' => translate('product_description_is_required_to_generate_general_setup'),
         ];
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */

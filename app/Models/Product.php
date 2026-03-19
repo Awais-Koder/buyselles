@@ -65,7 +65,7 @@ use Modules\TaxModule\app\Models\Taxable;
  */
 class Product extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     protected $fillable = [
         'user_id',
@@ -192,10 +192,10 @@ class Product extends Model
         $productType = $digitalProductSetting ? ['digital', 'physical'] : ['physical'];
 
         return $query->when($businessMode == 'single', function ($query) {
-                $query->where(['added_by' => 'admin']);
-            })
-            ->when($brandSetting, function ($query) use ($brandSetting, $productType) {
-                if (!in_array('digital', $productType)) {
+            $query->where(['added_by' => 'admin']);
+        })
+            ->when($brandSetting, function ($query) use ($productType) {
+                if (! in_array('digital', $productType)) {
                     $query->whereHas('brand', function ($query) {
                         $query->where('status', 1);
                     })->orWhere(function ($query) {
@@ -203,7 +203,7 @@ class Product extends Model
                     });
                 }
             })
-            ->when(!$brandSetting, function ($query) {
+            ->when(! $brandSetting, function ($query) {
                 $query->whereNull('brand_id')->where('status', 1);
             })
             ->where(['status' => 1])
@@ -236,7 +236,7 @@ class Product extends Model
         return $this->hasMany(Review::class, 'product_id');
     }
 
-    //old relation: reviews_by_customer
+    // old relation: reviews_by_customer
     public function reviewsByCustomer(): HasMany
     {
         return $this->hasMany(Review::class, 'product_id')->where('customer_id', auth('customer')->id())->whereNotNull('product_id')->whereNull('delivery_man_id');
@@ -283,10 +283,11 @@ class Product extends Model
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
         } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-' . $this->id, 3600, function () {
+            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
                 return $this?->seller?->shop?->temporary_close ?? 0;
             });
         }
+
         return 0;
     }
 
@@ -295,13 +296,13 @@ class Product extends Model
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    //old relation: sub_category
+    // old relation: sub_category
     public function subCategory(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'sub_category_id');
     }
 
-    //old relation: sub_sub_category
+    // old relation: sub_sub_category
     public function subSubCategory(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'sub_sub_category_id');
@@ -315,7 +316,7 @@ class Product extends Model
             ->groupBy('product_id');
     }
 
-    //old relation: order_details
+    // old relation: order_details
     public function orderDetails(): HasMany
     {
         return $this->hasMany(OrderDetail::class, 'product_id');
@@ -326,7 +327,7 @@ class Product extends Model
         return $this->belongsTo(ProductSeo::class, 'id', 'product_id');
     }
 
-    //old relation: order_delivered
+    // old relation: order_delivered
     public function orderDelivered(): HasMany
     {
         return $this->hasMany(OrderDetail::class, 'product_id')
@@ -334,7 +335,7 @@ class Product extends Model
 
     }
 
-    //old relation: wish_list
+    // old relation: wish_list
     public function wishList(): HasMany
     {
         return $this->hasMany(Wishlist::class, 'product_id');
@@ -350,6 +351,7 @@ class Product extends Model
         if (strpos(url()->current(), '/api')) {
             return $this->belongsToMany(Tag::class)->limit(5);
         }
+
         return $this->belongsToMany(Tag::class);
     }
 
@@ -358,7 +360,7 @@ class Product extends Model
         return $this->morphMany(Taxable::class, 'taxable');
     }
 
-    //old relation: flash_deal_product
+    // old relation: flash_deal_product
     public function flashDealProducts(): HasMany
     {
         return $this->hasMany(FlashDealProduct::class);
@@ -371,13 +373,13 @@ class Product extends Model
         });
     }
 
-    //old relation: compare_list
+    // old relation: compare_list
     public function compareList(): HasMany
     {
         return $this->hasMany(ProductCompare::class);
     }
 
-    public function getNameAttribute($name): string|null
+    public function getNameAttribute($name): ?string
     {
         $segment = request()->segment(1);
         if ($segment === 'api') {
@@ -386,10 +388,11 @@ class Product extends Model
         if (in_array($segment, ['admin', 'vendor', 'seller'], true)) {
             return $name;
         }
+
         return $this->translations[0]->value ?? $name;
     }
 
-    public function getDetailsAttribute($detail): string|null
+    public function getDetailsAttribute($detail): ?string
     {
         $segment = request()->segment(1);
         if ($segment === 'api') {
@@ -398,30 +401,35 @@ class Product extends Model
         if (in_array($segment, ['admin', 'vendor', 'seller'], true)) {
             return $detail;
         }
+
         return $this->translations[1]->value ?? $detail;
     }
 
     public function getThumbnailFullUrlAttribute(): string|null|array
     {
         $value = $this->thumbnail;
+
         return $this->storageLink('product/thumbnail', $value, $this->thumbnail_storage_type ?? 'public');
     }
 
     public function getPreviewFileFullUrlAttribute(): string|null|array
     {
         $value = $this->preview_file;
+
         return $this->storageLink('product/preview', $value, $this->preview_file_storage_type ?? 'public');
     }
 
     public function getMetaImageFullUrlAttribute(): array
     {
         $value = $this->meta_image;
+
         return $this->storageLink('product/meta', $value, 'public');
     }
 
     public function getDigitalFileReadyFullUrlAttribute(): array
     {
         $value = $this->digital_file_ready;
+
         return $this->storageLink('product/digital-product', $value, $this->digital_file_ready_storage_type ?? 'public');
     }
 
@@ -431,13 +439,14 @@ class Product extends Model
         $value = is_array($this->color_image) ? $this->color_image : json_decode($this->color_image);
         if ($value) {
             foreach ($value as $item) {
-                $item = (array)$item;
+                $item = (array) $item;
                 $images[] = [
                     'color' => $item['color'],
-                    'image_name' => $this->storageLink('product', $item['image_name'], $item['storage'] ?? 'public')
+                    'image_name' => $this->storageLink('product', $item['image_name'], $item['storage'] ?? 'public'),
                 ];
             }
         }
+
         return $images;
     }
 
@@ -447,10 +456,11 @@ class Product extends Model
         $value = is_array($this->images) ? $this->images : json_decode($this->images);
         if ($value) {
             foreach ($value as $item) {
-                $item = isset($item->image_name) ? (array)$item : ['image_name' => $item, 'storage' => 'public'];
+                $item = isset($item->image_name) ? (array) $item : ['image_name' => $item, 'storage' => 'public'];
                 $images[] = $this->storageLink('product', $item['image_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
 
@@ -475,7 +485,7 @@ class Product extends Model
                 }
             }, 'reviews' => function ($query) {
                 $segment = request()->segment(1);
-                $query->whereNull('delivery_man_id')->when(!in_array($segment, ['admin', 'vendor', 'seller'], true), function ($query) use ($segment) {
+                $query->whereNull('delivery_man_id')->when(! in_array($segment, ['admin', 'vendor', 'seller'], true), function ($query) {
                     return $query->active();
                 });
             }]);

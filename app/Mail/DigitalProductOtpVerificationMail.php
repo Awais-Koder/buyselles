@@ -15,7 +15,6 @@ class DigitalProductOtpVerificationMail extends Mailable
      *
      * @return void
      */
-
     protected $token;
 
     public function __construct($token)
@@ -31,6 +30,7 @@ class DigitalProductOtpVerificationMail extends Mailable
     public function build()
     {
         $token = $this->token;
+
         return $this->subject(translate('digital_Product_OTP_Verification'))->view('email-templates.digital-product-otp-verificationMail', ['token' => $token]);
     }
 }

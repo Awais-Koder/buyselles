@@ -26,6 +26,7 @@ class InvoiceSettingRequest extends FormRequest
             'image' => 'nullable|mimes:jpg,jpeg,png,gif|max:1024',
         ];
     }
+
     public function messages(): array
     {
         return [

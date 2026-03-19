@@ -17,9 +17,9 @@ class DealController extends Controller
     {
         $user = Helpers::getCustomerInformation($request);
         $featuredDeal = FlashDeal::where(['deal_type' => 'feature_deal', 'status' => 1])
-                        ->whereDate('start_date', '<=', date('Y-m-d'))
-                        ->whereDate('end_date', '>=', date('Y-m-d'))
-                        ->first();
+            ->whereDate('start_date', '<=', date('Y-m-d'))
+            ->whereDate('end_date', '>=', date('Y-m-d'))
+            ->first();
 
         $productIDs = [];
         if ($featuredDeal) {
@@ -32,15 +32,15 @@ class DealController extends Controller
         }
 
         $products = Product::with(['rating', 'tags', 'clearanceSale' => function ($query) {
-                return $query->active();
-            }])
+            return $query->active();
+        }])
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
             }])
             ->whereIn('id', $productIDs);
 
         $products = ProductManager::getPriorityWiseFeatureDealQuery(query: $products, dataLimit: 'all');
+
         return response()->json(Helpers::product_data_formatting($products, true), 200);
     }
-
 }

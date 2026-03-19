@@ -6,11 +6,11 @@ use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\DeliveryManRepositoryInterface;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Contracts\Repositories\ProductRepositoryInterface;
+use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Contracts\Repositories\VendorWalletRepositoryInterface;
 use App\Contracts\Repositories\VendorWithdrawMethodInfoRepositoryInterface;
 use App\Contracts\Repositories\WithdrawalMethodRepositoryInterface;
 use App\Contracts\Repositories\WithdrawRequestRepositoryInterface;
-use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\WithdrawRequest;
 use App\Repositories\BrandRepository;
@@ -18,8 +18,8 @@ use App\Repositories\OrderTransactionRepository;
 use App\Services\DashboardService;
 use App\Services\VendorWalletService;
 use App\Services\WithdrawRequestService;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Carbon\Carbon;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -30,29 +30,22 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class DashboardController extends BaseController
 {
     public function __construct(
-        private readonly OrderTransactionRepository                  $orderTransactionRepo,
-        private readonly ProductRepositoryInterface                  $productRepo,
-        private readonly DeliveryManRepositoryInterface              $deliveryManRepo,
-        private readonly OrderRepositoryInterface                    $orderRepo,
-        private readonly CustomerRepositoryInterface                 $customerRepo,
-        private readonly BrandRepository                             $brandRepo,
-        private readonly VendorWalletRepositoryInterface             $vendorWalletRepo,
-        private readonly VendorWalletService                         $vendorWalletService,
-        private readonly WithdrawalMethodRepositoryInterface         $withdrawalMethodRepo,
-        private readonly WithdrawRequestRepositoryInterface          $withdrawRequestRepo,
-        private readonly WithdrawRequestService                      $withdrawRequestService,
-        private readonly DashboardService                            $dashboardService,
-        private readonly RestockProductRepositoryInterface           $restockProductRepo,
+        private readonly OrderTransactionRepository $orderTransactionRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly BrandRepository $brandRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly VendorWalletService $vendorWalletService,
+        private readonly WithdrawalMethodRepositoryInterface $withdrawalMethodRepo,
+        private readonly WithdrawRequestRepositoryInterface $withdrawRequestRepo,
+        private readonly WithdrawRequestService $withdrawRequestService,
+        private readonly DashboardService $dashboardService,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
         private readonly VendorWithdrawMethodInfoRepositoryInterface $vendorWithdrawMethodInfoRepo,
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $vendorId = auth('seller')->id();
@@ -60,7 +53,7 @@ class DashboardController extends BaseController
             filters: [
                 'added_by' => 'seller',
                 'seller_id' => $vendorId,
-                'request_status' => 1
+                'request_status' => 1,
             ],
             relations: ['orderDetails', 'refundRequest']
         )->take(DASHBOARD_TOP_SELL_DATA_LIMIT);
@@ -68,18 +61,18 @@ class DashboardController extends BaseController
             filters: [
                 'user_id' => $vendorId,
                 'added_by' => 'seller',
-                'request_status' => 1
+                'request_status' => 1,
             ],
             relations: ['reviews'],
         )->take(DASHBOARD_DATA_LIMIT);
         $topRatedDeliveryMan = $this->deliveryManRepo->getTopRatedList(
             orderBy: ['delivered_orders_count' => 'desc'],
             filters: [
-                'seller_id' => $vendorId
+                'seller_id' => $vendorId,
             ],
             whereHasFilters: [
                 'seller_is' => 'seller',
-                'seller_id' => $vendorId
+                'seller_id' => $vendorId,
             ],
             relations: ['deliveredOrders', 'rating', 'review'],
         )->take(DASHBOARD_DATA_LIMIT);
@@ -90,7 +83,7 @@ class DashboardController extends BaseController
         $vendorEarning = $this->getVendorEarning(from: $from, to: $to, range: $range, type: 'month');
         $commissionEarn = $this->getAdminCommission(from: $from, to: $to, range: $range, type: 'month');
         $vendorWallet = $this->vendorWalletRepo->getFirstWhere(params: ['seller_id' => $vendorId]);
-        $label = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        $label = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         $dateType = 'yearEarn';
         $dashboardData = [
             'orderStatus' => $this->getOrderStatusArray(type: 'overall'),
@@ -127,6 +120,7 @@ class DashboardController extends BaseController
             relations: ['withdraw_method'],
             dataLimit: 'all'
         );
+
         return view('vendor-views.dashboard.index', [
             'vendorWallet' => $vendorWallet,
             'withdrawRequests' => $withdrawRequests,
@@ -142,22 +136,19 @@ class DashboardController extends BaseController
     }
 
     /**
-     * @param string $type
-     * @return JsonResponse
      * @throws \Throwable
      */
     public function getOrderStatus(string $type): JsonResponse
     {
         session()->put('vendor_statistics_type', $type);
         $orderStatus = $this->getOrderStatusArray($type);
+
         return response()->json([
-            'view' => view('vendor-views.partials._dashboard-order-status', compact('orderStatus'))->render()
+            'view' => view('vendor-views.partials._dashboard-order-status', compact('orderStatus'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws \Throwable
      */
     public function getEarningStatistics(Request $request): JsonResponse
@@ -173,14 +164,13 @@ class DashboardController extends BaseController
         $vendorEarning = array_values($vendorEarning);
         $commissionEarn = array_values($commissionEarn);
         $label = $dateTypeArray['keyRange'] ?? [];
+
         return response()->json([
             'view' => view('vendor-views.dashboard.partials.earning-statistics', compact('vendorEarning', 'commissionEarn', 'label', 'dateType'))->render(),
         ]);
     }
 
     /**
-     * @param WithdrawRequest $request
-     * @return RedirectResponse
      * @throws \Exception
      */
     public function getWithdrawRequest(WithdrawRequest $request): RedirectResponse
@@ -203,15 +193,12 @@ class DashboardController extends BaseController
             );
             ToastMagic::success(translate('withdraw_request_has_been_sent'));
         } else {
-            ToastMagic::error(translate('invalid_request') . '!');
+            ToastMagic::error(translate('invalid_request').'!');
         }
+
         return redirect()->back();
     }
 
-    /**
-     * @param string $type
-     * @return array
-     */
     protected function getOrderStatusArray(string $type): array
     {
         $vendorId = auth('seller')->id();
@@ -223,22 +210,16 @@ class DashboardController extends BaseController
                 filters: [
                     'seller_is' => 'seller',
                     'seller_id' => $vendorId,
-                    'order_status' => $key
+                    'order_status' => $key,
                 ],
                 dateType: $type,
             )->count();
             $statusWiseOrders[$key] = $count;
         }
+
         return $statusWiseOrders;
     }
 
-    /**
-     * @param string|Carbon $from
-     * @param string|Carbon $to
-     * @param array $range
-     * @param string $type
-     * @return array
-     */
     protected function getVendorEarning(string|Carbon $from, string|Carbon $to, array $range, string $type): array
     {
         $vendorId = auth('seller')->id();
@@ -253,16 +234,10 @@ class DashboardController extends BaseController
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
+
         return $this->dashboardService->getDateWiseAmount(range: $range, type: $type, amountArray: $vendorEarnings);
     }
 
-    /**
-     * @param string|Carbon $from
-     * @param string|Carbon $to
-     * @param array $range
-     * @param string $type
-     * @return array
-     */
     protected function getAdminCommission(string|Carbon $from, string|Carbon $to, array $range, string $type): array
     {
         $vendorId = auth('seller')->id();
@@ -277,16 +252,14 @@ class DashboardController extends BaseController
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
+
         return $this->dashboardService->getDateWiseAmount(range: $range, type: $type, amountArray: $commissionGiven);
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function getMethodList(Request $request): JsonResponse
     {
         $method = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['method_id'], 'is_active' => 1]);
+
         return response()->json(['content' => $method]);
     }
 
@@ -309,16 +282,16 @@ class DashboardController extends BaseController
             $count = $products?->sum('restock_product_customers_count') ?? 0;
             $restockProduct = [
                 'title' => $firstProduct?->product?->name ?? '',
-                'body' => $count < 100 ? translate('This_product_has') . ' ' . $count . ' ' . translate('restock_request') : translate('This_product_has') . ' 99+ ' . translate('restock_request'),
+                'body' => $count < 100 ? translate('This_product_has').' '.$count.' '.translate('restock_request') : translate('This_product_has').' 99+ '.translate('restock_request'),
                 'image' => getStorageImages(path: $firstProduct?->product?->thumbnail_full_url ?? '', type: 'product'),
-                'route' => route('vendor.products.request-restock-list')
+                'route' => route('vendor.products.request-restock-list'),
             ];
         } elseif (count($restockProductList) > 1) {
             $restockProduct = [
                 'title' => translate('Restock_Request'),
-                'body' => (count($restockProductList) < 100 ? count($restockProductList) : '99 +') . ' ' . translate('more_products_have_restock_request'),
+                'body' => (count($restockProductList) < 100 ? count($restockProductList) : '99 +').' '.translate('more_products_have_restock_request'),
                 'image' => dynamicAsset(path: 'public/assets/back-end/img/icons/restock-request-icon.svg'),
-                'route' => route('vendor.products.request-restock-list')
+                'route' => route('vendor.products.request-restock-list'),
             ];
         }
 
@@ -326,7 +299,7 @@ class DashboardController extends BaseController
             'success' => 1,
             'new_order_count' => $newOrder,
             'restockProductCount' => $restockProductList->count(),
-            'restockProduct' => $restockProduct
+            'restockProduct' => $restockProduct,
         ]);
     }
 }

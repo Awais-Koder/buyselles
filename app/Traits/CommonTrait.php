@@ -2,19 +2,19 @@
 
 namespace App\Traits;
 
-use App\Models\OrderStatusHistory;
 use App\Models\DeliveryCountryCode;
 use App\Models\DeliverymanNotification;
 use App\Models\DeliverymanWallet;
 use App\Models\DeliveryZipCode;
 use App\Models\OrderExpectedDeliveryHistory;
+use App\Models\OrderStatusHistory;
 
 trait CommonTrait
 {
     public static function add_expected_delivery_date_history($order_id, $user_id, $value, $user_type, $cause = null): void
     {
         if ($order_id && $user_id && $value && $user_type) {
-            $delivery_history = new OrderExpectedDeliveryHistory();
+            $delivery_history = new OrderExpectedDeliveryHistory;
             $delivery_history->order_id = $order_id;
             $delivery_history->user_id = $user_id;
             $delivery_history->user_type = $user_type;
@@ -26,8 +26,8 @@ trait CommonTrait
 
     public static function add_order_status_history($order_id, $user_id, $status, $user_type, $cause = null): void
     {
-        if ($order_id && ($user_id || $user_id=='0') && $status && $user_type) {
-            $delivery_history = new OrderStatusHistory();
+        if ($order_id && ($user_id || $user_id == '0') && $status && $user_type) {
+            $delivery_history = new OrderStatusHistory;
             $delivery_history->order_id = $order_id;
             $delivery_history->user_id = $user_id;
             $delivery_history->user_type = $user_type;
@@ -40,7 +40,7 @@ trait CommonTrait
     public static function add_deliveryman_push_notification($data, $delivery_man_id): void
     {
         if ($data && $delivery_man_id) {
-            $notification = new DeliverymanNotification();
+            $notification = new DeliverymanNotification;
             $notification->order_id = $data['order_id'];
             $notification->delivery_man_id = $delivery_man_id;
             $notification->description = $data['description'];
@@ -55,6 +55,7 @@ trait CommonTrait
         if ($wallet) {
             $withdrawalBalance = ($wallet->current_balance ?? 0) - (($wallet->cash_in_hand ?? 0) + ($wallet->pending_withdraw ?? 0));
         }
+
         return $withdrawalBalance > 0 ? $withdrawalBalance : 0;
     }
 
@@ -65,6 +66,7 @@ trait CommonTrait
         if ($wallet) {
             $totalEarn = ($wallet->current_balance ?? 0) + ($wallet->total_withdraw ?? 0);
         }
+
         return $totalEarn;
     }
 
@@ -80,18 +82,19 @@ trait CommonTrait
             }
 
         }
+
         return $data;
     }
 
     public function delivery_country_exist_check($input_country): bool
     {
         $data = [];
-        foreach (DeliveryCountryCode::pluck('country_code') as $code)
-        {
+        foreach (DeliveryCountryCode::pluck('country_code') as $code) {
             foreach (COUNTRIES as $country) {
-                $country['code'] == $code ?  $data[] = $country['name'] : '';
+                $country['code'] == $code ? $data[] = $country['name'] : '';
             }
         }
+
         return in_array($input_country, $data);
     }
 

@@ -37,6 +37,7 @@ class CouponUpdateRequest extends FormRequest
         if (isset($this['discount_type']) && $this['discount_type'] == 'percentage' && empty($this['max_discount'])) {
             $data['max_discount'] = 'required';
         }
+
         return $data;
     }
 
@@ -55,7 +56,7 @@ class CouponUpdateRequest extends FormRequest
         if (isset($this['discount_type']) && $this['discount_type'] == 'percentage' && empty($this['max_discount'])) {
             $data['max_discount.required'] = translate('max_discount_amount_is_required!');
         }
+
         return $data;
     }
-
 }

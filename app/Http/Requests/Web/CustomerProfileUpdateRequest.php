@@ -6,15 +6,13 @@ use App\Traits\CalculatorTrait;
 use App\Traits\RecaptchaTrait;
 use App\Traits\ResponseHandler;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class CustomerProfileUpdateRequest extends FormRequest
 {
-    use RecaptchaTrait;
     use CalculatorTrait, ResponseHandler;
+    use RecaptchaTrait;
 
     protected $stopOnFirstFailure = true;
 
@@ -56,8 +54,8 @@ class CustomerProfileUpdateRequest extends FormRequest
             'phone.required' => translate('phone_number_is_required'),
             'phone.unique' => translate('phone_number_already_has_been_taken'),
             'phone.max' => translate('The_phone_number_may_not_be_greater_than_20_characters'),
-            'image.mimes' => translate('The_image_type_must_be') . '.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
-            'image.max' => translate('The_image_may_not_be_greater_than_2_MB')
+            'image.mimes' => translate('The_image_type_must_be').'.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
+            'image.max' => translate('The_image_may_not_be_greater_than_2_MB'),
         ];
     }
 
@@ -79,11 +77,11 @@ class CustomerProfileUpdateRequest extends FormRequest
                     );
                 }
 
-                if ($this['password'] && !empty($this['password']) && empty($this['confirm_password'])) {
+                if ($this['password'] && ! empty($this['password']) && empty($this['confirm_password'])) {
                     $validator->errors()->add(
                         'confirm_password.required', translate('confirm_password_is_required')
                     );
-                } elseif ($this['confirm_password'] && !empty($this['confirm_password']) && empty($this['password'])) {
+                } elseif ($this['confirm_password'] && ! empty($this['confirm_password']) && empty($this['password'])) {
                     $validator->errors()->add(
                         'password.required', translate('password_is_required')
                     );
@@ -92,7 +90,7 @@ class CustomerProfileUpdateRequest extends FormRequest
                         'password.same:confirm_password', translate('passwords_must_match_with_confirm_password')
                     );
                 }
-            }
+            },
         ];
     }
 }

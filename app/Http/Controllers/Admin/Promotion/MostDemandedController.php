@@ -13,24 +13,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-
 class MostDemandedController extends BaseController
 {
-
     public function __construct(
         private readonly MostDemandedRepositoryInterface $mostDemandedRepo,
-        private readonly ProductRepositoryInterface      $productRepo,
-    )
-    {
-    }
+        private readonly ProductRepositoryInterface $productRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return $this->getListView($request);
     }
@@ -47,6 +41,7 @@ class MostDemandedController extends BaseController
             relations: ['product'],
             dataLimit: getWebConfig(name: 'pagination_limit'),
         );
+
         return view('admin-views.theme-features.most-demanded.view', compact('products', 'mostDemandedProducts'));
     }
 
@@ -55,6 +50,7 @@ class MostDemandedController extends BaseController
         $dataArray = $mostDemandedService->getProcessedData(request: $request);
         $this->mostDemandedRepo->add(data: $dataArray);
         ToastMagic::success(translate('most_demanded_product_add_successfully'));
+
         return back();
     }
 
@@ -62,6 +58,7 @@ class MostDemandedController extends BaseController
     {
         $this->mostDemandedRepo->updateWhere(params: ['status' => 1], data: ['status' => 0]);
         $this->mostDemandedRepo->updateWhere(params: ['id' => $request['id']], data: ['status' => $request->get('status', 0)]);
+
         return response()->json(['success' => 1, 'message' => translate('status_updated_successfully')], 200);
     }
 
@@ -72,6 +69,7 @@ class MostDemandedController extends BaseController
         }
         $products = $this->productRepo->getListWhere(orderBy: ['name' => 'asc'], dataLimit: 'all');
         $mostDemandedProduct = $this->mostDemandedRepo->getFirstWhere(params: ['id' => $id]);
+
         return view('admin-views.theme-features.most-demanded.edit', compact('products', 'mostDemandedProduct'));
     }
 
@@ -81,12 +79,14 @@ class MostDemandedController extends BaseController
         $dataArray = $mostDemandedService->getProcessedData(request: $request, image: $mostDemandedProduct['banner']);
         $this->mostDemandedRepo->update(id: $id, data: $dataArray);
         ToastMagic::success(translate('most_demanded_product_update_successfully'));
+
         return redirect()->route('admin.most-demanded.index');
     }
 
     public function delete(Request $request): JsonResponse
     {
         $this->mostDemandedRepo->delete(params: ['id' => $request['id']]);
+
         return response()->json(['message' => translate('most_demanded_product_delete_successfully')]);
     }
 }

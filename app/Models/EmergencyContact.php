@@ -17,8 +17,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class EmergencyContact extends Model
 {
@@ -42,5 +40,4 @@ class EmergencyContact extends Model
         'created_at',
         'updated_at',
     ];
-
 }

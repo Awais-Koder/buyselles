@@ -15,5 +15,4 @@ class OfflinePaymentMethod extends Model
         'method_fields' => 'array',
         'method_informations' => 'array',
     ];
-
 }

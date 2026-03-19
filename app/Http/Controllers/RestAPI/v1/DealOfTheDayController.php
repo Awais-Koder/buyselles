@@ -17,29 +17,30 @@ class DealOfTheDayController extends Controller
 
         if (isset($dealOfTheDay)) {
             $product = Product::active()->with(['rating', 'clearanceSale' => function ($query) {
-                    return $query->active();
-                }])
+                return $query->active();
+            }])
                 ->withCount(['reviews' => function ($query) {
                     $query->active()->whereNull('delivery_man_id');
                 }])->find($dealOfTheDay->product_id);
 
-            if (!isset($product)) {
+            if (! isset($product)) {
                 $product = Product::active()->with(['rating', 'clearanceSale' => function ($query) {
-                        return $query->active();
-                    }])
+                    return $query->active();
+                }])
                     ->withCount(['reviews' => function ($query) {
                         $query->active()->whereNull('delivery_man_id');
                     }])->inRandomOrder()->first();
             }
         } else {
             $product = Product::active()->with(['rating', 'clearanceSale' => function ($query) {
-                    return $query->active();
-                }])
+                return $query->active();
+            }])
                 ->withCount(['reviews' => function ($query) {
                     $query->active()->whereNull('delivery_man_id');
                 }])->inRandomOrder()->first();
         }
         $product = $product ? Helpers::product_data_formatting($product) : [];
+
         return response()->json($product, 200);
 
     }

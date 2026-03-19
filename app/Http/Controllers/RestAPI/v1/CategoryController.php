@@ -20,22 +20,22 @@ class CategoryController extends Controller
 
         if ($shop) {
             $categoriesID = Product::active()
-                ->when($shop['author_type'] == 'admin', function ($query) use ($request) {
+                ->when($shop['author_type'] == 'admin', function ($query) {
                     return $query->where(['added_by' => 'admin']);
                 })
-                ->when($shop['author_type'] != 'admin', function ($query) use ($request, $shop) {
+                ->when($shop['author_type'] != 'admin', function ($query) use ($shop) {
                     return $query->where(['added_by' => 'seller'])->where('user_id', $shop['seller_id']);
                 })->pluck('category_id');
         }
 
         $categories = Category::when($shop, function ($query) use ($categoriesID) {
-                return $query->whereIn('id', $categoriesID);
-            })
+            return $query->whereIn('id', $categoriesID);
+        })
             ->with(['product' => function ($query) {
                 return $query->active()->withCount(['orderDetails'])->latest()->limit(10);
             }])
-            ->withCount(['product' => function ($query) use ($request, $shop) {
-                return $query->active()->when($shop && $shop['author_type'] != 'admin', function ($query) use ($request, $shop) {
+            ->withCount(['product' => function ($query) use ($shop) {
+                return $query->active()->when($shop && $shop['author_type'] != 'admin', function ($query) use ($shop) {
                     return $query->where(['added_by' => 'seller', 'user_id' => $shop['seller_id'], 'status' => '1']);
                 });
             }])->with(['childes' => function ($query) {
@@ -66,13 +66,13 @@ class CategoryController extends Controller
 
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
             'products' => $productFinal,
         ], 200);
     }
 
-    public function find_what_you_need():JsonResponse
+    public function find_what_you_need(): JsonResponse
     {
         $find_what_you_need_categories = Category::where('parent_id', 0)
             ->with(['childes' => function ($query) {
@@ -101,5 +101,4 @@ class CategoryController extends Controller
 
         return response()->json(['find_what_you_need' => $final_category], 200);
     }
-
 }

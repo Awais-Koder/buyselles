@@ -11,15 +11,12 @@ use Illuminate\Support\Facades\DB;
 
 class OrderTransactionRepository implements OrderTransactionRepositoryInterface
 {
-    public function __construct(private readonly OrderTransaction $orderTransaction)
-    {
-    }
+    public function __construct(private readonly OrderTransaction $orderTransaction) {}
 
     public function getByStatusExcept(string $status, array $relations = [], int $paginateBy = DEFAULT_DATA_LIMIT): Collection|array|LengthAwarePaginator
     {
         return $this->orderTransaction->with($relations)->whereNotIn('status', [$status])->paginate($paginateBy);
     }
-
 
     public function add(array $data): string|object
     {
@@ -33,7 +30,7 @@ class OrderTransactionRepository implements OrderTransactionRepositoryInterface
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query = $this->orderTransaction->with($relations)->when(!empty($orderBy), function ($query) use ($orderBy) {
+        $query = $this->orderTransaction->with($relations)->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
@@ -44,22 +41,23 @@ class OrderTransactionRepository implements OrderTransactionRepositoryInterface
     {
         $query = $this->orderTransaction->with($relations)
             ->when(isset($filters['seller_is']), function ($query) use ($filters) {
-                return $query->where('seller_is',$filters['seller_is']);
+                return $query->where('seller_is', $filters['seller_is']);
             })
             ->when(isset($filters['seller_id']), function ($query) use ($filters) {
-                return $query->where('seller_id',$filters['seller_id']);
+                return $query->where('seller_id', $filters['seller_id']);
             })
-            ->when(isset($filters['status']) &&  $filters['status'] != 'all' , function ($query) use ($filters) {
-                return $query->where('status',$filters['status']);
+            ->when(isset($filters['status']) && $filters['status'] != 'all', function ($query) use ($filters) {
+                return $query->where('status', $filters['status']);
             })
             ->when($searchValue, function ($query) use ($searchValue) {
-                $query->where('order_id',  'like', "%$searchValue%")
+                $query->where('order_id', 'like', "%$searchValue%")
                     ->orWhere('transaction_id', 'like', "%$searchValue%");
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -79,13 +77,13 @@ class OrderTransactionRepository implements OrderTransactionRepositoryInterface
                 );
             })
             ->whereBetween($whereBetween, $whereBetweenFilters)
-            ->when($groupBy == 'month', function ($query) use ($filters) {
+            ->when($groupBy == 'month', function ($query) {
                 return $query->groupBy('year', 'month');
             })
-            ->when($groupBy == 'day', function ($query) use ($filters) {
+            ->when($groupBy == 'day', function ($query) {
                 return $query->groupBy('month', 'day');
             })
-            ->when($groupBy == 'day_of_week', function ($query) use ($filters) {
+            ->when($groupBy == 'day_of_week', function ($query) {
                 return $query->groupBy('day_of_week');
             })
             ->get();
@@ -99,6 +97,7 @@ class OrderTransactionRepository implements OrderTransactionRepositoryInterface
     public function delete(array $params): bool
     {
         $this->orderTransaction->where($params)->delete();
+
         return true;
     }
 
@@ -185,6 +184,4 @@ class OrderTransactionRepository implements OrderTransactionRepositoryInterface
 
         return $inhouseEarningStatisticsData;
     }
-
-
 }

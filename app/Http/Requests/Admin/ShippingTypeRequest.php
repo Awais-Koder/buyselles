@@ -16,12 +16,12 @@ class ShippingTypeRequest extends FormRequest
 
     /**
      * @return array
-     * Get the validation error message
+     *               Get the validation error message
      */
     public function rules(): array
     {
         return [
-            'shippingType'    => 'required',
+            'shippingType' => 'required',
         ];
     }
 }

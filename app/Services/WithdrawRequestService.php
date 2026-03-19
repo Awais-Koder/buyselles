@@ -17,15 +17,10 @@ class WithdrawRequestService
             'withdrawal_method_fields' => json_encode($this->getWithdrawMethodFields(request: $request, withdrawMethod: $withdrawMethod)),
             'approved' => 0,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ];
     }
 
-    /**
-     * @param object $request
-     * @param object $withdrawMethod
-     * @return array
-     */
     public function getWithdrawMethodFields(object $request, object $withdrawMethod): array
     {
         $inputFields = array_column($withdrawMethod['method_fields'], 'input_name');
@@ -33,11 +28,11 @@ class WithdrawRequestService
         $methodInfoValues = $request['method_info'] ?? [];
 
         foreach ($inputFields as $field) {
-            if (key_exists($field, $methodInfoValues)) {
+            if (array_key_exists($field, $methodInfoValues)) {
                 $method[$field] = $methodInfoValues[$field];
             }
         }
+
         return $method;
     }
-
 }

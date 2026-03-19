@@ -10,6 +10,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class CustomerRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -32,6 +33,7 @@ class CustomerRequest extends FormRequest
             'phone' => 'unique:users|min:4|max:20',
         ];
     }
+
     public function messages(): array
     {
         return [
@@ -45,8 +47,9 @@ class CustomerRequest extends FormRequest
             'phone.min' => translate('phone_number_with_a_minimum_length_requirement_of_4_characters'),
         ];
     }
+
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
-        throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)],422));
+        throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)], 422));
     }
 }

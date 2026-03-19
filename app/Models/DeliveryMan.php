@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\DB;
  */
 class DeliveryMan extends Model
 {
-    use StorageTrait, DemoMaskingTrait;
+    use DemoMaskingTrait, StorageTrait;
 
     protected $hidden = ['password', 'auth_token'];
 
@@ -118,19 +118,21 @@ class DeliveryMan extends Model
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('delivery-man', $value, $storage['value'] ?? 'public');
     }
 
-    public function getIdentityImagesFullUrlAttribute(): array|null
+    public function getIdentityImagesFullUrlAttribute(): ?array
     {
         $images = [];
         $value = $this->identity_image;
         if ($value) {
             foreach ($value as $item) {
-                $item = isset($item['image_name']) ? (array)$item : ['image_name' => $item, 'storage' => 'public'];
+                $item = isset($item['image_name']) ? (array) $item : ['image_name' => $item, 'storage' => 'public'];
                 $images[] = $this->storageLink('delivery-man', $item['image_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
 

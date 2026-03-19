@@ -6,7 +6,6 @@ enum SoftwareUpdate
 {
     const VIEW = [
         URI => 'software-update',
-        VIEW => 'admin-views.system-setup.software-update'
+        VIEW => 'admin-views.system-setup.software-update',
     ];
-
 }

@@ -5,8 +5,8 @@ namespace Modules\TaxModule\app\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\TaxModule\app\Models\OrderTax;
 use Modules\TaxModule\app\Models\SystemTaxSetup;
-use Modules\TaxModule\app\Models\Taxable;
 use Modules\TaxModule\app\Models\Tax;
+use Modules\TaxModule\app\Models\Taxable;
 use Modules\TaxModule\app\Traits\VatTaxConfiguration;
 
 class CalculateTaxService
@@ -14,24 +14,23 @@ class CalculateTaxService
     use VatTaxConfiguration;
 
     public static function getCalculatedTax(
-        float  $amount,
-        array  $productIds,
+        float $amount,
+        array $productIds,
         string $taxPayer = 'vendor',
-        bool   $storeData = false,
-        array  $additionalCharges = [],
-        array  $addonIds = [],
-               $orderId = null,
-               $countryCode = null,
-               $storeId = null,
-    ): array
-    {
+        bool $storeData = false,
+        array $additionalCharges = [],
+        array $addonIds = [],
+        $orderId = null,
+        $countryCode = null,
+        $storeId = null,
+    ): array {
         $systemTaxVat = SystemTaxSetup::with('additionalData')
-            ->when($countryCode, fn($query) => $query->where('country_code', $countryCode))
+            ->when($countryCode, fn ($query) => $query->where('country_code', $countryCode))
             ->where('tax_payer', $taxPayer)
             ->where('is_active', 1)
             ->first();
 
-        if (!$systemTaxVat || !$systemTaxVat->is_active) {
+        if (! $systemTaxVat || ! $systemTaxVat->is_active) {
             return self::emptyTaxResult();
         }
 
@@ -109,6 +108,7 @@ class CalculateTaxService
             if ($storeData) {
                 DB::rollBack();
             }
+
             return array_merge(self::emptyTaxResult(), [
                 'error' => $th->getMessage(),
                 'line' => $th->getLine(),
@@ -164,8 +164,7 @@ class CalculateTaxService
         &$totalTaxAmount,
         &$orderTaxIds,
         $storeId
-    ): array
-    {
+    ): array {
         $productWiseData = [];
         $addonWiseData = [];
 
@@ -205,7 +204,7 @@ class CalculateTaxService
             $orderTaxIds = array_merge($orderTaxIds, $taxData['orderTaxIds']);
         }
 
-        if (!empty($addonIds)) {
+        if (! empty($addonIds)) {
             $addonDataType = self::getClassNames($taxType === 'product_wise' ? 'addon' : 'addon_category');
 
             foreach ($addonIds as $addon) {
@@ -241,7 +240,6 @@ class CalculateTaxService
         return [$productWiseData, $addonWiseData];
     }
 
-
     protected static function calculateTax($systemTaxVat, $amount, $taxIds, $taxPayer = 'vendor', $tax_on = 'basic', $quantity = 1, $storeId = null, $storeData = null, $orderId = null, $countryCode = null, $data_id = null, $data_type = null)
     {
         $taxRatePercent = Tax::whereIn('id', $taxIds)->where('is_active', 1)->select('id', 'name', 'tax_rate')->get();
@@ -255,7 +253,7 @@ class CalculateTaxService
             $totalTaxAmount += $taxAmount;
 
             if ($storeData) {
-                $orderTaxData = new OrderTax();
+                $orderTaxData = new OrderTax;
                 $orderTaxData->tax_name = $taxRate->name;
                 $orderTaxData->tax_type = $systemTaxVat->tax_type;
                 $orderTaxData->tax_on = $tax_on;
@@ -286,6 +284,7 @@ class CalculateTaxService
         if ($amount > 0 && $taxRatePercent > 0) {
             $taxAmount = ($amount * $taxRatePercent) / (100 + ($isInclude ? $taxRatePercent : 0));
             $totalAmount = $isInclude ? ($amount - $taxAmount) : ($amount + $taxAmount);
+
             return ['taxAmount' => $taxAmount, 'originalAmount' => $amount, 'totalAmount' => $totalAmount];
         }
 
@@ -296,11 +295,12 @@ class CalculateTaxService
     {
         if (count($orderTaxIds) > 0) {
             OrderTax::whereIn('id', $orderTaxIds)->update(['order_id' => $orderId]);
+
             return true;
         }
+
         return false;
     }
-
 
     public static function getProductWiseData(array $productIds, $isInclude, $totalTaxPercent): array
     {

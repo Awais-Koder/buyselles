@@ -13,10 +13,10 @@ class Storage extends Model
     protected $fillable = [
         'data_type',
         'data_id',
-        'value'
+        'value',
     ];
 
-    public function data():MorphTo
+    public function data(): MorphTo
     {
         return $this->morphTo();
     }

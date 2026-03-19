@@ -2,15 +2,10 @@
 
 namespace App\Http\Requests\API\v3;
 
-
-use App\Enums\GlobalConstant;
-use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ShopInfoUpdateRequest extends FormRequest
 {
@@ -34,7 +29,7 @@ class ShopInfoUpdateRequest extends FormRequest
         $maxFileSize = getFileUploadMaxSize(unit: 'kb');
 
         return [
-            'logo' =>  getRulesStringForImageValidation(
+            'logo' => getRulesStringForImageValidation(
                 rules: ['nullable'],
                 skipMimes: ['.svg', '.gif'],
                 maxSize: $maxFileSize,
@@ -58,22 +53,21 @@ class ShopInfoUpdateRequest extends FormRequest
                 maxSize: $maxFileSize,
                 isDisallowed: true
             ),
-            'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:' . $maxFileSize,
+            'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:'.$maxFileSize,
         ];
     }
 
     public function messages(): array
     {
         return [
-            'logo.mimes' => translate('The logo must be a file of type: ') . getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
-            'banner.mimes' => translate('The banner must be a file of type: ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'bottom_banner.mimes' => translate('The bottom banner must be a file of type: ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'offer_banner.mimes' => translate('The offer banner must be a file of type: ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'tin_certificate.mimes' => translate('The tin certificate must be a file of type: ') . getFileUploadFormats(skip: ['.png', '.gif', '.svg'], asMessage: true) . getFileUploadFormats(type: 'file', skip: ['.txt'], asMessage: 'true'),
-            'tin_certificate.max' => translate('The tin certificate may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'logo.mimes' => translate('The logo must be a file of type: ').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
+            'banner.mimes' => translate('The banner must be a file of type: ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'bottom_banner.mimes' => translate('The bottom banner must be a file of type: ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'offer_banner.mimes' => translate('The offer banner must be a file of type: ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'tin_certificate.mimes' => translate('The tin certificate must be a file of type: ').getFileUploadFormats(skip: ['.png', '.gif', '.svg'], asMessage: true).getFileUploadFormats(type: 'file', skip: ['.txt'], asMessage: 'true'),
+            'tin_certificate.max' => translate('The tin certificate may not be greater than ').getFileUploadMaxSize().' MB.',
         ];
     }
-
 
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {

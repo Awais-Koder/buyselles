@@ -15,27 +15,23 @@ use Illuminate\Routing\Redirector;
 
 class AddonActivationController extends BaseController
 {
-
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly AddonService                       $addonService,
-    )
-    {
-    }
+        private readonly AddonService $addonService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $addonData['deliveryman_app'] = getWebConfig(name: 'addon_activation_delivery_man_app') ?? [
             'activation_status' => 0,
             'username' => '',
             'purchase_key' => '',
         ];
+
         return view('admin-views.system-setup.addons.addon-activation', compact('addonData'));
     }
 
@@ -54,6 +50,7 @@ class AddonActivationController extends BaseController
         } else {
             ToastMagic::error($data['message']);
         }
+
         return back();
     }
 }

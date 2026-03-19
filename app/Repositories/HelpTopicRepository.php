@@ -12,9 +12,7 @@ class HelpTopicRepository implements HelpTopicRepositoryInterface
 {
     public function __construct(
         private readonly HelpTopic $helpTopic,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class HelpTopicRepository implements HelpTopicRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->helpTopic->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -53,11 +51,12 @@ class HelpTopicRepository implements HelpTopicRepositoryInterface
             ->when(isset($filters['status']), function ($query) use ($filters) {
                 return $query->where(['status' => $filters['status']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -69,12 +68,14 @@ class HelpTopicRepository implements HelpTopicRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->helpTopic->where($params)->update($data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->helpTopic->where($params)->delete();
+
         return true;
     }
 }

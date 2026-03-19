@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Utils\Helpers;
 use App\Exports\ProductReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -29,14 +29,14 @@ class ProductReportController extends Controller
         $chart_data = self::all_product_chart_filter($request);
 
         $product_query = Product::with(['reviews', 'orderDetails' => function ($query) {
-                $query->select(
-                    'product_id',
-                    DB::raw('SUM(qty * price) as total_sold_amount'),
-                    DB::raw('SUM(qty) as product_quantity'),
-                )
+            $query->select(
+                'product_id',
+                DB::raw('SUM(qty * price) as total_sold_amount'),
+                DB::raw('SUM(qty) as product_quantity'),
+            )
                 ->where('delivery_status', 'delivered')->groupBy('product_id')
                 ->groupBy('product_id');
-            }])
+        }])
             ->when($seller_id != 'all', function ($query) use ($seller_id) {
                 $query->when($seller_id == 'inhouse', function ($q) {
                     $q->where(['user_id' => 1, 'added_by' => 'admin']);
@@ -53,19 +53,19 @@ class ProductReportController extends Controller
             ->appends($query_param);
 
         $total_sales_value = 0;
-        foreach($products as $key=>$product){
+        foreach ($products as $key => $product) {
             $total_sales_value += (isset($product->orderDetails[0]->total_sold_amount) ? $product->orderDetails[0]->total_sold_amount : 0) / (isset($product->orderDetails[0]->product_quantity) ? $product->orderDetails[0]->product_quantity : 1);
         }
 
-        $total_product_sale_query = Product::with(['orderDetails'=>function($query){
+        $total_product_sale_query = Product::with(['orderDetails' => function ($query) {
             $query->select(
-                    'product_id',
-                    DB::raw('SUM(qty * price) as total_sale_amount'),
-                    DB::raw('SUM(qty) as product_quantity'),
-                    DB::raw('SUM(discount) as total_discount')
-                )->groupBy('product_id');
-            }])
-            ->whereHas('orderDetails',function($query){
+                'product_id',
+                DB::raw('SUM(qty * price) as total_sale_amount'),
+                DB::raw('SUM(qty) as product_quantity'),
+                DB::raw('SUM(discount) as total_discount')
+            )->groupBy('product_id');
+        }])
+            ->whereHas('orderDetails', function ($query) {
                 $query->where('delivery_status', 'delivered');
             })
             ->when($seller_id != 'all', function ($query) use ($seller_id) {
@@ -82,7 +82,7 @@ class ProductReportController extends Controller
         $total_product_sale = 0;
         $total_product_sale_amount = 0;
         $total_discount_given = 0;
-        if(count($total_product_sales) > 0) {
+        if (count($total_product_sales) > 0) {
             foreach ($total_product_sales as $sales) {
                 foreach ($sales->orderDetails as $sale) {
                     $total_product_sale += isset($sale->product_quantity) ? $sale->product_quantity : 0;
@@ -101,17 +101,18 @@ class ProductReportController extends Controller
         $active_product_count_query = Product::where('request_status', 1);
         $active_product_count = self::product_count($active_product_count_query, $date_type, $from, $to, $seller_id);
 
-        $product_count = array(
-            'reject_product_count'=> $reject_product_count,
-            'active_product_count'=> $active_product_count,
-            'pending_product_count'=> $pending_product_count
-        );
+        $product_count = [
+            'reject_product_count' => $reject_product_count,
+            'active_product_count' => $active_product_count,
+            'pending_product_count' => $pending_product_count,
+        ];
 
         return view('admin-views.report.all-product', compact('sellers', 'products', 'chart_data', 'total_sales_value',
             'total_product_sale', 'total_product_sale_amount', 'total_discount_given', 'product_count', 'search', 'date_type', 'from', 'to', 'seller_id'));
     }
 
-    public function product_count($query, $date_type, $from, $to, $seller_id){
+    public function product_count($query, $date_type, $from, $to, $seller_id)
+    {
         $query_final = $query->when($seller_id != 'all', function ($query) use ($seller_id) {
             $query->when($seller_id == 'inhouse', function ($q) {
                 $q->where(['user_id' => 1, 'added_by' => 'admin']);
@@ -121,6 +122,7 @@ class ProductReportController extends Controller
         });
 
         $count = self::create_date_wise_common_filter($query_final, $date_type, $from, $to)->count();
+
         return $count;
     }
 
@@ -130,7 +132,7 @@ class ProductReportController extends Controller
         $to = $request['to'];
         $date_type = $request['date_type'] ?? 'this_year';
 
-        if ($date_type == 'this_year') { //this year table
+        if ($date_type == 'this_year') { // this year table
             $number = 12;
             $default_inc = 1;
             $current_start_year = date('Y-01-01');
@@ -138,7 +140,7 @@ class ProductReportController extends Controller
             $from_year = Carbon::parse($from)->format('Y');
 
             return self::all_product_same_year($request, $current_start_year, $current_end_year, $from_year, $number, $default_inc);
-        } elseif ($date_type == 'this_month') { //this month table
+        } elseif ($date_type == 'this_month') { // this month table
             $current_month_start = date('Y-m-01');
             $current_month_end = date('Y-m-t');
             $inc = 1;
@@ -150,7 +152,7 @@ class ProductReportController extends Controller
             return self::all_product_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getAllProductForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -162,14 +164,17 @@ class ProductReportController extends Controller
 
             if ($from_year != $to_year) {
                 $different_year = self::all_product_different_year($request, $start_date, $end_date, $from_year, $to_year);
+
                 return $different_year;
 
             } elseif ($from_month != $to_month) {
                 $same_year = self::all_product_same_year($request, $start_date, $end_date, $from_year, $to_month, $from_month);
+
                 return $same_year;
 
             } elseif ($from_month == $to_month) {
                 $same_month = self::all_product_same_month($request, $start_date, $end_date, $from_month, $to_day, $from_day);
+
                 return $same_month;
             }
         }
@@ -184,24 +189,24 @@ class ProductReportController extends Controller
             ->latest('created_at')->get();
 
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = date("F", strtotime("2023-$inc-01"));
-            $total_product[$month . '-' . $from_year] = 0;
+            $month = date('F', strtotime("2023-$inc-01"));
+            $total_product[$month.'-'.$from_year] = 0;
             foreach ($products as $match) {
                 if ($match['month'] == $inc) {
-                    $total_product[$month . '-' . $from_year] = $match['total_product'];
+                    $total_product[$month.'-'.$from_year] = $match['total_product'];
                 }
             }
         }
 
-        return array(
+        return [
             'total_product' => $total_product,
-        );
+        ];
     }
 
     public function all_product_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc)
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = date("F", strtotime("$year_month"));
+        $month = date('F', strtotime("$year_month"));
 
         $products = self::all_product_date_common_query($request, $start_date, $end_date)
             ->selectRaw('count(*) as total_product, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
@@ -217,9 +222,9 @@ class ProductReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'total_product' => $total_product,
-        );
+        ];
     }
 
     public function all_product_this_week($request)
@@ -229,7 +234,7 @@ class ProductReportController extends Controller
 
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             array_push($day_name, $date->format('l'));
         }
@@ -251,10 +256,11 @@ class ProductReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'total_product' => $total_product,
-        );
+        ];
     }
+
     public function getAllProductForToday($request): array
     {
         $number = 1;
@@ -299,26 +305,27 @@ class ProductReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'total_product' => $total_product,
-        );
+        ];
 
     }
 
     public function all_product_date_common_query($request, $start_date, $end_date)
     {
         $seller_id = $request['seller_id'] ?? 'all';
+
         return Product::when($seller_id != 'all', function ($query) use ($seller_id) {
-                $query->when($seller_id == 'inhouse', function ($query) {
-                    $query->where(['user_id' => 1, 'added_by' => 'admin']);
-                })->when($seller_id != 'inhouse', function ($query) use ($seller_id) {
-                    $query->where(['user_id' => $seller_id, 'added_by' => 'seller']);
-                });
-            })
+            $query->when($seller_id == 'inhouse', function ($query) {
+                $query->where(['user_id' => 1, 'added_by' => 'admin']);
+            })->when($seller_id != 'inhouse', function ($query) use ($seller_id) {
+                $query->where(['user_id' => $seller_id, 'added_by' => 'seller']);
+            });
+        })
             ->whereBetween('created_at', [$start_date, $end_date]);
     }
 
-    public function allProductExportExcel(Request $request):BinaryFileResponse
+    public function allProductExportExcel(Request $request): BinaryFileResponse
     {
         $search = $request['search'];
         $from = $request['from'];
@@ -333,8 +340,8 @@ class ProductReportController extends Controller
                     DB::raw('SUM(qty * price) as total_sold_amount'),
                     DB::raw('SUM(qty) as product_quantity'),
                 )
-                ->where('delivery_status', 'delivered')->groupBy('product_id')
-                ->groupBy('product_id');
+                    ->where('delivery_status', 'delivered')->groupBy('product_id')
+                    ->groupBy('product_id');
             }])
             ->when($seller_id != 'all', function ($query) use ($seller_id) {
                 $query->when($seller_id == 'inhouse', function ($q) {
@@ -350,15 +357,15 @@ class ProductReportController extends Controller
 
         $seller = $request->has('seller_id') && $request['seller_id'] != 'inhouse' && $request['seller_id'] != 'all' ? (Seller::with('shop')->find($request->seller_id)) : ($request['seller_id'] ?? 'all');
         $data = [
-            'products' =>$products,
-            'search' =>$request['search'],
+            'products' => $products,
+            'search' => $request['search'],
             'seller' => $seller,
             'from' => $request['from'],
             'to' => $request['to'],
-            'date_type' => $request['date_type'] ?? 'this_year'
+            'date_type' => $request['date_type'] ?? 'this_year',
         ];
 
-        return Excel::download(new ProductReportExport($data) , 'Product-Report-List.xlsx');
+        return Excel::download(new ProductReportExport($data), 'Product-Report-List.xlsx');
     }
 
     public function create_date_wise_common_filter($query, $date_type, $from, $to)
@@ -376,7 +383,7 @@ class ProductReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });

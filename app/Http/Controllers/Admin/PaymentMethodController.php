@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\GlobalConstant;
 use App\Http\Controllers\Controller;
-use App\Models\Setting;
 use App\Models\BusinessSetting;
+use App\Models\Setting;
 use App\Traits\Processor;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
@@ -49,35 +49,37 @@ class PaymentMethodController extends Controller
 
         BusinessSetting::updateOrInsert(['type' => 'cash_on_delivery'], [
             'value' => json_encode(['status' => $request['cash_on_delivery'] ?? 0]),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         BusinessSetting::updateOrInsert(['type' => 'digital_payment'], [
             'value' => json_encode(['status' => $request['digital_payment'] ?? 0]),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         BusinessSetting::updateOrInsert(['type' => 'offline_payment'], [
             'value' => json_encode(['status' => $request['offline_payment'] ?? 0]),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('successfully_updated'));
+
         return back();
     }
 
     /**
      * Display a listing of the resource.
-     * @param Request $request
+     *
      * @return RedirectResponse
+     *
      * @throws ValidationException
      */
     public function payment_config_set(Request $request)
     {
-        collect(['status'])->each(fn($item, $key) => $request[$item] = $request->has($item) ? (int)$request[$item] : 0);
+        collect(['status'])->each(fn ($item, $key) => $request[$item] = $request->has($item) ? (int) $request[$item] : 0);
         $validation = [
             'gateway' => 'required|in:ssl_commerz,sixcash,worldpay,payfast,swish,esewa,maxicash,hubtel,viva_wallet,tap,thawani,moncash,pvit,ccavenue,foloosi,iyzi_pay,xendit,fatoorah,hyper_pay,amazon_pay,paypal,stripe,razor_pay,senang_pay,paytabs,paystack,paymob_accept,paytm,flutterwave,liqpay,bkash,mercadopago,cash_after_service,digital_payment,momo',
-            'mode' => 'required|in:live,test'
+            'mode' => 'required|in:live,test',
         ];
 
         $additional_data = [];
@@ -86,13 +88,13 @@ class PaymentMethodController extends Controller
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'store_id' => 'required',
-                'store_password' => 'required'
+                'store_password' => 'required',
             ];
         } elseif ($request['gateway'] == 'paypal') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'client_id' => 'required',
-                'client_secret' => 'required'
+                'client_secret' => 'required',
             ];
         } elseif ($request['gateway'] == 'stripe') {
             $additional_data = [
@@ -104,28 +106,28 @@ class PaymentMethodController extends Controller
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'api_key' => 'required',
-                'api_secret' => 'required'
+                'api_secret' => 'required',
             ];
         } elseif ($request['gateway'] == 'senang_pay') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'callback_url' => 'required',
                 'secret_key' => 'required',
-                'merchant_id' => 'required'
+                'merchant_id' => 'required',
             ];
         } elseif ($request['gateway'] == 'paytabs') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'profile_id' => 'required',
                 'server_key' => 'required',
-                'base_url' => 'required'
+                'base_url' => 'required',
             ];
         } elseif ($request['gateway'] == 'paystack') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'public_key' => 'required',
                 'secret_key' => 'required',
-                'merchant_email' => 'required'
+                'merchant_email' => 'required',
             ];
         } elseif ($request['gateway'] == 'paymob_accept') {
             $additional_data = [
@@ -134,33 +136,33 @@ class PaymentMethodController extends Controller
                 'api_key' => 'required',
                 'iframe_id' => 'required',
                 'integration_id' => 'required',
-                'hmac' => 'required'
+                'hmac' => 'required',
             ];
         } elseif ($request['gateway'] == 'mercadopago') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'access_token' => 'required',
-                'public_key' => 'required'
+                'public_key' => 'required',
             ];
         } elseif ($request['gateway'] == 'liqpay') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'private_key' => 'required',
-                'public_key' => 'required'
+                'public_key' => 'required',
             ];
         } elseif ($request['gateway'] == 'flutterwave') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'secret_key' => 'required',
                 'public_key' => 'required',
-                'hash' => 'required'
+                'hash' => 'required',
             ];
         } elseif ($request['gateway'] == 'paytm') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'merchant_key' => 'required',
                 'merchant_id' => 'required',
-                'merchant_website_link' => 'required'
+                'merchant_website_link' => 'required',
             ];
         } elseif ($request['gateway'] == 'bkash') {
             $additional_data = [
@@ -172,11 +174,11 @@ class PaymentMethodController extends Controller
             ];
         } elseif ($request['gateway'] == 'cash_after_service') {
             $additional_data = [
-                'status' => 'required|in:1,0'
+                'status' => 'required|in:1,0',
             ];
         } elseif ($request['gateway'] == 'digital_payment') {
             $additional_data = [
-                'status' => 'required|in:1,0'
+                'status' => 'required|in:1,0',
             ];
         } elseif ($request['gateway'] == 'momo') {
             $additional_data = [
@@ -312,7 +314,7 @@ class PaymentMethodController extends Controller
 
         $additional_data_image = $settings['additional_data'] != null ? json_decode($settings['additional_data']) : null;
 
-        if( !$additional_data_image || !isset($additional_data_image->gateway_image) || (isset($additional_data_image->gateway_image) && $additional_data_image->gateway_image == '') || (isset($additional_data_image->gateway_image) && !file_exists(base_path("storage/app/public/payment_modules/gateway_image/".$additional_data_image->gateway_image)))){
+        if (! $additional_data_image || ! isset($additional_data_image->gateway_image) || (isset($additional_data_image->gateway_image) && $additional_data_image->gateway_image == '') || (isset($additional_data_image->gateway_image) && ! file_exists(base_path('storage/app/public/payment_modules/gateway_image/'.$additional_data_image->gateway_image)))) {
             $request->validate([
                 'gateway_image' => 'required',
             ]);
@@ -343,6 +345,7 @@ class PaymentMethodController extends Controller
         ]);
 
         ToastMagic::success(GATEWAYS_DEFAULT_UPDATE_200['message']);
+
         return back();
     }
 }

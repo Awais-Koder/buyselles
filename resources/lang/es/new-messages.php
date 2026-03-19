@@ -1,4 +1,6 @@
-<?php return array (
+<?php
+
+return [
     'Dashboard' => 'Panel',
     'order_management' => 'Gestión de pedidos',
     'orders' => 'Pedidos',
@@ -6149,4 +6151,4 @@
     'want_to_turn_OFF_WhatsApp_as_social_media_chat_option' => 'Quiero apagar WhatsApp como opción de chat de redes sociales',
     'if_enabled WhatsApp_chatting_option_will_be_available_in_the_system' => 'Si la opción de chat de WhatsApp habilitada estará disponible en el sistema',
     'if_disabled _WhatsApp_chatting_option_will_be_hidden_from_the_system ' => 'Si la opción de chat de WhatsApp deshabilitada se ocultará al sistema',
-);
+];

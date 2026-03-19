@@ -2,20 +2,17 @@
 
 namespace App\Http\Requests\Web;
 
-use App\Traits\RecaptchaTrait;
 use App\Traits\CalculatorTrait;
+use App\Traits\RecaptchaTrait;
 use App\Traits\ResponseHandler;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Validator;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Validator;
 
 class CustomerRegistrationRequest extends FormRequest
 {
-    use RecaptchaTrait;
     use CalculatorTrait, ResponseHandler;
+    use RecaptchaTrait;
 
     protected $stopOnFirstFailure = true;
 
@@ -66,7 +63,7 @@ class CustomerRegistrationRequest extends FormRequest
                         translate('The_phone_number_may_not_be_greater_than_20_characters')
                     );
                 }
-            }
+            },
         ];
     }
 

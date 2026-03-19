@@ -5,6 +5,7 @@ namespace App\Services\Admin\Reports;
 class TransectionReportPdfService
 {
     private object|array $transactions;
+
     private array $totals;
 
     public function __construct($transactions)
@@ -38,7 +39,7 @@ class TransectionReportPdfService
     public function calculateTotals(): array
     {
         foreach ($this->transactions as $transaction) {
-            if (!$transaction->order) {
+            if (! $transaction->order) {
                 continue;
             }
             $this->calculateOrderedProductPrice($transaction);
@@ -55,6 +56,7 @@ class TransectionReportPdfService
             $this->calculateAdminNetIncome($transaction);
             $this->calculateSellerNetIncome($transaction);
         }
+
         return $this->totals;
     }
 
@@ -183,7 +185,7 @@ class TransectionReportPdfService
 
         if (isset($order->deliveryMan) && $order->deliveryMan->seller_id == 0) {
             $adminNetIncome += $transaction['delivery_charge'];
-        } elseif (!isset($order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
+        } elseif (! isset($order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
             $shippingCost = $order->is_shipping_free && $order->free_delivery_bearer == 'admin' ? 0 : $order->shipping_cost;
             $adminNetIncome += $shippingCost;
         }

@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class VendorWalletRepository implements VendorWalletRepositoryInterface
 {
     public function __construct(
-        private readonly SellerWallet  $vendorWallet,
+        private readonly SellerWallet $vendorWallet,
     ) {}
 
     public function add(array $data): string|object
@@ -27,7 +27,7 @@ class VendorWalletRepository implements VendorWalletRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->vendorWallet->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -43,18 +43,19 @@ class VendorWalletRepository implements VendorWalletRepositoryInterface
             })
             ->when($searchValue, function ($query) use ($searchValue) {
                 $query->where('seller_id', 'like', "%$searchValue%");
-            })->when(!empty($filters), function ($query) use ($filters) {
+            })->when(! empty($filters), function ($query) use ($filters) {
                 foreach ($filters as $filter) {
                     if (is_array($filter) && isset($filter['column'], $filter['operator'], $filter['value'])) {
                         $query->where($filter['column'], $filter['operator'], $filter['value']);
                     }
                 }
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -66,12 +67,14 @@ class VendorWalletRepository implements VendorWalletRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->vendorWallet->where($params)->update($data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->vendorWallet->where($params)->delete();
+
         return true;
     }
 }

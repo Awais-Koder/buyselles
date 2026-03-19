@@ -15,27 +15,23 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CustomRoleController extends BaseController
 {
     use PaginatorTrait;
 
     public function __construct(
-        private readonly AdminRepositoryInterface     $adminRepo,
+        private readonly AdminRepositoryInterface $adminRepo,
         private readonly AdminRoleRepositoryInterface $adminRoleRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $employeeRolePermission = GlobalConstant::EMPLOYEE_ROLE_MODULE_PERMISSION;
         $roles = $this->adminRoleRepo->getEmployeeRoleList(
@@ -44,6 +40,7 @@ class CustomRoleController extends BaseController
             filters: ['admin_role_id' => $request['role']],
             dataLimit: 'all'
         );
+
         return view('admin-views.custom-role.create', compact('roles', 'employeeRolePermission'));
     }
 
@@ -58,6 +55,7 @@ class CustomRoleController extends BaseController
         ];
         $this->adminRoleRepo->add(data: $data);
         ToastMagic::success(translate('role_added_successfully'));
+
         return back();
     }
 
@@ -65,6 +63,7 @@ class CustomRoleController extends BaseController
     {
         $employeeRolePermission = GlobalConstant::EMPLOYEE_ROLE_MODULE_PERMISSION;
         $role = $this->adminRoleRepo->getFirstWhere(params: ['id' => $id]);
+
         return view('admin-views.custom-role.edit', compact('role', 'employeeRolePermission'));
     }
 
@@ -76,12 +75,14 @@ class CustomRoleController extends BaseController
         ];
         $this->adminRoleRepo->update(id: $request['id'], data: $data);
         ToastMagic::success(translate('role_updated_successfully'));
+
         return back();
     }
 
     public function updateStatus(Request $request): JsonResponse
     {
         $this->adminRoleRepo->update(id: $request['id'], data: ['status' => $request->get('status', 0)]);
+
         return response()->json([
             'success' => 1,
             'message' => translate('status_updated_successfully'),
@@ -108,10 +109,10 @@ class CustomRoleController extends BaseController
     public function delete(Request $request): JsonResponse
     {
         $this->adminRoleRepo->delete(params: ['id' => $request['id']]);
+
         return response()->json([
             'success' => 1,
-            'message' => translate('role_deleted_successfully')
+            'message' => translate('role_deleted_successfully'),
         ], 200);
     }
-
 }

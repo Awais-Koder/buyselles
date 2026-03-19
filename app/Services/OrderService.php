@@ -8,9 +8,7 @@ class OrderService
 {
     use VatTaxManagement;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function getPOSOrderData(int|string $orderId, array $cart, float $amount, float $totalTaxAmount, float $paidAmount, string $paymentType, string $addedBy, int $userId): array
     {
@@ -36,7 +34,7 @@ class OrderService
             'paid_amount' => currencyConverter(amount: $paidAmount),
             'discount_amount' => $cart['coupon_discount'] ?? 0,
             'coupon_code' => $cart['coupon_code'] ?? null,
-            'discount_type' => (isset($cart['coupon_code']) && $cart['coupon_code']) ? 'coupon_discount' : NULL,
+            'discount_type' => (isset($cart['coupon_code']) && $cart['coupon_code']) ? 'coupon_discount' : null,
             'coupon_discount_bearer' => $cart['coupon_bearer'] ?? 'inhouse',
             'created_at' => now(),
             'updated_at' => now(),
@@ -54,7 +52,7 @@ class OrderService
                 }
             }
         }
+
         return $isOrderOnlyDigital;
     }
-
 }

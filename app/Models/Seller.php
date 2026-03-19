@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Seller extends Authenticatable
 {
-    use Notifiable, StorageTrait, DemoMaskingTrait;
+    use DemoMaskingTrait, Notifiable, StorageTrait;
 
     protected $fillable = [
         'f_name',
@@ -125,6 +125,7 @@ class Seller extends Authenticatable
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('seller', $value, $storage['value'] ?? 'public');
     }
 
@@ -154,5 +155,4 @@ class Seller extends Authenticatable
             cacheRemoveByType(type: 'sellers');
         });
     }
-
 }

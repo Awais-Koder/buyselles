@@ -10,6 +10,7 @@ class AttributeController extends Controller
     public function get_attributes()
     {
         $attributes = Attribute::all();
-        return response()->json($attributes,200);
+
+        return response()->json($attributes, 200);
     }
 }

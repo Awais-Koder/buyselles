@@ -21,9 +21,7 @@ class UserLoyaltyController extends Controller
 {
     use CustomerTrait;
 
-    public function __construct(private readonly LoyaltyPointTransactionRepositoryInterface $loyaltyPointTransactionRepo)
-    {
-    }
+    public function __construct(private readonly LoyaltyPointTransactionRepositoryInterface $loyaltyPointTransactionRepo) {}
 
     public function index(Request $request): View|RedirectResponse
     {
@@ -35,7 +33,7 @@ class UserLoyaltyController extends Controller
             $loyaltyPointExchangeRate = getWebConfig(name: 'loyalty_point_exchange_rate');
             $transactionTypes = $this->getSelectTransactionTypes(types: $request->get('types', []));
             $loyaltyPointList = $this->getLoyaltyPointTransactionList(request: $request, types: $transactionTypes);
-            $filterCount = count($transactionTypes) + (int)!empty($request['transaction_range']) + (int)!empty($request['filter_by']);
+            $filterCount = count($transactionTypes) + (int) ! empty($request['transaction_range']) + (int) ! empty($request['filter_by']);
 
             return view(VIEW_FILE_NAMES['user_loyalty'], [
                 'totalLoyaltyPoint' => $totalLoyaltyPoint,
@@ -51,6 +49,7 @@ class UserLoyaltyController extends Controller
             ]);
         } else {
             Toastr::warning(translate('access_denied'));
+
             return redirect()->route('home');
         }
     }
@@ -59,15 +58,17 @@ class UserLoyaltyController extends Controller
     {
         $startDate = '';
         $endDate = '';
-        if (isset($request['transaction_range']) && !empty($request['transaction_range'])) {
+        if (isset($request['transaction_range']) && ! empty($request['transaction_range'])) {
             $dates = explode(' - ', $request['transaction_range']);
-            if (count($dates) !== 2 || !checkDateFormatInMDY($dates[0]) || !checkDateFormatInMDY($dates[1])) {
+            if (count($dates) !== 2 || ! checkDateFormatInMDY($dates[0]) || ! checkDateFormatInMDY($dates[1])) {
                 Toastr::error(translate('Invalid_date_range_format'));
+
                 return back();
             }
-            $startDate = Carbon::createFromFormat('d/m/Y', $dates[0])->format('Y-m-d') . ' 00:00:00';
-            $endDate = Carbon::createFromFormat('d/m/Y', $dates[1])->format('Y-m-d') . ' 23:59:59';
+            $startDate = Carbon::createFromFormat('d/m/Y', $dates[0])->format('Y-m-d').' 00:00:00';
+            $endDate = Carbon::createFromFormat('d/m/Y', $dates[1])->format('Y-m-d').' 23:59:59';
         }
+
         return LoyaltyPointTransaction::where('user_id', auth('customer')->id())
             ->when($request->has('filter_by') && in_array($request['filter_by'], ['debit', 'credit']), function ($query) use ($request) {
                 $query->when($request['filter_by'] == 'debit', function ($query) {
@@ -76,10 +77,10 @@ class UserLoyaltyController extends Controller
                     $query->where('debit', '=', 0);
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('created_at', [$startDate, $endDate]);
             })
-            ->when(!empty($types) && !in_array('all', $types), function ($query) use ($types) {
+            ->when(! empty($types) && ! in_array('all', $types), function ($query) use ($types) {
                 return $query->whereIn('transaction_type', $types);
             })
             ->latest()
@@ -109,17 +110,20 @@ class UserLoyaltyController extends Controller
         $loyaltyPointMinimumPoint = getWebConfig(name: 'loyalty_point_minimum_point');
         if (getWebConfig(name: 'wallet_status') != 1 || getWebConfig(name: 'loyalty_point_status') != 1) {
             Toastr::warning(translate('transfer_loyalty_point_to_currency_is_not_possible_at_this_moment!'));
+
             return redirect()->route('home');
         }
 
         $user = auth('customer')->user();
-        if ( $request['point'] > $user['loyalty_point'] ) {
+        if ($request['point'] > $user['loyalty_point']) {
             Toastr::warning(translate('conversion_is_limited_to_current_points_only'));
+
             return back();
         }
 
-        if ( $request['point'] < (int)getWebConfig(name: 'loyalty_point_minimum_point') ) {
+        if ($request['point'] < (int) getWebConfig(name: 'loyalty_point_minimum_point')) {
             Toastr::warning(translate('Oops!_You_need_more_points_to_convert_to_your_wallet_balance'));
+
             return back();
         }
 
@@ -132,6 +136,7 @@ class UserLoyaltyController extends Controller
         }
 
         Toastr::success(translate('point_to_wallet_transfer_successfully'));
+
         return back();
     }
 
@@ -140,6 +145,7 @@ class UserLoyaltyController extends Controller
         $loyaltyPointExchangeRate = getWebConfig(name: 'loyalty_point_exchange_rate');
         $value = ((session('currency_exchange_rate') * 1) / $loyaltyPointExchangeRate) * $request['amount'];
         $amount = setCurrencySymbol(amount: $value, currencyCode: session('currency_code'), type: 'web');
+
         return response()->json($amount);
     }
 }

@@ -22,21 +22,18 @@ use Illuminate\Support\Facades\DB;
 
 class OrderRepository implements OrderRepositoryInterface
 {
-
     public function __construct(
-        private readonly Order                        $order,
+        private readonly Order $order,
         private readonly OrderExpectedDeliveryHistory $orderExpectedDeliveryHistory,
-        private readonly Product                      $product,
-        private readonly OrderDetail                  $orderDetail,
-        private readonly AdminWallet                  $adminWallet,
-        private readonly SellerWallet                 $sellerWallet,
-        private readonly Transaction                  $transaction,
-        private readonly OrderTransaction             $orderTransaction,
-        private readonly Shop                         $shop,
-        private readonly OrderEditHistory             $orderEditHistory,
-    )
-    {
-    }
+        private readonly Product $product,
+        private readonly OrderDetail $orderDetail,
+        private readonly AdminWallet $adminWallet,
+        private readonly SellerWallet $sellerWallet,
+        private readonly Transaction $transaction,
+        private readonly OrderTransaction $orderTransaction,
+        private readonly Shop $shop,
+        private readonly OrderEditHistory $orderEditHistory,
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -51,7 +48,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         return $this->order
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             })->get();
     }
@@ -104,28 +101,31 @@ class OrderRepository implements OrderRepositoryInterface
                         });
                     });
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "today", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'today', function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_year", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_year', function ($query) {
                 $current_start_year = date('Y-01-01');
                 $current_end_year = date('Y-12-31');
+
                 return $query->whereDate('created_at', '>=', $current_start_year)
                     ->whereDate('created_at', '<=', $current_end_year);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_month", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_month', function ($query) {
                 $current_month_start = date('Y-m-01');
                 $current_month_end = date('Y-m-t');
+
                 return $query->whereDate('created_at', '>=', $current_month_start)
                     ->whereDate('created_at', '<=', $current_month_end);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_week", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_week', function ($query) {
                 $start_week = Carbon::now()->subDays(7)->startOfWeek()->format('Y-m-d');
                 $end_week = Carbon::now()->startOfWeek()->format('Y-m-d');
+
                 return $query->whereDate('created_at', '>=', $start_week)
                     ->whereDate('created_at', '<=', $end_week);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "custom_date" && isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'custom_date' && isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
                 return $query->whereDate('created_at', '>=', $filters['from'])
                     ->whereDate('created_at', '<=', $filters['to']);
             })
@@ -150,11 +150,12 @@ class OrderRepository implements OrderRepositoryInterface
             ->when(isset($filters['whereIn_payment_status']) && $filters['whereIn_payment_status'] != 'all', function ($query) use ($filters) {
                 $query->whereIn('payment_status', $filters['whereIn_payment_status']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -170,7 +171,7 @@ class OrderRepository implements OrderRepositoryInterface
             ->when(isset($filters['order_type']) && $filters['order_type'] != 'all', function ($query) use ($filters) {
                 return $query->where('order_type', $filters['order_type']);
             })
-            ->when(isset($filters['order_status']) && $filters['order_status'] != 'all' && !is_array($filters['order_status']), function ($query) use ($filters) {
+            ->when(isset($filters['order_status']) && $filters['order_status'] != 'all' && ! is_array($filters['order_status']), function ($query) use ($filters) {
                 return $query->where('order_status', $filters['order_status']);
             })
             ->when(isset($filters['customer_id']) && $filters['customer_id'] != 'all' && $filters['customer_id'] != '0', function ($query) use ($filters) {
@@ -206,20 +207,20 @@ class OrderRepository implements OrderRepositoryInterface
                         });
                     });
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "today", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'today', function ($query) {
                 return $query->whereDate('created_at', Carbon::today());
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_week", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_week', function ($query) {
                 $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_month", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_month', function ($query) {
                 $query->whereMonth('created_at', Carbon::now()->month)
                     ->whereYear('created_at', Carbon::now()->year);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "this_year", function ($query) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'this_year', function ($query) {
                 $query->whereYear('created_at', Carbon::now()->year);
             })
-            ->when(isset($filters['date_type']) && $filters['date_type'] == "custom_date" && isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
+            ->when(isset($filters['date_type']) && $filters['date_type'] == 'custom_date' && isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
                 return $query->whereDate('created_at', '>=', $filters['from'])
                     ->whereDate('created_at', '<=', $filters['to']);
             })
@@ -241,13 +242,13 @@ class OrderRepository implements OrderRepositoryInterface
             ->when(isset($filters['has_order_edit_settlement']), function ($query) use ($filters) {
                 $settlements = $filters['has_order_edit_settlement'];
                 $query->where('edited_status', 1)
-                    ->when(count($settlements) == 1 && in_array('due', $settlements), function ($query) use ($filters) {
+                    ->when(count($settlements) == 1 && in_array('due', $settlements), function ($query) {
                         $query->where('edit_due_amount', '>', 0);
                     })
-                    ->when(count($settlements) == 1 && in_array('return', $settlements), function ($query) use ($filters) {
+                    ->when(count($settlements) == 1 && in_array('return', $settlements), function ($query) {
                         $query->where('edit_return_amount', '>', 0);
                     })
-                    ->when(count($settlements) > 1 && in_array('due', $settlements) && in_array('return', $settlements), function ($query) use ($filters) {
+                    ->when(count($settlements) > 1 && in_array('due', $settlements) && in_array('return', $settlements), function ($query) {
                         $query->where('edit_due_amount', '>', 0)->orWhere('edit_return_amount', '>', 0);
                     });
             })
@@ -257,24 +258,25 @@ class OrderRepository implements OrderRepositoryInterface
             ->when(isset($filters['whereIn_payment_status']) && $filters['whereIn_payment_status'] != 'all', function ($query) use ($filters) {
                 $query->whereIn('payment_status', $filters['whereIn_payment_status']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             })
-            ->when(!empty($whereIn), function ($query) use ($whereIn) {
+            ->when(! empty($whereIn), function ($query) use ($whereIn) {
                 foreach ($whereIn as $key => $filterIndex) {
-                    if (is_array($filterIndex) && !empty($filterIndex)) {
+                    if (is_array($filterIndex) && ! empty($filterIndex)) {
                         $query->whereIn($key, $filterIndex);
                     }
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -340,27 +342,29 @@ class OrderRepository implements OrderRepositoryInterface
     public function delete(array $params): bool
     {
         $this->order->where($params)->delete();
+
         return true;
     }
 
     public function getListWhereNotIn(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], array $nullFields = [], array $whereNotIn = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->order->where($filters)
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 $query->whereHas('order', function ($query) use ($searchValue) {
                     $query->where('id', 'like', "%{$searchValue}%");
                 });
             })
-            ->when(!empty($whereNotIn), function ($query) use ($whereNotIn) {
+            ->when(! empty($whereNotIn), function ($query) use ($whereNotIn) {
                 foreach ($whereNotIn as $key => $whereNotInIndex) {
                     $query->whereNotIn($key, $whereNotInIndex);
                 }
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -383,7 +387,7 @@ class OrderRepository implements OrderRepositoryInterface
                     'user_id' => $userId,
                     'user_type' => $userType,
                     'expected_delivery_date' => $fieldValues,
-                    'cause' => $cause
+                    'cause' => $cause,
                 ]);
             }
 
@@ -392,8 +396,10 @@ class OrderRepository implements OrderRepositoryInterface
             DB::commit();
         } catch (Exception $ex) {
             DB::rollback();
+
             return false;
         }
+
         return true;
     }
 
@@ -421,7 +427,7 @@ class OrderRepository implements OrderRepositoryInterface
                         ]);
                         $this->orderDetail->where(['id' => $detail['id']])->update([
                             'is_stock_decreased' => 0,
-                            'delivery_status' => $status
+                            'delivery_status' => $status,
                         ]);
                     }
                 }
@@ -446,7 +452,7 @@ class OrderRepository implements OrderRepositoryInterface
                     }
                     $this->orderDetail->where(['id' => $detail['id']])->update([
                         'is_stock_decreased' => 1,
-                        'delivery_status' => $status
+                        'delivery_status' => $status,
                     ]);
                 }
             }
@@ -464,7 +470,7 @@ class OrderRepository implements OrderRepositoryInterface
         $shippingModel = $order->shipping_responsibility;
 
         $adminWallet = $this->adminWallet->where('admin_id', 1)->first();
-        if (!$adminWallet) {
+        if (! $adminWallet) {
             $adminWalletData = [
                 'admin_id' => 1,
                 'withdrawn' => 0,
@@ -480,7 +486,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         $sellerWallet = $this->sellerWallet->where('seller_id', $order['seller_id'])->first();
-        if (!$sellerWallet) {
+        if (! $sellerWallet) {
             $sellerWalletData = [
                 'seller_id' => $order['seller_id'],
                 'withdrawn' => 0,
@@ -528,7 +534,6 @@ class OrderRepository implements OrderRepositoryInterface
             $this->transaction->create($transaction);
         }
         // coupon transaction end
-
 
         // Referral transaction Start
         if ($order['refer_and_earn_discount'] > 0) {
@@ -593,7 +598,6 @@ class OrderRepository implements OrderRepositoryInterface
                 $paidTo = 'seller';
             }
 
-
             $sellerWallet->save();
             $adminWallet->save();
 
@@ -655,7 +659,7 @@ class OrderRepository implements OrderRepositoryInterface
 
             $wallet = $this->adminWallet->where('admin_id', 1)->first();
             $wallet->commission_earned += $commission;
-            if ($shippingModel == 'inhouse_shipping' && !$order['is_shipping_free']) {
+            if ($shippingModel == 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
             $wallet->save();
@@ -663,7 +667,7 @@ class OrderRepository implements OrderRepositoryInterface
             if ($order['seller_is'] == 'admin') {
                 $wallet = $this->adminWallet->where('admin_id', 1)->first();
                 $wallet->inhouse_earning += $orderAmount;
-                if ($shippingModel == 'sellerwise_shipping' && !$order['is_shipping_free']) {
+                if ($shippingModel == 'sellerwise_shipping' && ! $order['is_shipping_free']) {
                     $wallet->delivery_charge_earned += $order['shipping_cost'];
                 }
                 $wallet->total_tax_collected += $orderSummary['total_tax'];
@@ -672,7 +676,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $wallet->commission_given += $commission;
                 $wallet->total_tax_collected += $orderSummary['total_tax'];
                 if ($shippingModel == 'sellerwise_shipping') {
-                    if (!$order['is_shipping_free']) {
+                    if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
                     }
 
@@ -710,7 +714,7 @@ class OrderRepository implements OrderRepositoryInterface
             }
             $wallet->pending_amount -= $currentOrderAmount;
 
-            if ($shippingModel == 'inhouse_shipping' && !$order['is_shipping_free']) {
+            if ($shippingModel == 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
             $wallet->save();
@@ -718,14 +722,14 @@ class OrderRepository implements OrderRepositoryInterface
             if ($order['seller_is'] == 'admin') {
                 $wallet = $this->adminWallet->where('admin_id', 1)->first();
                 $wallet->inhouse_earning += $orderAmount;
-                if ($shippingModel == 'sellerwise_shipping' && !$order['is_shipping_free']) {
+                if ($shippingModel == 'sellerwise_shipping' && ! $order['is_shipping_free']) {
                     $wallet->delivery_charge_earned += $order['shipping_cost'];
                 }
             } else {
                 $wallet = $this->sellerWallet->where('seller_id', $order['seller_id'])->first();
                 $wallet->commission_given += $commission;
                 if ($shippingModel == 'sellerwise_shipping') {
-                    if (!$order['is_shipping_free']) {
+                    if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
                     }
 
@@ -773,7 +777,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $query->where('id', '!=', 0)->whereNot('email', 'walking@customer.com');
             })
             ->groupBy('customer_id')
-            ->orderBy("count", 'desc');
+            ->orderBy('count', 'desc');
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
@@ -788,7 +792,7 @@ class OrderRepository implements OrderRepositoryInterface
             ->where('seller_is', 'seller')
             ->select('seller_id', DB::raw('COUNT(id) as count'))
             ->groupBy('seller_id')
-            ->orderBy("count", 'desc');
+            ->orderBy('count', 'desc');
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }

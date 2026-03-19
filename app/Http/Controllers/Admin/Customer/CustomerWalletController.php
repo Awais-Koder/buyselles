@@ -29,21 +29,17 @@ class CustomerWalletController extends BaseController
     use PaginatorTrait;
 
     public function __construct(
-        private readonly CustomerRepositoryInterface               $customerRepo,
-        private readonly BusinessSettingRepositoryInterface        $businessSettingRepo,
-        private readonly WalletTransactionRepositoryInterface      $walletTransactionRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+        private readonly WalletTransactionRepositoryInterface $walletTransactionRepo,
         private readonly AddFundBonusCategoriesRepositoryInterface $addFundBonusCategoriesRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $customerStatus = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'wallet_status'])['value'];
         $filters = [
@@ -55,10 +51,11 @@ class CustomerWalletController extends BaseController
 
         $data = $this->walletTransactionRepo->getListWhereSelect(filters: $filters, dataLimit: 'all');
         $transactions = $this->walletTransactionRepo->getListWhere(filters: $filters, dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT));
-        $customer = "all";
-        if (isset($request['customer_id']) && $request['customer_id'] != 'all' && !is_null($request['customer_id']) && $request->has('customer_id')) {
+        $customer = 'all';
+        if (isset($request['customer_id']) && $request['customer_id'] != 'all' && ! is_null($request['customer_id']) && $request->has('customer_id')) {
             $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]);
         }
+
         return view('admin-views.customer.wallet.report', compact('data', 'transactions', 'customerStatus', 'customer'));
     }
 
@@ -83,11 +80,12 @@ class CustomerWalletController extends BaseController
                 'title' => translate('add_fund_to_wallet'),
             ];
             event(new AddFundToWalletEvent(email: $customer['email'], data: $data));
+
             return response()->json(['message' => translate('transaction_successful')], 200);
         }
 
         return response()->json(['errors' => [
-            'message' => translate('failed_to_create_transaction')
+            'message' => translate('failed_to_create_transaction'),
         ]], 200);
     }
 
@@ -110,8 +108,9 @@ class CustomerWalletController extends BaseController
             'transaction_type' => $request['transaction_type'],
             'to' => $request['to'],
             'from' => $request['from'],
-            'customer' => $request['customer_id'] ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : "all_customers",
+            'customer' => $request['customer_id'] ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : 'all_customers',
         ];
+
         return Excel::download(new CustomerTransactionsExport($data), 'Wallet-Transactions-Report.xlsx');
     }
 
@@ -122,6 +121,7 @@ class CustomerWalletController extends BaseController
             searchValue: $request['search'],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
+
         return view('admin-views.customer.wallet.wallet-bonus-setup', compact('data'));
     }
 
@@ -139,12 +139,14 @@ class CustomerWalletController extends BaseController
             'created_at' => now(),
         ];
         $this->addFundBonusCategoriesRepo->add(data: $data);
+
         return response()->json(['message' => translate('wallet_Bonus_added_Successfully')]);
     }
 
     public function updateStatus(AddFundBonusCategoriesUpdateRequest $request): JsonResponse|RedirectResponse
     {
         $this->addFundBonusCategoriesRepo->update(id: $request['id'], data: ['is_active' => $request->get('status', 0)]);
+
         return response()->json(['message' => translate('update_successfully')]);
     }
 
@@ -158,12 +160,14 @@ class CustomerWalletController extends BaseController
             ]);
         }
         ToastMagic::success(translate('bonus_removed_Successfully'));
+
         return back();
     }
 
     public function getUpdateView(Request $request): View
     {
         $data = $this->addFundBonusCategoriesRepo->getFirstWhere(params: ['id' => $request['id']]);
+
         return view('admin-views.customer.wallet.wallet-bonus-edit', compact('data'));
     }
 
@@ -180,7 +184,7 @@ class CustomerWalletController extends BaseController
             'end_date_time' => $request['end_date_time'],
         ];
         $this->addFundBonusCategoriesRepo->update(id: $request['id'], data: $data);
+
         return response()->json(['message' => translate('wallet_Bonus_updated_Successfully')]);
     }
-
 }

@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace App\Packages\AdvanceSearch;
 
-use Illuminate\Http\JsonResponse;
-use stdClass;
 use App\Models\Translation;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Cache;
-use PHPUnit\Framework\Attributes\After;
-use App\Packages\AdvanceSearch\Traits\ModelsWithRoutesTrait;
 use App\Packages\AdvanceSearch\Traits\AdminMenuWithRoutesTrait;
+use App\Packages\AdvanceSearch\Traits\ModelsWithRoutesTrait;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use stdClass;
 
 class AdvanceSearch
 {
-    use ModelsWithRoutesTrait;
     use AdminMenuWithRoutesTrait;
+    use ModelsWithRoutesTrait;
 
     protected string $keyword = '';
+
     protected string $type = '';
 
     public function __construct(string $type = '', ?string $keyword = null)
@@ -28,7 +27,6 @@ class AdvanceSearch
         $this->type = $type;
         $this->keyword = $keyword ?? '';
     }
-
 
     public function searchAllList(): array
     {
@@ -42,13 +40,14 @@ class AdvanceSearch
         $themeWiseSkipRoutes = $this->getThemeWiseRoutesList();
 
         $scored = collect($result)->filter(function ($item) use ($themeWiseSkipRoutes) {
-            return isset($item['priority']) && (!in_array($item['uri'], $themeWiseSkipRoutes));
-        })->map(function ($item) use ($searchTerm, $themeWiseSkipRoutes) {
+            return isset($item['priority']) && (! in_array($item['uri'], $themeWiseSkipRoutes));
+        })->map(function ($item) use ($searchTerm) {
             $score = 0;
             if (isset($item['page_title']) && str_contains(strtolower($item['page_title']), $searchTerm)) {
                 $score += 1;
             }
             $item['match_score'] = $score;
+
             return $item;
         });
 
@@ -56,6 +55,7 @@ class AdvanceSearch
             if ($a['match_score'] === $b['match_score']) {
                 return $a['priority'] <=> $b['priority'];
             }
+
             return $b['match_score'] <=> $a['match_score'];
         })->values();
 
@@ -68,16 +68,16 @@ class AdvanceSearch
     {
         $defaultThemeRoutes = [
             'admin/pages-and-media/company-reliability',
-            'admin/brand/add-new'
+            'admin/brand/add-new',
         ];
 
         $asterThemeRoutes = [
-            'admin/brand/add-new'
+            'admin/brand/add-new',
         ];
 
         $lifestyleThemeRoutes = [
             'admin/pages-and-media/features-section',
-          'admin/brand/add-new'
+            'admin/brand/add-new',
 
         ];
 
@@ -100,31 +100,32 @@ class AdvanceSearch
     {
         $keyword = strtolower($this->keyword);
 
-        if ($this->type == "admin") {
+        if ($this->type == 'admin') {
             $result = $this->getAdminMenuWithRoutes();
 
             $translatedMenus = [];
             if (getDefaultLanguage() != 'en') {
-                $messageArray = include(base_path('resources/lang/'.getDefaultLanguage().'/messages.php'));
-                $newMessageArray = include(base_path('resources/lang/'.getDefaultLanguage().'/new-messages.php'));
+                $messageArray = include base_path('resources/lang/'.getDefaultLanguage().'/messages.php');
+                $newMessageArray = include base_path('resources/lang/'.getDefaultLanguage().'/new-messages.php');
                 $allMessages = array_merge($messageArray, $newMessageArray);
 
                 $allMessageKeys = [];
                 foreach ($allMessages as $key => $value) {
-                    if (str_contains(strtolower((string)$value), $keyword)) {
+                    if (str_contains(strtolower((string) $value), $keyword)) {
                         $allMessageKeys[] = strtolower($key);
                     }
                 }
 
-                $translatedMenus = collect($result)->filter(function ($item) use ($keyword, $allMessageKeys) {
-                    $value = strtolower((string)($item['page_title_value'] ?? ''));
+                $translatedMenus = collect($result)->filter(function ($item) use ($allMessageKeys) {
+                    $value = strtolower((string) ($item['page_title_value'] ?? ''));
+
                     return in_array($value, $allMessageKeys);
                 })->unique('uri')->values()->toArray();
             }
 
             $getRawValues = collect($result)->filter(function ($item) use ($keyword) {
-                $value = strtolower((string)($item['page_title_value'] ?? ''));
-                $keywords = strtolower((string)($item['keywords'] ?? ''));
+                $value = strtolower((string) ($item['page_title_value'] ?? ''));
+                $keywords = strtolower((string) ($item['keywords'] ?? ''));
                 if ($value === $keyword || str_contains($value, $keyword)) {
                     return true;
                 }
@@ -134,12 +135,14 @@ class AdvanceSearch
                         return true;
                     }
                 }
+
                 return false;
             })->unique('uri')->values()->toArray();
 
             return collect(array_merge($translatedMenus, $getRawValues))
                 ->map(function ($item) {
                     $item['page_title_value'] = translate($item['page_title']);
+
                     return $item;
                 })
                 ->unique('uri')
@@ -150,23 +153,22 @@ class AdvanceSearch
         return [];
     }
 
-
     public function searchPageList(): JsonResponse|array
     {
         // json search
         $keyword = strtolower($this->keyword);
-        $routesPath = public_path('json/admin/lang/' . getDefaultLanguage() . '.json');
-        if (!File::exists($routesPath)) {
+        $routesPath = public_path('json/admin/lang/'.getDefaultLanguage().'.json');
+        if (! File::exists($routesPath)) {
             $eng = public_path('json/admin/lang/en.json');
-            $filename = public_path('json/admin/lang/' . getDefaultLanguage() . '.json');
-            if (!file_exists(dirname($filename))) {
+            $filename = public_path('json/admin/lang/'.getDefaultLanguage().'.json');
+            if (! file_exists(dirname($filename))) {
                 File::makeDirectory(public_path('json/admin/lang'), 0777, true, true);
             }
             if (file_exists($eng)) {
                 $content = file_get_contents($eng);
                 file_put_contents($filename, $content);
             } else {
-                file_put_contents($filename, json_encode(new stdClass(), JSON_PRETTY_PRINT));
+                file_put_contents($filename, json_encode(new stdClass, JSON_PRETTY_PRINT));
             }
         }
 
@@ -189,7 +191,7 @@ class AdvanceSearch
             $title = $this->formatTitle($route['page_title_value']);
             if ($title == $keyword) {
                 $matchedRoutes[] = $route['key'];
-            } elseif (preg_match('/' . preg_quote($keyword, '/') . '/i', $title)) {
+            } elseif (preg_match('/'.preg_quote($keyword, '/').'/i', $title)) {
                 $matchedRoutes[] = $route['key'];
             } else {
                 foreach ($route['keywords'] as $value) {
@@ -208,28 +210,30 @@ class AdvanceSearch
         foreach ($adminData as $route) {
             if (in_array($route['key'], $matchedRoutes)) {
                 $finalMatchedRoutes[] = [
-                    "page_title" => translate($route['page_title']) ?? translate('Unknown'),
-                    "page_title_value" => translate($route['page_title']) ?? translate('Unknown'),
-                    "key" => $route['key'] ?? base64_encode("page_search_" . ($route['uri'] ?? '')),
-                    "uri" => $route['uri'] ?? '',
-                    "uri_count" => isset($route['uri']) ? count(explode('/', $route['uri'])) : 0,
-                    "method" => $route['method'] ?? "GET",
-                    "keywords" => $keyword,
-                    "productNames" => [],
-                    "items_count" => 1,
-                    "priority" => 2,
-                    "type" => 'page',
+                    'page_title' => translate($route['page_title']) ?? translate('Unknown'),
+                    'page_title_value' => translate($route['page_title']) ?? translate('Unknown'),
+                    'key' => $route['key'] ?? base64_encode('page_search_'.($route['uri'] ?? '')),
+                    'uri' => $route['uri'] ?? '',
+                    'uri_count' => isset($route['uri']) ? count(explode('/', $route['uri'])) : 0,
+                    'method' => $route['method'] ?? 'GET',
+                    'keywords' => $keyword,
+                    'productNames' => [],
+                    'items_count' => 1,
+                    'priority' => 2,
+                    'type' => 'page',
                 ];
             }
         }
+
         return $finalMatchedRoutes;
     }
-    function formatTitle($input)
+
+    public function formatTitle($input)
     {
         $withSpaces = str_replace('_', ' ', $input);
+
         return strtolower(ucwords($withSpaces));
     }
-
 
     public function getImageType($model)
     {
@@ -251,56 +255,56 @@ class AdvanceSearch
 
         $models = $this->getModels();
 
-        $allTranslation = Cache::remember("cache_translations_table_for_advance_search", $this->getCacheTimeoutByDays(days: 2), function () {
+        $allTranslation = Cache::remember('cache_translations_table_for_advance_search', $this->getCacheTimeoutByDays(days: 2), function () {
             return Translation::all();
         })->where('locale', getDefaultLanguage());
 
-        if (!empty($this->keyword)) {
+        if (! empty($this->keyword)) {
             $keyword = strtolower($this->keyword);
 
-            if (!empty($models)) {
+            if (! empty($models)) {
                 foreach ($models as $key => $table) {
-                    if (!empty($table['access_type']) && in_array($this->type, $table['access_type'])) {
+                    if (! empty($table['access_type']) && in_array($this->type, $table['access_type'])) {
 
-                        $cache_key = $this->getModelPrefix() . $table['model'];
+                        $cache_key = $this->getModelPrefix().$table['model'];
 
                         $allItems = Cache::remember($cache_key, $this->getCacheTimeoutByDays(days: 2), function () use ($table) {
                             $query = $table['model']::query();
                             $query->select($table['column']);
-                            if (!empty($table['relations'])) {
+                            if (! empty($table['relations'])) {
                                 $query->with(array_keys($table['relations']));
                             }
 
                             return $query->get();
                         });
 
-                        $filteredItems = $allItems->filter(function ($item) use ($keyword, $table, $allTranslation) {
+                        $filteredItems = $allItems->filter(function ($item) use ($keyword, $table) {
                             foreach ($table['column'] as $column) {
-                                $value = strtolower((string)($item->{$column} ?? ''));
-                                if (preg_match('/(?<![a-zA-Z0-9])' . preg_quote($keyword, '/') . '(?![a-zA-Z0-9])/i', $value)) {
+                                $value = strtolower((string) ($item->{$column} ?? ''));
+                                if (preg_match('/(?<![a-zA-Z0-9])'.preg_quote($keyword, '/').'(?![a-zA-Z0-9])/i', $value)) {
                                     return true;
                                 }
                             }
-                            if (!empty($table['relations'])) {
+                            if (! empty($table['relations'])) {
                                 foreach ($table['relations'] as $relationName => $relationData) {
                                     $relatedItems = $item->{$relationName} ?? null;
 
                                     if ($relatedItems) {
-                                        //hasMany
+                                        // hasMany
                                         if ($relatedItems instanceof \Illuminate\Support\Collection) {
                                             foreach ($relatedItems as $relatedItem) {
                                                 foreach ($relationData['columns'] as $relColumn) {
-                                                    $relValue = strtolower((string)($relatedItem->{$relColumn} ?? ''));
-                                                    if (preg_match('/(?<![a-zA-Z0-9])' . preg_quote($keyword, '/') . '(?![a-zA-Z0-9])/i', $relValue)) {
+                                                    $relValue = strtolower((string) ($relatedItem->{$relColumn} ?? ''));
+                                                    if (preg_match('/(?<![a-zA-Z0-9])'.preg_quote($keyword, '/').'(?![a-zA-Z0-9])/i', $relValue)) {
                                                         return true;
                                                     }
                                                 }
                                             }
                                         } else {
-                                            //hasOne/belongsTo
+                                            // hasOne/belongsTo
                                             foreach ($relationData['columns'] as $relColumn) {
-                                                $relValue = strtolower((string)($relatedItems->{$relColumn} ?? ''));
-                                                if (preg_match('/(?<![a-zA-Z0-9])' . preg_quote($keyword, '/') . '(?![a-zA-Z0-9])/i', $relValue)) {
+                                                $relValue = strtolower((string) ($relatedItems->{$relColumn} ?? ''));
+                                                if (preg_match('/(?<![a-zA-Z0-9])'.preg_quote($keyword, '/').'(?![a-zA-Z0-9])/i', $relValue)) {
                                                     return true;
                                                 }
                                             }
@@ -310,7 +314,7 @@ class AdvanceSearch
                             }
 
                             // Translation logic for product names
-                            if ($table['type'] == "brands" || $table['type'] == "categories" || $table['type'] == "products") {
+                            if ($table['type'] == 'brands' || $table['type'] == 'categories' || $table['type'] == 'products') {
                                 // $matches = collect($allTranslation)->first(function ($translation) use ($item, $keyword, $table) {
                                 //     return $translation['translationable_type'] === $table['translationable_type']
                                 //         && $translation['key'] === 'name'
@@ -334,8 +338,6 @@ class AdvanceSearch
                             return false;
                         })->values();
 
-
-
                         //  search result output
                         if ($filteredItems->count() > 0) {
                             foreach ($filteredItems as $item) {
@@ -344,7 +346,7 @@ class AdvanceSearch
                                     'admin/orders/details/{id}',
                                     'admin/products/update/{id}',
                                     'admin/vendors/view/{id}',
-                                    'refund-section/refund/details/{id}'
+                                    'refund-section/refund/details/{id}',
                                 ];
 
                                 foreach ($table['routes'] as $route) {
@@ -352,23 +354,22 @@ class AdvanceSearch
                                     if (in_array($route, $strictMatchRoutes)) {
                                         $isExactMatch = false;
                                         foreach ($table['column'] as $column) {
-                                            $value = strtolower((string)($item->{$column} ?? ''));
+                                            $value = strtolower((string) ($item->{$column} ?? ''));
                                             if ($value === strtolower($keyword)) {
                                                 $isExactMatch = true;
                                                 break;
                                             }
                                         }
-                                        if (!$isExactMatch) {
+                                        if (! $isExactMatch) {
                                             continue;
                                         }
                                     }
 
                                     if (strpos($route, '{id}') !== false && isset($item->id)) {
-                                        $finalRoute = str_replace('{id}', (string)$item->id, $route);
+                                        $finalRoute = str_replace('{id}', (string) $item->id, $route);
                                     }
 
                                     $thumbnail = getStorageImages(path: '', type: 'backend-basic');
-
 
                                     if (isset($item->thumbnail_full_url)) {
                                         $thumbnail = getStorageImages(path: $item->thumbnail_full_url, type: $this->getImageType($table['model']));
@@ -377,22 +378,21 @@ class AdvanceSearch
                                     }
 
                                     $result[] = [
-                                        "page_title" => $item->name ?? ucfirst($this->getRouteName($route)),
-                                        "page_title_value" => $item->name ?? ucfirst($this->getRouteName($route)),
-                                        "key" => base64_encode("dbsearch" . $route . '' . $item->id),
-                                        "uri" => $finalRoute,
-                                        "uri_count" => count(explode('/', $route)),
-                                        "method" => "GET",
-                                        "keywords" => $keyword,
-                                        "type" => $key,
-                                        "relations" => [],
-                                        "image" => $thumbnail,
-                                        "priority" => 3
+                                        'page_title' => $item->name ?? ucfirst($this->getRouteName($route)),
+                                        'page_title_value' => $item->name ?? ucfirst($this->getRouteName($route)),
+                                        'key' => base64_encode('dbsearch'.$route.''.$item->id),
+                                        'uri' => $finalRoute,
+                                        'uri_count' => count(explode('/', $route)),
+                                        'method' => 'GET',
+                                        'keywords' => $keyword,
+                                        'type' => $key,
+                                        'relations' => [],
+                                        'image' => $thumbnail,
+                                        'priority' => 3,
                                     ];
 
-
                                     //  related data in result
-                                    if (!empty($table['relations'])) {
+                                    if (! empty($table['relations'])) {
                                         foreach ($table['relations'] as $relationName => $relationData) {
                                             $relatedData = $item->{$relationName} ?? null;
 
@@ -408,21 +408,21 @@ class AdvanceSearch
                                                 foreach ($relatedData as $relatedItem) {
                                                     foreach ($relationRoutes as $relRoute => $label) {
                                                         if (strpos($relRoute, '{id}') !== false && isset($relatedItem->id)) {
-                                                            $finalRelRoute = str_replace('{id}', (string)$relatedItem->id, $relRoute);
+                                                            $finalRelRoute = str_replace('{id}', (string) $relatedItem->id, $relRoute);
                                                         } else {
                                                             $finalRelRoute = $relRoute;
                                                         }
 
                                                         $result[] = [
-                                                            "page_title" => ucfirst($label),
-                                                            "page_title_value" => ucfirst($label),
-                                                            "uri" => $finalRelRoute,
-                                                            "key" => base64_encode("dbsearch" . $relRoute . '' . $relatedItem->id),
-                                                            "uri_count" => count(explode('/', $finalRelRoute)),
-                                                            "method" => "GET",
-                                                            "keywords" => $keyword,
-                                                            "type" => $key,
-                                                            "relations" => [
+                                                            'page_title' => ucfirst($label),
+                                                            'page_title_value' => ucfirst($label),
+                                                            'uri' => $finalRelRoute,
+                                                            'key' => base64_encode('dbsearch'.$relRoute.''.$relatedItem->id),
+                                                            'uri_count' => count(explode('/', $finalRelRoute)),
+                                                            'method' => 'GET',
+                                                            'keywords' => $keyword,
+                                                            'type' => $key,
+                                                            'relations' => [
                                                                 $relationName => collect($relatedItem)->only($relationData['columns']),
                                                             ],
                                                         ];
@@ -443,7 +443,6 @@ class AdvanceSearch
 
         return $result;
     }
-
 
     private function getRouteName($actualRouteName)
     {
@@ -481,6 +480,7 @@ class AdvanceSearch
         } else {
             $routeName = ucwords(str_replace(['.', '_', '-'], ' ', Str::afterLast($actualRouteName, '.')));
         }
+
         return $routeName;
     }
 }

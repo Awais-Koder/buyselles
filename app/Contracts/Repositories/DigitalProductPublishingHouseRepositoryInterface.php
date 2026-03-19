@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface DigitalProductPublishingHouseRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface DigitalProductPublishingHouseRepositoryInterface extends RepositoryInterface {}

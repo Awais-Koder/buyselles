@@ -12,9 +12,8 @@ class ShopFollowerRepository implements ShopFollowerRepositoryInterface
 {
     public function __construct(
         private readonly ShopFollower $shopFollower,
-    )
-    {
-    }
+    ) {}
+
     public function add(array $data): string|object
     {
         return $this->shopFollower->newInstance()->create($data);
@@ -28,7 +27,7 @@ class ShopFollowerRepository implements ShopFollowerRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->shopFollower->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -44,21 +43,23 @@ class ShopFollowerRepository implements ShopFollowerRepositoryInterface
             ->when(isset($filters['shop_id']), function ($query) use ($filters) {
                 return $query->where('shop_id', $filters['shop_id']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
-        return $this->shopFollower->where('id',$id)->update($data);
+        return $this->shopFollower->where('id', $id)->update($data);
     }
 
     public function delete(array $params): bool
     {
         $this->shopFollower->where($params)->delete();
+
         return true;
     }
 }

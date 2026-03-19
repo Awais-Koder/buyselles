@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $added_by
  * @property string $coupon_type
  * @property string $coupon_bearer
- * @property integer $seller_id
- * @property integer $customer_id
+ * @property int $seller_id
+ * @property int $customer_id
  * @property string $title
  * @property string $code
  * @property datetime $start_date
@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $max_discount
  * @property float $discount
  * @property string $discount_type
- * @property integer $limit
+ * @property int $limit
  */
 class Coupon extends Model
 {
@@ -67,6 +67,7 @@ class Coupon extends Model
     {
         $shippingMethod = getWebConfig(name: 'shipping_method');
         $businessMode = getWebConfig(name: 'business_mode');
+
         return $query->when($businessMode == 'single', function ($query) {
             $query->where(['added_by' => 'admin']);
         })->where(['status' => 1]);

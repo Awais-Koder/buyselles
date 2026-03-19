@@ -24,6 +24,7 @@ class GeneralController extends Controller
             'ip_address' => $request->ip(),
             'created_at' => now(),
         ]);
+
         return response()->json(['guest_id' => $guestId?->id], 200);
     }
 
@@ -52,7 +53,7 @@ class GeneralController extends Controller
             'email' => $request['email'],
             'mobile_number' => $request['mobile_number'],
             'subject' => $request['subject'],
-            'message' => $request['message']
+            'message' => $request['message'],
         ]);
 
         return response()->json(['message' => 'your_message_send_successfully'], 200);

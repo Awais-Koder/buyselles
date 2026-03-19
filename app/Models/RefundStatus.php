@@ -14,8 +14,9 @@ class RefundStatus extends Model
         'change_by',
         'change_by_id',
         'status',
-        'message'
+        'message',
     ];
+
     protected $casts = [
         'refund_request_id' => 'integer',
         'change_by' => 'string',

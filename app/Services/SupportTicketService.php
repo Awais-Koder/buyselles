@@ -10,13 +10,13 @@ class SupportTicketService
 
     public function getAddData(object $request): array
     {
-        $images = [] ;
+        $images = [];
         if ($request->file('media')) {
             foreach ($request->media as $imageFile) {
-                $image_name = $this->upload(dir:'support-ticket/', format: 'webp', image: $imageFile);
+                $image_name = $this->upload(dir: 'support-ticket/', format: 'webp', image: $imageFile);
                 $images[] = [
                     'file_name' => $image_name,
-                    'storage'=> getWebConfig(name: 'storage_connection_type') ?? 'public',
+                    'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
                 ];
             }
         }
@@ -27,8 +27,7 @@ class SupportTicketService
             'support_ticket_id' => $request['id'],
             'attachment' => $images,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ];
     }
-
 }

@@ -11,11 +11,6 @@ class ModulePermissionMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @param $module
-     * @return mixed
      */
     public function handle(Request $request, Closure $next, $module): mixed
     {
@@ -23,10 +18,11 @@ class ModulePermissionMiddleware
             return $next($request);
         }
 
-        ToastMagic::error(translate('access_Denied') . '!');
+        ToastMagic::error(translate('access_Denied').'!');
         if (auth('admin')->check()) {
             return redirect()->route('admin.dashboard.index');
         }
+
         return back();
     }
 }

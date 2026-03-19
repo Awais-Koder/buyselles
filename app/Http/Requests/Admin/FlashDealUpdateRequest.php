@@ -22,7 +22,7 @@ class FlashDealUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules= [
+        $rules = [
             'title' => 'required',
             'start_date' => 'required',
             'end_date' => 'required',
@@ -30,8 +30,9 @@ class FlashDealUpdateRequest extends FormRequest
         if ($this->input('deal_type') === 'flash_deal' && theme_root_path() !== 'theme_aster') {
             $rules['image'] = 'sometimes|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff';
         } else {
-            $rules['image'] = 'nullable|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff|max:'. getFileUploadMaxSize('kb');
+            $rules['image'] = 'nullable|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff|max:'.getFileUploadMaxSize('kb');
         }
+
         return $rules;
     }
 

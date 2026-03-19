@@ -9,7 +9,6 @@ trait ModelsWithRoutesTrait
         return 'advanced_search_';
     }
 
-
     public function getModels(): array
     {
         return [
@@ -29,16 +28,16 @@ trait ModelsWithRoutesTrait
                         'vendor_routes' => [
                             'vendor/orders/details/{id}' => 'order_Details',
                         ],
-                    ]
-                ]
+                    ],
+                ],
             ],
             'sellers' => [
                 'model' => 'App\Models\Seller',
                 'translationable_type' => 'App\Models\Seller',
                 'type' => 'sellers',
-                'column' => ['id', 'f_name', 'l_name','phone','email'],
+                'column' => ['id', 'f_name', 'l_name', 'phone', 'email'],
                 'routes' => ['admin/vendors/list', 'admin/vendors/view/{id}'],
-                'access_type' => ['admin', 'vendor']
+                'access_type' => ['admin', 'vendor'],
             ],
             'categories' => [
                 'model' => 'App\Models\Category',
@@ -46,7 +45,7 @@ trait ModelsWithRoutesTrait
                 'type' => 'categories',
                 'column' => ['id', 'name', 'slug'],
                 'routes' => ['admin/category/view', 'admin/category/update/{id}'],
-                'access_type' => ['admin', 'vendor']
+                'access_type' => ['admin', 'vendor'],
             ],
             'brands' => [
                 'model' => 'App\Models\Brand',
@@ -54,7 +53,7 @@ trait ModelsWithRoutesTrait
                 'type' => 'brands',
                 'column' => ['id', 'name', 'image'],
                 'routes' => ['admin/brand/list', 'admin/brand/update/{id}'],
-                'access_type' => ['admin', 'vendor']
+                'access_type' => ['admin', 'vendor'],
             ],
             'coupons' => [
                 'model' => 'App\Models\Coupon',
@@ -79,7 +78,7 @@ trait ModelsWithRoutesTrait
                 'type' => 'blogs',
                 'column' => ['id', 'title', 'slug'],
                 'routes' => ['admin/blog/view'],
-                'access_type' => ['admin', 'vendor']
+                'access_type' => ['admin', 'vendor'],
             ],
             'delivery_men' => [
                 'model' => 'App\Models\DeliveryMan',
@@ -103,7 +102,7 @@ trait ModelsWithRoutesTrait
                 'translationable_type' => 'App\Models\RefundRequest',
                 'type' => 'refund_requests',
                 'column' => ['id', 'refund_reason', 'status'],
-                'routes' => ['admin/refund-section/refund/list/pending', 'admin/refund-section/refund/list/approved', 'admin/refund-section/refund/list/refunded', 'admin/refund-section/refund/list/rejected','refund-section/refund/details/{id}'],
+                'routes' => ['admin/refund-section/refund/list/pending', 'admin/refund-section/refund/list/approved', 'admin/refund-section/refund/list/refunded', 'admin/refund-section/refund/list/rejected', 'refund-section/refund/details/{id}'],
                 'access_type' => ['admin', 'vendor'],
             ],
             'contacts' => [
@@ -134,7 +133,5 @@ trait ModelsWithRoutesTrait
         ];
     }
 
-    public function getRoutes()
-    {
-    }
+    public function getRoutes() {}
 }

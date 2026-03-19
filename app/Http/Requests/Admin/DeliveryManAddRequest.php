@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Traits\ResponseHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Carbon;
 
@@ -21,11 +21,11 @@ use Illuminate\Support\Carbon;
  * @property string $confirm_password
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
  */
 class DeliveryManAddRequest extends FormRequest
 {
     use ResponseHandler;
+
     protected $stopOnFirstFailure = false;
 
     public function authorize(): bool
@@ -62,8 +62,8 @@ class DeliveryManAddRequest extends FormRequest
             'email.unique' => translate('The_email_has_already_been_taken'),
             'phone.unique' => translate('The_phone_number_already_been_taken'),
             'image.required' => translate('The_delivery_man_image_field_is_required'),
-            'image.mimes' => translate('The_image_type_must_be'). getFileUploadFormats(skip: ['.svg','.gif'], asMessage: 'true'),
-            'image.max' => translate('The_image_may_not_be_greater_than_' . getFileUploadMaxSize() . "MB"),
+            'image.mimes' => translate('The_image_type_must_be').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: 'true'),
+            'image.max' => translate('The_image_may_not_be_greater_than_'.getFileUploadMaxSize().'MB'),
             'password.required' => translate('The_password_field_is_required'),
             'password.same' => translate('The_password_and_confirm_password_must_match'),
             'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter').','.translate('_one_lowercase_letter').','.translate('_one_digit_').','.translate('_one_special_character').','.translate('_and_no_spaces').'.',

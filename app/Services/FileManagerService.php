@@ -12,7 +12,6 @@ use ZipArchive;
 
 class FileManagerService
 {
-
     public function uploadFileAndImages(object $request): bool
     {
         $storage = $request['storage'];
@@ -23,8 +22,8 @@ class FileManagerService
                 if ($storage == 's3') {
                     Storage::disk($storage)->putFileAs($request->path, $image, $name);
                 } else {
-                    $name = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $image->getClientOriginalExtension();
-                    $path = $request['path'] == 'public' ? $name : ($request['path'] . '/' . $name);
+                    $name = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$image->getClientOriginalExtension();
+                    $path = $request['path'] == 'public' ? $name : ($request['path'].'/'.$name);
                     Storage::disk('public')->put($path, file_get_contents($image));
                 }
             }
@@ -38,42 +37,42 @@ class FileManagerService
                     for ($i = 0; $i < $zip->numFiles; $i++) {
                         $stat = $zip->statIndex($i);
 
-                        if (!$stat['name'] || $this->shouldSkip($stat['name'])) {
+                        if (! $stat['name'] || $this->shouldSkip($stat['name'])) {
                             continue;
                         }
                         $filename = $stat['name'];
                         $fileContent = $zip->getFromIndex($i);
                         $format = pathinfo($filename, PATHINFO_EXTENSION);
-                        $imageName = Carbon::now()->toDateString() . "-" . uniqid() . "." . $format;
+                        $imageName = Carbon::now()->toDateString().'-'.uniqid().'.'.$format;
                         $s3 = Storage::disk('s3');
-                        $s3Path = $request->path . '/' . $imageName;
+                        $s3Path = $request->path.'/'.$imageName;
                         $s3->put($s3Path, $fileContent, 'public');
                     }
                     $zip->close();
                 }
             } else {
-                $zip = new ZipArchive();
-                if ($zip->open($request->file('file')) === TRUE) {
+                $zip = new ZipArchive;
+                if ($zip->open($request->file('file')) === true) {
                     $genFolderName = explode('/', $zip->getNameIndex(0))[0];
-                    if ($genFolderName === "__MACOSX") {
+                    if ($genFolderName === '__MACOSX') {
                         for ($i = 0; $i < $zip->numFiles; $i++) {
-                            if (!str_contains($zip->getNameIndex($i), "__MACOSX")) {
+                            if (! str_contains($zip->getNameIndex($i), '__MACOSX')) {
                                 break;
                             }
                         }
                     }
 
-                    $tempPath = storage_path('app/temp-zip-' . Str::random(10));
+                    $tempPath = storage_path('app/temp-zip-'.Str::random(10));
                     File::makeDirectory($tempPath);
                     $zip->extractTo($tempPath);
                     $zip->close();
-                    if (File::exists($tempPath . '/__MACOSX')) {
-                        File::deleteDirectory($tempPath . '/__MACOSX');
+                    if (File::exists($tempPath.'/__MACOSX')) {
+                        File::deleteDirectory($tempPath.'/__MACOSX');
                     }
 
                     $destination = $request['path'] === 'public'
                         ? storage_path('app/public')
-                        : storage_path('app/public/' . $request['path']);
+                        : storage_path('app/public/'.$request['path']);
                     $this->copyAndTouch($tempPath, $destination);
 
                     File::deleteDirectory($tempPath);
@@ -83,6 +82,7 @@ class FileManagerService
                 }
             }
         }
+
         return true;
     }
 
@@ -91,7 +91,7 @@ class FileManagerService
         $files = File::allFiles($src);
         foreach ($files as $file) {
             $relativePath = Str::after($file->getPathname(), $src);
-            $destinationPath = $dst . $relativePath;
+            $destinationPath = $dst.$relativePath;
             File::ensureDirectoryExists(dirname($destinationPath));
             File::copy($file->getPathname(), $destinationPath);
             touch($destinationPath);
@@ -116,8 +116,7 @@ class FileManagerService
         return false;
     }
 
-
-    public static function getFoldersWithInfo(string|null $targetFolder, string|null $storage = 'public'): array
+    public static function getFoldersWithInfo(?string $targetFolder, ?string $storage = 'public'): array
     {
         $currentFolder = Storage::disk($storage)->Directories($targetFolder);
 
@@ -156,7 +155,7 @@ class FileManagerService
         return $folders;
     }
 
-    public static function getAllFilesWithInfo($targetFolder = null, string|null $storage = 'public'): array
+    public static function getAllFilesWithInfo($targetFolder = null, ?string $storage = 'public'): array
     {
         $targetFolder = $targetFolder == 'public' ? '/' : $targetFolder;
         $currentFolderFiles = Storage::disk($storage)->files($targetFolder);
@@ -192,7 +191,7 @@ class FileManagerService
             $name = explode('/', $file);
             $dbPath = explode('/', $file, 2);
 
-            if (!(empty(end($name)) || self::shouldSkip(end($name)))) {
+            if (! (empty(end($name)) || self::shouldSkip(end($name)))) {
                 $FilesWithInfo[] = [
                     'name' => end($name),
                     'short_name' => self::getFileMinifyString(end($name)),
@@ -210,6 +209,7 @@ class FileManagerService
         usort($FilesWithInfo, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
+
         return $FilesWithInfo;
     }
 
@@ -220,7 +220,8 @@ class FileManagerService
         }
         $prefix = substr($inputString, 0, $prefixLength);
         $suffix = substr($inputString, -$suffixLength);
-        return $prefix . $ellipsis . $suffix;
+
+        return $prefix.$ellipsis.$suffix;
     }
 
     public static function getAdvancedFileFormatSize($size = 0): string
@@ -233,7 +234,7 @@ class FileManagerService
             $unitIndex++;
         }
 
-        return round($size, 2) . ' ' . $units[$unitIndex];
+        return round($size, 2).' '.$units[$unitIndex];
     }
 
     public static function getFileManagerBreadcrumb($path): array
@@ -250,10 +251,10 @@ class FileManagerService
                 $decodePath = '/';
                 $relativePath = ''; // reset relative for others
             } else {
-                $relativePath .= ($relativePath === '' ? '' : '/') . $segment;
+                $relativePath .= ($relativePath === '' ? '' : '/').$segment;
                 $decodePath = $relativePath;
             }
-            if (!empty($decodePath)) {
+            if (! empty($decodePath)) {
                 $breadcrumb[] = [
                     'name' => $segment === 'public'
                         ? (getDefaultLanguage() == 'en' ? 'Public' : translate('Main'))
@@ -270,11 +271,13 @@ class FileManagerService
     public function getRecentFiles(string $storage = 'public'): array
     {
         $cacheKey = $storage == 's3' ? 'cache_for_recent_file_list_s3' : 'cache_for_recent_file_list_public';
+
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($storage) {
             $recentFilesPath = Storage::disk($storage)->allFiles('/');
             usort($recentFilesPath, function ($a, $b) use ($storage) {
                 $timeA = Storage::disk($storage)->lastModified($a);
                 $timeB = Storage::disk($storage)->lastModified($b);
+
                 return $timeB - $timeA;
             });
             $recentFilesPath = array_slice($recentFilesPath, 0, 10);
@@ -285,7 +288,7 @@ class FileManagerService
                 $name = explode('/', $file);
                 $dbPath = explode('/', $file, 2);
 
-                if (!(empty(end($name)) || self::shouldSkip(end($name)))) {
+                if (! (empty(end($name)) || self::shouldSkip(end($name)))) {
                     $FilesWithInfo[] = [
                         'name' => end($name),
                         'short_name' => self::getFileMinifyString(end($name)),
@@ -297,10 +300,11 @@ class FileManagerService
                         'size' => self::getAdvancedFileFormatSize(Storage::disk($storage)->size($file)),
                         'sizeInInteger' => Storage::disk($storage)->size($file),
                         'extension' => pathinfo($file, PATHINFO_EXTENSION),
-                        'last_modified' => Carbon::parse(date('Y-m-d H:i:s', Storage::disk($storage)->lastModified($file)))
+                        'last_modified' => Carbon::parse(date('Y-m-d H:i:s', Storage::disk($storage)->lastModified($file))),
                     ];
                 }
             }
+
             return $FilesWithInfo;
         });
     }

@@ -11,16 +11,14 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     protected function successResponse(mixed $data = [], string $message = 'Success', int $status = 200): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ], $status);
     }
 
@@ -29,8 +27,7 @@ class Controller extends BaseController
         return response()->json([
             'success' => false,
             'message' => $message,
-            'data' => $data
+            'data' => $data,
         ], $status);
     }
-
 }

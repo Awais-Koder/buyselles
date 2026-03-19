@@ -2,7 +2,4 @@
 
 namespace Modules\AI\app\Exceptions;
 
-class ValidationException extends ApiException
-{
-
-}
+class ValidationException extends ApiException {}

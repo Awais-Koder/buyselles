@@ -11,24 +11,18 @@ use Illuminate\Http\Request;
 
 class OrderSettingsController extends BaseController
 {
-
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return view('admin-views.business-settings.order-settings.index');
     }
-
 
     public function update(Request $request): RedirectResponse
     {
@@ -41,8 +35,7 @@ class OrderSettingsController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'free_delivery_over_amount_seller', value: currencyConverter(amount: $request['free_delivery_over_amount_seller']) ?? 0);
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('successfully_updated'));
+
         return back();
     }
-
-
 }

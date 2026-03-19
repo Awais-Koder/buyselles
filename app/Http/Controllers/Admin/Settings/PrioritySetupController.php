@@ -19,11 +19,9 @@ class PrioritySetupController extends BaseController
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly PrioritySetupService               $prioritySetupService,
+        private readonly PrioritySetupService $prioritySetupService,
 
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -103,6 +101,7 @@ class PrioritySetupController extends BaseController
         cacheRemoveByType(type: 'categories');
 
         ToastMagic::success(translate('Priority_setup_updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -122,8 +121,7 @@ class PrioritySetupController extends BaseController
         }
 
         ToastMagic::success(translate('Priority_setup_updated_successfully'));
+
         return redirect()->back();
     }
-
-
 }

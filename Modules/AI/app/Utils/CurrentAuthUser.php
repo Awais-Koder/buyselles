@@ -18,6 +18,7 @@ class CurrentAuthUser
         if (Auth::guard('admin')->check()) {
             return Auth::guard('admin')->id();
         }
+
         return null;
     }
 
@@ -32,6 +33,7 @@ class CurrentAuthUser
         if (Auth::check()) {
             return Auth::guard('admin')->user();
         }
+
         return null;
     }
 
@@ -48,7 +50,7 @@ class CurrentAuthUser
         if (Auth::guard('seller')->check()) {
             return Auth::guard('seller')->user();
         }
-        return (object)[];
-    }
 
+        return (object) [];
+    }
 }

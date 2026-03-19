@@ -6,7 +6,6 @@ use Illuminate\Support\Str;
 
 class BlogCategoryService
 {
-
     public function getAddData(object|array $request): array
     {
         return [
@@ -27,7 +26,7 @@ class BlogCategoryService
 
     public function getCategorySlug(object $request): string
     {
-        return Str::slug($request['name'][array_search('en', $request['lang'])], '-') . '-' . Str::random(6);
+        return Str::slug($request['name'][array_search('en', $request['lang'])], '-').'-'.Str::random(6);
     }
 
     public function getCategoryLanguageData(object|array $category): array
@@ -49,21 +48,22 @@ class BlogCategoryService
                 'value' => $language === 'en' ? ($category->name ?? '') : $value,
             ];
         }
+
         return $categoryLang;
     }
 
     public function getCategoryDropdown(object $request, object $categories): string
     {
-        $dropdown = '<option value="' . 0 . '" disabled selected>' . translate("Select") . '</option>';
+        $dropdown = '<option value="'. 0 .'" disabled selected>'.translate('Select').'</option>';
         foreach ($categories as $category) {
             if (getDefaultLanguage() == 'en') {
                 $defaultName = $category->name;
             } else {
                 $defaultName = $category?->translations()->where('key', 'name')->where('locale', getDefaultLanguage())->first()?->value ?? $category?->name;
             }
-            $dropdown .= '<option value="' . $category->id . '">' . $defaultName . '</option>';
+            $dropdown .= '<option value="'.$category->id.'">'.$defaultName.'</option>';
         }
+
         return $dropdown;
     }
-
 }

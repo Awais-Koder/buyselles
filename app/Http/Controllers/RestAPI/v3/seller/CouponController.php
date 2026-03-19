@@ -19,7 +19,7 @@ class CouponController extends Controller
     {
         $seller = $request->seller;
         $coupons = Coupon::whereIn('seller_id', [$seller->id, '0'])
-            ->when(isset($request['search']) && !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) && ! empty($request['search']), function ($query) use ($request) {
                 $key = explode(' ', $request['search']);
                 foreach ($key as $value) {
                     $query->where('title', 'like', "%{$value}%")
@@ -30,7 +30,7 @@ class CouponController extends Controller
             ->withCount('order')->latest()
             ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $coupons->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
@@ -67,7 +67,7 @@ class CouponController extends Controller
             return response()->json(['message' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $coupon = new Coupon();
+        $coupon = new Coupon;
         $coupon->added_by = 'seller';
         $coupon->coupon_type = $request->coupon_type;
         $coupon->title = $request->title;
@@ -102,7 +102,7 @@ class CouponController extends Controller
             'discount_type' => 'required_if:coupon_type,discount_on_purchase',
             'discount' => 'required_if:coupon_type,discount_on_purchase',
             'min_purchase' => 'required',
-            'code' => 'required|unique:coupons,code,' . $id,
+            'code' => 'required|unique:coupons,code,'.$id,
             'title' => 'required',
             'start_date' => 'required',
             'expire_date' => 'required',
@@ -116,7 +116,7 @@ class CouponController extends Controller
         ]);
 
         $coupon = Coupon::where(['coupon_bearer' => 'seller'])->whereIn('seller_id', [$seller->id, '0'])->find($id);
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json(['message' => translate('coupon_not_found')], 403);
         }
         $coupon->coupon_type = $request->coupon_type;
@@ -147,7 +147,7 @@ class CouponController extends Controller
     {
         $seller = $request->seller;
         $coupon = Coupon::where(['coupon_bearer' => 'seller'])->whereIn('seller_id', [$seller->id, '0'])->find($request->id);
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json(['message' => translate('coupon_not_found')], 403);
         }
         $coupon->status = $request->status;
@@ -162,7 +162,7 @@ class CouponController extends Controller
         $coupon = Coupon::where(['added_by' => 'seller', 'coupon_bearer' => 'seller'])
             ->whereIn('seller_id', [$seller->id, '0'])->find($id);
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json(['message' => translate('coupon_not_found')], 403);
         }
         $coupon->delete();
@@ -193,7 +193,7 @@ class CouponController extends Controller
                 ->first();
         }
 
-        if (!$coupon || $coupon->coupon_type == 'free_delivery' || $coupon->coupon_type == 'first_order') {
+        if (! $coupon || $coupon->coupon_type == 'free_delivery' || $coupon->coupon_type == 'first_order') {
             return response(['message' => translate('coupon_invalid')], 202);
         }
 
@@ -212,6 +212,7 @@ class CouponController extends Controller
                 return response()->json($data, 200);
             }
         }
+
         return response(['message' => translate('coupon_invalid')], 202);
     }
 
@@ -230,15 +231,15 @@ class CouponController extends Controller
             ->take(10)
             ->get()->toArray();
 
-        $customer_add = array(
-            array('id' => 0, 'f_name' => 'All', 'l_name' => 'Customer')
-        );
+        $customer_add = [
+            ['id' => 0, 'f_name' => 'All', 'l_name' => 'Customer'],
+        ];
         array_splice($customers, 0, 0, $customer_add);
 
-        $data = array(
-            'customers' => $customers
-        );
+        $data = [
+            'customers' => $customers,
+        ];
+
         return response()->json($data, 200);
     }
-
 }

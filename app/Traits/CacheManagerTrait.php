@@ -44,9 +44,10 @@ trait CacheManagerTrait
         });
         if ($bannerType && $dataLimit) {
             return $banners?->where('banner_type', $bannerType)->take($dataLimit);
-        } else if ($bannerType) {
+        } elseif ($bannerType) {
             return $banners?->firstWhere('banner_type', $bannerType);
         }
+
         return $banners;
     }
 
@@ -81,6 +82,7 @@ trait CacheManagerTrait
     public function cacheShopTable()
     {
         $productReviews = $this->cacheProductsReviews();
+
         return Cache::remember(CACHE_SHOP_TABLE, CACHE_FOR_3_HOURS, function () use ($productReviews) {
             return Shop::active()
                 ->withCount(['products' => function ($query) {
@@ -104,6 +106,7 @@ trait CacheManagerTrait
                     $positiveReviewsCount = $productReviews->where('rating', '>=', 4)->count();
                     $shop->positive_review = ($shop->review_count !== 0) ? ($positiveReviewsCount * 100) / $shop->review_count : 0;
                     $shop->is_vacation_mode_now = checkVendorAbility(type: 'vendor', status: 'vacation_status', vendor: $shop);
+
                     return $shop;
                 });
         });
@@ -127,6 +130,7 @@ trait CacheManagerTrait
     {
         return Cache::remember(CACHE_FOR_IN_HOUSE_SHIPPING_TYPE, CACHE_FOR_3_HOURS, function () {
             $adminShipping = ShippingType::where(['seller_id' => 0])->first();
+
             return isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
         });
     }
@@ -166,7 +170,7 @@ trait CacheManagerTrait
                         },
                         'clearanceSale' => function ($query) {
                             return $query->active();
-                        }
+                        },
                     ])
                     ->withCount('reviews')
                     ->where('category_id', $data['id']);
@@ -184,9 +188,11 @@ trait CacheManagerTrait
                         }
                     }
                     $product['flash_deal_status'] = $flash_deal_status;
+
                     return $product;
                 });
             });
+
             return $homeCategories;
         });
     }
@@ -212,6 +218,7 @@ trait CacheManagerTrait
             return StockClearanceSetup::all();
         });
         $data = $settings?->firstWhere('shop_id', $shopId);
+
         return $data ?? $config;
     }
 
@@ -228,6 +235,7 @@ trait CacheManagerTrait
     {
         $productIds = StockClearanceProduct::active()->whereHas('setup', function ($query) {
             $addedBy = getWebConfig(name: 'stock_clearance_vendor_offer_in_homepage') ? ['admin', 'vendor'] : ['admin'];
+
             return $query->where('show_in_homepage', 1)->whereIn('setup_by', $addedBy);
         })->whereHas('product', function ($query) {
             return $query->active()->with(['reviews', 'rating'])->withCount('reviews');
@@ -238,6 +246,7 @@ trait CacheManagerTrait
         $products = Product::active()->with(['reviews', 'rating', 'clearanceSale' => function ($query) {
             return $query->active();
         }])->withCount('reviews')->whereIn('id', $productIds);
+
         return ProductManager::getPriorityWiseClearanceSaleProductsQuery(query: $products, dataLimit: $dataLimit);
     }
 
@@ -248,9 +257,10 @@ trait CacheManagerTrait
             return RobotsMetaContent::all();
         });
         $data = $settings?->firstWhere('page_name', $page);
-        if (!$data) {
+        if (! $data) {
             $data = $settings?->firstWhere('page_name', 'default');
         }
+
         return $data ?? $config;
     }
 
@@ -258,6 +268,7 @@ trait CacheManagerTrait
     {
         $inHouseProducts = $this->cacheInHouseAllProducts();
         $productReviews = $this->cacheProductsReviews();
+
         return Cache::remember(CACHE_FOR_HOME_PAGE_TOP_VENDORS_LIST, CACHE_FOR_3_HOURS, function () use ($inHouseProducts, $productReviews) {
             $topVendorsList = Shop::active()
                 ->withCount(['products' => function ($query) {
@@ -313,6 +324,7 @@ trait CacheManagerTrait
             $inHouseShop->positive_review = $inHouseReviewDataCount != 0 ? ($inHouseRattingStatusPositive * 100) / $inHouseReviewDataCount : 0;
             $inHouseShop->orders_count = Order::where(['seller_is' => 'admin'])->count();
             $inHouseShop->products = Arr::random($inHouseProducts->toArray(), $inHouseProductCount < 3 ? $inHouseProductCount : 3);
+
             return $topVendorsList->prepend($inHouseShop);
         });
     }
@@ -321,6 +333,7 @@ trait CacheManagerTrait
     {
         return Cache::remember(CACHE_FOR_HOME_PAGE_MORE_VENDORS_LIST, CACHE_FOR_3_HOURS, function () {
             $productReviews = $this->cacheProductsReviews();
+
             return Seller::approved()
                 ->with(['shop' => function ($query) {
                     return $query->with(['seller' => function ($query) {
@@ -340,8 +353,8 @@ trait CacheManagerTrait
                     $productIds = $seller->product?->pluck('id')->toArray() ?? [];
                     $filteredReviews = $productReviews->whereIn('product_id', $productIds)->where('status', 1);
                     $seller->average_rating = $filteredReviews->avg('rating');
-                    $seller->review_count   = $filteredReviews->count();
-                    $seller->total_rating   = $filteredReviews->sum('rating');
+                    $seller->review_count = $filteredReviews->count();
+                    $seller->total_rating = $filteredReviews->sum('rating');
                 });
         });
 
@@ -351,11 +364,11 @@ trait CacheManagerTrait
     {
         return Cache::remember(CACHE_FOR_HOME_PAGE_JUST_FOR_YOU_PRODUCT_LIST, CACHE_FOR_3_HOURS, function () {
             return Product::active()->with(['clearanceSale' => function ($query) {
-                    $query->active();
-                },
+                $query->active();
+            },
                 'reviews' => function ($query) {
                     $query->active();
-                }
+                },
             ])->inRandomOrder()->take(8)->get()->each(function ($product) {
                 $product->reviews_count = $product->reviews->count();
                 $product->average_rating = $product->reviews->avg('rating');
@@ -367,7 +380,7 @@ trait CacheManagerTrait
     public function cacheHomePageRandomSingleProductItem()
     {
         return Cache::remember(CACHE_FOR_RANDOM_SINGLE_PRODUCT, now()->addMinutes(10), function () {
-            return $this->product->active()->with(['clearanceSale' =>function ($query) {
+            return $this->product->active()->with(['clearanceSale' => function ($query) {
                 return $query->active();
             }])->where('discount', '>', 0)->inRandomOrder()->first();
         });
@@ -387,7 +400,7 @@ trait CacheManagerTrait
     public function cacheTopRatedProductList()
     {
         return Cache::remember(CACHE_FOR_HOME_PAGE_TOP_RATED_PRODUCT_LIST, CACHE_FOR_3_HOURS, function () {
-            return Product::active()->with(['seller.shop', 'clearanceSale' =>function ($query) {
+            return Product::active()->with(['seller.shop', 'clearanceSale' => function ($query) {
                 return $query->active();
             }])
                 ->whereHas('reviews', function ($query) {
@@ -420,6 +433,7 @@ trait CacheManagerTrait
             $latestProductsList = Product::active()->with(['seller.shop', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
                 return $query->active();
             }])->orderBy('id', 'desc')->take(10)->get();
+
             return $this->getUpdateLatestProductWithFlashDeal(latestProducts: $latestProductsList);
         });
     }
@@ -427,7 +441,7 @@ trait CacheManagerTrait
     public function cacheBannerAllTypeKeys($cacheKey): void
     {
         $cacheKeys = Cache::get(CACHE_BANNER_ALL_CACHE_KEYS, []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_BANNER_ALL_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -436,7 +450,7 @@ trait CacheManagerTrait
     public function cacheBannerForTypeMainBanner()
     {
         $themeName = theme_root_path() ?? 'default';
-        $cacheKey = 'cache_banner_type_main_banner_' . ($themeName);
+        $cacheKey = 'cache_banner_type_main_banner_'.($themeName);
         $this->cacheBannerAllTypeKeys(cacheKey: $cacheKey);
 
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($themeName) {
@@ -447,7 +461,7 @@ trait CacheManagerTrait
     public function cacheBannerForTypeSidebarBanner()
     {
         $themeName = theme_root_path() ?? 'default';
-        $cacheKey = 'cache_banner_type_sidebar_banner_' . ($themeName);
+        $cacheKey = 'cache_banner_type_sidebar_banner_'.($themeName);
         $this->cacheBannerAllTypeKeys(cacheKey: $cacheKey);
 
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($themeName) {
@@ -458,7 +472,7 @@ trait CacheManagerTrait
     public function cacheBannerForTypeTopSideBanner()
     {
         $themeName = theme_root_path() ?? 'default';
-        $cacheKey = 'cache_banner_type_top_side_banner_' . ($themeName);
+        $cacheKey = 'cache_banner_type_top_side_banner_'.($themeName);
         $this->cacheBannerAllTypeKeys(cacheKey: $cacheKey);
 
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($themeName) {
@@ -469,7 +483,7 @@ trait CacheManagerTrait
     public function cacheBannerForTypePromoBannerLeft()
     {
         $themeName = theme_root_path() ?? 'default';
-        $cacheKey = 'cache_banner_type_top_side_banner_' . ($themeName);
+        $cacheKey = 'cache_banner_type_top_side_banner_'.($themeName);
         $this->cacheBannerAllTypeKeys(cacheKey: $cacheKey);
 
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($themeName) {
@@ -480,7 +494,7 @@ trait CacheManagerTrait
     public function cacheBannerForTypePromoBanner($bannerType)
     {
         $themeName = theme_root_path() ?? 'default';
-        $cacheKey = 'cache_banner_type_' . strtolower(str_replace(' ', '_', $bannerType)) . '_' . ($themeName);
+        $cacheKey = 'cache_banner_type_'.strtolower(str_replace(' ', '_', $bannerType)).'_'.($themeName);
         $this->cacheBannerAllTypeKeys(cacheKey: $cacheKey);
 
         return Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($themeName, $bannerType) {
@@ -509,6 +523,7 @@ trait CacheManagerTrait
     private function getUpdateLatestProductWithFlashDeal($latestProducts)
     {
         $currentDate = date('Y-m-d H:i:s');
+
         return $latestProducts?->map(function ($product) use ($currentDate) {
             $flashDealStatus = 0;
             $flashDealEndDate = 0;
@@ -523,6 +538,7 @@ trait CacheManagerTrait
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
     }

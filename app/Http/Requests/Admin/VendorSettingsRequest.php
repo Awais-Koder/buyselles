@@ -25,5 +25,4 @@ class VendorSettingsRequest extends FormRequest
     {
         return [];
     }
-
 }

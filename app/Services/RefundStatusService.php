@@ -8,13 +8,7 @@ class RefundStatusService
 {
     use CustomerTrait;
 
-    /**
-     * @param object $request
-     * @param object $refund
-     * @param string $changeBy
-     * @return array
-     */
-    public function getRefundStatusData(object $request, object $refund, string $changeBy):array
+    public function getRefundStatusData(object $request, object $refund, string $changeBy): array
     {
         return [
             'refund_request_id' => $refund['id'],
@@ -67,6 +61,4 @@ class RefundStatusService
             'refundStatus' => $refundStatus,
         ];
     }
-
-
 }

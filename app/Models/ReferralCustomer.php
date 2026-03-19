@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_used
  * @property bool $is_used_by_refer
  * @property bool $is_checked
- *@property Carbon $created_at
+ * @property Carbon $created_at
  * @property Carbon $updated_at
  */
 class ReferralCustomer extends Model
@@ -38,5 +38,4 @@ class ReferralCustomer extends Model
         'is_used_by_refer',
         'is_checked',
     ];
-   
 }

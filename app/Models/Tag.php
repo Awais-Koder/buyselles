@@ -16,12 +16,10 @@ use Illuminate\Support\Carbon;
  * @property int $visit_count
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class Tag extends Model
 {
-    use HasFactory, CacheManagerTrait;
+    use CacheManagerTrait, HasFactory;
 
     /**
      * The attributes that are mass assignable.

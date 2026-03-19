@@ -2,23 +2,20 @@
 
 namespace App\Services\Admin\Reports;
 
-
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 
 class EarningReportsService
 {
-
     public function getEarnFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $earnFromOrder = [];
 
         if ($dataType == 'today') {
@@ -63,7 +60,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $earnFromOrder[$month] = 0;
                 foreach ($query as $order) {
                     if ($order['month'] == $inc) {
@@ -87,7 +84,7 @@ class EarningReportsService
         return $earnFromOrder;
     }
 
-    function getEarnFormOrderAmount($order, $type)
+    public function getEarnFormOrderAmount($order, $type)
     {
         $amount = $order['order_amount'] + $order['refer_and_earn_discount'];
         $amount -= $order['total_tax_amount'];
@@ -117,19 +114,19 @@ class EarningReportsService
         if ($type == 'seller' && $order['seller_is'] == 'seller' && $order['free_delivery_bearer'] == 'admin' && $order['is_shipping_free']) {
             $amount += $order['extra_discount'];
         }
+
         return $amount;
     }
 
     public function getCommissionFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $commission = [];
 
         if ($dataType == 'today') {
@@ -173,7 +170,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $commission[$month] = 0;
                 foreach ($query as $match) {
                     if ($match['month'] == $inc) {
@@ -199,14 +196,13 @@ class EarningReportsService
 
     public function getShippingEarnFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $shippingEarn = [];
 
         if ($dataType == 'today') {
@@ -250,10 +246,10 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $shippingEarn[$month] = 0;
                 foreach ($query as $match) {
-                    if ((int)$match['month'] == $inc) {
+                    if ((int) $match['month'] == $inc) {
                         $shippingEarn[$month] += self::getShippingEarnFormOrderAmount(order: $match, type: $userType);
                     }
                 }
@@ -264,7 +260,7 @@ class EarningReportsService
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
                 $shippingEarn[$inc] = 0;
                 foreach ($query as $match) {
-                    if ((int)$match['year'] == $inc) {
+                    if ((int) $match['year'] == $inc) {
                         $shippingEarn[$inc] += self::getShippingEarnFormOrderAmount(order: $match, type: $userType);
                     }
                 }
@@ -274,7 +270,7 @@ class EarningReportsService
         return $shippingEarn;
     }
 
-    function getShippingEarnFormOrderAmount($order, $type)
+    public function getShippingEarnFormOrderAmount($order, $type)
     {
         $amount = 0;
         if ($type == 'admin' && ($order['seller_is'] == 'admin' || ($order['seller_is'] == 'seller' && $order['shipping_responsibility'] == 'inhouse_shipping'))) {
@@ -284,19 +280,19 @@ class EarningReportsService
         if ($type == 'seller' && $order['seller_is'] == 'seller' && $order['shipping_responsibility'] != 'inhouse_shipping') {
             $amount += $order['shipping_cost'];
         }
+
         return $amount;
     }
 
     public function getDeliverymanIncentiveFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $deliverymanIncentive = [];
 
         if ($dataType == 'today') {
@@ -340,7 +336,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $deliverymanIncentive[$month] = 0;
                 foreach ($query as $match) {
                     if ($match['month'] == $inc) {
@@ -366,14 +362,13 @@ class EarningReportsService
 
     public function getDiscountGivenFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $discountGiven = [];
 
         if ($dataType == 'today') {
@@ -417,7 +412,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($increment = $defaultIncrement; $increment <= $incrementNumber; $increment++) {
-                $month = substr(date("F", strtotime("2023-$increment-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$increment-01")), 0, 3);
                 $discountGiven[$month] = 0;
                 foreach ($query as $order) {
                     if ($order['month'] == $increment) {
@@ -441,33 +436,32 @@ class EarningReportsService
         return $discountGiven;
     }
 
-    function getDiscountGivenFormOrderAmount($order, $type)
+    public function getDiscountGivenFormOrderAmount($order, $type)
     {
         $amount = 0;
         $couponDiscountBearer = $order['coupon_discount_bearer'] == 'inhouse' ? 'admin' : 'seller';
         if ($type == $couponDiscountBearer && $order->discount_type === 'coupon_discount') {
             $amount += $order->discount_amount;
         }
-        if ((int)$order->is_shipping_free === 1 && $order->free_delivery_bearer === $type) {
+        if ((int) $order->is_shipping_free === 1 && $order->free_delivery_bearer === $type) {
             $amount += $order->extra_discount;
         }
         if ($type == 'admin') {
             $amount += $order->refer_and_earn_discount;
         }
+
         return $amount;
     }
 
-
     public function getVatTAxFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $totalTax = [];
 
         if ($dataType == 'today') {
@@ -511,7 +505,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $totalTax[$month] = 0;
                 foreach ($query as $match) {
                     if ($match['month'] == $inc) {
@@ -537,14 +531,13 @@ class EarningReportsService
 
     public function getRefundGivenFromOrderForEarningReport(
         object|array|null $query = [],
-        string|null $userType = '',
-        string|null $dataType = '',
-        string|null $startDate = '',
-        string|null $endDate = '',
-        int|null $incrementNumber = 0,
-        int|null $defaultIncrement = 0,
-    ): array
-    {
+        ?string $userType = '',
+        ?string $dataType = '',
+        ?string $startDate = '',
+        ?string $endDate = '',
+        ?int $incrementNumber = 0,
+        ?int $defaultIncrement = 0,
+    ): array {
         $refundGiven = [];
 
         if ($dataType == 'today') {
@@ -588,7 +581,7 @@ class EarningReportsService
 
         if ($dataType == 'this_year') {
             for ($inc = $defaultIncrement; $inc <= $incrementNumber; $inc++) {
-                $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+                $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
                 $refundGiven[$month] = 0;
                 foreach ($query as $match) {
                     if ($match['month'] == $inc) {
@@ -611,5 +604,4 @@ class EarningReportsService
 
         return $refundGiven;
     }
-
 }

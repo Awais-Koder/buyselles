@@ -12,7 +12,6 @@ use Carbon\CarbonInterval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Modules\Gateways\Traits\SmsGateway;
 
 class PhoneVerificationController extends Controller
 {
@@ -20,7 +19,7 @@ class PhoneVerificationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'temporary_token' => 'required',
-            'phone' => 'required|min:11|max:14'
+            'phone' => 'required|min:11|max:14',
         ]);
 
         if ($validator->fails()) {
@@ -45,10 +44,11 @@ class PhoneVerificationController extends Controller
 
         $response = SMSModule::sendCentralizedSMS($request['phone'], $token);
         $otp_resend_time = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
+
         return response()->json([
             'message' => $response,
             'token' => 'active',
-            'resend_time' => $otp_resend_time
+            'resend_time' => $otp_resend_time,
         ], 200);
     }
 
@@ -56,7 +56,7 @@ class PhoneVerificationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'temporary_token' => 'required',
-            'phone' => 'required|min:11|max:14'
+            'phone' => 'required|min:11|max:14',
         ]);
 
         if ($validator->fails()) {
@@ -66,13 +66,13 @@ class PhoneVerificationController extends Controller
         $otp_resend_time = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
         $user = User::where(['temporary_token' => $request->temporary_token])->first();
         $token = PhoneOrEmailVerification::where('phone_or_email', $request['phone'])->first();
-        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; //minute
+        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; // minute
 
         // Time Difference in Minutes
         $time_differance = 0;
         if ($token) {
             $token_time = Carbon::parse($token->created_at);
-            $add_time = $token_time->addSeconds((int)$otp_resend_time);
+            $add_time = $token_time->addSeconds((int) $otp_resend_time);
             $time_differance = $add_time > Carbon::now() ? Carbon::now()->diffInSeconds($add_time) : 0;
         }
 
@@ -86,7 +86,7 @@ class PhoneVerificationController extends Controller
                 $token->created_at = now();
                 $token->save();
             } else {
-                $token_data = new PhoneOrEmailVerification();
+                $token_data = new PhoneOrEmailVerification;
                 $token_data->phone_or_email = $user->phone;
                 $token_data->token = $new_token;
                 $token_data->created_at = now();
@@ -103,7 +103,7 @@ class PhoneVerificationController extends Controller
             ], 200);
         } else {
             return response()->json(['errors' => [
-                ['message' => translate('please_try_again_after') . ' ' . CarbonInterval::seconds($time_differance)->cascade()->forHumans()]
+                ['message' => translate('please_try_again_after').' '.CarbonInterval::seconds($time_differance)->cascade()->forHumans()],
             ]], 403);
         }
 
@@ -122,7 +122,7 @@ class PhoneVerificationController extends Controller
         }
 
         $max_otp_hit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
-        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; //minute
+        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; // minute
         $verify = PhoneOrEmailVerification::where(['phone_or_email' => $request['phone'], 'token' => $request['otp']])->first();
 
         if (isset($verify)) {
@@ -131,9 +131,8 @@ class PhoneVerificationController extends Controller
             if (isset($verify->temp_block_time) && Carbon::parse($verify->temp_block_time)->diffInSeconds() <= $temp_block_time) {
                 $time = $temp_block_time - Carbon::parse($verify->temp_block_time)->diffInSeconds();
 
-
                 return response()->json(['errors' => [
-                    ['message' => translate('please_try_again_after') . ' ' . CarbonInterval::seconds($time)->cascade()->forHumans()]
+                    ['message' => translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans()],
                 ]], 403);
             }
 
@@ -143,9 +142,10 @@ class PhoneVerificationController extends Controller
             $verify->delete();
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json([
                 'message' => translate('otp_verified'),
-                'token' => $token
+                'token' => $token,
             ], 200);
         } else {
             $verification = PhoneOrEmailVerification::where(['phone_or_email' => $request['phone']])->first();
@@ -154,7 +154,7 @@ class PhoneVerificationController extends Controller
                 if (isset($verification->temp_block_time) && Carbon::parse($verification->temp_block_time)->diffInSeconds() <= $temp_block_time) {
                     $time = $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
 
-                    $message = translate('please_try_again_after') . ' ' . CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $message = translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans();
 
                 } elseif ($verification->is_temp_blocked == 1 && isset($verification->created_at) && Carbon::parse($verification->created_at)->diffInSeconds() >= $temp_block_time) {
                     $verification->otp_hit_count = 1;
@@ -172,7 +172,7 @@ class PhoneVerificationController extends Controller
                     $verification->save();
 
                     $time = $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
-                    $message = translate('too_many_attempts') . translate('please_try_again_after') . ' ' . CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $message = translate('too_many_attempts').translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans();
 
                 } else {
                     $verification->otp_hit_count += 1;
@@ -186,7 +186,7 @@ class PhoneVerificationController extends Controller
         }
 
         return response()->json(['errors' => [
-            ['message' => $message]
+            ['message' => $message],
         ]], 403);
     }
 }

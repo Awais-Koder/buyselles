@@ -6,11 +6,11 @@ enum SocialLoginSettings
 {
     const VIEW = [
         URI => 'view',
-        VIEW => 'admin-views.third-party.social-login.view'
+        VIEW => 'admin-views.third-party.social-login.view',
     ];
 
     const UPDATE = [
         URI => 'update',
-        VIEW => ''
+        VIEW => '',
     ];
 }

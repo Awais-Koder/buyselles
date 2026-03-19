@@ -7,7 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class VendorRegistrationReasonRequest extends FormRequest
 {
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -29,6 +28,7 @@ class VendorRegistrationReasonRequest extends FormRequest
             'priority' => ['required', 'integer'],
         ];
     }
+
     public function messages(): array
     {
         return [

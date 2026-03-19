@@ -28,6 +28,7 @@ class RefundTransactionService
         foreach ($refundTransactions as $transaction) {
             $totalAmount += $transaction['amount'];
         }
+
         return [
             'total_amount' => $totalAmount,
             'company_phone' => $companyPhone,

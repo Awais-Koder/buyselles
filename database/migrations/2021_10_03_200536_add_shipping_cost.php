@@ -25,8 +25,6 @@ class AddShippingCost extends Migration
      */
     public function down()
     {
-        Schema::table('orders', function (Blueprint $table) {
-
-        });
+        Schema::table('orders', function (Blueprint $table) {});
     }
 }

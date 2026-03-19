@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ChatController extends Controller
 {
-    public function list(Request $request, $type):JsonResponse
+    public function list(Request $request, $type): JsonResponse
     {
 
         $delivery_man = $request['delivery_man'];
@@ -53,7 +53,7 @@ class ChatController extends Controller
 
         $unique_chat_ids = array_slice($all_chat_ids, $request->offset - 1, $request->limit);
 
-        $chats = array();
+        $chats = [];
         if ($unique_chat_ids) {
             foreach ($unique_chat_ids as $unique_chat_id) {
                 $user_chatting = Chatting::with([$with_param])
@@ -67,7 +67,7 @@ class ChatController extends Controller
             }
         }
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $total_size;
         $data['limit'] = $request->limit;
         $data['offset'] = $request->offset;
@@ -76,10 +76,10 @@ class ChatController extends Controller
         return response()->json($data, 200);
     }
 
-    public function search(Request $request, $type):JsonResponse
+    public function search(Request $request, $type): JsonResponse
     {
         $delivery_man = $request['delivery_man'];
-        $terms = explode(" ", $request->input('search'));
+        $terms = explode(' ', $request->input('search'));
 
         if ($type == 'customer') {
             $with_param = 'customer';
@@ -87,8 +87,8 @@ class ChatController extends Controller
             $users = User::where('id', '!=', 0)
                 ->when($request->search, function ($query) use ($terms) {
                     foreach ($terms as $term) {
-                        $query->where('f_name', 'like', '%' . $term . '%')
-                            ->orWhere('l_name', 'like', '%' . $term . '%');
+                        $query->where('f_name', 'like', '%'.$term.'%')
+                            ->orWhere('l_name', 'like', '%'.$term.'%');
                     }
                 })->pluck('id')->toArray();
 
@@ -97,8 +97,8 @@ class ChatController extends Controller
             $with_param = 'sellerInfo.shops';
             $users = Seller::when($request->search, function ($query) use ($terms) {
                 foreach ($terms as $term) {
-                    $query->where('f_name', 'like', '%' . $term . '%')
-                        ->orWhere('l_name', 'like', '%' . $term . '%');
+                    $query->where('f_name', 'like', '%'.$term.'%')
+                        ->orWhere('l_name', 'like', '%'.$term.'%');
                 }
             })->pluck('id')->toArray();
         } else {
@@ -113,7 +113,7 @@ class ChatController extends Controller
             ->toArray();
         $unique_chat_ids = call_user_func_array('array_merge', $unique_chat_ids);
 
-        $chats = array();
+        $chats = [];
         if ($unique_chat_ids) {
             foreach ($unique_chat_ids as $unique_chat_id) {
                 $chats[] = Chatting::with([$with_param])
@@ -159,13 +159,13 @@ class ChatController extends Controller
 
         $query = Chatting::with($with)->where(['delivery_man_id' => $delivery_man['id'], $id_param => $id])->latest();
 
-        if (!empty($query->get())) {
+        if (! empty($query->get())) {
             $message = $query->paginate($request->limit, ['*'], 'page', $request->offset);
             $message?->map(function ($conversation) {
-                if (!is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
+                if (! is_null($conversation->attachment_full_url) && count($conversation->attachment_full_url) > 0) {
                     $attachmentData = [];
                     foreach ($conversation->attachment_full_url as $key => $attachment) {
-                        $attachmentData[] = (object)$this->getAttachmentData($attachment);
+                        $attachmentData[] = (object) $this->getAttachmentData($attachment);
                     }
                     $conversation->attachment = $attachmentData;
                 } else {
@@ -174,13 +174,15 @@ class ChatController extends Controller
             });
             $query->where($sent_by, 1)->update(['seen_by_delivery_man' => 1]);
 
-            $data = array();
+            $data = [];
             $data['total_size'] = $message->total();
             $data['limit'] = $request->limit;
             $data['offset'] = $request->offset;
             $data['message'] = $message->items();
+
             return response()->json($data, 200);
         }
+
         return response()->json(['message' => translate('no messages found!')], 200);
 
     }
@@ -191,7 +193,7 @@ class ChatController extends Controller
         $attachment = [];
         if ($request->file('media')) {
             foreach ($request['media'] as $image) {
-                if (in_array('.' . $image->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
+                if (in_array('.'.$image->getClientOriginalExtension(), GlobalConstant::VIDEO_EXTENSION)) {
                     $attachment[] = [
                         'file_name' => ImageManager::file_upload(dir: 'chatting/', format: $image->getClientOriginalExtension(), file: $image),
                         'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
@@ -214,7 +216,7 @@ class ChatController extends Controller
             }
         }
 
-        $chatting = new Chatting();
+        $chatting = new Chatting;
         $chatting->delivery_man_id = $deliveryMan->id;
         $chatting->message = $request->message;
         $chatting->attachment = json_encode($attachment);
@@ -260,11 +262,12 @@ class ChatController extends Controller
         }
         $path = $attachment['status'] == 200 ? $attachment['path'] : null;
         $size = $attachment['status'] == 200 ? FileManagerLogic::getFileSize(path: $path) : null;
+
         return [
             'type' => $type,
             'key' => $attachment['key'],
             'path' => $path,
-            'size' => $size
+            'size' => $size,
         ];
     }
 }

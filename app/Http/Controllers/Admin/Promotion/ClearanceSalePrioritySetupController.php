@@ -19,12 +19,10 @@ class ClearanceSalePrioritySetupController extends BaseController
     use InHouseTrait;
 
     public function __construct(
-        private readonly BusinessSettingRepositoryInterface     $businessSettingRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
         private readonly StockClearanceSetupRepositoryInterface $stockClearanceSetupRepo,
-        private readonly PrioritySetupService                   $prioritySetupService,
-    )
-    {
-    }
+        private readonly PrioritySetupService $prioritySetupService,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -32,10 +30,11 @@ class ClearanceSalePrioritySetupController extends BaseController
         $stockClearanceVendors = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'stock_clearance_vendor_priority'])?->value ?? '';
         $availableVendors = $this->stockClearanceSetupRepo->getListWhere(filters: ['is_active' => 1], relations: ['shop'], dataLimit: 'all')->pluck('shop');
 
-        $availableVendors = $availableVendors->map(function($vendor) {
+        $availableVendors = $availableVendors->map(function ($vendor) {
             if (is_null($vendor)) {
                 $vendor = $this->getInHouseShopObject();
             }
+
             return $vendor;
         });
 
@@ -57,8 +56,7 @@ class ClearanceSalePrioritySetupController extends BaseController
             value: json_encode($this->prioritySetupService->updateStockClearanceProductPrioritySetupData(request: $request))
         );
         ToastMagic::success(translate('Priority_setup_updated_successfully'));
+
         return redirect()->back();
     }
-
-
 }

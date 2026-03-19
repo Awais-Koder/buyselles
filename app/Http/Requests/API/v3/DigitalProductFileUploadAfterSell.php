@@ -2,16 +2,11 @@
 
 namespace App\Http\Requests\API\v3;
 
-
-use App\Enums\GlobalConstant;
 use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
-use App\Utils\Helpers;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class DigitalProductFileUploadAfterSell extends FormRequest
 {
@@ -37,8 +32,8 @@ class DigitalProductFileUploadAfterSell extends FormRequest
             'digital_file_ready' => [
                 'required',
                 'file',
-                new DisallowedExtension(),
-                'max:' . getFileUploadMaxSize(unit: 'kb'),
+                new DisallowedExtension,
+                'max:'.getFileUploadMaxSize(unit: 'kb'),
                 'mimes:jpg,jpeg,png,gif,zip,pdf',
 
             ],
@@ -54,7 +49,6 @@ class DigitalProductFileUploadAfterSell extends FormRequest
             'digital_file_ready.mimes' => translate('The digital file format is not supported. Allowed formats: jpg, jpeg, png, gif, zip, pdf.'),
         ];
     }
-
 
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {

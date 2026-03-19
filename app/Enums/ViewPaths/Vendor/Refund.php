@@ -4,20 +4,23 @@ namespace App\Enums\ViewPaths\Vendor;
 
 class Refund
 {
-    const INDEX =[
+    const INDEX = [
         URI => 'index',
         VIEW => 'vendor-views.refund.index',
     ];
-    const DETAILS =[
+
+    const DETAILS = [
         URI => 'details',
-        VIEW => 'vendor-views.refund.details'
+        VIEW => 'vendor-views.refund.details',
     ];
-    const UPDATE_STATUS =[
+
+    const UPDATE_STATUS = [
         URI => 'update-status',
-        VIEW => ''
+        VIEW => '',
     ];
+
     const EXPORT = [
         URI => 'export',
-        VIEW => ''
+        VIEW => '',
     ];
 }

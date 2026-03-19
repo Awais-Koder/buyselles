@@ -4,21 +4,18 @@ namespace App\Repositories;
 
 use App\Contracts\Repositories\OrderEditHistoryRepositoryInterface;
 use App\Models\OrderEditHistory;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrderEditHistoryRepository implements OrderEditHistoryRepositoryInterface
 {
-
-    public function __construct(private readonly OrderEditHistory $orderEditHistory){}
+    public function __construct(private readonly OrderEditHistory $orderEditHistory) {}
 
     public function add(array $data): OrderEditHistory
     {
         return $this->orderEditHistory->create($data);
     }
-
 
     public function getFirstWhere(array $params, array $relations = []): ?Model
     {
@@ -62,6 +59,7 @@ class OrderEditHistoryRepository implements OrderEditHistoryRepositoryInterface
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -73,6 +71,7 @@ class OrderEditHistoryRepository implements OrderEditHistoryRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->orderEditHistory->where($params)->update($data);
+
         return true;
     }
 

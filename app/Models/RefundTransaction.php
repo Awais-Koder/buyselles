@@ -55,7 +55,7 @@ class RefundTransaction extends Model
         'order_details_id' => 'integer',
         'amount' => 'float',
         'transaction_type' => 'string',
-        'refund_id' => 'string'
+        'refund_id' => 'string',
     ];
 
     public function orderDetails(): BelongsTo

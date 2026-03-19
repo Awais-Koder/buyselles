@@ -4,8 +4,8 @@ namespace Modules\Blog\app\Models;
 
 use App\Traits\StorageTrait;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\App;
@@ -68,16 +68,18 @@ class Blog extends Model
     public function getThumbnailFullUrlAttribute(): string|null|array
     {
         $value = $this->image;
+
         return $this->storageLink('blog/image', $value, $this->image_storage_type ?? 'public');
     }
 
     public function getDraftThumbnailFullUrlAttribute(): string|null|array
     {
         $value = $this->draft_image;
+
         return $this->storageLink('blog/image', $value, $this->draft_image_storage_type ?? 'public');
     }
 
-    public function getTitleAttribute($title): string|null
+    public function getTitleAttribute($title): ?string
     {
         if (strpos(url()->current(), '/admin') || strpos(url()->current(), '/vendor') || strpos(url()->current(), '/seller')) {
             return $title;
@@ -86,7 +88,7 @@ class Blog extends Model
             ->when(strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', App::getLocale());
             })
-            ->when(!strpos(url()->current(), '/api'), function ($query) {
+            ->when(! strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', getDefaultLanguage());
             })
             ->first();
@@ -94,7 +96,7 @@ class Blog extends Model
         return $translation?->value ?? $title;
     }
 
-    public function getDescriptionAttribute($description): string|null
+    public function getDescriptionAttribute($description): ?string
     {
         if (strpos(url()->current(), '/admin') || strpos(url()->current(), '/vendor') || strpos(url()->current(), '/seller')) {
             return $description;
@@ -103,10 +105,11 @@ class Blog extends Model
             ->when(strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', App::getLocale());
             })
-            ->when(!strpos(url()->current(), '/api'), function ($query) {
+            ->when(! strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', getDefaultLanguage());
             })
             ->first();
+
         return $translation?->value ?? $description;
     }
 

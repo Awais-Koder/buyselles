@@ -11,10 +11,6 @@ class CustomerMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return mixed
      */
     public function handle(Request $request, Closure $next): mixed
     {
@@ -26,6 +22,7 @@ class CustomerMiddleware
         } else {
             Toastr::info(translate('login_first_for_next_steps'));
         }
+
         return redirect()->route('customer.auth.login');
     }
 }

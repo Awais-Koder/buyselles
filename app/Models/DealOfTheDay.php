@@ -21,8 +21,6 @@ use Illuminate\Support\Facades\App;
  * @property bool $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DealOfTheDay extends Model
 {
@@ -53,13 +51,13 @@ class DealOfTheDay extends Model
         return $this->morphMany(Translation::class, 'translationable');
     }
 
-    public function getTitleAttribute($title): string|null
+    public function getTitleAttribute($title): ?string
     {
         if (strpos(url()->current(), '/admin') || strpos(url()->current(), '/vendor') || strpos(url()->current(), '/seller')) {
             return $title;
         }
 
-        return $this->translations[0]->value??$title;
+        return $this->translations[0]->value ?? $title;
     }
 
     protected static function boot(): void
@@ -67,9 +65,9 @@ class DealOfTheDay extends Model
         parent::boot();
         static::addGlobalScope('translate', function (Builder $builder) {
             $builder->with(['translations' => function ($query) {
-                if (strpos(url()->current(), '/api')){
+                if (strpos(url()->current(), '/api')) {
                     return $query->where('locale', App::getLocale());
-                }else{
+                } else {
                     return $query->where('locale', Helpers::default_lang());
                 }
             }]);

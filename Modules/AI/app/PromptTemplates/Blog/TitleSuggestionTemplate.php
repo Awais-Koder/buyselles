@@ -6,7 +6,6 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class TitleSuggestionTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode = strtoupper($langCode);
@@ -14,6 +13,7 @@ class TitleSuggestionTemplate implements PromptTemplateInterface
         if (is_array($context)) {
             $keywordsText = implode(' ', $context);
         }
+
         return <<<PROMPT
                 You are an expert SEO content strategist and professional copywriter.
 

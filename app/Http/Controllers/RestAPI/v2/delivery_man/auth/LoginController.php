@@ -14,15 +14,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Modules\Gateways\Traits\SmsGateway;
 
 class LoginController extends Controller
 {
-    public function login(Request $request):JsonResponse
+    public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'phone' => 'required',
-            'password' => 'required|min:8'
+            'password' => 'required|min:8',
         ]);
 
         if ($validator->fails()) {
@@ -32,13 +31,13 @@ class LoginController extends Controller
         /**
          * checking if existing delivery man has a country code or not
          */
-
         $d_man = DeliveryMan::where(['phone' => $request->phone])->first();
         if ($d_man && isset($d_man->country_code) && ($d_man->country_code != $request->country_code)) {
             $errors = [];
             array_push($errors, ['code' => 'auth-001', 'message' => 'Invalid credential or account suspended']);
+
             return response()->json([
-                'errors' => $errors
+                'errors' => $errors,
             ], 403);
         }
 
@@ -46,12 +45,14 @@ class LoginController extends Controller
             $token = Str::random(50);
             $d_man->auth_token = $token;
             $d_man->save();
+
             return response()->json(['token' => $token], 200);
         } else {
             $errors = [];
             array_push($errors, ['code' => 'auth-001', 'message' => 'Invalid credential or account suspended']);
+
             return response()->json([
-                'errors' => $errors
+                'errors' => $errors,
             ], 401);
         }
     }
@@ -100,20 +101,23 @@ class LoginController extends Controller
                     } catch (\Exception $ex) {
                         return response()->json(['message' => translate('email_send_failed')], 403);
                     }
-                    return response()->json(['message' => translate('OTP_sent_successfully.') . ' ' . translate('Please_check_your_email')], 200);
+
+                    return response()->json(['message' => translate('OTP_sent_successfully.').' '.translate('Please_check_your_email')], 200);
                 } else {
                     return response()->json(['message' => translate('email_failed')], 403);
                 }
             } elseif ($verificationBy == 'phone') {
-                $phoneNumber = $deliveryMan->country_code ? '+' . $deliveryMan->country_code . $deliveryMan->phone : $deliveryMan->phone;
+                $phoneNumber = $deliveryMan->country_code ? '+'.$deliveryMan->country_code.$deliveryMan->phone : $deliveryMan->phone;
                 SMSModule::sendCentralizedSMS($phoneNumber, $otp);
-                return response()->json(['message' => translate('OTP_sent_successfully.') . ' ' . translate('Please_check_your_phone')], 200);
+
+                return response()->json(['message' => translate('OTP_sent_successfully.').' '.translate('Please_check_your_phone')], 200);
             }
+
             return response()->json(['message' => translate('OTP_sent_successfully.')], 200);
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => translate('user_not_found')]
+            ['code' => 'not-found', 'message' => translate('user_not_found')],
         ]], 403);
     }
 
@@ -129,7 +133,7 @@ class LoginController extends Controller
         }
 
         $data = PasswordReset::where(['token' => $request['otp'], 'identity' => $request['identity'], 'user_type' => 'delivery_man'])->first();
-        if (!$data) {
+        if (! $data) {
             return response()->json(['message' => translate('Invalid_OTP')], 403);
         }
 
@@ -137,17 +141,18 @@ class LoginController extends Controller
 
         if ($timeDiff > 2) {
             PasswordReset::where(['token' => $request['otp'], 'user_type' => 'delivery_man'])->delete();
+
             return response()->json(['message' => translate('OTP_expired')], 403);
         }
 
         $deliveryManPhone = DeliveryMan::where(['phone' => $request['identity']])->orWhere(['email' => $request['identity']])->first();
+
         return response()->json([
             'message' => translate('OTP_verified_successfully'),
             'phone' => $deliveryManPhone['phone'],
             'email' => $deliveryManPhone['email'],
         ], 200);
     }
-
 
     public function reset_password_submit(Request $request)
     {

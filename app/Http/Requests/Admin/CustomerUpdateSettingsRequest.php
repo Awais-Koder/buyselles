@@ -42,8 +42,6 @@ use Illuminate\Foundation\Http\FormRequest;
  * @property $temp_block_time
  * @property string|null $referral_code
  * @property int $referred_by
- *
- * @package App\Models
  */
 class CustomerUpdateSettingsRequest extends FormRequest
 {
@@ -78,7 +76,6 @@ class CustomerUpdateSettingsRequest extends FormRequest
         return $rules;
     }
 
-
     public function messages(): array
     {
         return [
@@ -109,5 +106,4 @@ class CustomerUpdateSettingsRequest extends FormRequest
             'validity_type.in' => translate('The_validity_type_must_be_day_week_or_month'),
         ];
     }
-
 }

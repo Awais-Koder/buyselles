@@ -15,15 +15,16 @@ class SettingService
                 }
             }
         }
+
         return $url;
     }
 
     public function getSMSModuleValidationData(object $request): array
     {
-        collect(['status'])->each(fn($item, $key) => $request[$item] = $request->has($item) ? (int)$request[$item] : 0);
+        collect(['status'])->each(fn ($item, $key) => $request[$item] = $request->has($item) ? (int) $request[$item] : 0);
         $validation = [
             'gateway' => 'required|in:releans,twilio,nexmo,2factor,msg91,hubtel,paradox,signal_wire,019_sms,viatech,global_sms,akandit_sms,sms_to,alphanet_sms',
-            'mode' => 'required|in:live,test'
+            'mode' => 'required|in:live,test',
         ];
         $additional_data = [];
         if ($request['gateway'] == 'releans') {
@@ -31,7 +32,7 @@ class SettingService
                 'status' => 'required|in:1,0',
                 'api_key' => 'required',
                 'from' => 'required',
-                'otp_template' => 'required'
+                'otp_template' => 'required',
             ];
         } elseif ($request['gateway'] == 'twilio') {
             $additional_data = [
@@ -40,7 +41,7 @@ class SettingService
                 'messaging_service_sid' => 'required',
                 'token' => 'required',
                 'from' => 'required',
-                'otp_template' => 'required'
+                'otp_template' => 'required',
             ];
         } elseif ($request['gateway'] == 'nexmo') {
             $additional_data = [
@@ -49,13 +50,13 @@ class SettingService
                 'api_secret' => 'required',
                 'token' => 'required',
                 'from' => 'required',
-                'otp_template' => 'required'
+                'otp_template' => 'required',
             ];
         } elseif ($request['gateway'] == '2factor') {
             $additional_data = [
                 'status' => 'required|in:1,0',
                 'api_key' => 'required',
-                'otp_template' => 'required'
+                'otp_template' => 'required',
             ];
         } elseif ($request['gateway'] == 'msg91') {
             $additional_data = [
@@ -135,5 +136,4 @@ class SettingService
 
         return $request->validate(array_merge($validation, $additional_data));
     }
-
 }

@@ -15,20 +15,27 @@ class BkashPaymentController extends Controller
     use Processor;
 
     private $config_values;
+
     private $base_url;
+
     private $app_key;
+
     private $app_secret;
+
     private $username;
+
     private $password;
+
     private PaymentRequest $payment;
+
     private $user;
 
-    public function __construct(PaymentRequest $payment,User $user)
+    public function __construct(PaymentRequest $payment, User $user)
     {
         $config = $this->payment_config('bkash', 'payment_config');
-        if (!is_null($config) && $config->mode == 'live') {
+        if (! is_null($config) && $config->mode == 'live') {
             $this->config_values = json_decode($config->live_values);
-        } elseif (!is_null($config) && $config->mode == 'test') {
+        } elseif (! is_null($config) && $config->mode == 'test') {
             $this->config_values = json_decode($config->test_values);
         }
 
@@ -46,21 +53,21 @@ class BkashPaymentController extends Controller
 
     public function getToken()
     {
-        $post_token = array(
+        $post_token = [
             'app_key' => $this->app_key,
-            'app_secret' => $this->app_secret
-        );
+            'app_secret' => $this->app_secret,
+        ];
 
-        $url = curl_init($this->base_url . '/tokenized/checkout/token/grant');
+        $url = curl_init($this->base_url.'/tokenized/checkout/token/grant');
         $post_token_json = json_encode($post_token);
-        $header = array(
+        $header = [
             'Content-Type:application/json',
-            'username:' . $this->username,
-            'password:' . $this->password
-        );
+            'username:'.$this->username,
+            'password:'.$this->password,
+        ];
 
         curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($url, CURLOPT_POSTFIELDS, $post_token_json);
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
@@ -81,7 +88,7 @@ class BkashPaymentController extends Controller
     public function make_tokenize_payment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'payment_id' => 'required|uuid'
+            'payment_id' => 'required|uuid',
         ]);
 
         if ($validator->fails()) {
@@ -89,7 +96,7 @@ class BkashPaymentController extends Controller
         }
 
         $data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($data)) {
+        if (! isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
         $payer = json_decode($data['payer_information']);
@@ -99,27 +106,27 @@ class BkashPaymentController extends Controller
         session()->put('token', $auth);
         $callbackURL = route('bkash.callback', ['payment_id' => $request['payment_id'], 'token' => $auth]);
 
-        $requestbody = array(
+        $requestbody = [
             'mode' => '0011',
             'amount' => round($data->payment_amount, 2),
             'currency' => 'BDT',
             'intent' => 'sale',
-            'payerReference' => !empty($payer->phone) ? $payer->phone : getWebConfig(name: 'company_phone'),
-            'merchantInvoiceNumber' => 'invoice_' . Str::random('15'),
-            'callbackURL' => $callbackURL
-        );
+            'payerReference' => ! empty($payer->phone) ? $payer->phone : getWebConfig(name: 'company_phone'),
+            'merchantInvoiceNumber' => 'invoice_'.Str::random('15'),
+            'callbackURL' => $callbackURL,
+        ];
 
-        $url = curl_init($this->base_url . '/tokenized/checkout/create');
+        $url = curl_init($this->base_url.'/tokenized/checkout/create');
         $requestbodyJson = json_encode($requestbody);
 
-        $header = array(
+        $header = [
             'Content-Type:application/json',
-            'Authorization:' . $auth,
-            'X-APP-Key:' . $this->app_key
-        );
+            'Authorization:'.$auth,
+            'X-APP-Key:'.$this->app_key,
+        ];
 
         curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($url, CURLOPT_POSTFIELDS, $requestbodyJson);
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
@@ -128,6 +135,7 @@ class BkashPaymentController extends Controller
         curl_close($url);
 
         $obj = json_decode($resultdata);
+
         return redirect()->away($obj->{'bkashURL'});
     }
 
@@ -135,21 +143,21 @@ class BkashPaymentController extends Controller
     {
         $paymentID = $_GET['paymentID'];
         $auth = $_GET['token'];
-        $request_body = array(
-            'paymentID' => $paymentID
-        );
-        $url = curl_init($this->base_url . '/tokenized/checkout/execute');
+        $request_body = [
+            'paymentID' => $paymentID,
+        ];
+        $url = curl_init($this->base_url.'/tokenized/checkout/execute');
 
         $request_body_json = json_encode($request_body);
 
-        $header = array(
+        $header = [
             'Content-Type:application/json',
-            'Authorization:' . $auth,
-            'X-APP-Key:' . $this->app_key
-        );
+            'Authorization:'.$auth,
+            'X-APP-Key:'.$this->app_key,
+        ];
 
         curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($url, CURLOPT_POSTFIELDS, $request_body_json);
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
@@ -172,16 +180,14 @@ class BkashPaymentController extends Controller
                 call_user_func($data->success_hook, $data);
             }
 
-            return $this->payment_response($data,'success');
+            return $this->payment_response($data, 'success');
         } else {
             $payment_data = $this->payment::where(['id' => $request['payment_id']])->first();
             if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
                 call_user_func($payment_data->failure_hook, $payment_data);
             }
-            return $this->payment_response($payment_data,'fail');
+
+            return $this->payment_response($payment_data, 'fail');
         }
     }
-
-
 }
-

@@ -2,22 +2,21 @@
 
 namespace App\Providers;
 
-use App\Models\BusinessPage;
-use App\Models\BusinessSetting;
-use App\Models\LoginSetup;
-use App\Models\StockClearanceProduct;
-use App\Traits\CacheManagerTrait;
-use App\Traits\FileManagerTrait;
-use App\Traits\UpdateClass;
-use App\Utils\Helpers;
 use App\Enums\GlobalConstant;
+use App\Models\BusinessPage;
 use App\Models\Currency;
+use App\Models\LoginSetup;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Shop;
 use App\Models\SocialMedia;
-use App\Models\Product;
+use App\Models\StockClearanceProduct;
 use App\Traits\AddonHelper;
+use App\Traits\CacheManagerTrait;
+use App\Traits\FileManagerTrait;
 use App\Traits\ThemeHelper;
+use App\Traits\UpdateClass;
+use App\Utils\Helpers;
 use App\Utils\ProductManager;
 use Exception;
 use Illuminate\Foundation\AliasLoader;
@@ -48,8 +47,6 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Register any application services.
-     *
-     * @return void
      */
     public function register(): void
     {
@@ -61,16 +58,13 @@ class AppServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
-
     public function boot(): void
     {
-        if (!in_array(request()->ip(), ['127.0.0.1', '::1']) && env('FORCE_HTTPS')) {
+        if (! in_array(request()->ip(), ['127.0.0.1', '::1']) && env('FORCE_HTTPS')) {
             \URL::forceScheme('https');
         }
-        if (!App::runningInConsole()) {
+        if (! App::runningInConsole()) {
             Paginator::useBootstrap();
 
             Config::set('addon_admin_routes', $this->getAddonAdminRoutes());
@@ -85,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
                     $web = $this->cacheBusinessSettingsTable();
 
                     $firebaseOTPVerification = getWebConfig(name: 'firebase_otp_verification');
-                    $firebaseOTPVerificationStatus = (int)($firebaseOTPVerification && $firebaseOTPVerification['status'] && $firebaseOTPVerification['web_api_key']);
+                    $firebaseOTPVerificationStatus = (int) ($firebaseOTPVerification && $firebaseOTPVerification['status'] && $firebaseOTPVerification['web_api_key']);
 
                     $systemColors = getWebConfig('colors');
                     $web_config = [
@@ -103,7 +97,7 @@ class AppServiceProvider extends ServiceProvider
                         'about' => Helpers::get_settings($web, 'about_us'),
                         'footer_logo' => getWebConfig(name: 'company_footer_logo'),
                         'copyright_text' => getWebConfig(name: 'company_copyright_text'),
-                        'decimal_point_settings' => !empty(getWebConfig(name: 'decimal_point_settings')) ? getWebConfig(name: 'decimal_point_settings') : 0,
+                        'decimal_point_settings' => ! empty(getWebConfig(name: 'decimal_point_settings')) ? getWebConfig(name: 'decimal_point_settings') : 0,
                         'seller_registration' => getWebConfig(name: 'seller_registration') ?? 0,
                         'wallet_status' => getWebConfig(name: 'wallet_status'),
                         'loyalty_point_status' => getWebConfig(name: 'loyalty_point_status'),
@@ -118,7 +112,7 @@ class AppServiceProvider extends ServiceProvider
                         'meta_description' => substr(strip_tags(str_replace('&nbsp;', ' ', (BusinessPage::where('slug', 'about-us')->first()?->description ?? ''))), 0, 160),
                     ];
 
-                    if ((!Request::is('admin') && !Request::is('admin/*') && !Request::is('seller/*') && !Request::is('vendor/*')) || Request::is('vendor/auth/registration/*')) {
+                    if ((! Request::is('admin') && ! Request::is('admin/*') && ! Request::is('seller/*') && ! Request::is('vendor/*')) || Request::is('vendor/auth/registration/*')) {
                         $userId = Auth::guard('customer')->user() ? Auth::guard('customer')->id() : 0;
                         $flashDeal = ProductManager::getPriorityWiseFlashDealsProductsQuery(userId: $userId);
 
@@ -158,6 +152,7 @@ class AppServiceProvider extends ServiceProvider
                                     return $query->where('discount', '!=', 0);
                                 })->orWhere(function ($query) {
                                     $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                                     return $query->whereIn('id', $stockClearanceProductIds);
                                 });
                             })
@@ -200,7 +195,7 @@ class AppServiceProvider extends ServiceProvider
                             'business_pages' => $this->cacheBusinessPagesTable(),
                         ];
 
-                        if (theme_root_path() == "theme_fashion") {
+                        if (theme_root_path() == 'theme_fashion') {
                             $featuresSection = [
                                 'features_section_top' => getWebConfig(name: 'features_section_top') ?? [],
                                 'features_section_middle' => getWebConfig(name: 'features_section_middle') ?? [],
@@ -230,22 +225,22 @@ class AppServiceProvider extends ServiceProvider
             }
 
             try {
-                if (!in_array(request()->ip(), ['127.0.0.1', '::1'])) {
+                if (! in_array(request()->ip(), ['127.0.0.1', '::1'])) {
                     $this->autoClearDebugBarLogs();
                 }
-            } catch (Exception $exception) {}
+            } catch (Exception $exception) {
+            }
         }
 
         /**
          * Paginate a standard Laravel Collection.
          *
-         * @param int $perPage
-         * @param int $total
-         * @param int $page
-         * @param string $pageName
+         * @param  int  $perPage
+         * @param  int  $total
+         * @param  int  $page
+         * @param  string  $pageName
          * @return array
          */
-
         Collection::macro('paginate', function ($perPage, $total = null, $page = null, $pageName = 'page') {
             $page = $page ?: LengthAwarePaginator::resolveCurrentPage($pageName);
 
@@ -268,7 +263,7 @@ class AppServiceProvider extends ServiceProvider
         $minutes = 60;
         $lastClear = Cache::get($key);
 
-        if (!$lastClear || now()->diffInMinutes($lastClear) >= $minutes) {
+        if (! $lastClear || now()->diffInMinutes($lastClear) >= $minutes) {
             $debugBarPath = storage_path('debugbar');
             if (File::exists($debugBarPath)) {
                 foreach (File::files($debugBarPath) as $file) {

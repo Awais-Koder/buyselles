@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 class Notification extends Model
 {
     use StorageTrait;
+
     protected $fillable = [
         'sent_by',
         'sent_to',
@@ -32,6 +33,7 @@ class Notification extends Model
         'image',
         'status',
     ];
+
     protected $casts = [
         'sent_by' => 'string',
         'sent_to' => 'string',
@@ -44,31 +46,34 @@ class Notification extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function scopeActive($query):mixed
+    public function scopeActive($query): mixed
     {
         return $query->where('status', 1);
     }
 
     /* notification_seen_by -> notificationSeenBy */
-    public function notificationSeenBy():HasOne
+    public function notificationSeenBy(): HasOne
     {
         return $this->hasOne(NotificationSeen::class, 'notification_id');
     }
-    public function getImageFullUrlAttribute():array|null
+
+    public function getImageFullUrlAttribute(): ?array
     {
         $value = $this->image;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','image')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'image')->first();
         }
-        return $this->storageLink('notification',$value,$storage['value'] ?? 'public');
+
+        return $this->storageLink('notification', $value, $storage['value'] ?? 'public');
     }
 
     protected $appends = ['image_full_url'];
+
     protected static function boot(): void
     {
         parent::boot();
         static::saved(function ($model) {
-            if($model->isDirty('image')){
+            if ($model->isDirty('image')) {
                 $storage = config('filesystems.disks.default') ?? 'public';
                 DB::table('storages')->updateOrInsert([
                     'data_type' => get_class($model),

@@ -4,8 +4,9 @@ namespace Modules\Blog\app\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Modules\Blog\app\Traits\BlogResponseHandlerTrait;
 use Illuminate\Validation\Validator;
+use Modules\Blog\app\Traits\BlogResponseHandlerTrait;
+
 /**
  * @property string $about_us
  */
@@ -60,10 +61,12 @@ class BlogAddRequest extends FormRequest
             $messages["title.$locale.max"] = translate("The_title_in_{$languageName}_may_not_be_greater_than_255_characters");
             $messages["description.$locale.string"] = translate("The_description_in_{$languageName}_must_be_a_string");
         }
+
         return $messages;
     }
 
-    public function after(): array {
+    public function after(): array
+    {
         return [
             function (Validator $validator) {
                 $description = $this->input('description');
@@ -77,16 +80,16 @@ class BlogAddRequest extends FormRequest
 
                 if (is_null($this['title'][array_search('en', $this['lang'])])) {
                     $validator->errors()->add(
-                        'title', translate('title_field_is_required') . '!'
+                        'title', translate('title_field_is_required').'!'
                     );
                 }
                 if (empty($cleanedDescription)) {
                     $validator->errors()->add(
                         'description',
-                        translate('Description_is_required') . '!'
+                        translate('Description_is_required').'!'
                     );
                 }
-            }
+            },
         ];
     }
 
@@ -98,6 +101,7 @@ class BlogAddRequest extends FormRequest
                 $name = $language['name'];
             }
         }
+
         return $name;
     }
 

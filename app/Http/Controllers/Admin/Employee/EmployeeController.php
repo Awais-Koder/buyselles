@@ -10,12 +10,12 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\AdminAddRequest;
 use App\Http\Requests\Admin\AdminUpdateRequest;
 use App\Services\AdminService;
+use App\Traits\PaginatorTrait;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Traits\PaginatorTrait;
-use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -26,32 +26,30 @@ class EmployeeController extends BaseController
     public function __construct(
         private readonly AdminRepositoryInterface $adminRepo,
         private readonly AdminRoleRepositoryInterface $adminRoleRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $employee_roles = $this->adminRoleRepo->getEmployeeRoleList(dataLimit: 'all');
         $employees = $this->adminRepo->getEmployeeListWhere(
-            orderBy:['id'=>'desc'],
+            orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
-            filters:['admin_role_id' => $request['admin_role_id'] ?? 'all'] ,
+            filters: ['admin_role_id' => $request['admin_role_id'] ?? 'all'],
             relations: ['role'],
-            dataLimit:getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
+            dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
         );
-        return view('admin-views.employee.list', compact('employees','employee_roles'));
+
+        return view('admin-views.employee.list', compact('employees', 'employee_roles'));
     }
 
     public function getAddView(): View
     {
         $employee_roles = $this->adminRoleRepo->getEmployeeRoleList(dataLimit: 'all');
+
         return view('admin-views.employee.add-new', compact('employee_roles'));
     }
 
@@ -59,6 +57,7 @@ class EmployeeController extends BaseController
     {
         if ($request['role_id'] == 1) {
             ToastMagic::warning(translate('access_denied'));
+
             return back();
         }
 
@@ -71,14 +70,15 @@ class EmployeeController extends BaseController
             'identify_number' => $request['identify_number'],
             'identify_image' => $adminService->getIdentityImages(request: $request),
             'password' => bcrypt($request['password']),
-            'status'=>1,
-            'image' => $adminService->getProceedImage(request:$request),
+            'status' => 1,
+            'image' => $adminService->getProceedImage(request: $request),
             'created_at' => now(),
             'updated_at' => now(),
         ];
 
         $this->adminRepo->add(data: $data);
         ToastMagic::success(translate('employee_added_successfully'));
+
         return redirect()->route('admin.employee.list');
     }
 
@@ -89,12 +89,12 @@ class EmployeeController extends BaseController
             filters: ['admin_role_id' => $request['role']],
             relations: ['role'],
             dataLimit: 'all');
-        $active = $employees->where('status',1)->count();
-        $inactive = $employees->where('status',0)->count();
+        $active = $employees->where('status', 1)->count();
+        $inactive = $employees->where('status', 0)->count();
 
         $filter = 'all';
-        if($request->has('role') &&  $request['role'] != 'all') {
-            $filter = $this->adminRoleRepo->getFirstWhere(params:['id'=>$request['role']])['name'];
+        if ($request->has('role') && $request['role'] != 'all') {
+            $filter = $this->adminRoleRepo->getFirstWhere(params: ['id' => $request['role']])['name'];
         }
 
         $data = [
@@ -102,7 +102,7 @@ class EmployeeController extends BaseController
             'search' => $request['searchValue'],
             'active' => $active,
             'inactive' => $inactive,
-            'filter' => $filter
+            'filter' => $filter,
         ];
 
         return Excel::download(new EmployeeListExport($data), 'Employees.xlsx');
@@ -110,14 +110,16 @@ class EmployeeController extends BaseController
 
     public function getView(Request $request): View
     {
-        $employee = $this->adminRepo->getFirstWhere(params:['id' => $request['id']], relations:['role']);
+        $employee = $this->adminRepo->getFirstWhere(params: ['id' => $request['id']], relations: ['role']);
+
         return view('admin-views.employee.view', compact('employee'));
     }
 
     public function getUpdateView($id): View
     {
-        $employee = $this->adminRepo->getFirstWhere(params:['id' => $id]);
+        $employee = $this->adminRepo->getFirstWhere(params: ['id' => $id]);
         $adminRoles = $this->adminRoleRepo->getEmployeeRoleList(dataLimit: 'all');
+
         return view('admin-views.employee.edit', compact('adminRoles', 'employee'));
     }
 
@@ -125,9 +127,10 @@ class EmployeeController extends BaseController
     {
         if ($request['role_id'] == 1) {
             ToastMagic::warning(translate('access_denied'));
+
             return back();
         }
-        $employee = $this->adminRepo->getFirstWhere(params:['id' => $request['id']]);
+        $employee = $this->adminRepo->getFirstWhere(params: ['id' => $request['id']]);
         $identity_image = [];
         if ($request->file('identity_image')) {
             $identity_image = $adminService->getIdentityImages(request: $request, oldImages: $employee);
@@ -139,28 +142,30 @@ class EmployeeController extends BaseController
             'email' => $request['email'],
             'admin_role_id' => $request['role_id'],
             'password' => $request['password'] ? bcrypt($request['password']) : $employee['password'],
-            'image' => $request->file('image') ? $adminService->getProceedImage(request:$request, oldImage:$employee['image']) : $employee['image'],
+            'image' => $request->file('image') ? $adminService->getProceedImage(request: $request, oldImage: $employee['image']) : $employee['image'],
             'identify_image' => $request->file('identity_image') ? $identity_image : $employee['identify_image'],
             'identify_type' => $request['identify_type'],
             'identify_number' => $request['identify_number'],
             'updated_at' => now(),
         ];
 
-        $this->adminRepo->update(id:$request['id'], data: $data);
+        $this->adminRepo->update(id: $request['id'], data: $data);
         ToastMagic::success(translate('employee_updated_successfully'));
+
         return redirect()->route('admin.employee.list');
     }
 
     public function updateStatus(Request $request): RedirectResponse|JsonResponse
     {
-        $this->adminRepo->update(id:$request['id'], data:['status'=> $request->get('status', 0)]);
-        if($request->ajax()) {
+        $this->adminRepo->update(id: $request['id'], data: ['status' => $request->get('status', 0)]);
+        if ($request->ajax()) {
             return response()->json([
                 'status' => 'success',
                 'message' => translate('Status_Updated'),
             ]);
         }
         ToastMagic::success(translate('Status_Updated'));
+
         return back();
     }
 }

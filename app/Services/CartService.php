@@ -18,10 +18,6 @@ class CartService
     use VatTaxManagement;
 
     /**
-     * @param object $request
-     * @param object $product
-     * @param string|null $colorName
-     * @return array
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -33,7 +29,7 @@ class CartService
         $discount = 0;
         $currentStock = 0;
         $variations = json_decode($product->variation, true) ?? [];
-        $hasVariations = !empty($variations);
+        $hasVariations = ! empty($variations);
         $variation = $this->makeVariation(
             request: $request,
             colorName: $colorName,
@@ -57,7 +53,7 @@ class CartService
             $quantity = $product['current_stock'];
         }
 
-        $requestQuantity = (int)$request['quantity'];
+        $requestQuantity = (int) $request['quantity'];
 
         $inCartStatus = 0;
         $cartData = session(SessionKey::CURRENT_USER) ? session()->get(session(SessionKey::CURRENT_USER)) : [];
@@ -87,32 +83,33 @@ class CartService
                 $inCartData = [
                     'price' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $price * $requestQuantity)),
                     'discount' => usdToDefaultCurrency($cartDiscount),
-                    'quantity' => (int)$cart['quantity'],
+                    'quantity' => (int) $cart['quantity'],
                     'variant' => $cart['variant'],
                     'id' => $cart['id'],
                 ];
-                $requestQuantity = (int)($request['quantity_in_cart'] ?? $cart['quantity']);
+                $requestQuantity = (int) ($request['quantity_in_cart'] ?? $cart['quantity']);
             }
         }
         $discountType = getProductPriceByType(product: $product, type: 'discount_type', result: 'string');
-        $allVariationsOutOfStock = $hasVariations ? empty(array_filter($variations, fn($v) => ($v['qty'] ?? 0) > 0)) : ($quantity < 1);
+        $allVariationsOutOfStock = $hasVariations ? empty(array_filter($variations, fn ($v) => ($v['qty'] ?? 0) > 0)) : ($quantity < 1);
+
         return [
             'price' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $price * $requestQuantity)),
             'discount' => usdToDefaultCurrency($discount),
             'discount_amount' => $discount,
             'discount_type' => $discountType,
-            'discount_text' => $discountType == 'flat' ? translate('save') . ' ' . setCurrencySymbol(amount: usdToDefaultCurrency(amount: $discount), currencyCode: getCurrencyCode()) : getProductPriceByType(product: $product, type: 'discount', result: 'value') . '% ' . translate('off'),
+            'discount_text' => $discountType == 'flat' ? translate('save').' '.setCurrencySymbol(amount: usdToDefaultCurrency(amount: $discount), currencyCode: getCurrencyCode()) : getProductPriceByType(product: $product, type: 'discount', result: 'value').'% '.translate('off'),
             'quantity' => $product['product_type'] == 'physical' ? $quantity : 100,
             'inCartStatus' => $inCartStatus,
             'inCartData' => $inCartData,
             'requestQuantity' => $requestQuantity,
             'total_unit_price' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $unitPrice)),
             'discounted_unit_price' => setCurrencySymbol(amount: usdToDefaultCurrency(amount: $unitPrice - $discount)),
-            'allVariationsOutOfStock' => $allVariationsOutOfStock
+            'allVariationsOutOfStock' => $allVariationsOutOfStock,
         ];
     }
 
-    public function makeVariation(object $request, string|null $colorName, array $choiceOptions): string
+    public function makeVariation(object $request, ?string $colorName, array $choiceOptions): string
     {
         $variation = '';
         if ($colorName) {
@@ -120,11 +117,12 @@ class CartService
         }
         foreach ($choiceOptions as $choice) {
             if ($variation != null) {
-                $variation .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $variation .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $variation .= str_replace(' ', '', $request[$choice->name]);
             }
         }
+
         return $variation;
     }
 
@@ -134,6 +132,7 @@ class CartService
         if (Str::contains(session(SessionKey::CURRENT_USER), 'saved-customer')) {
             $userId = explode('-', session(SessionKey::CURRENT_USER))[2];
         }
+
         return $userId;
     }
 
@@ -143,16 +142,17 @@ class CartService
         if (Str::contains(session(SessionKey::CURRENT_USER), 'saved-customer')) {
             $userType = 'saved-customer';
         }
+
         return $userType;
     }
 
     public function getNewCartSession(string|int $cartId): void
     {
-        if (!session()->has(SessionKey::CURRENT_USER)) {
+        if (! session()->has(SessionKey::CURRENT_USER)) {
             session()->put(SessionKey::CURRENT_USER, $cartId);
         }
-        if (!session()->has(SessionKey::CART_NAME)) {
-            if (!in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
+        if (! session()->has(SessionKey::CART_NAME)) {
+            if (! in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
                 session()->push(SessionKey::CART_NAME, $cartId);
             }
         }
@@ -180,6 +180,7 @@ class CartService
                 $price = $variation[$i]->price;
             }
         }
+
         return $price;
     }
 
@@ -192,12 +193,14 @@ class CartService
                 $productQuantity = $variation[$i]->qty;
             }
         }
+
         return $productQuantity;
     }
 
     public function getCurrentQuantity($variation, $variant, $quantity): int
     {
         $productQuantity = $this->getVariationQuantity($variation, $variant);
+
         return $productQuantity - $quantity;
     }
 
@@ -224,13 +227,14 @@ class CartService
             }
             $keeper[] = $sessionData;
 
-            if (!isset(session()->get($cartId)['add_to_cart_time'])) {
+            if (! isset(session()->get($cartId)['add_to_cart_time'])) {
                 $keeper += ['add_to_cart_time' => Carbon::now()];
             }
             session()->put($cartId, $keeper);
         } else {
             session()->put($cartId, [$sessionData] + ['add_to_cart_time' => Carbon::now()]);
         }
+
         return $sessionData;
     }
 
@@ -240,9 +244,9 @@ class CartService
         $cartData = session($cartId, []);
         $productCounts = [];
 
-        if (!empty($cartData)) {
+        if (! empty($cartData)) {
             foreach ($cartData as $key => $item) {
-                if ($key === 'add_to_cart_time' || !is_array($item) || !isset($item['id'])) {
+                if ($key === 'add_to_cart_time' || ! is_array($item) || ! isset($item['id'])) {
                     continue;
                 }
                 $productId = $item['id'];
@@ -254,8 +258,10 @@ class CartService
                 }
             }
         }
+
         return $productCounts;
     }
+
     public function getQuantityAndUpdateTime(object $request, object $product): int
     {
         $quantity = 0;
@@ -266,7 +272,7 @@ class CartService
         foreach ($cart as $item) {
             if (is_array($item)) {
                 $variantCheck = false;
-                if (!empty($item['variant']) && ($item['variant'] == $request['variant']) && ($item['id'] == $request['key'])) {
+                if (! empty($item['variant']) && ($item['variant'] == $request['variant']) && ($item['id'] == $request['key'])) {
                     $variantCheck = true;
                 } elseif (empty($request['variant']) && $item['id'] == $request['key']) {
                     $variantCheck = true;
@@ -277,7 +283,7 @@ class CartService
                     if ($item['variations']) {
                         foreach ($item['variations'] as $value) {
                             if ($variant != null) {
-                                $variant .= '-' . str_replace(' ', '', $value);
+                                $variant .= '-'.str_replace(' ', '', $value);
                             } else {
                                 $variant .= str_replace(' ', '', $value);
                             }
@@ -301,14 +307,15 @@ class CartService
         }
         $keeper += ['add_to_cart_time' => Carbon::now()];
         session()->put($cartId, $keeper);
+
         return $quantity;
     }
 
     public function getNewCartId(): void
     {
-        $cartId = 'walk-in-customer-' . rand(10, 1000);
+        $cartId = 'walk-in-customer-'.rand(10, 1000);
         session()->put(SessionKey::CURRENT_USER, $cartId);
-        if (!in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
+        if (! in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
             session()->push(SessionKey::CART_NAME, $cartId);
         }
     }
@@ -371,7 +378,7 @@ class CartService
         return [
             'total' => $total,
             'couponDiscount' => $couponDiscount,
-            'extraDiscount' => $extraDiscount
+            'extraDiscount' => $extraDiscount,
         ];
     }
 
@@ -406,6 +413,7 @@ class CartService
                 }
             }
         }
+
         return $totalDiscountedPrice;
     }
 
@@ -416,6 +424,7 @@ class CartService
         } else {
             $currentQty = $productQty - $quantity;
         }
+
         return $currentQty;
     }
 
@@ -428,36 +437,40 @@ class CartService
                 $isDigitalProduct = true;
             }
         }
+
         return $isDigitalProduct;
     }
 
-    public function getCustomerInfo(object|null $currentCustomerData, int $customerId): array
+    public function getCustomerInfo(?object $currentCustomerData, int $customerId): array
     {
         if ($currentCustomerData) {
-            $customerName = $currentCustomerData['f_name'] . ' ' . $currentCustomerData['l_name'];
+            $customerName = $currentCustomerData['f_name'].' '.$currentCustomerData['l_name'];
             $customerPhone = $currentCustomerData['phone'];
         } else {
-            $customerName = "";
-            $customerPhone = "";
+            $customerName = '';
+            $customerPhone = '';
             session()->forget(session($customerId));
             $this->getNewCartId();
         }
+
         return [
             'customerName' => $customerName,
-            'customerPhone' => $customerPhone
+            'customerPhone' => $customerPhone,
         ];
     }
 
     public function filterSessionCartList($cart): Collection
     {
         $cartListVariations = [];
+
         return collect($cart)->filter(function ($cart, $key) {
             return is_array($cart);
         })->filter(function ($cartItem, $key) use (&$cartListVariations) {
-            $variations = $cartItem['id'] . '-' . $cartItem['productType'] . '-Q' . $cartItem['quantity'] . '-' . ($cartItem['variant'] ? $cartItem['variant'] : 'single');
+            $variations = $cartItem['id'].'-'.$cartItem['productType'].'-Q'.$cartItem['quantity'].'-'.($cartItem['variant'] ? $cartItem['variant'] : 'single');
             $variationExist = in_array($variations, $cartListVariations);
             $cartListVariations[] = $variations;
-            return !$variationExist;
+
+            return ! $variationExist;
         });
     }
 }

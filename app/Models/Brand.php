@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\App;
  */
 class Brand extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     protected $fillable = [
         'name',
@@ -27,7 +27,7 @@ class Brand extends Model
         'image',
         'image_storage_type',
         'image_alt_text',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -67,7 +67,7 @@ class Brand extends Model
         return $this->morphOne('App\Models\SeoMetaInfo', 'seoable');
     }
 
-    public function getNameAttribute($name): string|null
+    public function getNameAttribute($name): ?string
     {
         $segment = request()->segment(1);
         if ($segment === 'api') {
@@ -76,10 +76,11 @@ class Brand extends Model
         if (in_array($segment, ['admin', 'vendor', 'seller'], true)) {
             return $name;
         }
+
         return $this->translations[0]->value ?? $name;
     }
 
-    public function getDefaultNameAttribute(): string|null
+    public function getDefaultNameAttribute(): ?string
     {
         return $this->translations[0]->value ?? $this->name;
     }
@@ -92,6 +93,7 @@ class Brand extends Model
     public function getImageFullUrlAttribute(): array
     {
         $value = $this->image;
+
         return $this->storageLink('brand', $value, $this->image_storage_type ?? 'public');
     }
 

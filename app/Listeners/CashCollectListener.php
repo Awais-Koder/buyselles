@@ -5,7 +5,6 @@ namespace App\Listeners;
 use App\Events\CashCollectEvent;
 use App\Traits\PushNotificationTrait;
 
-
 class CashCollectListener
 {
     use PushNotificationTrait;

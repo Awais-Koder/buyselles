@@ -12,10 +12,7 @@ class AttributeRepository implements AttributeRepositoryInterface
 {
     public function __construct(
         private readonly Attribute $attribute,
-    )
-    {
-    }
-
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,27 +27,29 @@ class AttributeRepository implements AttributeRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->attribute->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
     public function getListWhere(
-        array      $orderBy = [],
-        string     $searchValue = null,
-        array      $filters = [], array $relations = [],
+        array $orderBy = [],
+        ?string $searchValue = null,
+        array $filters = [], array $relations = [],
         int|string $dataLimit = DEFAULT_DATA_LIMIT,
-        int        $offset = null): Collection|LengthAwarePaginator
+        ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->attribute->when($searchValue, function ($query) use ($searchValue) {
-                    return $query->where('name', 'like', "%$searchValue%");
-                })
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-                });
+            return $query->where('name', 'like', "%$searchValue%");
+        })
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -62,6 +61,7 @@ class AttributeRepository implements AttributeRepositoryInterface
     public function delete(array $params): bool
     {
         $this->attribute->where($params)->delete();
+
         return true;
     }
 }

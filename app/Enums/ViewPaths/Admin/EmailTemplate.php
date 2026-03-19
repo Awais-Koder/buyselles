@@ -6,15 +6,16 @@ enum EmailTemplate
 {
     const VIEW = [
         URI => '/',
-        VIEW => 'admin-views.business-settings.email-template.index'
-    ];
-    const UPDATE = [
-        URI => 'update',
-        VIEW => ''
-    ];
-    const UPDATE_STATUS = [
-        URI => 'update-status',
-        VIEW => ''
+        VIEW => 'admin-views.business-settings.email-template.index',
     ];
 
+    const UPDATE = [
+        URI => 'update',
+        VIEW => '',
+    ];
+
+    const UPDATE_STATUS = [
+        URI => 'update-status',
+        VIEW => '',
+    ];
 }

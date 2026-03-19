@@ -12,9 +12,7 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
 {
     public function __construct(
         private readonly Subscription $subscription,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->subscription->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -41,9 +39,10 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
         $query = $this->subscription->where($filters)->with($relations)
             ->when($searchValue, function ($query) use ($searchValue) {
                 $query->orWhere('email', 'like', "%$searchValue%");
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends(['searchValue' => $searchValue]);
     }
 
@@ -54,16 +53,16 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
             ->when($searchValue, function ($query) use ($searchValue) {
                 $query->orWhere('email', 'like', "%$searchValue%");
             })
-            ->when(!empty($whereBetween) && !empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
+            ->when(! empty($whereBetween) && ! empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
                 $query->whereBetween($whereBetween, $whereBetweenFilters);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        if (!empty($takeItem) && $dataLimit == 'all') {
+        if (! empty($takeItem) && $dataLimit == 'all') {
             return $query->get()->slice(0, $takeItem)->values();
-        } else if (!empty($takeItem) && $dataLimit != 'all') {
+        } elseif (! empty($takeItem) && $dataLimit != 'all') {
             $allResults = $query->get();
             $allResults = $allResults->slice(0, $takeItem);
             $page = request('page') ?? 1;
@@ -74,8 +73,10 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
                 perPage: $perPage,
                 currentPage: $page,
                 options: ['path' => request()->url(), 'query' => request()->query()]);
+
             return $paginator->appends($appends);
         }
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($appends);
     }
 
@@ -87,6 +88,7 @@ class SubscriptionRepository implements SubscriptionRepositoryInterface
     public function delete(array $params): bool
     {
         $this->subscription->where($params)->delete();
+
         return true;
     }
 }

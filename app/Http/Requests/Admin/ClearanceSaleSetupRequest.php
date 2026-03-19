@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -44,45 +43,44 @@ class ClearanceSaleSetupRequest extends FormRequest
             function (Validator $validator) {
                 if (empty($this['clearance_sale_duration'])) {
                     $validator->errors()->add(
-                        'clearance_sale_duration', translate('clearance_sale_duration_is_required') . '!'
+                        'clearance_sale_duration', translate('clearance_sale_duration_is_required').'!'
                     );
                 } else {
                     $dates = explode(' - ', $this['clearance_sale_duration']);
-                    if (count($dates) !== 2 || !checkDateFormatInMDYAndTime($dates[0]) || !checkDateFormatInMDYAndTime($dates[1])) {
+                    if (count($dates) !== 2 || ! checkDateFormatInMDYAndTime($dates[0]) || ! checkDateFormatInMDYAndTime($dates[1])) {
                         $validator->errors()->add(
-                            'clearance_sale_duration', translate('Invalid_date_range_format') . '!'
+                            'clearance_sale_duration', translate('Invalid_date_range_format').'!'
                         );
                     }
                 }
 
                 if ($this['discount_type'] == 'flat' && $this['discount_amount'] <= 0) {
                     $validator->errors()->add(
-                        'discount_amount', translate('discount_amount_is_required') . '!'
+                        'discount_amount', translate('discount_amount_is_required').'!'
                     );
                 }
 
                 if ($this['discount_type'] == 'flat' && $this['discount_amount'] > 100) {
                     $validator->errors()->add(
-                        'discount_amount', translate('discount_amount_cannot_be_greater_than_100') . '!'
+                        'discount_amount', translate('discount_amount_cannot_be_greater_than_100').'!'
                     );
                 }
 
                 if ($this['offer_active_time'] == 'specific_time' && empty($this['offer_active_range'])) {
                     $validator->errors()->add(
-                        'offer_active_range', translate('offer_active_range_is_required') . '!'
+                        'offer_active_range', translate('offer_active_range_is_required').'!'
                     );
                 }
 
-                if ($this['offer_active_time'] == 'specific_time' && !empty($this['offer_active_range'])) {
+                if ($this['offer_active_time'] == 'specific_time' && ! empty($this['offer_active_range'])) {
                     $dates = explode(' - ', $this['offer_active_range']);
-                    if (count($dates) !== 2 || !checkTimeFormatInRequestTime($dates[0]) || !checkTimeFormatInRequestTime($dates[1])) {
+                    if (count($dates) !== 2 || ! checkTimeFormatInRequestTime($dates[0]) || ! checkTimeFormatInRequestTime($dates[1])) {
                         $validator->errors()->add(
-                            'offer_active_range', translate('Invalid_time_range_format') . '!'
+                            'offer_active_range', translate('Invalid_time_range_format').'!'
                         );
                     }
                 }
-            }
+            },
         ];
     }
-
 }

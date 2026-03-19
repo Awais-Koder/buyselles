@@ -10,8 +10,6 @@ class SystemTaxSetupUpdateRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -24,7 +22,8 @@ class SystemTaxSetupUpdateRequest extends FormRequest
             return [
                 'tax_ids' => 'required_if:tax_type,order_wise',
             ];
-        };
+        }
+
         return [];
     }
 

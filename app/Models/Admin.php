@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use App\Traits\StorageTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,8 +27,6 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property int $status
- *
- * @package App\Models
  */
 class Admin extends Authenticatable
 {
@@ -71,7 +68,7 @@ class Admin extends Authenticatable
     ];
 
     protected $hidden = [
-        'password', 'remember_token'
+        'password', 'remember_token',
     ];
 
     public function role(): BelongsTo
@@ -85,6 +82,7 @@ class Admin extends Authenticatable
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('admin', $value, $storage['value'] ?? 'public');
     }
 
@@ -94,10 +92,11 @@ class Admin extends Authenticatable
         $value = json_decode($this->identify_image);
         if ($value) {
             foreach ($value as $item) {
-                $item = isset($item->image_name) ? (array)$item : ['image_name' => $item, 'storage' => 'public'];
+                $item = isset($item->image_name) ? (array) $item : ['image_name' => $item, 'storage' => 'public'];
                 $images[] = $this->storageLink('admin', $item['image_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
 
@@ -125,5 +124,4 @@ class Admin extends Authenticatable
             }
         });
     }
-
 }

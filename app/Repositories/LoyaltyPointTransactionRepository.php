@@ -17,12 +17,9 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
 {
     public function __construct(
         private readonly LoyaltyPointTransaction $loyaltyPointTransaction,
-        private readonly BusinessSetting         $businessSetting,
-        private readonly User                    $user,
-    )
-    {
-    }
-
+        private readonly BusinessSetting $businessSetting,
+        private readonly User $user,
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -37,7 +34,7 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->loyaltyPointTransaction->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -48,13 +45,13 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
     {
         $query = $this->loyaltyPointTransaction
             ->when((isset($filters['from']) && isset($filters['to'])), function ($query) use ($filters) {
-                $query->whereBetween('created_at', [$filters['from'] . ' 00:00:00', $filters['to'] . ' 23:59:59']);
+                $query->whereBetween('created_at', [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59']);
             })
             ->when((isset($filters['from']) && empty($filters['to'])), function ($query) use ($filters) {
-                $query->where('created_at', '>=', $filters['from'] . ' 00:00:00');
+                $query->where('created_at', '>=', $filters['from'].' 00:00:00');
             })
-            ->when((empty($filters['from']) && !empty($filters['to'])), function ($query) use ($filters) {
-                $query->where('created_at', '<=', $filters['to'] . ' 23:59:59');
+            ->when((empty($filters['from']) && ! empty($filters['to'])), function ($query) use ($filters) {
+                $query->where('created_at', '<=', $filters['to'].' 23:59:59');
             })
             ->when(isset($filters['transaction_id']), function ($query) use ($filters) {
                 $query->where('transaction_id', $filters['transaction_id']);
@@ -65,7 +62,7 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
             ->when(isset($filters['customer_id']) && $filters['customer_id'] != 'all', function ($query) use ($filters) {
                 $query->where('user_id', $filters['customer_id']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -76,7 +73,7 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
     {
         $query = $this->loyaltyPointTransaction->selectRaw('sum(credit) as total_credit, sum(debit) as total_debit')
             ->when(($filters['from'] && $filters['to']), function ($query) use ($filters) {
-                $query->whereBetween('created_at', [$filters['from'] . ' 00:00:00', $filters['to'] . ' 23:59:59']);
+                $query->whereBetween('created_at', [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59']);
             })
             ->when($filters['transaction_type'], function ($query) use ($filters) {
                 $query->where('transaction_type', $filters['transaction_type']);
@@ -96,6 +93,7 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
     public function delete(array $params): bool
     {
         $this->loyaltyPointTransaction->where($params)->delete();
+
         return true;
     }
 
@@ -109,10 +107,10 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
         $debit = 0;
         $user = $this->user->find($userId);
         if ($transactionType == 'order_place') {
-            $credit = (int)($amount * $settings['loyalty_point_item_purchase_point'] / 100);
-        } else if ($transactionType == 'point_to_wallet') {
+            $credit = (int) ($amount * $settings['loyalty_point_item_purchase_point'] / 100);
+        } elseif ($transactionType == 'point_to_wallet') {
             $debit = $amount;
-        } else if ($transactionType == 'refund_order') {
+        } elseif ($transactionType == 'refund_order') {
             $debit = $amount;
         }
 
@@ -139,11 +137,13 @@ class LoyaltyPointTransactionRepository implements LoyaltyPointTransactionReposi
             $user->save();
             $this->loyaltyPointTransaction->create($loyaltyPointTransaction);
             DB::commit();
+
             return true;
         } catch (Exception $ex) {
             info($ex);
             DB::rollback();
         }
+
         return false;
     }
 }

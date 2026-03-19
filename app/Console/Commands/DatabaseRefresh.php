@@ -15,6 +15,7 @@ use Madnest\Madzipper\Facades\Madzipper;
 class DatabaseRefresh extends Command
 {
     use PushNotificationTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -42,7 +43,6 @@ class DatabaseRefresh extends Command
     /**
      * Execute the console command.
      *
-     * @return void
      * @throws Exception
      */
     public function handle(): void
@@ -59,13 +59,14 @@ class DatabaseRefresh extends Command
         Madzipper::make('demo/public.zip')->extractTo('storage/app');
 
         try {
-            if (!in_array(request()->ip(), ['127.0.0.1', '::1'])) {
+            if (! in_array(request()->ip(), ['127.0.0.1', '::1'])) {
                 $recaptcha = BusinessSetting::where('type', 'recaptcha')->first()?->value ?? '';
-                $recaptcha =  is_string($recaptcha) ? json_decode($recaptcha, true) : $recaptcha;
+                $recaptcha = is_string($recaptcha) ? json_decode($recaptcha, true) : $recaptcha;
                 $value = json_encode(['status' => 0, 'site_key' => $recaptcha['site_key'], 'secret_key' => $recaptcha['secret_key']]);
-                BusinessSetting::where('type', 'recaptcha')->update(['type' =>'recaptcha', 'value' => $value]);
+                BusinessSetting::where('type', 'recaptcha')->update(['type' => 'recaptcha', 'value' => $value]);
             }
-        } catch (Exception $exception) {}
+        } catch (Exception $exception) {
+        }
 
         Cache::forget('demo_database_refresh');
     }

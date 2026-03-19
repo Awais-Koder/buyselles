@@ -4,7 +4,6 @@ namespace App\Http\Controllers\RestAPI\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Seller;
@@ -17,18 +16,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Arr;
 
 class SellerController extends Controller
 {
-    use InHouseTrait;
     use CacheManagerTrait;
+    use InHouseTrait;
 
     public function __construct(
         private Seller $seller,
-    )
-    {
-    }
+    ) {}
 
     public function get_seller_info(Request $request): JsonResponse
     {
@@ -69,7 +65,7 @@ class SellerController extends Controller
         }
 
         $data['seller'] = $seller;
-        $data['avg_rating'] = (float)$avgRating;
+        $data['avg_rating'] = (float) $avgRating;
         $data['positive_review'] = round(($avgRating * 100) / 5);
         $data['total_review'] = $totalReview;
         $data['total_order'] = $totalOrder;
@@ -84,11 +80,12 @@ class SellerController extends Controller
     {
         $products = ProductManager::get_seller_products($slug, $request);
         $productsList = $products->total() > 0 ? Helpers::product_data_formatting($products->items(), true) : [];
+
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
@@ -105,7 +102,7 @@ class SellerController extends Controller
             }])
             ->get()
             ->each(function ($seller) {
-                $seller['temporary_close'] = (int)$seller?->shop?->temporary_close ?? 0;
+                $seller['temporary_close'] = (int) $seller?->shop?->temporary_close ?? 0;
                 $seller->product?->map(function ($product) {
                     $product['rating'] = $product?->reviews?->where('status', 1)->pluck('rating')->sum();
                     $product['rating_count'] = $product->reviews?->where('status', 1)->count();
@@ -145,7 +142,7 @@ class SellerController extends Controller
         $inhouseSeller->average_rating = $inhouseReviewData->avg('rating');
         $inhouseSeller->positive_review = $inhouseReviewDataCount != 0 ? ($inhouseRattingStatusPositive * 100) / $inhouseReviewDataCount : 0;
         $inhouseSeller->orders_count = Order::where(['seller_is' => 'admin'])->count();
-        $inhouseSeller->temporary_close = (int)$inhouseShop->temporary_close ?? 0;
+        $inhouseSeller->temporary_close = (int) $inhouseShop->temporary_close ?? 0;
         $inhouseSeller->shop = $inhouseShop;
         $sellers->prepend($inhouseSeller);
 
@@ -168,9 +165,9 @@ class SellerController extends Controller
 
         return [
             'total_size' => $sellers->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'sellers' => $sellers->values()
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'sellers' => $sellers->values(),
         ];
 
     }
@@ -214,9 +211,9 @@ class SellerController extends Controller
 
         return [
             'total_size' => $featuredProductsList->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $featuredProductsList->items() ? Helpers::product_data_formatting($featuredProductsList->items(), true) : []
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $featuredProductsList->items() ? Helpers::product_data_formatting($featuredProductsList->items(), true) : [],
         ];
     }
 
@@ -241,12 +238,11 @@ class SellerController extends Controller
             $product['rating'] = isset($product?->rating[0]) ? $product->rating[0] : null;
         });
 
-
         return [
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $products ? Helpers::product_data_formatting($products, true) : []
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $products ? Helpers::product_data_formatting($products, true) : [],
         ];
     }
 }

@@ -17,8 +17,6 @@ class ProductEditImageRequest extends Request
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -27,8 +25,6 @@ class ProductEditImageRequest extends Request
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -38,15 +34,15 @@ class ProductEditImageRequest extends Request
                 skipMimes: ['.webp'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed: true
-            )
+            ),
         ];
     }
 
     public function messages(): array
     {
         return [
-            'image' . '.' . 'required' => translate('product_thumbnail_is_required!'),
-            'image.mimes' => translate('The image format is not supported. Allowed formats:'). getFileUploadFormats( skip: '.webp', asMessage: 'true'),
+            'image'.'.'.'required' => translate('product_thumbnail_is_required!'),
+            'image.mimes' => translate('The image format is not supported. Allowed formats:').getFileUploadFormats(skip: '.webp', asMessage: 'true'),
         ];
     }
 
@@ -57,8 +53,7 @@ class ProductEditImageRequest extends Request
 
                 $disallowedExtensions = getDisallowedExtensionsListArray();
 
-
-            }
+            },
         ];
     }
 

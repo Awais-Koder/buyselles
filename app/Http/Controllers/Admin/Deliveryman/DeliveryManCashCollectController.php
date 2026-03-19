@@ -20,43 +20,34 @@ class DeliveryManCashCollectController extends BaseController
 {
     use PushNotificationTrait;
 
-    /**
-     * @param DeliveryManRepositoryInterface $deliveryManRepo
-     * @param DeliveryManWalletRepositoryInterface $deliveryManWalletRepo
-     * @param DeliveryManTransactionRepositoryInterface $deliveryManTransactionRepo
-     */
     public function __construct(
-        private readonly DeliveryManRepositoryInterface       $deliveryManRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
         private readonly DeliveryManWalletRepositoryInterface $deliveryManWalletRepo,
         private readonly DeliveryManTransactionRepositoryInterface $deliveryManTransactionRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
-        $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id'=>$request['id']], relations: ['wallet']);
+        $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id' => $request['id']], relations: ['wallet']);
         $transactions = $this->deliveryManTransactionRepo->getListWhere(
-            orderBy: ['id'=>'desc'],
-            filters: ['delivery_man_id'=>$request['id']],
+            orderBy: ['id' => 'desc'],
+            filters: ['delivery_man_id' => $request['id']],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
 
         return view('admin-views.delivery-man.earning-statement.collect-cash', compact('deliveryMan', 'transactions'));
     }
 
-
     public function getCashReceive(DeliveryManCashCollectRequest $request, $id, DeliveryManCashCollectService $deliveryManCashCollectService): RedirectResponse
     {
         $wallet = $this->deliveryManWalletRepo->getFirstWhere(params: ['delivery_man_id' => $id]);
         if (empty($wallet) || currencyConverter(amount: $request['amount']) > $wallet['cash_in_hand']) {
             ToastMagic::warning(translate('receive_amount_can_not_be_more_than_cash_in_hand'));
+
             return back();
         }
         $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id' => $id]);
@@ -64,11 +55,11 @@ class DeliveryManCashCollectController extends BaseController
         $this->deliveryManTransactionRepo->add(data: $dataArray);
         $amount = $wallet['cash_in_hand'] - currencyConverter(amount: $request['amount']);
         $this->deliveryManWalletRepo->update(id: $wallet['id'], data: ['cash_in_hand' => $amount]);
-        if (!empty($deliveryMan['fcm_token'])) {
+        if (! empty($deliveryMan['fcm_token'])) {
             CashCollectEvent::dispatch('cash_collect_by_admin_message', 'delivery_man', $deliveryMan['app_language'] ?? getDefaultLanguage(), currencyConverter(amount: $request['amount']), $deliveryMan['fcm_token']);
         }
         ToastMagic::success(translate('amount_receive_successfully'));
+
         return back();
     }
-
 }

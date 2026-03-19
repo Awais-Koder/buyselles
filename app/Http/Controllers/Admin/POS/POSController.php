@@ -26,7 +26,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -34,36 +33,20 @@ class POSController extends BaseController
 {
     use CalculatorTrait, CommonTrait;
 
-    /**
-     * @param AuthorRepositoryInterface $authorRepo
-     * @param BrandRepositoryInterface $brandRepo
-     * @param CategoryRepositoryInterface $categoryRepo
-     * @param ProductRepositoryInterface $productRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param OrderRepositoryInterface $orderRepo
-     * @param CouponRepositoryInterface $couponRepo
-     * @param CartService $cartService
-     * @param POSService $POSService
-     * @param ProductService $productService
-     * @param DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo
-     * @param PublishingHouseRepositoryInterface $publishingHouseRepo
-     */
     public function __construct(
-        private readonly AuthorRepositoryInterface          $authorRepo,
-        private readonly BrandRepositoryInterface           $brandRepo,
-        private readonly CategoryRepositoryInterface        $categoryRepo,
-        private readonly ProductRepositoryInterface         $productRepo,
-        private readonly CustomerRepositoryInterface        $customerRepo,
-        private readonly OrderRepositoryInterface           $orderRepo,
-        private readonly CouponRepositoryInterface          $couponRepo,
-        private readonly CartService                        $cartService,
-        private readonly POSService                         $POSService,
-        private readonly ProductService                     $productService,
+        private readonly AuthorRepositoryInterface $authorRepo,
+        private readonly BrandRepositoryInterface $brandRepo,
+        private readonly CategoryRepositoryInterface $categoryRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly CouponRepositoryInterface $couponRepo,
+        private readonly CartService $cartService,
+        private readonly POSService $POSService,
+        private readonly ProductService $productService,
         private readonly DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo,
         private readonly PublishingHouseRepositoryInterface $publishingHouseRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -74,15 +57,15 @@ class POSController extends BaseController
         $requestedProductType = $request->input('product_type', 'physical');
         $productType = $requestedProductType;
 
-        if (!empty($searchValue)) {
+        if (! empty($searchValue)) {
             $allSearchResults = $this->productRepo->getWebListWithScope(orderBy: ['id' => 'desc'], searchValue: $searchValue, filters: $filter, whereIn: $filterWhereIn, dataLimit: getWebConfig('pagination_limit'));
             if ($allSearchResults->count() > 0) {
                 $firstProductType = $allSearchResults->first()?->product_type;
-                if (!$request->has('product_type')) {
+                if (! $request->has('product_type')) {
                     $productType = $firstProductType;
                 } else {
                     $hasResultsInRequestedType = $allSearchResults->contains('product_type', $requestedProductType);
-                    if (!$hasResultsInRequestedType) {
+                    if (! $hasResultsInRequestedType) {
                         $productType = $firstProductType;
                     }
                 }
@@ -98,7 +81,7 @@ class POSController extends BaseController
             relations: ['clearanceSale'],
             dataLimit: getWebConfig('pagination_limit'),
         );
-        $cartId = 'walk-in-customer-' . rand(10, 1000);
+        $cartId = 'walk-in-customer-'.rand(10, 1000);
         $this->cartService->getNewCartSession(cartId: $cartId);
         $customers = $this->customerRepo->getListWhereNotIn(ids: [0]);
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
@@ -150,26 +133,23 @@ class POSController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function changeCustomer(Request $request): JsonResponse
     {
-        $cartId = ($request['user_id'] != 0 ? 'saved-customer-' . $request['user_id'] : 'walk-in-customer-' . rand(10, 1000));
+        $cartId = ($request['user_id'] != 0 ? 'saved-customer-'.$request['user_id'] : 'walk-in-customer-'.rand(10, 1000));
         $this->POSService->UpdateSessionWhenCustomerChange(cartId: $cartId);
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
         $summaryData = array_merge($this->POSService->getSummaryData(), $getCurrentCustomerData);
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'view' => view('admin-views.pos.partials._admin-pos-customer-info', compact('summaryData', 'cartItems'))->render(),
-            'cart_view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+            'cart_view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function updateDiscount(Request $request): JsonResponse
@@ -180,9 +160,10 @@ class POSController extends BaseController
             $text = $request['discount'] > 0 ? 'Extra_discount_can_not_be_less_than_0_percent' :
                 'Extra_discount_can_not_be_more_than_100_percent';
             ToastMagic::error(translate($text));
+
             return response()->json([
-                'extraDiscount' => "amount_low",
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'extraDiscount' => 'amount_low',
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
         $cart = session($cartId, collect());
@@ -209,34 +190,35 @@ class POSController extends BaseController
             $total = $totalProductPrice - $productDiscount - $couponDiscount - $extraDiscount;
             if ($total < 0) {
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
-                    'extraDiscount' => "amount_low",
-                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                    'extraDiscount' => 'amount_low',
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                 ]);
             } else {
                 $cart['ext_discount'] = $request['type'] == 'percent' ? $request['discount'] : currencyConverter(amount: $request['discount']);
                 $cart['ext_discount_type'] = $request['type'];
                 session()->put($cartId, $cart);
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
                     'extraDiscountAmount' => $extraDiscount ?? 0,
-                    'extraDiscount' => "success",
-                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                    'extraDiscount' => 'success',
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                 ]);
             }
         } else {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
-                'extraDiscount' => "empty",
-                'cart' => "empty",
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'extraDiscount' => 'empty',
+                'cart' => 'empty',
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getCouponDiscount(Request $request): JsonResponse
@@ -252,7 +234,7 @@ class POSController extends BaseController
                     'limit' => $usedCoupon,
                     'start_date' => now(),
                     'expire_date' => now(),
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
         } else {
@@ -262,23 +244,25 @@ class POSController extends BaseController
                     'added_by' => 'admin',
                     'start_date' => now(),
                     'expire_date' => now(),
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
         }
         $carts = session($cartId);
         if (empty($carts)) {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
                 'coupon' => 'cart_empty',
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
-        if (!$coupon || $coupon['coupon_type'] == 'free_delivery' || $coupon['coupon_type'] == 'first_order') {
+        if (! $coupon || $coupon['coupon_type'] == 'free_delivery' || $coupon['coupon_type'] == 'first_order') {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
                 'coupon' => 'coupon_invalid',
-                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
         $totalProductPrice = 0;
@@ -312,9 +296,10 @@ class POSController extends BaseController
                     $total = $totalProductPrice - $productDiscount - $couponDiscount - $extraDiscount;
                     if ($total < 0) {
                         $cartItems = $this->getCartData(cartName: $cartId);
+
                         return response()->json([
-                            'coupon' => "amount_low",
-                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                            'coupon' => 'amount_low',
+                            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                         ]);
                     }
 
@@ -327,29 +312,30 @@ class POSController extends BaseController
                     );
 
                     $cartItems = $this->getCartData(cartName: $cartId);
+
                     return response()->json([
                         'coupon' => 'success',
-                        'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                        'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                     ]);
                 }
             } else {
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
                     'coupon' => 'cart_empty',
-                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                 ]);
             }
         }
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'coupon' => 'coupon_invalid',
-            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+            'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getQuickView(Request $request): JsonResponse
@@ -368,15 +354,13 @@ class POSController extends BaseController
         $digitalProductAuthors = $this->authorRepo->getListWhere(dataLimit: 'all');
         $productPublishingHouseIds = $this->productService->getProductPublishingHouseInfo(product: $product)['ids'];
         $publishingHouseRepo = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
+
         return response()->json([
             'success' => 1,
-            'view' => view('admin-views.pos.partials._quick-view', compact('product', 'digitalProductAuthors', 'productAuthorIds', 'productPublishingHouseIds', 'publishingHouseRepo','productSubtotal'))->render(),
+            'view' => view('admin-views.pos.partials._quick-view', compact('product', 'digitalProductAuthors', 'productAuthorIds', 'productPublishingHouseIds', 'publishingHouseRepo', 'productSubtotal'))->render(),
         ]);
     }
 
-    /**
-     * @return array
-     */
     protected function getCustomerDataFromSessionForPOS(): array
     {
         if (Str::contains(session(SessionKey::CURRENT_USER), 'walk-in-customer')) {
@@ -387,23 +371,20 @@ class POSController extends BaseController
             $currentCustomerData = $this->customerRepo->getFirstWhere(params: ['id' => $userId]);
             $currentCustomerInfo = $this->cartService->getCustomerInfo(currentCustomerData: $currentCustomerData, customerId: $userId);
         }
+
         return [
             'currentCustomer' => $currentCustomerInfo['customerName'],
-            'currentCustomerData' => $currentCustomerData
+            'currentCustomerData' => $currentCustomerData,
         ];
     }
 
-    /**
-     * @param string $cartName
-     * @return array
-     */
     protected function getCustomerCartData(string $cartName): array
     {
         $customerCartData = [];
         if (Str::contains($cartName, 'walk-in-customer')) {
             $currentCustomerInfo = [
                 'customerName' => 'Walk-In Customer',
-                'customerPhone' => "",
+                'customerPhone' => '',
             ];
             $customerId = 0;
         } else {
@@ -416,6 +397,7 @@ class POSController extends BaseController
             'customerPhone' => $currentCustomerInfo['customerPhone'],
             'customerId' => $customerId,
         ];
+
         return $customerCartData;
     }
 
@@ -469,6 +451,7 @@ class POSController extends BaseController
             subTotalCalculation: $subTotalCalculation,
             cartName: $cartName
         );
+
         return [
             'countItem' => $subTotalCalculation['countItem'],
             'total' => $totalCalculation['total'],
@@ -487,6 +470,7 @@ class POSController extends BaseController
     {
         $customerCartData = $this->getCustomerCartData(cartName: $cartName);
         $cartItemData = $this->calculateCartItemsData(cartName: $cartName, customerCartData: $customerCartData);
+
         return array_merge($customerCartData[$cartName], $cartItemData);
     }
 
@@ -497,13 +481,13 @@ class POSController extends BaseController
             filters: [
                 'added_by' => 'in_house',
                 'keywords' => $request['name'],
-                'search_from' => 'pos'
+                'search_from' => 'pos',
             ],
             dataLimit: 'all'
         );
         $data = [
             'count' => $products->count(),
-            'result' => view('admin-views.pos.partials._search-product', compact('products'))->render()
+            'result' => view('admin-views.pos.partials._search-product', compact('products'))->render(),
         ];
         if ($products->count() > 0) {
             $data += ['id' => $products[0]->id];

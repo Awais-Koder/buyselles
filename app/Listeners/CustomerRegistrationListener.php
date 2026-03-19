@@ -5,10 +5,10 @@ namespace App\Listeners;
 use App\Events\CustomerRegistrationEvent;
 use App\Traits\EmailTemplateTrait;
 
-
 class CustomerRegistrationListener
 {
     use EmailTemplateTrait;
+
     /**
      * Create the event listener.
      */
@@ -25,10 +25,11 @@ class CustomerRegistrationListener
         $this->sendMail($event);
     }
 
-    private function sendMail(CustomerRegistrationEvent $event):void{
+    private function sendMail(CustomerRegistrationEvent $event): void
+    {
         $email = $event->email;
         $data = $event->data;
-        $this->sendingMail(sendMailTo: $email,userType: $data['userType'],templateName: $data['templateName'],data: $data);
+        $this->sendingMail(sendMailTo: $email, userType: $data['userType'], templateName: $data['templateName'], data: $data);
 
     }
 }

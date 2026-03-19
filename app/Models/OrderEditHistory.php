@@ -79,7 +79,7 @@ class OrderEditHistory extends Model
 
         static::creating(function ($model) {
             if (empty($model->u_id)) {
-                $model->u_id = (string)Str::uuid();
+                $model->u_id = (string) Str::uuid();
             }
         });
     }

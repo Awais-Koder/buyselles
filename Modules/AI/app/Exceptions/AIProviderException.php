@@ -2,7 +2,4 @@
 
 namespace Modules\AI\app\Exceptions;
 
-class AIProviderException extends ApiException
-{
-
-}
+class AIProviderException extends ApiException {}

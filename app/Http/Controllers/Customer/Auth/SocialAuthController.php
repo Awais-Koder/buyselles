@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Customer\Auth;
 
 use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\PhoneOrEmailVerificationRepositoryInterface;
-use App\Models\User;
+use App\Http\Controllers\Controller;
 use App\Services\FirebaseService;
 use App\Services\RecaptchaService;
 use App\Services\Web\CustomerAuthService;
+use App\Utils\CartManager;
 use App\Utils\CustomerManager;
 use App\Utils\Helpers;
-use App\Http\Controllers\Controller;
-use App\Utils\CartManager;
 use Brian2694\Toastr\Facades\Toastr;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
@@ -25,15 +24,12 @@ use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
 {
-
     public function __construct(
-        private readonly CustomerRepositoryInterface                 $customerRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly PhoneOrEmailVerificationRepositoryInterface $phoneOrEmailVerificationRepo,
-        private readonly CustomerAuthService                         $customerAuthService,
-        private readonly FirebaseService                             $firebaseService,
-    )
-    {
-    }
+        private readonly CustomerAuthService $customerAuthService,
+        private readonly FirebaseService $firebaseService,
+    ) {}
 
     public function redirectToProvider($service)
     {
@@ -46,21 +42,22 @@ class SocialAuthController extends Controller
             $userSocialData = Socialite::driver($service)->stateless()->user();
         } catch (\Exception $e) {
             Toastr::error(translate('Login_failed'));
+
             return redirect()->route('home');
         }
 
         $user = $this->customerRepo->getFirstWhere(params: ['email' => $userSocialData->getEmail()]);
 
-        if (!$user || $user['login_medium'] != $service) {
+        if (! $user || $user['login_medium'] != $service) {
             $name = explode(' ', $userSocialData['name']);
             if (count($name) > 1) {
-                $fastName = implode(" ", array_slice($name, 0, -1));
+                $fastName = implode(' ', array_slice($name, 0, -1));
                 $lastName = end($name);
             } else {
-                $fastName = implode(" ", $name);
+                $fastName = implode(' ', $name);
                 $lastName = '';
             }
-            $fullName = $fastName . ' ' . $lastName;
+            $fullName = $fastName.' '.$lastName;
 
             session()->forget('socialLoginEmailRemovedForOldUser');
             session()->put('social_login_new_customer', [
@@ -76,7 +73,7 @@ class SocialAuthController extends Controller
                 'is_phone_verified' => 0,
                 'is_email_verified' => 1,
                 'referral_code' => Helpers::generate_referer_code(),
-                'temporary_token' => Str::random(40)
+                'temporary_token' => Str::random(40),
             ]);
 
             return redirect()->route('customer.auth.social-login-confirmation', [
@@ -88,7 +85,7 @@ class SocialAuthController extends Controller
                 'is_email_verified' => 1,
                 'login_medium' => $service,
                 'social_id' => $userSocialData->id,
-                'temporary_token' => Str::random(40)
+                'temporary_token' => Str::random(40),
             ]);
 
             return self::actionCustomerLoginProcess($request, $user, $user['email']);
@@ -100,7 +97,6 @@ class SocialAuthController extends Controller
         // Need Verification Or Not
         $phoneVerification = getLoginConfig(key: 'phone_verification');
         $emailVerification = getLoginConfig(key: 'email_verification');
-
 
         if ($request['keep_customer_login_redirect_url']) {
             session()->put('keep_customer_login_redirect_url', $request['keep_customer_login_redirect_url']);
@@ -116,10 +112,10 @@ class SocialAuthController extends Controller
             $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user['email']]);
         }
 
-        if (($phoneVerification && !$user['is_phone_verified']) || ($emailVerification && !$user['is_email_verified'])) {
+        if (($phoneVerification && ! $user['is_phone_verified']) || ($emailVerification && ! $user['is_email_verified'])) {
             $this->getCustomerVerificationCheck($request, $user, $phoneVerification, $emailVerification);
-            $verifyType = ($phoneVerification && !$user['is_phone_verified']) ? 'phone_verification' : 'email_verification';
-            $verifyIdentity = ($phoneVerification && !$user['is_phone_verified']) ? $user['phone'] : $user['email'];
+            $verifyType = ($phoneVerification && ! $user['is_phone_verified']) ? 'phone_verification' : 'email_verification';
+            $verifyIdentity = ($phoneVerification && ! $user['is_phone_verified']) ? $user['phone'] : $user['email'];
             $message = $verifyType == 'phone_verification' ? translate('Please_verify_your_phone') : translate('Please_verify_your_email');
             if ($request->ajax()) {
                 return response()->json([
@@ -129,17 +125,19 @@ class SocialAuthController extends Controller
                 ]);
             }
             Toastr::success($message);
+
             return redirect(route('customer.auth.check-verification', ['identity' => base64_encode($verifyIdentity), 'type' => base64_encode($verifyType)]));
         }
 
-        $message = translate('credentials_are_not_matched_or_your_account_is_not_active') . '!';
+        $message = translate('credentials_are_not_matched_or_your_account_is_not_active').'!';
         if ($user->is_active) {
             auth('customer')->login($user);
             CustomerManager::updateCustomerSessionData(userId: $user->id);
             CartManager::cartListSessionToDatabase();
-            $message = translate('welcome_to') . ' ' . getWebConfig(name: 'company_name') . '!';
+            $message = translate('welcome_to').' '.getWebConfig(name: 'company_name').'!';
         }
         Toastr::info($message);
+
         return redirect($authAttemptRedirectUrl);
     }
 
@@ -157,41 +155,45 @@ class SocialAuthController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                    'message' => translate('please_try_again_after_').$time.' '.translate('seconds'),
                 ]);
             }
-            Toastr::error(translate('please_try_again_after_') . $time . ' ' . translate('seconds'));
+            Toastr::error(translate('please_try_again_after_').$time.' '.translate('seconds'));
+
             return redirect()->back();
         }
 
-        if ($phoneVerification && !$user['is_phone_verified'] && $firebaseOTPVerification && $firebaseOTPVerification['status']) {
+        if ($phoneVerification && ! $user['is_phone_verified'] && $firebaseOTPVerification && $firebaseOTPVerification['status']) {
             $response = $this->firebaseService->sendOtp($user['phone']);
             if ($response['status'] == 'success') {
                 $token = $response['sessionInfo'];
             } else {
                 Toastr::error($response['errors']);
+
                 return back();
             }
-        } else if ($phoneVerification && !$user['is_phone_verified']) {
+        } elseif ($phoneVerification && ! $user['is_phone_verified']) {
             $response = $this->customerAuthService->sendCustomerPhoneVerificationToken($user['phone'], $token);
             if (env('APP_MODE') == 'dev') {
                 $response['status'] = 'success';
             }
-        } else if ($emailVerification && !$user['is_email_verified']) {
+        } elseif ($emailVerification && ! $user['is_email_verified']) {
             $response = $this->customerAuthService->sendCustomerEmailVerificationToken($user, $token);
         }
 
         if ($response && $response['status'] == 'error') {
             Toastr::error($response['message']);
+
             return back();
         }
 
         if ($response && $response['status'] == 'success') {
             $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $user?->email], value: [
-                'phone_or_email' => ($phoneVerification && !$user['is_phone_verified']) ? $user?->phone : $user?->email,
+                'phone_or_email' => ($phoneVerification && ! $user['is_phone_verified']) ? $user?->phone : $user?->email,
                 'token' => $token,
             ]);
         }
+
         return $response;
     }
 
@@ -204,8 +206,9 @@ class SocialAuthController extends Controller
                 'is_email_verified' => 1,
                 'login_medium' => $socialLoginNewCustomer['login_medium'] ?? null,
                 'social_id' => $socialLoginNewCustomer['social_id'] ?? null,
-                'temporary_token' => Str::random(40)
+                'temporary_token' => Str::random(40),
             ]);
+
             return self::actionCustomerLoginProcess($request, $user, $user['email']);
         } else {
             return view(VIEW_FILE_NAMES['customer_auth_verify_otp_update_info'], [
@@ -224,8 +227,9 @@ class SocialAuthController extends Controller
             'phone' => 'required',
         ]);
 
-        if (!$request['phone']) {
+        if (! $request['phone']) {
             Toastr::error(translate('Please_use_a_phone_number'));
+
             return back();
         }
 
@@ -233,10 +237,11 @@ class SocialAuthController extends Controller
         $phoneCheck = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
         if ($phoneCheck && $phoneCheck['email'] != base64_decode($request['identity'])) {
             Toastr::error(translate('Phone_Number_Already_Exist'));
+
             return back();
         }
 
-        if (!session()->has('socialLoginEmailRemovedForOldUser')) {
+        if (! session()->has('socialLoginEmailRemovedForOldUser')) {
             $this->customerRepo->updateWhere(params: ['email' => base64_decode($request['identity'])], data: ['email' => null, 'is_email_verified' => 0]);
             session()->put('socialLoginEmailRemovedForOldUser', 1);
         }
@@ -267,6 +272,7 @@ class SocialAuthController extends Controller
             }
         } else {
             Toastr::error(translate('Invalid_Request'));
+
             return back();
         }
     }
@@ -274,10 +280,10 @@ class SocialAuthController extends Controller
     public function loginByOTP(Request $request): JsonResponse|RedirectResponse
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|min:6|max:20'
+            'phone' => 'required|min:6|max:20',
         ]);
 
-        $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60;// seconds
+        $OTPIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
         $OTPVerificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $request['phone']]);
 
         if (isset($OTPVerificationData) && Carbon::parse($OTPVerificationData['created_at'])->DiffInSeconds() < $OTPIntervalTime) {
@@ -286,10 +292,11 @@ class SocialAuthController extends Controller
             $errors = [];
             $errors[] = [
                 'code' => 'otp',
-                'message' => translate('please_try_again_after_') . $time . ' ' . translate('seconds')
+                'message' => translate('please_try_again_after_').$time.' '.translate('seconds'),
             ];
+
             return response()->json([
-                'errors' => $errors
+                'errors' => $errors,
             ], 403);
         }
 
@@ -317,27 +324,29 @@ class SocialAuthController extends Controller
                 'token' => $token,
             ]);
 
-            return redirect()->route('customer.auth.login.verify-account', ['identity' => base64_encode($request['phone']), 'action' => base64_encode('social-login-verify') ]);
+            return redirect()->route('customer.auth.login.verify-account', ['identity' => base64_encode($request['phone']), 'action' => base64_encode('social-login-verify')]);
         } else {
             Toastr::error($errorMsg);
+
             return redirect()->back();
         }
     }
 
     public function verifyAccount(Request $request): View|RedirectResponse|JsonResponse
     {
-        $result = RecaptchaService::verificationStatus(request: $request, session: 'default_recaptcha_id_customer_auth', action: "customer_auth", firebase: true);
-        if ($result && !$result['status']) {
+        $result = RecaptchaService::verificationStatus(request: $request, session: 'default_recaptcha_id_customer_auth', action: 'customer_auth', firebase: true);
+        if ($result && ! $result['status']) {
             if ($request->ajax()) {
                 return response()->json([
                     'error' => $result['message'],
                 ]);
             }
             Toastr::error($result['message']);
+
             return back();
         }
 
-        if (!$request->has('token') || empty($request['token'])) {
+        if (! $request->has('token') || empty($request['token'])) {
             if (request()->ajax()) {
                 return response()->json([
                     'status' => 'error',
@@ -345,13 +354,14 @@ class SocialAuthController extends Controller
                 ]);
             }
             Toastr::error(translate('The_token_field_is_required'));
+
             return redirect()->back();
         }
 
         $identity = base64_decode($request['identity']);
         $firebaseOTPVerification = getWebConfig(name: 'firebase_otp_verification') ?? [];
         $maxOTPHit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
-        $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60;// seconds
+        $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
         $tempBlockTime = getWebConfig(name: 'temporary_block_time') ?? 600; // seconds
         $verificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $identity]);
         $OTPVerificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $identity, 'token' => $request['token']]);
@@ -362,8 +372,8 @@ class SocialAuthController extends Controller
             if (isset($verificationData->temp_block_time) && Carbon::parse($verificationData->temp_block_time)->DiffInSeconds() <= $tempBlockTime) {
                 $time = $tempBlockTime - Carbon::parse($verificationData->temp_block_time)->DiffInSeconds();
                 $validateBlock = 1;
-                $errorMsg = translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
-            } else if ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() >= $tempBlockTime) {
+                $errorMsg = translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
+            } elseif ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() >= $tempBlockTime) {
                 $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
                     'otp_hit_count' => 0,
                     'is_temp_blocked' => 0,
@@ -371,7 +381,7 @@ class SocialAuthController extends Controller
                 ]);
                 $validateBlock = 1;
                 $errorMsg = translate('OTP_is_not_matched');
-            } else if ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
+            } elseif ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
                 $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
                     'is_temp_blocked' => 1,
                     'temp_block_time' => now(),
@@ -379,7 +389,7 @@ class SocialAuthController extends Controller
 
                 $validateBlock = 1;
                 $time = $tempBlockTime - Carbon::parse($verificationData['temp_block_time'])->DiffInSeconds();
-                $errorMsg = translate('Too_many_attempts.') .' '. translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                $errorMsg = translate('Too_many_attempts.').' '.translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
             }
             $verificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $identity]);
             $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
@@ -390,18 +400,19 @@ class SocialAuthController extends Controller
                 if (request()->ajax()) {
                     return response()->json([
                         'status' => 0,
-                        'message' => $errorMsg
+                        'message' => $errorMsg,
                     ]);
                 }
                 Toastr::error($errorMsg);
+
                 return redirect()->back();
             }
 
             $tokenVerifyStatus = false;
             if ($firebaseOTPVerification && $firebaseOTPVerification['status']) {
                 $firebaseVerify = $this->firebaseService->verifyOtp($verificationData['token'], $verificationData['phone_or_email'], $request['token']);
-                $tokenVerifyStatus = (boolean)($firebaseVerify['status'] == 'success');
-                if (!$tokenVerifyStatus) {
+                $tokenVerifyStatus = (bool) ($firebaseVerify['status'] == 'success');
+                if (! $tokenVerifyStatus) {
                     $verificationData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $identity]);
                     $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
                         'otp_hit_count' => ($verificationData['otp_hit_count'] + 1),
@@ -409,10 +420,11 @@ class SocialAuthController extends Controller
                         'temp_block_time' => null,
                     ]);
                     Toastr::error(translate(strtolower($firebaseVerify['errors'])));
+
                     return back();
                 }
             } else {
-                $tokenVerifyStatus = (boolean)$OTPVerificationData;
+                $tokenVerifyStatus = (bool) $OTPVerificationData;
             }
 
             if ($request['keep_customer_login_redirect_url']) {
@@ -425,14 +437,15 @@ class SocialAuthController extends Controller
             if ($tokenVerifyStatus) {
                 if (isset($OTPVerificationData->temp_block_time) && \Illuminate\Support\Carbon::parse($OTPVerificationData->temp_block_time)->DiffInSeconds() <= $tempBlockTime) {
                     $time = $tempBlockTime - Carbon::parse($OTPVerificationData->temp_block_time)->DiffInSeconds();
-                    $errorMsg = translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $errorMsg = translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
                     if (request()->ajax()) {
                         return response()->json([
                             'status' => 0,
-                            'message' => $errorMsg
+                            'message' => $errorMsg,
                         ]);
                     }
                     Toastr::error($errorMsg);
+
                     return redirect()->back();
                 }
 
@@ -444,6 +457,7 @@ class SocialAuthController extends Controller
 
                 auth('customer')->login($user);
                 CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
+
                 return redirect($authAttemptRedirectUrl);
             }
         }
@@ -452,10 +466,11 @@ class SocialAuthController extends Controller
         if (request()->ajax()) {
             return response()->json([
                 'status' => 0,
-                'message' => $errorMsg
+                'message' => $errorMsg,
             ]);
         }
         Toastr::error($errorMsg);
+
         return redirect()->back();
     }
 }

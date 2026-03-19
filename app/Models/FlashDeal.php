@@ -30,12 +30,10 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon $updated_at
  * @property int $product_id
  * @property string $deal_type
- *
- * @package App\Models
  */
 class FlashDeal extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     /**
      * The attributes that are mass assignable.
@@ -83,7 +81,7 @@ class FlashDeal extends Model
         return $this->morphOne('App\Models\SeoMetaInfo', 'seoable');
     }
 
-    public function getTitleAttribute($title): string|null
+    public function getTitleAttribute($title): ?string
     {
         if (strpos(url()->current(), '/admin') || strpos(url()->current(), '/vendor') || strpos(url()->current(), '/seller')) {
             return $title;
@@ -98,6 +96,7 @@ class FlashDeal extends Model
         if (count($this->storage) > 0 && $this->storageConnectionCheck() == 's3') {
             $storage = $this->storage->where('key', 'banner')->first();
         }
+
         return $this->storageLink('deal', $value, $storage['value'] ?? 'public');
     }
 

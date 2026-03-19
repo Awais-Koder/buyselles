@@ -24,31 +24,31 @@ use Modules\TaxModule\app\Traits\VatTaxConfiguration;
 
 class VendorTaxReportController extends Controller
 {
-    use VatTaxConfiguration, AdminTaxReportManagement;
+    use AdminTaxReportManagement, VatTaxConfiguration;
 
     private Tax $taxVat;
+
     private SystemTaxSetup $systemTaxVat;
 
     public function __construct(
-        private readonly TaxService              $taxService,
-        private readonly SystemTaxSetupService   $systemTaxSetupService,
-        private readonly TaxAdditionalSetup      $taxAdditionalSetup,
+        private readonly TaxService $taxService,
+        private readonly SystemTaxSetupService $systemTaxSetupService,
+        private readonly TaxAdditionalSetup $taxAdditionalSetup,
         private readonly ShopRepositoryInterface $shopRepo
-    )
-    {
+    ) {
         DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
     }
 
-
     public static function apiTaxReportDateRange($request): string
     {
-        if (isset($request['start_date']) && !is_null($request['start_date']) && isset($request['end_date']) && !is_null($request['end_date'])) {
+        if (isset($request['start_date']) && ! is_null($request['start_date']) && isset($request['end_date']) && ! is_null($request['end_date'])) {
             $startFormatted = \Carbon\Carbon::parse($request['start_date'])->format('m/d/Y');
             $endFormatted = \Carbon\Carbon::parse($request['end_date'])->format('m/d/Y');
-            $dateRange = $startFormatted . ' - ' . $endFormatted;
+            $dateRange = $startFormatted.' - '.$endFormatted;
         } else {
-            $dateRange = now()->subDays(6)->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
+            $dateRange = now()->subDays(6)->format('m/d/Y').' - '.now()->format('m/d/Y');
         }
+
         return $dateRange;
     }
 
@@ -56,7 +56,7 @@ class VendorTaxReportController extends Controller
     {
         $vendor = $request['seller'];
         $dateRange = $this->apiTaxReportDateRange(request: $request);
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -68,15 +68,15 @@ class VendorTaxReportController extends Controller
             ->whereHas('order', function ($query) {
                 return $query->where(['order_status' => 'delivered', 'order_type' => 'default_type']);
             })
-            ->when(isset($shop['id']), function ($query) use ($request, $shop) {
+            ->when(isset($shop['id']), function ($query) use ($shop) {
                 return $query->where('shop_id', $shop['id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('shop', function ($query) use ($request) {
                     return $query->where('name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->orderBy('created_at', 'desc')
@@ -87,9 +87,9 @@ class VendorTaxReportController extends Controller
             $typeName = $type == 'basic' ? 'Order Tax' : ucwords(str_replace('_', ' ', $type));
 
             $taxItemArr = [
-                'name' => $typeName
+                'name' => $typeName,
             ];
-            foreach($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
+            foreach ($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
                 $taxItemArr['data'][] = [
                     'name' => ucwords($taxItemKey),
                     'tax_rate' => $orderTax->first()->tax_rate,
@@ -105,11 +105,11 @@ class VendorTaxReportController extends Controller
 
         $orderTransactions = $orderTransactions->map(function ($orderTransaction) {
             $orderTaxItemData = [];
-            foreach($orderTransaction?->orderTaxes?->flatten()->groupBy('tax_on')->sortKeys() as $orderTaxItemKey => $orderTaxItem) {
+            foreach ($orderTransaction?->orderTaxes?->flatten()->groupBy('tax_on')->sortKeys() as $orderTaxItemKey => $orderTaxItem) {
                 $taxItemData = [
                     'group_name' => $orderTaxItemKey == 'basic' ? 'Order Tax' : ucwords(str_replace('_', ' ', $orderTaxItemKey)),
                 ];
-                foreach($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
+                foreach ($orderTaxItem->groupBy('tax_name') as $taxItemKey => $orderTax) {
                     $taxItemData['data'][] = [
                         'name' => $taxItemKey,
                         'tax_amount' => $orderTax->sum('tax_amount'),
@@ -119,9 +119,10 @@ class VendorTaxReportController extends Controller
             }
             $data = [
                 'total_vat_amount' => $orderTransaction?->sum('tax') ?? 0,
-                'all_vat_groups' => $orderTaxItemData
+                'all_vat_groups' => $orderTaxItemData,
             ];
             $orderTransaction['vat_amount_formats'] = $data;
+
             return $orderTransaction;
         });
 
@@ -134,7 +135,7 @@ class VendorTaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -154,7 +155,7 @@ class VendorTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -170,12 +171,12 @@ class VendorTaxReportController extends Controller
             ->when(isset($request['shop_id']) & $request['shop_id'] !== 'all', function ($query) use ($request) {
                 return $query->where('shop_id', $request['shop_id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('shop', function ($query) use ($request) {
                     return $query->where('name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -193,7 +194,7 @@ class VendorTaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -211,8 +212,8 @@ class VendorTaxReportController extends Controller
 
     public function vendorTaxExport(Request $request)
     {
-        $dateRange = $request->dates ?? now()->subDays(6)->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        $dateRange = $request->dates ?? now()->subDays(6)->format('m/d/Y').' - '.now()->format('m/d/Y');
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -220,7 +221,6 @@ class VendorTaxReportController extends Controller
 
         $shop_id = $request->id;
         $shop = is_numeric($shop_id) ? shop::select('id', 'name', 'phone')->findOrFail($shop_id) : null;
-
 
         $vendortaxData = $this->getVendortaxData($shop->id, $startDate, $endDate);
         $summary = $vendortaxData['summary'];
@@ -236,13 +236,13 @@ class VendorTaxReportController extends Controller
             'search' => $request->search ?? null,
             'from' => $startDate,
             'to' => $endDate,
-            'summary' => $summary
+            'summary' => $summary,
         ];
 
         if ($request->export_type == 'excel') {
-            return Excel::download(new VendorTaxExport($data), $shop->name . 's TaxExport.xlsx');
-        } else if ($request->export_type == 'csv') {
-            return Excel::download(new VendorTaxExport($data), $shop->name . 's TaxExport.csv');
+            return Excel::download(new VendorTaxExport($data), $shop->name.'s TaxExport.xlsx');
+        } elseif ($request->export_type == 'csv') {
+            return Excel::download(new VendorTaxExport($data), $shop->name.'s TaxExport.csv');
         }
     }
 
@@ -251,7 +251,7 @@ class VendorTaxReportController extends Controller
         $summary = DB::table('orders')
             ->where('shop_id', $shop_id)
             ->whereIn('order_status', ['delivered', 'refund_requested', 'refund_request_canceled'])
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
             ->selectRaw('COUNT(*) as total_orders, SUM(order_amount) as total_order_amount, SUM(total_tax_amount) as total_tax')
             ->first();
 
@@ -259,15 +259,14 @@ class VendorTaxReportController extends Controller
             'orderTaxes' => function (MorphMany $query) {
                 $query->where('order_type', Order::class)
                     ->select('id', 'order_id', 'tax_name', 'tax_amount', 'tax_on', 'tax_type');
-            }
+            },
         ])
             ->where('shop_id', $shop_id)
             ->whereIn('order_status', ['delivered', 'refund_requested', 'refund_request_canceled'])
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
             ->select(['id', 'order_amount', 'total_tax_amount', 'order_type', 'created_at'])
             ->latest('created_at');
 
         return ['summary' => $summary, 'orders' => $orders];
     }
-
 }

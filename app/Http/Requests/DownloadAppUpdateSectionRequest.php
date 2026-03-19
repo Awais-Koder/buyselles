@@ -22,8 +22,8 @@ class DownloadAppUpdateSectionRequest extends FormRequest
     public function rules(): array
     {
         $rules = [];
-        if($this->section_type == 'title_section'){
-            $rules+= [
+        if ($this->section_type == 'title_section') {
+            $rules += [
                 'title' => 'required|string|max:50',
                 'sub_title' => 'required|string|max:160',
                 'image' => getRulesStringForImageValidation(
@@ -33,7 +33,7 @@ class DownloadAppUpdateSectionRequest extends FormRequest
                     isDisallowed: true
                 ),
             ];
-        }elseif($this->section_type == 'link_section') {
+        } elseif ($this->section_type == 'link_section') {
             $rules += [
                 'download_google_app' => 'required|string',
                 'download_apple_app' => 'required|string',
@@ -54,8 +54,8 @@ class DownloadAppUpdateSectionRequest extends FormRequest
             'sub_title.string' => translate('download_app_subtitle_must_be_a_string'),
             'sub_title.max' => translate('download_app_subtitle_max_character_is_160'),
 
-            'image.mimes' => translate('image_type_must_be'). ' ' . getFileUploadFormats(skip: '.svg'),
-            'image.max' => translate('image_max_size_is'). ' ' . getFileUploadMaxSize() . ' MB',
+            'image.mimes' => translate('image_type_must_be').' '.getFileUploadFormats(skip: '.svg'),
+            'image.max' => translate('image_max_size_is').' '.getFileUploadMaxSize().' MB',
 
             'download_google_app.required' => translate('google_play_link_is_required'),
             'download_google_app.string' => translate('google_play_link_must_be_a_valid_string'),
@@ -63,5 +63,4 @@ class DownloadAppUpdateSectionRequest extends FormRequest
             'download_apple_app.string' => translate('apple_store_link_must_be_a_valid_string'),
         ];
     }
-
 }

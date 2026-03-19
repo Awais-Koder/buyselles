@@ -12,15 +12,12 @@ class VendorRepository implements VendorRepositoryInterface
 {
     public function __construct(
         private readonly Seller $vendor,
-    )
-    {
-    }
+    ) {}
 
     public function getByStatusExcept(string $status, array $relations = [], int $paginateBy = DEFAULT_DATA_LIMIT): Collection|array|LengthAwarePaginator
     {
         return $this->vendor->with($relations)->whereNotIn('status', [$status])->paginate($paginateBy);
     }
-
 
     public function add(array $data): string|object
     {
@@ -45,7 +42,7 @@ class VendorRepository implements VendorRepositoryInterface
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query = $this->vendor->with($relations)->when(!empty($orderBy), function ($query) use ($orderBy) {
+        $query = $this->vendor->with($relations)->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
@@ -58,6 +55,7 @@ class VendorRepository implements VendorRepositoryInterface
             ->where($filters)
             ->when($searchValue, function ($query) use ($searchValue) {
                 $searchTerms = explode(' ', $searchValue);
+
                 return $query->where(function ($query) use ($searchTerms) {
                     foreach ($searchTerms as $term) {
                         $query->orWhere('f_name', 'like', "%$term%")
@@ -70,24 +68,25 @@ class VendorRepository implements VendorRepositoryInterface
                     }
                 });
             })
-            ->when(!empty($relations) && in_array('product', $relations), function ($query) {
+            ->when(! empty($relations) && in_array('product', $relations), function ($query) {
                 return $query->withCount('product')
-                ->withCount(['product as wishlist_count' => function ($query) {
-                    return $query->whereHas('wishList');
-                }]);
+                    ->withCount(['product as wishlist_count' => function ($query) {
+                        return $query->whereHas('wishList');
+                    }]);
             })
-            ->when(!empty($orderBy) && array_key_exists('orders_count', $orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy) && array_key_exists('orders_count', $orderBy), function ($query) {
                 return $query->with(['wallet'])->withSum('wallet as total_earning_sum', 'total_earning')
                     ->orderBy('total_earning_sum', 'desc');
             })
-            ->when(!empty($relations) && in_array('orders', $relations), function ($query) {
+            ->when(! empty($relations) && in_array('orders', $relations), function ($query) {
                 return $query->withCount('orders');
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -99,6 +98,7 @@ class VendorRepository implements VendorRepositoryInterface
     public function delete(array $params): bool
     {
         $this->vendor->where($params)->delete();
+
         return true;
     }
 

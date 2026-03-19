@@ -5,9 +5,9 @@ namespace App\Http\Requests\API\v3;
 use App\Models\WithdrawalMethod;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class PaymentInfoApiRequest extends FormRequest
@@ -42,6 +42,7 @@ class PaymentInfoApiRequest extends FormRequest
         if ($this->input('id')) {
             $rules['id'] = 'exists:vendor_withdraw_method_infos,id';
         }
+
         return $rules;
     }
 
@@ -64,22 +65,23 @@ class PaymentInfoApiRequest extends FormRequest
             function (Validator $validator) {
                 $fields = WithdrawalMethod::where(['id' => $this['withdraw_method_id']])->first();
 
-                if (!$fields) {
+                if (! $fields) {
                     $validator->errors()->add(
                         'withdraw_method_id', translate('The_selected_withdraw_method_is_invalid')
                     );
                 }
 
                 foreach ($fields['method_fields'] as $field) {
-                    if (isset($field['is_required']) && $field['is_required'] == 1)
-                        if (!isset($this['method_info'][$field['input_name']]) || empty($this['method_info'][$field['input_name']])) {
+                    if (isset($field['is_required']) && $field['is_required'] == 1) {
+                        if (! isset($this['method_info'][$field['input_name']]) || empty($this['method_info'][$field['input_name']])) {
                             $validator->errors()->add(
-                                'method_info_' . $field['input_name'], translate('The_' . $field['input_name'] . '_field_is_required')
+                                'method_info_'.$field['input_name'], translate('The_'.$field['input_name'].'_field_is_required')
                             );
                         }
+                    }
                 }
 
-            }
+            },
         ];
     }
 

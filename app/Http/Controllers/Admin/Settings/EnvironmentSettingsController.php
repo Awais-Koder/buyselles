@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use App\Enums\ViewPaths\Admin\EnvironmentSettings;
 use App\Http\Controllers\BaseController;
 use App\Traits\SettingsTrait;
 use App\Traits\UpdateClass;
@@ -18,12 +17,10 @@ class EnvironmentSettingsController extends BaseController
     use SettingsTrait, UpdateClass;
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return view('admin-views.system-setup.environment-index');
     }
@@ -32,6 +29,7 @@ class EnvironmentSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
 
@@ -42,6 +40,7 @@ class EnvironmentSettingsController extends BaseController
         } catch (Exception $exception) {
             ToastMagic::error(translate('environment_variables_updated_failed'));
         }
+
         return back();
     }
 
@@ -49,6 +48,7 @@ class EnvironmentSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
 
@@ -58,6 +58,7 @@ class EnvironmentSettingsController extends BaseController
         } catch (Exception $exception) {
             ToastMagic::error(translate('environment_variables_updated_failed'));
         }
+
         return back();
     }
 
@@ -65,6 +66,7 @@ class EnvironmentSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
 
@@ -73,10 +75,10 @@ class EnvironmentSettingsController extends BaseController
             Artisan::call('view:clear');
             Artisan::call('cache:clear');
             ToastMagic::success(translate('Cache_clear_successfully'));
-        } else if ($request['optimize_type'] == 'migrate') {
+        } elseif ($request['optimize_type'] == 'migrate') {
             Artisan::call('migrate');
             ToastMagic::success(translate('Database_migrate_successfully'));
-        } else if ($request['optimize_type'] == 'update') {
+        } elseif ($request['optimize_type'] == 'update') {
             $this->getProcessAllVersionsUpdates();
             ToastMagic::success(translate('Database_update_successfully'));
         }
@@ -88,11 +90,13 @@ class EnvironmentSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
 
         shell_exec('php ../artisan passport:install');
         ToastMagic::success(translate('Passport_install_successfully'));
+
         return back();
     }
 }

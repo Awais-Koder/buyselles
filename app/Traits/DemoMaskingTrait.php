@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Support\Facades\Request;
 
 trait DemoMaskingTrait
 {
@@ -16,6 +15,7 @@ trait DemoMaskingTrait
         if (env('APP_MODE') == 'demo' && in_array($segment, ['admin', 'vendor', 'seller'], true)) {
             return true;
         }
+
         return false;
     }
 
@@ -28,11 +28,11 @@ trait DemoMaskingTrait
             get: function ($value) {
 
                 // Read directly from env
-                if (!$this->shouldMask()) {
+                if (! $this->shouldMask()) {
                     return $value;
                 }
 
-                if (!$value) {
+                if (! $value) {
                     return null;
                 }
 
@@ -50,15 +50,15 @@ trait DemoMaskingTrait
             get: function ($value) {
 
                 // Read directly from env
-                if (!$this->shouldMask()) {
+                if (! $this->shouldMask()) {
                     return $value;
                 }
 
-                if (!$value) {
+                if (! $value) {
                     return null;
                 }
 
-                return substr($value, 0, 2) . '****';
+                return substr($value, 0, 2).'****';
             }
         );
     }
@@ -70,19 +70,18 @@ trait DemoMaskingTrait
     {
         return Attribute::make(
             get: function ($value) {
-                if (!$this->shouldMask()) {
+                if (! $this->shouldMask()) {
                     return $value;
                 }
 
-                if (!$value) {
+                if (! $value) {
                     return null;
                 }
 
-                return substr($value, 0, 2) . '****';
+                return substr($value, 0, 2).'****';
             }
         );
     }
-
 
     protected function shippingAddressData(): Attribute
     {
@@ -99,7 +98,8 @@ trait DemoMaskingTrait
                 if (isset($data['contact_person_number'])) {
                     $data['contact_person_number'] = $this->maskPhone($data['contact_person_number']);
                 }
-                return (object)$data;
+
+                return (object) $data;
             }
         );
     }
@@ -120,35 +120,35 @@ trait DemoMaskingTrait
                     $data['contact_person_number'] = $this->maskPhone($data['contact_person_number']);
                 }
 
-                return (object)$data;
+                return (object) $data;
             }
         );
     }
 
     public function maskPhone(?string $phone): ?string
     {
-        if (!$this->shouldMask()) {
+        if (! $this->shouldMask()) {
             return $phone;
         }
 
-        if (!$phone) {
+        if (! $phone) {
             return null;
         }
 
-        return substr($phone, 0, 2) . '****';
+        return substr($phone, 0, 2).'****';
     }
 
     public function maskEmail(?string $email): ?string
     {
-        if (!$this->shouldMask()) {
+        if (! $this->shouldMask()) {
             return $email;
         }
 
-        if (!$email) {
+        if (! $email) {
             return null;
         }
 
-        if (!str_contains($email, '@')) {
+        if (! str_contains($email, '@')) {
             return preg_replace(
                 '/^(.)(.*)(@.*)$/',
                 '$1****$3',
@@ -157,9 +157,10 @@ trait DemoMaskingTrait
         }
 
         [$username, $domain] = explode('@', $email);
-        $maskedUsername = substr($username, 0, 1) . '****';
+        $maskedUsername = substr($username, 0, 1).'****';
         [$domainName, $extension] = explode('.', $domain, 2);
-        $maskedDomain = '**' . substr($domainName, -3) . '.' . $extension;
-        return $maskedUsername . '@' . $maskedDomain;
+        $maskedDomain = '**'.substr($domainName, -3).'.'.$extension;
+
+        return $maskedUsername.'@'.$maskedDomain;
     }
 }

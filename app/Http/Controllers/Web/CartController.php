@@ -2,26 +2,23 @@
 
 namespace App\Http\Controllers\Web;
 
-
 use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Contracts\Repositories\RestockProductCustomerRepositoryInterface;
 use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Events\RequestProductRestockEvent;
-use App\Models\BusinessSetting;
+use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\CartShipping;
+use App\Models\Color;
 use App\Models\DigitalProductVariation;
-use App\Models\RestockProductCustomer;
+use App\Models\OrderDetail;
+use App\Models\Product;
 use App\Models\Shop;
 use App\Models\Wishlist;
 use App\Services\RestockProductService;
+use App\Utils\CartManager;
 use App\Utils\CustomerManager;
 use App\Utils\Helpers;
-use App\Http\Controllers\Controller;
-use App\Models\Cart;
-use App\Models\Color;
-use App\Models\OrderDetail;
-use App\Models\Product;
-use App\Utils\CartManager;
 use App\Utils\OrderManager;
 use App\Utils\ProductManager;
 use Brian2694\Toastr\Facades\Toastr;
@@ -29,21 +26,18 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
     public function __construct(
-        private readonly OrderDetail                               $order_details,
-        private readonly Product                                   $product,
-        private readonly Wishlist                                  $wishlist,
-        private readonly RestockProductService                     $restockProductService,
-        private readonly RestockProductRepositoryInterface         $restockProductRepo,
-        private readonly ProductRepositoryInterface                $productRepo,
+        private readonly OrderDetail $order_details,
+        private readonly Product $product,
+        private readonly Wishlist $wishlist,
+        private readonly RestockProductService $restockProductService,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
+        private readonly ProductRepositoryInterface $productRepo,
         private readonly RestockProductCustomerRepositoryInterface $restockProductCustomerRepo,
-    )
-    {
-    }
+    ) {}
 
     public function getVariantPrice(Request $request): array
     {
@@ -66,7 +60,7 @@ class CartController extends Controller
 
         foreach (json_decode(Product::find($request->id)->choice_options) as $key => $choice) {
             if ($string != null) {
-                $string .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $string .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $string .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -89,7 +83,6 @@ class CartController extends Controller
                 $requestQuantity = $productVariationCode == $request['variant_key'] ? $request['quantity'] : $cartItem['quantity'];
             }
         }
-
 
         if ($string != null) {
             $count = count(json_decode($product->variation));
@@ -141,25 +134,25 @@ class CartController extends Controller
 
         $restockRequestStatus = 0;
         if (auth('customer')->check()) {
-            $restockRequestStatus = (int)($this->restockProductRepo->getListWhere(filters: [
-                    'customer_id' => auth('customer')->id(),
-                    'product_id' => $product['id'],
-                    'variant' => $string,
-                ])->count() > 0);
+            $restockRequestStatus = (int) ($this->restockProductRepo->getListWhere(filters: [
+                'customer_id' => auth('customer')->id(),
+                'product_id' => $product['id'],
+                'variant' => $string,
+            ])->count() > 0);
         }
 
         $discountType = getProductPriceByType(product: $product, type: 'discount_type', result: 'string');
 
         return [
             'price' => webCurrencyConverter($price * $requestQuantity),
-            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value') . '%',
+            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value').'%',
             'discount_type' => $discountType,
             'discount_amount' => $discount,
             'quantity' => $product['product_type'] == 'physical' ? $quantity : 100,
             'delivery_cost' => isset($deliveryInfo['delivery_cost']) ? webCurrencyConverter($deliveryInfo['delivery_cost']) : 0,
-            'unit_price' => webCurrencyConverter($price), //fashion theme
-            'total_unit_price' => webCurrencyConverter($unit_price), //fashion theme
-            'discounted_unit_price' => webCurrencyConverter($discountedUnitPrice), //fashion theme
+            'unit_price' => webCurrencyConverter($price), // fashion theme
+            'total_unit_price' => webCurrencyConverter($unit_price), // fashion theme
+            'discounted_unit_price' => webCurrencyConverter($discountedUnitPrice), // fashion theme
             'color_name' => $color_name,
             'stock_limit' => $stock_limit,
 
@@ -171,7 +164,6 @@ class CartController extends Controller
             'restock_request_status' => $restockRequestStatus,
         ];
     }
-
 
     public function addToCart(Request $request): JsonResponse|RedirectResponse
     {
@@ -190,13 +182,16 @@ class CartController extends Controller
 
         if (isset($cart['redirect_to']) && $cart['redirect_to'] == 'checkout') {
             $cart['redirect_to_url'] = route('checkout-details');
+
             return request()->ajax() ? response()->json($cart) : redirect()->route('checkout-details');
         }
 
-        if (!request()->ajax() && $cart['status'] == 0) {
+        if (! request()->ajax() && $cart['status'] == 0) {
             Toastr::warning($cart['message']);
+
             return back();
         }
+
         return response()->json($cart);
 
     }
@@ -209,17 +204,17 @@ class CartController extends Controller
                 'id' => $wishlist['product_id'],
                 'quantity' => $product['minimum_order_qty'] ?? 1,
                 'product_variation_code' => $wishlist['product_id'],
-                'key' => null
+                'key' => null,
             ];
             $miniRequest = new Request($cartData);
             CartManager::add_to_cart($miniRequest);
         }
+
         return response()->json([
             'success' => true,
-            'message' => translate('All wishlist items have been added to cart')
+            'message' => translate('All wishlist items have been added to cart'),
         ]);
     }
-
 
     public function updateNavCart(): JsonResponse
     {
@@ -260,7 +255,7 @@ class CartController extends Controller
         ]);
     }
 
-    //updated the quantity for a cart item
+    // updated the quantity for a cart item
     public function updateQuantity(Request $request)
     {
         $response = CartManager::update_cart_qty($request);
@@ -274,6 +269,7 @@ class CartController extends Controller
         if ($response['status'] == 0) {
             return response()->json($response);
         }
+
         return response()->json(view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render());
     }
 
@@ -291,7 +287,7 @@ class CartController extends Controller
 
         $product = Cart::find($request['key']);
 
-        if (!$product) {
+        if (! $product) {
             return response()->json([
                 'status' => 0,
                 'qty' => $request['quantity'],
@@ -299,8 +295,8 @@ class CartController extends Controller
             ]);
         }
 
-        $quantity_price = webCurrencyConverter($product['price'] * (int)$product['quantity']);
-        $discount_price = webCurrencyConverter(($product['price'] - $product['discount']) * (int)$product['quantity']);
+        $quantity_price = webCurrencyConverter($product['price'] * (int) $product['quantity']);
+        $discount_price = webCurrencyConverter(($product['price'] - $product['discount']) * (int) $product['quantity']);
         $total_discount = 0;
         foreach ($cart as $cartItem) {
             $sub_total += ($cartItem['price'] - $cartItem['discount']) * $cartItem['quantity'];
@@ -336,14 +332,14 @@ class CartController extends Controller
     {
         $orderDetails = OrderDetail::with('order')->where('order_id', $request['order_id'])->first();
 
-        $vendorType = $orderDetails?->order?->seller_is == "seller" ? 'vendor' : 'inhouse';
+        $vendorType = $orderDetails?->order?->seller_is == 'seller' ? 'vendor' : 'inhouse';
         $vendorInfo = $orderDetails?->order?->seller?->shop ?? null;
 
         $temporaryClose = checkVendorAbility(type: $vendorType, status: 'temporary_close', vendor: $vendorInfo);
         $vacationStatus = checkVendorAbility(type: $vendorType, status: 'vacation_status', vendor: $vendorInfo);
 
         if ($temporaryClose || $vacationStatus) {
-            $message = translate('this_shop_is_temporary_closed_or_on_vacation.') . ' ' . translate('you_cannot_add_product_to_cart_from_this_shop_for_now');
+            $message = translate('this_shop_is_temporary_closed_or_on_vacation.').' '.translate('you_cannot_add_product_to_cart_from_this_shop_for_now');
             if (auth('customer')->check()) {
                 return response()->json(['status' => 0, 'message' => $message], 200);
             } else {
@@ -371,7 +367,7 @@ class CartController extends Controller
                     'status' => 1,
                     'redirect_url' => route('shop-cart'),
                     'message' => $message,
-                    'errors' => $data['errorMessages'] ?? []
+                    'errors' => $data['errorMessages'] ?? [],
                 ], 200);
             } else {
                 return response()->json(['message' => $message], 200);
@@ -382,7 +378,7 @@ class CartController extends Controller
                     'status' => 1,
                     'redirect_url' => route('shop-cart'),
                     'message' => $message,
-                    'errors' => $data['errorMessages'] ?? []
+                    'errors' => $data['errorMessages'] ?? [],
                 ], 200);
             } else {
                 return response()->json(['message' => $message], 200);
@@ -391,17 +387,17 @@ class CartController extends Controller
             if (auth('customer')->check()) {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('all_items_were_not_added_to_cart_as_they_are_currently_unavailable_for_purchase!')
+                    'message' => translate('all_items_were_not_added_to_cart_as_they_are_currently_unavailable_for_purchase!'),
                 ], 200);
             } else {
                 return response()->json([
-                    'message' => translate('all_items_were_not_added_to_cart_as_they_are_currently_unavailable_for_purchase!')
+                    'message' => translate('all_items_were_not_added_to_cart_as_they_are_currently_unavailable_for_purchase!'),
                 ], 403);
             }
         }
     }
 
-    function addToCartPhysicalProduct($request, $product)
+    public function addToCartPhysicalProduct($request, $product)
     {
         $user = Helpers::getCustomerInformation($request);
         $str = '';
@@ -413,13 +409,13 @@ class CartController extends Controller
             $variations['color'] = $str;
         }
 
-        //Gets all the choice values of customer choice option and generate a string like Black-S-Cotton
+        // Gets all the choice values of customer choice option and generate a string like Black-S-Cotton
         $choices = [];
         foreach (json_decode($product->choice_options) as $key => $choice) {
             $choices[$choice->name] = $request[$choice->name];
             $variations[$choice->title] = $request[$choice->name];
             if ($str != null) {
-                $str .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $str .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $str .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -444,7 +440,7 @@ class CartController extends Controller
             'product_id' => $request['product_id'],
             'customer_id' => $user == 'offline' ? session('guest_id') : $user->id,
             'is_guest' => $user == 'offline' ? 1 : '0',
-            'variant' => $str
+            'variant' => $str,
         ])->first();
 
         if (isset($cart) == false) {
@@ -455,7 +451,7 @@ class CartController extends Controller
             $cart['variations'] = json_encode($variations);
             $cart['variant'] = $str;
 
-            //Check the string and decreases quantity for the stock
+            // Check the string and decreases quantity for the stock
             if ($str != null) {
                 $count = count(json_decode($product->variation));
                 for ($i = 0; $i < $count; $i++) {
@@ -464,7 +460,7 @@ class CartController extends Controller
                         if (json_decode($product->variation)[$i]->qty < $request['quantity']) {
                             return [
                                 'status' => 0,
-                                'message' => translate('out_of_stock') . '!'
+                                'message' => translate('out_of_stock').'!',
                             ];
                         }
                     }
@@ -480,20 +476,20 @@ class CartController extends Controller
 
             return [
                 'status' => 1,
-                'message' => translate('successfully_added') . '!',
+                'message' => translate('successfully_added').'!',
                 'price' => webCurrencyConverter($price),
                 'discount' => webCurrencyConverter($discount * $request['quantity']),
-                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render()
+                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),
             ];
         } else {
             return [
                 'status' => 0,
-                'message' => translate('already_added') . '!'
+                'message' => translate('already_added').'!',
             ];
         }
     }
 
-    function addToCartDigitalProduct($request, $product): array
+    public function addToCartDigitalProduct($request, $product): array
     {
         $price = $product->unit_price;
         $digitalVariation = DigitalProductVariation::where(['product_id' => $product['id'], 'variant_key' => $request['variant_key']])->first();
@@ -541,31 +537,33 @@ class CartController extends Controller
             'product_id' => $request['product_id'],
             'customer_id' => $user == 'offline' ? session('guest_id') : $user->id,
             'is_guest' => $user == 'offline' ? 1 : '0',
-            'variant' => $request['current_variant_key']
+            'variant' => $request['current_variant_key'],
         ])->first();
 
         if (isset($cart)) {
             Cart::where(['id' => $cart['id']])->update($cartArray);
+
             return [
                 'status' => 1,
                 'message' => translate('successfully_update!'),
                 'price' => webCurrencyConverter($price),
                 'discount' => webCurrencyConverter($getProductDiscount),
-                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render()
+                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),
             ];
         } else {
             Cart::insertGetId($cartArray);
+
             return [
                 'status' => 1,
-                'message' => translate('successfully_added') . '!',
+                'message' => translate('successfully_added').'!',
                 'price' => webCurrencyConverter($price),
                 'discount' => webCurrencyConverter($getProductDiscount),
-                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render()
+                'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),
             ];
         }
     }
 
-    function update_variation(Request $request)
+    public function update_variation(Request $request)
     {
         $product = Product::where(['id' => $request['product_id']])->first();
         if ($product['product_type'] == 'digital') {
@@ -583,9 +581,9 @@ class CartController extends Controller
             'customer_id' => ($user == 'offline' ? session('guest_id') : auth('customer')->id()),
             'is_guest' => ($user == 'offline' ? 1 : '0'),
         ])->delete();
+
         return redirect()->back();
     }
-
 
     public function updateCheckedCartItems(Request $request): JsonResponse
     {
@@ -618,7 +616,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => translate('Successfully_Update'),
-            'htmlView' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render()
+            'htmlView' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),
         ], 200);
     }
 
@@ -648,7 +646,7 @@ class CartController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => translate('Request_sent_successfully'),
-            'fcm_topic' => getRestockProductFCMTopic(restockRequest: $restockRequest)
+            'fcm_topic' => getRestockProductFCMTopic(restockRequest: $restockRequest),
         ], 200);
     }
 }

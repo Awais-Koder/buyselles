@@ -2,7 +2,7 @@
 
 use Carbon\Carbon;
 
-if (!function_exists('checkVendorAbility')) {
+if (! function_exists('checkVendorAbility')) {
     function checkVendorAbility(string $type, string $status, object|array|null $vendor = null)
     {
         if ($status == 'temporary_close') {
@@ -27,12 +27,14 @@ if (!function_exists('checkVendorAbility')) {
                 if ($vacationDurationType == 'until_change') {
                     return $vacationStatus;
                 } else {
-                    if (!is_null($vacationStartDate) && !is_null($vacationEndDate)) {
+                    if (! is_null($vacationStartDate) && ! is_null($vacationEndDate)) {
                         $start = Carbon::parse($vacationStartDate);
                         $end = Carbon::parse($vacationEndDate);
                         $today = Carbon::now();
+
                         return $today->between($start, $end);
                     }
+
                     return false;
                 }
             }

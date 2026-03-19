@@ -2,18 +2,16 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Http\Controllers\Controller;
 use App\Models\Author;
-use App\Models\BusinessSetting;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\FlashDeal;
-use App\Models\FlashDealProduct;
 use App\Models\PublishingHouse;
 use App\Models\RobotsMetaContent;
 use App\Models\StockClearanceSetup;
 use App\Utils\BrandManager;
 use App\Utils\CategoryManager;
-use App\Http\Controllers\Controller;
-use App\Models\Brand;
-use App\Models\Category;
 use App\Utils\ProductManager;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Contracts\View\View;
@@ -24,7 +22,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
-use Throwable;
 
 class ProductListController extends Controller
 {
@@ -32,10 +29,10 @@ class ProductListController extends Controller
     {
         $pageTitle = translate('Products');
         if ($request->has('publishing_house_id')) {
-            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name .' '.translate('Products');
+            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name.' '.translate('Products');
         }
         if ($request->has('author_id')) {
-            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name .' '.translate('Products');
+            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name.' '.translate('Products');
         }
 
         return match (theme_root_path()) {
@@ -48,17 +45,19 @@ class ProductListController extends Controller
     {
         $dataForm = 'brand';
         $brand = Brand::active()->where('slug', $slug)->with(['seo'])->first();
-        if (!$brand) {
+        if (! $brand) {
             Toastr::warning(translate('brand_not_found'));
+
             return back();
         }
 
         $request->merge(['data_from' => $dataForm]);
         $request->merge(['brand_id' => $brand['id']]);
+
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])) . ' ' . translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])).' '.translate('products'),
             metaData: $brand?->seo
         );
     }
@@ -66,8 +65,9 @@ class ProductListController extends Controller
     public function getCategoryProductsView(Request $request, $slug)
     {
         $category = Category::where('slug', $slug)->with(['seo'])->first();
-        if (!$category) {
+        if (! $category) {
             Toastr::warning(translate('category_not_found'));
+
             return back();
         }
 
@@ -76,15 +76,16 @@ class ProductListController extends Controller
 
         if ($category['position'] == 0) {
             $request->merge(['category_id' => $category['id']]);
-        } else if ($category['position'] == 1) {
+        } elseif ($category['position'] == 1) {
             $request->merge(['sub_category_id' => $category['id']]);
-        } else if ($category['position'] == 2) {
+        } elseif ($category['position'] == 2) {
             $request->merge(['sub_sub_category_id' => $category['id']]);
         }
+
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])) . ' ' . translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])).' '.translate('products'),
             metaData: $category?->seo
         );
     }
@@ -92,6 +93,7 @@ class ProductListController extends Controller
     public function getFeaturedProductsView(Request $request)
     {
         $request->merge(['data_from' => 'featured']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'featured',
@@ -105,6 +107,7 @@ class ProductListController extends Controller
         $featuredDeal = FlashDeal::where(['deal_type' => 'feature_deal', 'status' => 1])->whereDate('start_date', '<=', date('Y-m-d'))
             ->whereDate('end_date', '>=', date('Y-m-d'))->with(['seo'])->first();
         $request->merge(['offer_type' => 'featured_deal']);
+
         return self::getProductsListPage(
             request: $request,
             offerType: 'featured_deal',
@@ -116,6 +119,7 @@ class ProductListController extends Controller
     public function getLatestProductsView(Request $request)
     {
         $request->merge(['data_from' => 'latest']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'latest',
@@ -127,6 +131,7 @@ class ProductListController extends Controller
     public function getBestSellingProductsView(Request $request)
     {
         $request->merge(['data_from' => 'best-selling']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'best-selling',
@@ -138,6 +143,7 @@ class ProductListController extends Controller
     public function getTopRatedProductsView(Request $request)
     {
         $request->merge(['data_from' => 'top-rated']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'top-rated',
@@ -149,6 +155,7 @@ class ProductListController extends Controller
     public function getMostFavoriteProductsView(Request $request)
     {
         $request->merge(['data_from' => 'most-favorite']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'most-favorite',
@@ -160,6 +167,7 @@ class ProductListController extends Controller
     public function getDiscountedProductsView(Request $request)
     {
         $request->merge(['offer_type' => 'discounted']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'discounted',
@@ -172,6 +180,7 @@ class ProductListController extends Controller
     {
         $clearanceConfig = StockClearanceSetup::where(['setup_by' => 'admin'])->with(['seo'])->first();
         $request->merge(['offer_type' => 'clearance_sale']);
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'clearance_sale',
@@ -179,7 +188,6 @@ class ProductListController extends Controller
             metaData: $clearanceConfig?->seo
         );
     }
-
 
     public function getProductsListPage(object|array $request, string $pageType = 'default', string $offerType = '', string $pageTitle = '', object|array|null $metaData = null)
     {
@@ -212,7 +220,7 @@ class ProductListController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'total_product' => $products->total(),
-                'html_products' => view('web-views.products._ajax-products', compact('products'))->render()
+                'html_products' => view('web-views.products._ajax-products', compact('products'))->render(),
             ], 200);
         }
 
@@ -225,7 +233,6 @@ class ProductListController extends Controller
             'robotsMetaContentData' => $metaData,
         ]);
     }
-
 
     public function theme_aster(object|array $request, string $pageType = 'default', string $pageTitle = '', object|array|null $metaData = null): View|JsonResponse|Redirector|RedirectResponse
     {
@@ -296,19 +303,18 @@ class ProductListController extends Controller
         ]);
     }
 
-
     public function getPageSelectedDataByType(Request $request, string $type)
     {
         $resultArray = [];
-        if ($type == 'tag' && $request->has('category_ids') && !empty($request['category_ids'])) {
+        if ($type == 'tag' && $request->has('category_ids') && ! empty($request['category_ids'])) {
             $resultArray = Category::whereIn('id', $request['category_ids'])->select('id', 'name')->get();
         }
 
-        if ($type == 'publishing_house' && $request->has('publishing_house_id') && !empty($request['publishing_house_id'])) {
+        if ($type == 'publishing_house' && $request->has('publishing_house_id') && ! empty($request['publishing_house_id'])) {
             $resultArray = PublishingHouse::where('id', $request['publishing_house_id'])->select('id', 'name')->get();
         }
 
-        if ($type == 'author' && $request->has('author_id') && !empty($request['author_id'])) {
+        if ($type == 'author' && $request->has('author_id') && ! empty($request['author_id'])) {
             $resultArray = Author::where('id', $request['author_id'])->select('id', 'name')->get();
         }
 
@@ -319,7 +325,7 @@ class ProductListController extends Controller
         return $resultArray;
     }
 
-    function getProductsRatingOneToFiveAsArray($productQuery): array
+    public function getProductsRatingOneToFiveAsArray($productQuery): array
     {
         $rating_1 = 0;
         $rating_2 = 0;
@@ -393,8 +399,9 @@ class ProductListController extends Controller
         $userId = Auth::guard('customer')->user() ? Auth::guard('customer')->id() : 0;
         $flashDeal = ProductManager::getPriorityWiseFlashDealsProductsQuery(id: $id, userId: $userId);
 
-        if (!isset($flashDeal['flashDeal']) || $flashDeal['flashDeal'] == null) {
+        if (! isset($flashDeal['flashDeal']) || $flashDeal['flashDeal'] == null) {
             Toastr::warning(translate('not_found'));
+
             return back();
         }
 
@@ -408,8 +415,9 @@ class ProductListController extends Controller
         $getProductIds = $products->pluck('id')->toArray();
 
         if ($request['ratings'] != null) {
-            $products = $products->map(function ($product) use ($request) {
+            $products = $products->map(function ($product) {
                 $product->rating = $product->rating->pluck('average')[0];
+
                 return $product;
             });
             $products = $products->where('rating', '>=', $request['ratings'])
@@ -432,6 +440,7 @@ class ProductListController extends Controller
         }
 
         $selectedRatings = $request['rating'] ?? [];
+
         return view(VIEW_FILE_NAMES['flash_deals'], [
             'pageTitleContent' => translate('Flash_Deal_Products'),
             'products' => $products,
@@ -449,7 +458,7 @@ class ProductListController extends Controller
             'tagProductAuthors' => $tagProductAuthors,
             'tag_brand' => $tagBrand,
             'singlePageProductCount' => $singlePageProductCount,
-            'robotsMetaContentData' => $flashDeal['flashDeal']?->seo
+            'robotsMetaContentData' => $flashDeal['flashDeal']?->seo,
         ]);
     }
 

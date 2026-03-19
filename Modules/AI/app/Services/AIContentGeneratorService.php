@@ -2,7 +2,6 @@
 
 namespace Modules\AI\app\Services;
 
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Traits\FileManagerTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -32,12 +31,13 @@ class AIContentGeneratorService
     use FileManagerTrait;
 
     protected array $templates = [];
+
     protected array $providers;
 
     public function __construct()
     {
         $this->loadTemplates();
-        $this->providers = [new OpenAIProvider(), new ClaudeProvider()];
+        $this->providers = [new OpenAIProvider, new ClaudeProvider];
     }
 
     protected function loadTemplates(): void
@@ -55,12 +55,12 @@ class AIContentGeneratorService
             'blog_description' => DescriptionTemplate::class,
             'blog_title_suggestion' => TitleSuggestionTemplate::class,
             'blog_seo_section' => BlogSeoSectionTemplate::class,
-            'generate_blog_title_from_image' => GenerateBlogTitleFromImageTemplate::class
+            'generate_blog_title_from_image' => GenerateBlogTitleFromImageTemplate::class,
 
         ];
         foreach ($templateClasses as $type => $class) {
             if (class_exists($class)) {
-                $this->templates[$type] = new $class();
+                $this->templates[$type] = new $class;
             }
         }
     }
@@ -74,7 +74,8 @@ class AIContentGeneratorService
     public function generateContent(string $contentType, mixed $context = null, string $langCode = 'en', ?string $description = null, ?string $imageUrl = null): string
     {
         $template = $this->templates[$contentType];
-        $prompt = $template->build(context: $context, langCode: $langCode, description: $description, options:['image' => $imageUrl]);
+        $prompt = $template->build(context: $context, langCode: $langCode, description: $description, options: ['image' => $imageUrl]);
+
         return (new AIProviderManager($this->providers))->generate(prompt: $prompt, imageUrl: $imageUrl, options: ['section' => $contentType, 'context' => $context, 'description' => $description]);
     }
 
@@ -90,7 +91,7 @@ class AIContentGeneratorService
 
     public function deleteAiImage($imageName, $type): void
     {
-        $dir = "{$type}/ai_{$type}_image/". $imageName;
+        $dir = "{$type}/ai_{$type}_image/".$imageName;
         $this->delete($dir);
     }
 
@@ -105,12 +106,14 @@ class AIContentGeneratorService
         if ($storageConnectionType === 'public') {
             $dir = "{$type}/ai_{$type}_image/";
             $imageName = $this->fileUpload(dir: $dir, format: $extension, file: $image);
+
             return $this->getAiImageFullPath($imageName, $type);
         }
 
         if ($storageConnectionType === 's3') {
-            $imageName = "{$type}/ai_{$type}_image/" . Carbon::now()->toDateString() . '-' . uniqid() . '.' . $extension;
+            $imageName = "{$type}/ai_{$type}_image/".Carbon::now()->toDateString().'-'.uniqid().'.'.$extension;
             Storage::disk('s3')->put($imageName, file_get_contents($image), 'public');
+
             return $this->getAiImageFullPath($imageName, $type);
         }
 

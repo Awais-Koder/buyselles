@@ -3,11 +3,11 @@
 namespace App\Console\Commands;
 
 use Closure;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 class GenerateAdminRoutesJson extends Command
 {
@@ -38,19 +38,18 @@ class GenerateAdminRoutesJson extends Command
         $this->generateAndSaveJsonFiles($items);
     }
 
-
-
     private function getAdminRoutes(): Collection
     {
         $routes = Route::getRoutes();
+
         return collect($routes->getRoutesByMethod()['GET'] ?? [])
             ->filter(function ($route) {
                 return Str::startsWith($route->uri(), 'admin')
-                    && !Str::startsWith($route->uri(), 'admin/component')
-                    && !Str::startsWith($route->uri(), 'admin/ajax')
-                    && !Str::contains($route->getActionName(), 'Ajax')
-                    && !collect($route->middleware())->contains('api')
-                    && !in_array($route->uri(), $this->avoidRoutes());
+                    && ! Str::startsWith($route->uri(), 'admin/component')
+                    && ! Str::startsWith($route->uri(), 'admin/ajax')
+                    && ! Str::contains($route->getActionName(), 'Ajax')
+                    && ! collect($route->middleware())->contains('api')
+                    && ! in_array($route->uri(), $this->avoidRoutes());
             });
     }
 
@@ -59,26 +58,26 @@ class GenerateAdminRoutesJson extends Command
         return [
             'admin/blog/edit',
             'admin/vat-tax',
-            'admin/report/get-tax-details'
+            'admin/report/get-tax-details',
         ];
     }
-
 
     private function processRoutes($adminRoutes)
     {
         return $adminRoutes->map(function ($route) {
             $viewPath = $this->getBladePathFromController($route);
 
-            if (!$viewPath) {
+            if (! $viewPath) {
                 return null;
             }
             // skip dynamic route parameters
             if (preg_match('/{[^}]+}/', $route->uri())) {
                 return '';
             }
-            $fullPath  = $this->getFullViewPath($viewPath);
-            $keywords  = File::exists($fullPath) ? $this->extractKeywordsFromView($fullPath) : '';
+            $fullPath = $this->getFullViewPath($viewPath);
+            $keywords = File::exists($fullPath) ? $this->extractKeywordsFromView($fullPath) : '';
             $pageTitle = File::exists($fullPath) ? $this->extractPageTitleFromView($fullPath) : $this->getRouteName($route->getName());
+
             return [
                 'page_title' => $pageTitle,
                 'page_title_value' => $pageTitle,
@@ -88,8 +87,8 @@ class GenerateAdminRoutesJson extends Command
                 'method' => in_array('GET', $route->methods()) ? 'GET' : $route->methods()[0],
                 'view' => $viewPath,
                 'keywords' => $keywords,
-                "priority" => 2,
-                "type" => 'page'
+                'priority' => 2,
+                'type' => 'page',
             ];
         })
             ->filter()
@@ -133,6 +132,7 @@ class GenerateAdminRoutesJson extends Command
         } else {
             $routeName = ucwords(str_replace(['.', '_', '-'], ' ', Str::afterLast($actualRouteName, '.')));
         }
+
         return $routeName;
     }
 
@@ -140,7 +140,7 @@ class GenerateAdminRoutesJson extends Command
     {
 
         $filteredItems = collect($items)->filter(function ($item) {
-            return !empty($item['page_title']);
+            return ! empty($item['page_title']);
         });
         $itemsWithoutKeywords = $filteredItems->map(function ($item) {
             return collect($item)->except('keywords')->toArray();
@@ -156,13 +156,12 @@ class GenerateAdminRoutesJson extends Command
             }
 
             return [
-                'key'              => $item['key'],
-                'page_title'       => $item['page_title'],
+                'key' => $item['key'],
+                'page_title' => $item['page_title'],
                 'page_title_value' => $item['page_title'],
-                'keywords'         => $keywordMap,
+                'keywords' => $keywordMap,
             ];
         })->values()->all();
-
 
         $json = json_encode($itemsWithoutKeywords, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $langJson = json_encode($langItems, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -176,18 +175,16 @@ class GenerateAdminRoutesJson extends Command
         file_put_contents($path, $json);
         file_put_contents($langPath, $langJson);
 
-        $this->info("Wrote " . count($itemsWithoutKeywords) . " URIs to {$path}");
-        $this->info("Wrote " . count($langItems) . " URIs to {$langPath}");
+        $this->info('Wrote '.count($itemsWithoutKeywords)." URIs to {$path}");
+        $this->info('Wrote '.count($langItems)." URIs to {$langPath}");
     }
-
 
     private function isDirectoryExists($dir): void
     {
-        if (!File::exists($dir)) {
+        if (! File::exists($dir)) {
             File::makeDirectory($dir, 0755, true);
         }
     }
-
 
     private function getBladePathFromController($route): array|string|null
     {
@@ -203,12 +200,11 @@ class GenerateAdminRoutesJson extends Command
         return null;
     }
 
-
     private function extractViewPathFromControllerMethod($controllerWithMethod): array|string|null
     {
-        list($controllerClass, $method) = explode('@', $controllerWithMethod);
+        [$controllerClass, $method] = explode('@', $controllerWithMethod);
 
-        if (!class_exists($controllerClass) || !method_exists($controllerClass, $method)) {
+        if (! class_exists($controllerClass) || ! method_exists($controllerClass, $method)) {
             return null;
         }
 
@@ -216,13 +212,12 @@ class GenerateAdminRoutesJson extends Command
         $filename = $reflectionMethod->getFileName();
         $startLine = $reflectionMethod->getStartLine();
         $endLine = $reflectionMethod->getEndLine();
-        if (!$this->controllerReturnsView($filename, $startLine, $endLine)) {
+        if (! $this->controllerReturnsView($filename, $startLine, $endLine)) {
             return null;
         }
 
         return $this->extractViewPathFromCode($filename, $startLine, $endLine);
     }
-
 
     private function extractViewPathFromClosure(Closure $closure): array|string|null
     {
@@ -241,16 +236,16 @@ class GenerateAdminRoutesJson extends Command
 
         if (preg_match("/view\\(['\"](.*?)['\"]/", $codeBody, $matches)) {
             $bladePath = $matches[1];
+
             return str_replace('.', '/', $bladePath);
         }
 
         return null;
     }
 
-
     public function extractIncludedViews(string $viewPath): array
     {
-        if (!File::exists($viewPath)) {
+        if (! File::exists($viewPath)) {
             return [];
         }
 
@@ -265,7 +260,6 @@ class GenerateAdminRoutesJson extends Command
         return $matches[1] ?? [];
     }
 
-
     private function getFullViewPath(string $viewPath): string
     {
 
@@ -279,9 +273,9 @@ class GenerateAdminRoutesJson extends Command
             $viewFilePath = str_replace('.', '/', $viewName);
 
             $modulePaths = [
-                base_path('Modules/' . $properModuleName . '/Resources/views/' . $viewFilePath . '.blade.php'),
-                base_path('Modules/' . ucfirst($moduleName) . '/Resources/views/' . $viewFilePath . '.blade.php'),
-                base_path('Modules/' . $moduleName . '/Resources/views/' . $viewFilePath . '.blade.php'),
+                base_path('Modules/'.$properModuleName.'/Resources/views/'.$viewFilePath.'.blade.php'),
+                base_path('Modules/'.ucfirst($moduleName).'/Resources/views/'.$viewFilePath.'.blade.php'),
+                base_path('Modules/'.$moduleName.'/Resources/views/'.$viewFilePath.'.blade.php'),
             ];
 
             foreach ($modulePaths as $path) {
@@ -292,7 +286,7 @@ class GenerateAdminRoutesJson extends Command
 
             if (function_exists('module_path')) {
                 try {
-                    $moduleViewPath = module_path($properModuleName, 'Resources/views/' . $viewFilePath . '.blade.php');
+                    $moduleViewPath = module_path($properModuleName, 'Resources/views/'.$viewFilePath.'.blade.php');
                     if (File::exists($moduleViewPath)) {
                         return $moduleViewPath;
                     }
@@ -304,21 +298,21 @@ class GenerateAdminRoutesJson extends Command
 
         // Standard Laravel view path
         $viewFilePath = str_replace('.', '/', $viewPath);
-        $fullPath = resource_path('views/' . $viewFilePath . '.blade.php');
+        $fullPath = resource_path('views/'.$viewFilePath.'.blade.php');
         if (File::exists($fullPath)) {
             return $fullPath;
         }
 
         // PHP view file
-        $phpPath = resource_path('views/' . $viewFilePath . '.php');
+        $phpPath = resource_path('views/'.$viewFilePath.'.php');
         if (File::exists($phpPath)) {
             return $phpPath;
         }
 
         // Index file in directory
-        $dirPath = resource_path('views/' . $viewFilePath);
-        if (File::exists($dirPath . '/index.blade.php')) {
-            return $dirPath . '/index.blade.php';
+        $dirPath = resource_path('views/'.$viewFilePath);
+        if (File::exists($dirPath.'/index.blade.php')) {
+            return $dirPath.'/index.blade.php';
         }
 
         // Module views without :: notation
@@ -328,29 +322,29 @@ class GenerateAdminRoutesJson extends Command
 
             foreach ($modules as $modulePath) {
                 $moduleName = basename($modulePath);
-                $moduleViewsPath = $modulePath . '/Resources/views';
+                $moduleViewsPath = $modulePath.'/Resources/views';
 
                 if (File::exists($moduleViewsPath)) {
-                    $moduleViewPath = $moduleViewsPath . '/' . $viewFilePath . '.blade.php';
+                    $moduleViewPath = $moduleViewsPath.'/'.$viewFilePath.'.blade.php';
                     if (File::exists($moduleViewPath)) {
                         return $moduleViewPath;
                     }
 
-                    $modulePhpPath = $moduleViewsPath . '/' . $viewFilePath . '.php';
+                    $modulePhpPath = $moduleViewsPath.'/'.$viewFilePath.'.php';
                     if (File::exists($modulePhpPath)) {
                         return $modulePhpPath;
                     }
 
-                    $moduleDirPath = $moduleViewsPath . '/' . $viewFilePath;
-                    if (File::exists($moduleDirPath . '/index.blade.php')) {
-                        return $moduleDirPath . '/index.blade.php';
+                    $moduleDirPath = $moduleViewsPath.'/'.$viewFilePath;
+                    if (File::exists($moduleDirPath.'/index.blade.php')) {
+                        return $moduleDirPath.'/index.blade.php';
                     }
                 }
 
                 // Alternative module views path
-                $altModuleViewsPath = $modulePath . '/views';
+                $altModuleViewsPath = $modulePath.'/views';
                 if (File::exists($altModuleViewsPath)) {
-                    $altModuleViewPath = $altModuleViewsPath . '/' . $viewFilePath . '.blade.php';
+                    $altModuleViewPath = $altModuleViewsPath.'/'.$viewFilePath.'.blade.php';
                     if (File::exists($altModuleViewPath)) {
                         return $altModuleViewPath;
                     }
@@ -364,13 +358,12 @@ class GenerateAdminRoutesJson extends Command
 
     private function extractTextContent(string $viewPath): string
     {
-        if (!File::exists($viewPath)) {
+        if (! File::exists($viewPath)) {
             return '';
         }
 
         $content = File::get($viewPath);
         $extractedContent = [];
-
 
         $this->extractContentFromHtmlTags($content, $extractedContent);
         $this->extractContentFromIncludes($content, $viewPath, $extractedContent);
@@ -382,7 +375,6 @@ class GenerateAdminRoutesJson extends Command
         // Clean up the content
         return trim(preg_replace('/\s+/', ' ', $combinedContent));
     }
-
 
     private function extractContentFromHtmlTags(string $content, array &$extractedContent): void
     {
@@ -418,12 +410,11 @@ class GenerateAdminRoutesJson extends Command
                 '/@[\w]+\s*(\([^\)]*\))?/',
             ], ' ', $plainText);
 
-            if (!empty(trim($plainText))) {
+            if (! empty(trim($plainText))) {
                 $extractedContent[] = $plainText;
             }
         }
     }
-
 
     private function extractContentFromIncludes(string $content, string $viewPath, array &$extractedContent): void
     {
@@ -431,7 +422,7 @@ class GenerateAdminRoutesJson extends Command
 
         foreach ($includeMatches[1] as $includePath) {
             $includePath = str_replace('.', '/', $includePath);
-            $fullIncludePath = resource_path('views/' . $includePath . '.blade.php');
+            $fullIncludePath = resource_path('views/'.$includePath.'.blade.php');
 
             if (File::exists($fullIncludePath)) {
                 $processedViews = [$viewPath];
@@ -440,7 +431,6 @@ class GenerateAdminRoutesJson extends Command
             }
         }
     }
-
 
     private function extractTitlesAndArrayData(string $content, array &$extractedContent): void
     {
@@ -464,15 +454,16 @@ class GenerateAdminRoutesJson extends Command
             return ''; // Prevent infinite recursion
         }
         $processedViews[] = $viewPath;
-        if (!File::exists($viewPath)) {
+        if (! File::exists($viewPath)) {
             return '';
         }
+
         return $this->extractTextContent($viewPath);
     }
 
     private function extractPageTitleFromView(string $viewPath): string
     {
-        if (!File::exists($viewPath)) {
+        if (! File::exists($viewPath)) {
             return '';
         }
 
@@ -497,7 +488,7 @@ class GenerateAdminRoutesJson extends Command
                 }
             }
 
-            if (!empty($translated)) {
+            if (! empty($translated)) {
                 $title = implode(' ', array_unique($translated));
             }
         }
@@ -507,17 +498,19 @@ class GenerateAdminRoutesJson extends Command
 
         $cleaned = array_map(function ($word) {
             $word = preg_replace('/[^\p{L}\p{N}_\s]/u', '', $word);
+
             return trim($word);
         }, $words);
 
         $cleaned = array_filter($cleaned);
+
         return implode(', ', $cleaned);
     }
+
     private function controllerReturnsView(string $filename, int $startLine, int $endLine): bool
     {
         $file = file($filename);
         $codeBody = implode('', array_slice($file, $startLine - 1, $endLine - $startLine + 1));
-
 
         if (preg_match("/return\s+(view|View)::|\bview\(/i", $codeBody)) {
             if (
@@ -525,6 +518,7 @@ class GenerateAdminRoutesJson extends Command
             ) {
                 return false;
             }
+
             return true;
         }
 
@@ -538,7 +532,7 @@ class GenerateAdminRoutesJson extends Command
         }
 
         $processedViews[] = $viewPath;
-        if (!File::exists($viewPath)) {
+        if (! File::exists($viewPath)) {
             return [];
         }
 
@@ -551,14 +545,15 @@ class GenerateAdminRoutesJson extends Command
         $cleaned = array_map(function ($word) {
             // Keep letters, numbers, underscores, and whitespace
             $word = preg_replace('/[^\p{L}\p{N}_\s]/u', '', $word);
+
             return trim($word);
         }, $words);
 
         // Remove empty
         $cleaned = array_filter($cleaned);
+
         return implode(', ', $cleaned);
     }
-
 
     private function additionalItemsWithoutKeywords(): array
     {
@@ -571,7 +566,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/products/list/in-house')),
                 'method' => 'GET',
                 'view' => 'admin-views.product.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'vendor_Product_List',
@@ -580,7 +575,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/products/list/vendor')),
                 'method' => 'GET',
                 'view' => 'vendor-views.product.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'packaging_Orders',
@@ -589,7 +584,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/products/list/processing')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'failed_to_Deliver_Orders',
@@ -598,7 +593,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/products/list/failed')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'all_Orders',
@@ -607,7 +602,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/products/list/all')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'pending_Orders',
@@ -616,7 +611,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/pending')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'confirmed_Orders',
@@ -625,7 +620,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/confirmed')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'packaging_Orders',
@@ -634,7 +629,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/processing')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'out_of_delivery_Orders',
@@ -643,7 +638,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/out_for_delivery')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'delivered_Orders',
@@ -652,7 +647,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/delivered')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'returned_Orders',
@@ -661,7 +656,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/returned')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'failed_to_deliver_Orders',
@@ -670,7 +665,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/failed')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'canceled_Orders',
@@ -679,7 +674,7 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/orders/list/canceled')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
             [
                 'page_title' => 'canceled_Orders',
@@ -688,13 +683,13 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => count(explode('/', 'admin/refund-section/refund/list/pending')),
                 'method' => 'GET',
                 'view' => 'admin-views.order.list',
-                'keywords' => ''
+                'keywords' => '',
             ],
         ];
 
         foreach ($additionalPages as $page) {
             $fullPath = $this->getFullViewPath($page['view']);
-            $keywords = File::exists($fullPath) && !empty($this->extractKeywordsFromView($fullPath)) ? $this->extractKeywordsFromView($fullPath) : $this->humanizeTranslationKey($page['page_title']);
+            $keywords = File::exists($fullPath) && ! empty($this->extractKeywordsFromView($fullPath)) ? $this->extractKeywordsFromView($fullPath) : $this->humanizeTranslationKey($page['page_title']);
             $result[] = [
                 'page_title' => $page['page_title'],
                 'page_title_value' => $page['page_title'],
@@ -703,15 +698,17 @@ class GenerateAdminRoutesJson extends Command
                 'uri_count' => $page['uri_count'],
                 'method' => $page['method'],
                 'view' => $page['view'],
-                'keywords' => $keywords
+                'keywords' => $keywords,
             ];
         }
+
         return $result;
     }
 
     private function humanizeTranslationKey(string $key): string
     {
         $key = str_replace('_', ' ', $key);
+
         return ucwords(strtolower($key));
     }
 }

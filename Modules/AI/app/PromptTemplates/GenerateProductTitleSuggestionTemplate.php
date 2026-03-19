@@ -6,7 +6,6 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class GenerateProductTitleSuggestionTemplate implements PromptTemplateInterface
 {
-
     public function build(mixed $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode = strtoupper($langCode);
@@ -14,6 +13,7 @@ class GenerateProductTitleSuggestionTemplate implements PromptTemplateInterface
         if (is_array($context)) {
             $keywordsText = implode(' ', $context);
         }
+
         return <<<PROMPT
                You are an advanced e-commerce product analyst.
 
@@ -41,9 +41,9 @@ class GenerateProductTitleSuggestionTemplate implements PromptTemplateInterface
                 - Do not return generic explanations, fallback messages, or apologies.
                PROMPT;
     }
+
     public function getType(): string
     {
-        return "generate_product_title_suggestion";
+        return 'generate_product_title_suggestion';
     }
-
 }

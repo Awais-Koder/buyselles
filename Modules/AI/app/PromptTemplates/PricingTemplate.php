@@ -4,13 +4,13 @@ namespace Modules\AI\app\PromptTemplates;
 
 use Modules\AI\app\Contracts\PromptTemplateInterface;
 
-class PricingTemplate implements  PromptTemplateInterface
+class PricingTemplate implements PromptTemplateInterface
 {
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $currency = getCurrencySymbol();
         $productInfo = $description
-            ? "Product name: \"{$context}\". Description: \"" . addslashes($description) . "\"."
+            ? "Product name: \"{$context}\". Description: \"".addslashes($description).'".'
             : "Product name: \"{$context}\".";
 
         return <<<PROMPT

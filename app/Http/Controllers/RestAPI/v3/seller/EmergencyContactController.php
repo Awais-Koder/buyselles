@@ -16,8 +16,8 @@ class EmergencyContactController extends Controller
         $seller = $request->seller;
         $contactList = EmergencyContact::where(['user_id' => $seller->id])
             ->when($request->has('search') && $request['search'], function ($query) use ($request) {
-                return $query->where('name', 'like', '%' . $request['search'] . '%')
-                    ->orWhere('phone', 'like', '%' . $request['search'] . '%');
+                return $query->where('name', 'like', '%'.$request['search'].'%')
+                    ->orWhere('phone', 'like', '%'.$request['search'].'%');
             })->latest()->get();
 
         return response()->json(['contact_list' => $contactList], 200);
@@ -39,8 +39,9 @@ class EmergencyContactController extends Controller
             'user_id' => $seller->id,
             'name' => $request['name'],
             'phone' => $request['phone'],
-            'status' => 1
+            'status' => 1,
         ]);
+
         return response()->json(['message' => translate('emergency_contact_added_successfully!')], 200);
     }
 
@@ -57,7 +58,7 @@ class EmergencyContactController extends Controller
 
         $seller = $request->seller;
         $emergencyContact = EmergencyContact::where(['user_id' => $seller->id])->find($request->id);
-        if (!$emergencyContact) {
+        if (! $emergencyContact) {
             return response()->json(['message' => translate('invalid_emergency_contact!')], 403);
         }
         $emergencyContact->name = $request['name'];

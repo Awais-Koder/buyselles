@@ -15,9 +15,7 @@ class DeliveryCountryCodeRepository implements DeliveryCountryCodeRepositoryInte
 
     public function __construct(
         private readonly DeliveryCountryCode $deliveryCountryCode,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -32,7 +30,7 @@ class DeliveryCountryCodeRepository implements DeliveryCountryCodeRepositoryInte
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->deliveryCountryCode->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -49,17 +47,19 @@ class DeliveryCountryCodeRepository implements DeliveryCountryCodeRepositoryInte
             ->when(isset($filters['country_code']), function ($query) use ($filters) {
                 return $query->where(['country_code' => $filters['country_code']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         $this->deliveryCountryCode->where('id', $id)->update($data);
+
         return true;
     }
 

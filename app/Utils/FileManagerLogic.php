@@ -8,14 +8,15 @@ class FileManagerLogic
 {
     public static function getFileSize($path): string
     {
-        if (!is_null($path)) {
+        if (! is_null($path)) {
             try {
                 $headers = get_headers($path, 1);
                 $decimals = 2;
                 $bytes = isset($headers['Content-Length']) ? $headers['Content-Length'] : $headers['content-length'];
                 $size = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
                 $factor = floor((strlen($bytes) - 1) / 3);
-                return sprintf("%.{$decimals}f", $bytes / (1024 ** $factor)) . @$size[$factor];
+
+                return sprintf("%.{$decimals}f", $bytes / (1024 ** $factor)).@$size[$factor];
             } catch (Exception $exception) {
             }
 
@@ -39,11 +40,12 @@ class FileManagerLogic
                 $sizeUnits = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
                 $factor = floor((strlen($contentLength) - 1) / 3);
 
-                return sprintf("%.{$decimals}f", $contentLength / (1024 ** $factor)) . ' ' . $sizeUnits[$factor];
+                return sprintf("%.{$decimals}f", $contentLength / (1024 ** $factor)).' '.$sizeUnits[$factor];
             } catch (Exception $exception) {
-                return 'Error: ' . $exception->getMessage();
+                return 'Error: '.$exception->getMessage();
             }
         }
+
         return 'Invalid File';
     }
 
@@ -53,6 +55,7 @@ class FileManagerLogic
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
-        return round($bytes / pow(1024, $pow), $precision) . ' ' . $units[$pow];
+
+        return round($bytes / pow(1024, $pow), $precision).' '.$units[$pow];
     }
 }

@@ -13,9 +13,6 @@ interface ControllerInterface
 {
     /**
      * This is the starting method of a Controller
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|JsonResponse|null
      */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse|JsonResponse;
 }

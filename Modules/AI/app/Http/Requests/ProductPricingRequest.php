@@ -16,9 +16,12 @@ class ProductPricingRequest extends FormRequest
             'description' => 'nullable|string',
         ];
     }
-    public function messages(): array{
+
+    public function messages(): array
+    {
         return ['name.required' => translate('product_name_and_description_are_required_to_generate_pricing')];
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */

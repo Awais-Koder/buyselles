@@ -15,9 +15,7 @@ class EmailVerificationEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(public readonly string $email, public readonly array $data)
-    {
-    }
+    public function __construct(public readonly string $email, public readonly array $data) {}
 
     /**
      * Get the channels the event should broadcast on.

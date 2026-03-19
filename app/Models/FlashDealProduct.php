@@ -16,8 +16,6 @@ use Illuminate\Support\Carbon;
  * @property string $discount_type
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class FlashDealProduct extends Model
 {
@@ -49,11 +47,11 @@ class FlashDealProduct extends Model
 
     public function flashDeal(): BelongsTo
     {
-        return $this->belongsTo(FlashDeal::class)->where(['deal_type'=>'flash_deal','status'=>1]);
+        return $this->belongsTo(FlashDeal::class)->where(['deal_type' => 'flash_deal', 'status' => 1]);
     }
 
     public function featureDeal(): BelongsTo
     {
-        return $this->belongsTo(FlashDeal::class, 'flash_deal_id', 'id')->where(['deal_type'=>'feature_deal','status'=>1]);
+        return $this->belongsTo(FlashDeal::class, 'flash_deal_id', 'id')->where(['deal_type' => 'feature_deal', 'status' => 1]);
     }
 }

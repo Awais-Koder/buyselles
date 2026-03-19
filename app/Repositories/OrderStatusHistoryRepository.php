@@ -10,9 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrderStatusHistoryRepository implements OrderStatusHistoryRepositoryInterface
 {
-    public function __construct(private readonly OrderStatusHistory $orderStatusHistory)
-    {
-    }
+    public function __construct(private readonly OrderStatusHistory $orderStatusHistory) {}
 
     public function add(array $data): string|object
     {
@@ -27,7 +25,7 @@ class OrderStatusHistoryRepository implements OrderStatusHistoryRepositoryInterf
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->orderStatusHistory->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -47,6 +45,7 @@ class OrderStatusHistoryRepository implements OrderStatusHistoryRepositoryInterf
     public function delete(array $params): bool
     {
         $this->orderStatusHistory->where($params)->delete();
+
         return true;
     }
 }

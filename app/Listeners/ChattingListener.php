@@ -5,7 +5,6 @@ namespace App\Listeners;
 use App\Events\ChattingEvent;
 use App\Traits\PushNotificationTrait;
 
-
 class ChattingListener
 {
     use PushNotificationTrait;

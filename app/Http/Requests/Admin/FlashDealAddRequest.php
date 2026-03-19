@@ -30,8 +30,9 @@ class FlashDealAddRequest extends FormRequest
         if ($this->input('deal_type') === 'flash_deal' && theme_root_path() !== 'theme_aster') {
             $rules['image'] = 'required|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff';
         } else {
-            $rules['image'] = 'nullable|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff|max:'. getFileUploadMaxSize(unit: 'kb');
+            $rules['image'] = 'nullable|image|mimes:jpg,jpeg,png,gif,bmp,tif,tiff|max:'.getFileUploadMaxSize(unit: 'kb');
         }
+
         return $rules;
     }
 

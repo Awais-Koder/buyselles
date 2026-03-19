@@ -8,9 +8,9 @@ enum EmergencyContact
         URI => 'index',
         VIEW => 'vendor-views.delivery-man.emergency-contact.index',
     ];
+
     const UPDATE = [
         URI => 'update',
-        VIEW => 'vendor-views.delivery-man.emergency-contact._update-emergency-contact'
+        VIEW => 'vendor-views.delivery-man.emergency-contact._update-emergency-contact',
     ];
-
 }

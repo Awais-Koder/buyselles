@@ -24,7 +24,7 @@ class MapApiController extends Controller
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'X-Goog-Api-Key' => getWebConfig(name: 'map_api_key_server'),
-            'X-Goog-FieldMask' => '*'
+            'X-Goog-FieldMask' => '*',
         ])->post('https://places.googleapis.com/v1/places:autocomplete', [
             'input' => $request->input('search_text'),
         ]);
@@ -46,36 +46,36 @@ class MapApiController extends Controller
         }
 
         $origin = [
-            "waypoint" => [
-                "location" => [
-                    "latLng" => [
-                        "latitude" => $request['origin_lat'],
-                        "longitude" => $request['origin_lng']
-                    ]
-                ]
-            ]
+            'waypoint' => [
+                'location' => [
+                    'latLng' => [
+                        'latitude' => $request['origin_lat'],
+                        'longitude' => $request['origin_lng'],
+                    ],
+                ],
+            ],
         ];
 
         $destination = [
-            "waypoint" => [
-                "location" => [
-                    "latLng" => [
-                        "latitude" => $request['destination_lat'],
-                        "longitude" => $request['destination_lng']
-                    ]
-                ]
-            ]
+            'waypoint' => [
+                'location' => [
+                    'latLng' => [
+                        'latitude' => $request['destination_lat'],
+                        'longitude' => $request['destination_lng'],
+                    ],
+                ],
+            ],
         ];
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'X-Goog-Api-Key' => getWebConfig(name: 'map_api_key_server'),
-            'X-Goog-FieldMask' => '*'
+            'X-Goog-FieldMask' => '*',
         ])->post('https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix', [
-            "origins" => $origin,
-            "destinations" => $destination,
-            "travelMode" => "DRIVE",
-            "routingPreference" => "TRAFFIC_AWARE"
+            'origins' => $origin,
+            'destinations' => $destination,
+            'travelMode' => 'DRIVE',
+            'routingPreference' => 'TRAFFIC_AWARE',
         ]);
 
         return response()->json($response->json());
@@ -94,8 +94,8 @@ class MapApiController extends Controller
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'X-Goog-Api-Key' => getWebConfig(name: 'map_api_key_server'),
-            'X-Goog-FieldMask' => '*'
-        ])->get('https://places.googleapis.com/v1/places/' . $request['placeid']);
+            'X-Goog-FieldMask' => '*',
+        ])->get('https://places.googleapis.com/v1/places/'.$request['placeid']);
 
         return response()->json($response->json());
     }
@@ -112,7 +112,8 @@ class MapApiController extends Controller
         }
 
         $apiKey = getWebConfig(name: 'map_api_key_server');
-        $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $request['lat'] . ',' . $request['lng'] . '&key=' . $apiKey);
+        $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json?latlng='.$request['lat'].','.$request['lng'].'&key='.$apiKey);
+
         return response()->json($response->json());
     }
 }

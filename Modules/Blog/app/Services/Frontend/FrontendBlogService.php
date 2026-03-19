@@ -4,11 +4,12 @@ namespace Modules\Blog\app\Services\Frontend;
 
 use DOMDocument;
 use Illuminate\Support\Facades\App;
+
 class FrontendBlogService
 {
     public function getCheckLocale(object|array $request): void
     {
-        if ($request->has('locale') && !empty($request['locale'])) {
+        if ($request->has('locale') && ! empty($request['locale'])) {
             foreach (getWebConfig('language') as $language) {
                 if ($request['locale'] == getLanguageCode($language['code'])) {
                     session()->put('local', $language['code']);
@@ -21,7 +22,7 @@ class FrontendBlogService
         }
     }
 
-    function getModifiedDescription(string|null $description): bool|string
+    public function getModifiedDescription(?string $description): bool|string
     {
         if ($description) {
             $domDocument = new DOMDocument('1.0', 'UTF-8');
@@ -30,14 +31,16 @@ class FrontendBlogService
             libxml_clear_errors();
 
             foreach ($domDocument->getElementsByTagName('h2') as $index => $blogTag) {
-                $blogTag->setAttribute('id', 'article-section-' . $index);
+                $blogTag->setAttribute('id', 'article-section-'.$index);
             }
+
             return $domDocument->saveHTML();
         }
+
         return $description;
     }
 
-    function getModifiedDescriptionLinks($description): array
+    public function getModifiedDescriptionLinks($description): array
     {
         $blogLinks = [];
         if ($description) {
@@ -48,13 +51,12 @@ class FrontendBlogService
 
             foreach ($domDocument->getElementsByTagName('h2') as $index => $blogTag) {
                 $blogLinks[] = [
-                    'id' => 'article-section-' . $index,
-                    'text' => $blogTag->textContent
+                    'id' => 'article-section-'.$index,
+                    'text' => $blogTag->textContent,
                 ];
             }
         }
+
         return $blogLinks;
     }
-
-
 }

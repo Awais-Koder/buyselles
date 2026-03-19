@@ -15,7 +15,7 @@ class CustomerRegistrationEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(public readonly string $email,public readonly array $data)
+    public function __construct(public readonly string $email, public readonly array $data)
     {
         //
     }

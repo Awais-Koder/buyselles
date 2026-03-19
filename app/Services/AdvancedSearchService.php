@@ -17,7 +17,8 @@ class AdvancedSearchService
         }
 
         $fallbackResults = $fallbackResults->sortBy('priority')->values();
-       return $fallbackResults->groupBy('type')->toArray();
+
+        return $fallbackResults->groupBy('type')->toArray();
 
     }
 }

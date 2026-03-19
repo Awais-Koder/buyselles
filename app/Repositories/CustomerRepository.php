@@ -14,9 +14,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 {
     public function __construct(
         private readonly User $user,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -51,7 +49,7 @@ class CustomerRepository implements CustomerRepositoryInterface
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query = $this->user->with($relations)->when(!empty($orderBy), function ($query) use ($orderBy) {
+        $query = $this->user->with($relations)->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
@@ -65,6 +63,7 @@ class CustomerRepository implements CustomerRepositoryInterface
                 $filters = array_filter($filters, function ($key) {
                     return $key !== 'avoid_walking_customer';
                 }, ARRAY_FILTER_USE_KEY);
+
                 return $query->where($filters);
             })
             ->when($searchValue, function ($query) use ($searchValue) {
@@ -76,12 +75,13 @@ class CustomerRepository implements CustomerRepositoryInterface
             ->when(isset($filters['withCount']), function ($query) use ($filters) {
                 return $query->withCount($filters['withCount']);
             })
-            ->when(isset($filters['avoid_walking_customer']) && $filters['avoid_walking_customer'] == 1, function ($query) use ($filters) {
+            ->when(isset($filters['avoid_walking_customer']) && $filters['avoid_walking_customer'] == 1, function ($query) {
                 return $query->whereNot('email', 'walking@customer.com');
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends(['searchValue' => $searchValue]);
     }
 
@@ -97,7 +97,7 @@ class CustomerRepository implements CustomerRepositoryInterface
                         ->orWhereRaw("CONCAT(f_name, ' ', l_name) LIKE ?", ["%$searchValue%"]);
                 })->where('email', '!=', 'abc@gm.com');
             })
-            ->when(isset($filters['order_date']) && !empty($filters['order_date']), function ($query) use ($filters) {
+            ->when(isset($filters['order_date']) && ! empty($filters['order_date']), function ($query) use ($filters) {
                 $dates = explode(' - ', $filters['order_date']);
                 $orderStartDate = Carbon::createFromFormat('m/d/Y', $dates[0])->startOfDay();
                 $orderEndDate = Carbon::createFromFormat('m/d/Y', $dates[1])->endOfDay();
@@ -109,25 +109,25 @@ class CustomerRepository implements CustomerRepositoryInterface
             ->when(isset($filters['is_active']) && in_array($filters['is_active'], ['0', '1']), function ($query) use ($filters) {
                 return $query->where('is_active', $filters['is_active']);
             })
-            ->when(!empty($whereBetween) && !empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
+            ->when(! empty($whereBetween) && ! empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
                 $query->whereBetween($whereBetween, $whereBetweenFilters);
             })
             ->when(isset($filters['sort_by']) && in_array($filters['sort_by'], ['asc', 'desc']), function ($query) use ($filters) {
                 return $query->orderBy('created_at', $filters['sort_by']);
             })
-            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'order_amount', function ($query) use ($filters) {
+            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'order_amount', function ($query) {
                 return $query->withSum('orders', 'order_amount')->orderBy('orders_sum_order_amount', 'desc');
             })
-            ->when(isset($filters['avoid_walking_customer']) && $filters['avoid_walking_customer'] == 1, function ($query) use ($filters) {
+            ->when(isset($filters['avoid_walking_customer']) && $filters['avoid_walking_customer'] == 1, function ($query) {
                 return $query->whereNot('email', 'walking@customer.com');
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        if (!empty($takeItem) && $dataLimit == 'all') {
+        if (! empty($takeItem) && $dataLimit == 'all') {
             return $query->get()->slice(0, $takeItem)->values();
-        } else if (!empty($takeItem) && $dataLimit != 'all') {
+        } elseif (! empty($takeItem) && $dataLimit != 'all') {
             $allResults = $query->get();
             $allResults = $allResults->slice(0, $takeItem);
             $page = request('page') ?? 1;
@@ -138,8 +138,10 @@ class CustomerRepository implements CustomerRepositoryInterface
                 perPage: $perPage,
                 currentPage: $page,
                 options: ['path' => request()->url(), 'query' => request()->query()]);
+
             return $paginator->appends($appends);
         }
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($appends);
     }
 
@@ -156,6 +158,7 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->user->where($params)->update($data);
+
         return true;
     }
 
@@ -167,12 +170,14 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function delete(array $params): bool
     {
         $this->user->where($params)->delete();
+
         return true;
     }
 
     public function getCustomerNameList(object $request, int|string $dataLimit = DEFAULT_DATA_LIMIT): object
     {
         $searchValue = explode(' ', $request['searchValue']);
+
         return $this->user->where('id', '!=', 0)
             ->when($searchValue, function ($query) use ($searchValue) {
                 $query->where(function ($query) use ($searchValue) {
@@ -183,7 +188,7 @@ class CustomerRepository implements CustomerRepositoryInterface
                     }
                 });
             })
-            ->when($dataLimit != "all", function ($query) use ($dataLimit) {
+            ->when($dataLimit != 'all', function ($query) use ($dataLimit) {
                 return $query->limit($dataLimit);
             })->get([DB::raw('id, IF(id <> "0", CONCAT(f_name, " ", COALESCE(l_name, ""), " (", phone ,")"), CONCAT(f_name, " ", COALESCE(l_name, ""))) as text')]);
     }
@@ -191,6 +196,7 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function deleteAuthAccessTokens(string|int $id): bool
     {
         DB::table('oauth_access_tokens')->where('user_id', $id)->delete();
+
         return true;
     }
 }

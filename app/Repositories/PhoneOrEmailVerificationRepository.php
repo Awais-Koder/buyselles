@@ -12,9 +12,7 @@ class PhoneOrEmailVerificationRepository implements PhoneOrEmailVerificationRepo
 {
     public function __construct(
         private readonly PhoneOrEmailVerification $phoneOrEmailVerification,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,27 +27,28 @@ class PhoneOrEmailVerificationRepository implements PhoneOrEmailVerificationRepo
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->phoneOrEmailVerification->with($relations)
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-                });
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->phoneOrEmailVerification
-            ->when(isset($filters['phone_or_email']), function ($query) use($filters) {
+            ->when(isset($filters['phone_or_email']), function ($query) use ($filters) {
                 return $query->where(['phone_or_email' => $filters['phone_or_email']]);
             })
-            ->when(isset($filters['token']), function ($query) use($filters) {
+            ->when(isset($filters['token']), function ($query) use ($filters) {
                 return $query->where(['token' => $filters['token']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
 
     }
@@ -67,7 +66,7 @@ class PhoneOrEmailVerificationRepository implements PhoneOrEmailVerificationRepo
     public function delete(array $params): bool
     {
         $this->phoneOrEmailVerification->where($params)->delete();
+
         return true;
     }
-
 }

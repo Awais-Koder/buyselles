@@ -14,12 +14,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class Subscription extends Model
 {
-    use HasFactory, DemoMaskingTrait;
+    use DemoMaskingTrait, HasFactory;
 
     /**
      * The attributes that are mass assignable.

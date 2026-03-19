@@ -3,13 +3,11 @@
 namespace App\Traits;
 
 use App\Models\CategoryShippingCost;
-use App\Models\DigitalProductVariation;
 use App\Models\Product;
 use App\Models\RestockProduct;
 use App\Models\RestockProductCustomer;
 use App\Models\ShippingMethod;
 use App\Models\ShippingType;
-use App\Models\Storage;
 use App\Services\ProductService;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
@@ -19,11 +17,9 @@ trait ProductTrait
 
     public function __construct(
         private readonly ProductService $productService,
-    )
-    {
-    }
+    ) {}
 
-    public function isAddedByInHouse(string|null $addedBy): bool
+    public function isAddedByInHouse(?string $addedBy): bool
     {
         return isset($addedBy) && $addedBy == 'in_house';
     }
@@ -32,27 +28,27 @@ trait ProductTrait
     {
         $deliveryCost = 0;
         $shippingModel = getWebConfig(name: 'shipping_method');
-        $shippingType = "";
+        $shippingType = '';
         $maxOrderWiseShippingCost = 0;
         $minOrderWiseShippingCost = 0;
 
-        if ($shippingModel == "inhouse_shipping") {
+        if ($shippingModel == 'inhouse_shipping') {
             $shippingType = ShippingType::where(['seller_id' => 0])->first();
-            if ($shippingType->shipping_type == "category_wise") {
+            if ($shippingType->shipping_type == 'category_wise') {
                 $catId = $product->category_id;
                 $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => 0, 'category_id' => $catId])->first();
                 $deliveryCost = $CategoryShippingCost ?
                     ($CategoryShippingCost->multiply_qty != 0 ? ($CategoryShippingCost->cost * $quantity) : $CategoryShippingCost->cost)
                     : 0;
-            } elseif ($shippingType->shipping_type == "product_wise") {
+            } elseif ($shippingType->shipping_type == 'product_wise') {
                 $deliveryCost = $product->multiply_qty != 0 ? ($product->shipping_cost * $quantity) : $product->shipping_cost;
             } elseif ($shippingType->shipping_type == 'order_wise') {
                 $maxOrderWiseShippingCost = ShippingMethod::where(['creator_type' => 'admin', 'status' => 1])->max('cost');
                 $minOrderWiseShippingCost = ShippingMethod::where(['creator_type' => 'admin', 'status' => 1])->min('cost');
             }
-        } elseif ($shippingModel == "sellerwise_shipping") {
+        } elseif ($shippingModel == 'sellerwise_shipping') {
 
-            if ($product->added_by == "admin") {
+            if ($product->added_by == 'admin') {
                 $shippingType = ShippingType::where('seller_id', '=', 0)->first();
             } else {
                 $shippingType = ShippingType::where('seller_id', '!=', 0)->where(['seller_id' => $product->user_id])->first();
@@ -60,9 +56,9 @@ trait ProductTrait
 
             if ($shippingType) {
                 $shippingType = $shippingType ?? ShippingType::where('seller_id', '=', 0)->first();
-                if ($shippingType->shipping_type == "category_wise") {
+                if ($shippingType->shipping_type == 'category_wise') {
                     $catId = $product->category_id;
-                    if ($product->added_by == "admin") {
+                    if ($product->added_by == 'admin') {
                         $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => 0, 'category_id' => $catId])->first();
                     } else {
                         $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => $product->user_id, 'category_id' => $catId])->first();
@@ -71,7 +67,7 @@ trait ProductTrait
                     $deliveryCost = $CategoryShippingCost ?
                         ($CategoryShippingCost->multiply_qty != 0 ? ($CategoryShippingCost->cost * $quantity) : $CategoryShippingCost->cost)
                         : 0;
-                } elseif ($shippingType->shipping_type == "product_wise") {
+                } elseif ($shippingType->shipping_type == 'product_wise') {
                     $deliveryCost = $product->multiply_qty != 0 ? ($product->shipping_cost * $quantity) : $product->shipping_cost;
                 } elseif ($shippingType->shipping_type == 'order_wise') {
                     if ($product->added_by == 'admin') {
@@ -84,6 +80,7 @@ trait ProductTrait
                 }
             }
         }
+
         return [
             'delivery_cost' => $deliveryCost,
             'delivery_cost_max' => $maxOrderWiseShippingCost,
@@ -135,34 +132,34 @@ trait ProductTrait
         }
     }
 
-
     public function getProductWithAllDetails(int $id): mixed
     {
         $taxData = $this->getTaxSystemType();
-        $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+        $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
         $productWiseTaxRelation = $productWiseTax ? ['taxVats' => function ($query) {
             return $query->with(['tax'])->wherehas('tax', function ($query) {
                 return $query->where('is_active', 1);
             });
         }] : [];
-        $relations = ['digitalVariation','clearanceSale' => function ($query) {
+        $relations = ['digitalVariation', 'clearanceSale' => function ($query) {
             return $query->active();
         }];
         $relations = array_merge($productWiseTaxRelation, $relations);
-        $product =  Product::where(['id' => $id])->with($relations)->first();
+        $product = Product::where(['id' => $id])->with($relations)->first();
         unset($product['is_shop_temporary_close']);
         unset($product['color_images_full_url']);
         unset($product['meta_image_full_url']);
         unset($product['images_full_url']);
         unset($product['reviews']);
         unset($product['translations']);
+
         return $product;
     }
 
     public function getProductListWithAllDetails(array $ids): mixed
     {
         $taxData = $this->getTaxSystemType();
-        $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+        $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
         $productWiseTaxRelation = $productWiseTax ? ['taxVats' => function ($query) {
             return $query->with(['tax'])->wherehas('tax', function ($query) {
                 return $query->where('is_active', 1);
@@ -173,6 +170,7 @@ trait ProductTrait
             return $query->active();
         }];
         $relations = array_merge($productWiseTaxRelation, $relations);
+
         return Product::whereIn('id', $ids)->with($relations)->get();
     }
 }

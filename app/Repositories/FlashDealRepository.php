@@ -10,9 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class FlashDealRepository implements FlashDealRepositoryInterface
 {
-    public function __construct(private readonly FlashDeal $flashDeal)
-    {
-    }
+    public function __construct(private readonly FlashDeal $flashDeal) {}
 
     public function add(array $data): string|object
     {
@@ -24,7 +22,6 @@ class FlashDealRepository implements FlashDealRepositoryInterface
         return $this->flashDeal->where($params)->first();
     }
 
-
     public function getFirstWhereWithoutGlobalScope(array $params, array $relations = []): ?Model
     {
         return $this->flashDeal->withoutGlobalScopes()->where($params)->with($relations)->first();
@@ -33,14 +30,14 @@ class FlashDealRepository implements FlashDealRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->flashDeal->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->flashDeal
             ->with($relations)
@@ -50,11 +47,12 @@ class FlashDealRepository implements FlashDealRepositoryInterface
             ->when(isset($filters['flash_deal_id']), function ($query) use ($filters) {
                 return $query->where(['flash_deal_id' => $filters['flash_deal_id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -66,6 +64,7 @@ class FlashDealRepository implements FlashDealRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->flashDeal->where($params)->update($data);
+
         return true;
     }
 
@@ -74,33 +73,29 @@ class FlashDealRepository implements FlashDealRepositoryInterface
         return $this->flashDeal->where($params)->delete();
     }
 
-
-
-
-    public function getListWithRelations(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $withCount = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWithRelations(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $withCount = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->flashDeal
             ->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 $query->orWhere('title', 'like', "%$searchValue%");
             })
             ->when(isset($filters['deal_type']), function ($query) use ($filters) {
-                return $query->where(['deal_type'=>$filters['deal_type']]);
+                return $query->where(['deal_type' => $filters['deal_type']]);
             })
             ->when(isset($withCount['products']), function ($query) use ($withCount) {
-                return $query->withCount([$withCount['products']=> function ($query) {
-                    return $query->whereHas('product',function ($query){
+                return $query->withCount([$withCount['products'] => function ($query) {
+                    return $query->whereHas('product', function ($query) {
                         return $query->active();
                     });
                 }]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
-
 }

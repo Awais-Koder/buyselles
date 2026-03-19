@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
-use App\Enums\ViewPaths\Admin\SEOSettings;
 use App\Http\Controllers\BaseController;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
@@ -15,17 +14,13 @@ class SEOSettingsController extends BaseController
 {
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $webMasterToolData = [
             'google_search_console_code' => $this->businessSettingRepo->getFirstWhere(params: ['type' => 'google_search_console_code'])->value ?? null,
@@ -34,6 +29,7 @@ class SEOSettingsController extends BaseController
             'yandex_webmaster_code' => $this->businessSettingRepo->getFirstWhere(params: ['type' => 'yandex_webmaster_code'])->value ?? null,
 
         ];
+
         return view('admin-views.seo-settings.web-master-tool', compact('webMasterToolData'));
     }
 
@@ -41,6 +37,7 @@ class SEOSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         $this->businessSettingRepo->updateOrInsert(type: 'google_search_console_code', value: $request['google_search_console_code'] ?? '');
@@ -48,6 +45,7 @@ class SEOSettingsController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'baidu_webmaster_code', value: $request['baidu_webmaster_code'] ?? '');
         $this->businessSettingRepo->updateOrInsert(type: 'yandex_webmaster_code', value: $request['yandex_webmaster_code'] ?? '');
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -55,6 +53,7 @@ class SEOSettingsController extends BaseController
     {
         $path = DOMAIN_POINTED_DIRECTORY == 'public' ? public_path('robots.txt') : base_path('robots.txt');
         $content = File::exists($path) ? File::get($path) : '';
+
         return view('admin-views.seo-settings.robot-txt', compact('content', 'path'));
     }
 
@@ -62,15 +61,17 @@ class SEOSettingsController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         $content = $request->input('robot_text');
         $path = DOMAIN_POINTED_DIRECTORY == 'public' ? public_path('robots.txt') : base_path('robots.txt');
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             File::put($path, '');
         }
         File::put($path, $content);
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 }

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface ColorRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface ColorRepositoryInterface extends RepositoryInterface {}

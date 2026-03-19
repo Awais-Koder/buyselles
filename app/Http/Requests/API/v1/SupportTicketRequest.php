@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests\API\v1;
 
-use App\Models\WithdrawalMethod;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class SupportTicketRequest extends FormRequest
 {
@@ -48,8 +45,8 @@ class SupportTicketRequest extends FormRequest
             'subject.required' => translate('Subject is required.'),
             'type.required' => translate('Type is required.'),
             'description.required' => translate('Description is required.'),
-            'image.*.mimes' => translate('Invalid image format_image_type must be : ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'image.*.max' => translate('Image size exceeds_maximum_size'). ' ' . getFileUploadMaxSize() . 'MB',
+            'image.*.mimes' => translate('Invalid image format_image_type must be : ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'image.*.max' => translate('Image size exceeds_maximum_size').' '.getFileUploadMaxSize().'MB',
         ];
     }
 
@@ -57,7 +54,7 @@ class SupportTicketRequest extends FormRequest
     {
         throw new HttpResponseException(
             response()->json([
-                'errors' => $this->errorProcessor($validator)
+                'errors' => $this->errorProcessor($validator),
             ], 403)
         );
     }

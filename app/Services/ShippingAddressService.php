@@ -4,7 +4,7 @@ namespace App\Services;
 
 class ShippingAddressService
 {
-    public function getAddAddressData($request,$customerId,$addressType):array
+    public function getAddAddressData($request, $customerId, $addressType): array
     {
         return [
             'customer_id' => $customerId,

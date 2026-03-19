@@ -23,12 +23,13 @@ class OrderReceivedNotifySellerListener
         $this->sendMail($event);
     }
 
-    private function sendMail(OrderReceivedNotifySellerEvent $event):void{
+    private function sendMail(OrderReceivedNotifySellerEvent $event): void
+    {
         $orderId = $event->orderId;
         $email = $event->email;
-        try{
+        try {
             Mail::to($email)->send(new \App\Mail\OrderReceivedNotifySeller($orderId));
-        }catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             info($exception);
         }
     }

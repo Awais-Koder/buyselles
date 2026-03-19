@@ -6,8 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Class Bonus
+ *
  * @property int $id
- * @package App\Models
  */
 class AddFundBonusCategoriesDeleteRequest extends FormRequest
 {
@@ -21,7 +21,7 @@ class AddFundBonusCategoriesDeleteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'required'
+            'id' => 'required',
         ];
     }
 
@@ -31,5 +31,4 @@ class AddFundBonusCategoriesDeleteRequest extends FormRequest
             'id.required' => translate('The_id_field_is_required'),
         ];
     }
-
 }

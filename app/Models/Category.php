@@ -25,7 +25,7 @@ use Modules\TaxModule\app\Models\Taxable;
  */
 class Category extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     protected $fillable = [
         'name',
@@ -88,7 +88,7 @@ class Category extends Model
         return $this->hasMany(Product::class, 'sub_sub_category_id', 'id');
     }
 
-    public function getNameAttribute($name): string|null
+    public function getNameAttribute($name): ?string
     {
         $segment = request()->segment(1);
         if ($segment === 'api') {
@@ -97,14 +97,14 @@ class Category extends Model
         if (in_array($segment, ['admin', 'vendor', 'seller'], true)) {
             return $name;
         }
+
         return $this->translations[0]->value ?? $name;
     }
 
-    public function getDefaultNameAttribute(): string|null
+    public function getDefaultNameAttribute(): ?string
     {
         return $this->translations[0]->value ?? $this->name;
     }
-
 
     public function scopePriority($query): mixed
     {
@@ -116,11 +116,13 @@ class Category extends Model
         return $this->morphMany(Taxable::class, 'taxable');
     }
 
-    public function getIconFullUrlAttribute():array
+    public function getIconFullUrlAttribute(): array
     {
         $value = $this->icon;
-        return $this->storageLink('category',$value,$this->icon_storage_type ?? 'public');
+
+        return $this->storageLink('category', $value, $this->icon_storage_type ?? 'public');
     }
+
     protected $appends = ['icon_full_url'];
 
     protected static function boot(): void

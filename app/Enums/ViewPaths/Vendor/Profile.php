@@ -7,14 +7,16 @@ enum Profile
     const INDEX = [
         URI => 'index',
         VIEW => 'vendor-views.profile.index',
-        ROUTE => 'vendor.profile.index'
+        ROUTE => 'vendor.profile.index',
     ];
+
     const UPDATE = [
         URI => 'update',
-        VIEW => 'vendor-views.profile.update-view'
+        VIEW => 'vendor-views.profile.update-view',
     ];
+
     const BANK_INFO_UPDATE = [
         URI => 'update-bank-info',
-        VIEW => 'vendor-views.profile.bank-info-update-view'
+        VIEW => 'vendor-views.profile.bank-info-update-view',
     ];
 }

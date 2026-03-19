@@ -23,8 +23,6 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class AddFundRequest extends FormRequest
 {
@@ -62,5 +60,4 @@ class AddFundRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));
     }
-
 }

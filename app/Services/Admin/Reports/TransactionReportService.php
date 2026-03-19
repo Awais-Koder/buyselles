@@ -31,7 +31,7 @@ class TransactionReportService
                     'shop_name' => $shopName,
                     'is_guest' => $transaction?->order?->is_guest ?? 0,
                     'customer_id' => $customerId,
-                    'customer_name' => $customer ? $customer?->f_name . ' ' . $customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found')),
+                    'customer_name' => $customer ? $customer?->f_name.' '.$customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found')),
                     'total_product_amount' => $orderDetailsSumPrice,
                     'product_discount' => $orderDetailsSumDiscount,
                     'coupon_discount' => $transaction?->order?->discount_amount ?? 0,
@@ -43,7 +43,7 @@ class TransactionReportService
                     'edit_due_amount' => $transaction?->order?->edit_due_amount ?? 0,
                     'edit_return_amount' => $transaction?->order?->edit_return_amount ?? 0,
                     'delivered_by' => $transaction?->delivered_by ?? '',
-                    'deliveryman_incentive' =>  $this->getDeliveryManIncentive($transaction),
+                    'deliveryman_incentive' => $this->getDeliveryManIncentive($transaction),
                     'admin_discount' => $this->getAdminDiscount($adminCouponDiscount, $adminShippingDiscount, $referAndEarnDiscount),
                     'vendor_discount' => $this->getVendorDiscount($sellerCouponDiscount, $sellerShippingDiscount),
                     'admin_commission' => $transaction?->admin_commission ?? 0,
@@ -58,6 +58,7 @@ class TransactionReportService
                 ];
             }
         }
+
         return $transactionsTableData;
     }
 
@@ -68,12 +69,12 @@ class TransactionReportService
 
     private function getCustomer($transaction)
     {
-        return !$transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
+        return ! $transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
     }
 
     private function getCustomerId($transaction, $customer): ?int
     {
-        return !$transaction?->order?->is_guest && $customer ? $customer->id : null;
+        return ! $transaction?->order?->is_guest && $customer ? $customer->id : null;
     }
 
     private function getCouponDiscount($transaction): float
@@ -131,7 +132,7 @@ class TransactionReportService
 
         if (isset($transaction->order->deliveryMan) && $transaction->order->deliveryMan->seller_id == 0) {
             $adminNetIncome += $transaction['delivery_charge'];
-        } elseif (!isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
+        } elseif (! isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
             $adminNetIncome += $transaction->order->is_shipping_free && $transaction->order->free_delivery_bearer == 'admin' ? 0 : $transaction->order->shipping_cost;
         }
 
@@ -147,12 +148,12 @@ class TransactionReportService
         }
 
         if ($transaction->order->shipping_responsibility == 'inhouse_shipping') {
-            if (!$transaction->order->is_shipping_free) {
+            if (! $transaction->order->is_shipping_free) {
                 $adminNetIncome += $transaction['seller_is'] == 'seller' ? $transaction->order->shipping_cost : 0;
             }
             if ($transaction->order->is_shipping_free) {
                 $adminNetIncome += 0;
-            } else if (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
+            } elseif (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
                 $adminNetIncome += $sellerCouponDiscount;
             }
         } elseif ($transaction->order->shipping_responsibility == 'sellerwise_shipping' && $transaction['seller_is'] == 'seller') {
@@ -187,9 +188,10 @@ class TransactionReportService
                 $vendorNetIncome += $transaction->order->free_delivery_bearer == 'admin' && $transaction->order->is_shipping_free ? $transaction->order->shipping_cost : 0;
             } elseif ($transaction->order->shipping_responsibility == 'sellerwise_shipping') {
                 $vendorNetIncome += $transaction->order->free_delivery_bearer == 'admin' ? $transaction->order->shipping_cost : 0;
-                //$vendorNetIncome -= ($transaction->order->free_delivery_bearer == 'seller') ? $transaction->order->shipping_cost : 0;
+                // $vendorNetIncome -= ($transaction->order->free_delivery_bearer == 'seller') ? $transaction->order->shipping_cost : 0;
             }
         }
+
         return $vendorNetIncome;
     }
 
@@ -198,14 +200,16 @@ class TransactionReportService
         if ($transactions instanceof \Illuminate\Pagination\LengthAwarePaginator) {
             return $transactions->firstItem();
         }
+
         return 1;
     }
+
     public function getThisWeekOrderAmount($orders): array
     {
         $number = 6;
         $order_amount = [];
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             $day_name[] = $date->format('l');
         }
@@ -217,6 +221,7 @@ class TransactionReportService
                 }
             }
         }
+
         return $order_amount;
     }
 }

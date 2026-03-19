@@ -12,10 +12,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
-
 class shippingController extends Controller
 {
-    public function get_shipping_type(Request $request):JsonResponse
+    public function get_shipping_type(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $shippingMethod = getWebConfig(name: 'shipping_method');
@@ -25,12 +24,12 @@ class shippingController extends Controller
         $shippingType = isset($seller_shipping) == true ? $seller_shipping->shipping_type : 'order_wise';
 
         return response()->json([
-            'type' => $shippingType
+            'type' => $shippingType,
         ]);
 
     }
 
-    public function selected_shipping_type(Request $request):JsonResponse
+    public function selected_shipping_type(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $seller_id = $seller['id'];
@@ -50,7 +49,7 @@ class shippingController extends Controller
         }
 
         return response()->json([
-            'message' => translate('successfully updated')
+            'message' => translate('successfully updated'),
         ]);
     }
 
@@ -61,7 +60,7 @@ class shippingController extends Controller
         $categoryShippingCostIds = CategoryShippingCost::where('seller_id', $seller['id'])->pluck('category_id')->toArray();
         if (isset($allCategoryIds)) {
             foreach ($allCategoryIds as $id) {
-                if (!in_array($id, $categoryShippingCostIds)) {
+                if (! in_array($id, $categoryShippingCostIds)) {
                     $newCategoryShippingCost = new CategoryShippingCost;
                     $newCategoryShippingCost->seller_id = $seller['id'];
                     $newCategoryShippingCost->category_id = $id;
@@ -74,12 +73,13 @@ class shippingController extends Controller
             ->where('seller_id', $seller['id'])
             ->whereHas('category')
             ->get();
+
         return response()->json([
-            'all_category_shipping_cost' => $allCategoryShippingCost
+            'all_category_shipping_cost' => $allCategoryShippingCost,
         ]);
     }
 
-    public function set_category_cost(Request $request):JsonResponse
+    public function set_category_cost(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'ids' => 'required',
@@ -101,7 +101,7 @@ class shippingController extends Controller
         }
 
         return response()->json([
-            'success' => translate('successfully_updated')
+            'success' => translate('successfully_updated'),
         ]);
 
     }

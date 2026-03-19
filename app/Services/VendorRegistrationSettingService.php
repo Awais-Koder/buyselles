@@ -33,11 +33,12 @@ class VendorRegistrationSettingService
         for ($index = 1; $index <= 3; $index++) {
             $image = (isset($businessProcessStep[$index - 1]) ? $businessProcessStep[$index - 1]?->image : null);
             $array[] = [
-                'title' => $request['section_' . $index . '_title'],
-                'description' => $request['section_' . $index . '_description'],
-                'image' => $this->getImageDataProcess(request: $request, image: $image, requestImageName: 'section_' . $index . '_image'),
+                'title' => $request['section_'.$index.'_title'],
+                'description' => $request['section_'.$index.'_description'],
+                'image' => $this->getImageDataProcess(request: $request, image: $image, requestImageName: 'section_'.$index.'_image'),
             ];
         }
+
         return $array;
     }
 
@@ -48,8 +49,8 @@ class VendorRegistrationSettingService
         if (is_string($image)) {
             $imageData = $image;
         } else {
-            if (!is_array($image)) {
-                $image = (array)$image;
+            if (! is_array($image)) {
+                $image = (array) $image;
             }
             $imageData = $image['image_name'] ?? '';
         }
@@ -60,9 +61,10 @@ class VendorRegistrationSettingService
         } else {
             $imageName = $request->file($requestImageName) ? $this->upload(dir: 'vendor-registration-setting/', format: 'webp', image: $request->file($requestImageName)) : null;
         }
+
         return [
             'image_name' => $imageName,
-            'storage' => $storage
+            'storage' => $storage,
         ];
     }
 

@@ -21,7 +21,7 @@ class AdminTable extends Seeder
             'admin_role_id' => 1,
             'image' => 'def.png',
             'password' => bcrypt(12345678),
-            'remember_token' =>Str::random(10),
+            'remember_token' => Str::random(10),
         ]);
     }
 }

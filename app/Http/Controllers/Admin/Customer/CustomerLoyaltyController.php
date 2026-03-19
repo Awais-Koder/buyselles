@@ -18,19 +18,15 @@ class CustomerLoyaltyController extends BaseController
     use PaginatorTrait;
 
     public function __construct(
-        private readonly CustomerRepositoryInterface                    $customerRepo,
-        private readonly LoyaltyPointTransactionRepositoryInterface     $loyaltyPointTransactionRepo,
-    )
-    {
-    }
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly LoyaltyPointTransactionRepositoryInterface $loyaltyPointTransactionRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $filters = [
             'to' => $request['to'],
@@ -44,10 +40,11 @@ class CustomerLoyaltyController extends BaseController
             filters: $filters,
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
         );
-        $customer = "all";
-        if (isset($request['customer_id']) && $request['customer_id'] != 'all' && !is_null($request['customer_id']) && $request->has('customer_id')) {
+        $customer = 'all';
+        if (isset($request['customer_id']) && $request['customer_id'] != 'all' && ! is_null($request['customer_id']) && $request->has('customer_id')) {
             $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]);
         }
+
         return view('admin-views.customer.loyalty.report', compact('data', 'transactions', 'customer'));
     }
 
@@ -59,20 +56,20 @@ class CustomerLoyaltyController extends BaseController
             'transaction_type' => $request['transaction_type'],
             'customer_id' => $request['customer_id'],
         ];
-        $summary = $this->loyaltyPointTransactionRepo->getListWhereSelect(filters:$filters, dataLimit:'all');
-        $transactions = $this->loyaltyPointTransactionRepo->getListWhere(orderBy: ['id'=>'desc'], filters:$filters, dataLimit:'all');
+        $summary = $this->loyaltyPointTransactionRepo->getListWhereSelect(filters: $filters, dataLimit: 'all');
+        $transactions = $this->loyaltyPointTransactionRepo->getListWhere(orderBy: ['id' => 'desc'], filters: $filters, dataLimit: 'all');
         $data = [
-            'type'=>'loyalty',
-            'transactions'=> $transactions,
+            'type' => 'loyalty',
+            'transactions' => $transactions,
             'credit' => $summary[0]->total_credit,
             'debit' => $summary[0]->total_debit,
             'balance' => $summary[0]->total_credit - $summary[0]->total_debit,
-            'transaction_type' =>$request['transaction_type'],
+            'transaction_type' => $request['transaction_type'],
             'to' => $request['to'],
             'from' => $request['from'],
-            'customer' => $request['customer_id'] ? $this->customerRepo->getFirstWhere(params:['id'=>$request['customer_id']]) : "all_customers",
+            'customer' => $request['customer_id'] ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : 'all_customers',
         ];
+
         return Excel::download(new CustomerTransactionsExport($data), 'Loyalty-Transactions-Report.xlsx');
     }
-
 }

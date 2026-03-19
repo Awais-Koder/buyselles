@@ -22,18 +22,17 @@ use PhpOffice\PhpSpreadsheet\Exception;
 
 class AdminTaxReportController extends Controller
 {
-    use VatTaxConfiguration, AdminTaxReportManagement;
+    use AdminTaxReportManagement, VatTaxConfiguration;
 
     private Tax $taxVat;
+
     private SystemTaxSetup $systemTaxVat;
 
     public function __construct(
-        private readonly TaxService            $taxService,
+        private readonly TaxService $taxService,
         private readonly SystemTaxSetupService $systemTaxSetupService,
-        private readonly TaxAdditionalSetup    $taxAdditionalSetup
-    )
-    {
-    }
+        private readonly TaxAdditionalSetup $taxAdditionalSetup
+    ) {}
 
     public static function getReportList(object|array $request, $startDate, $endDate)
     {
@@ -42,13 +41,13 @@ class AdminTaxReportController extends Controller
         $taxOnOrderCommission = $taxRates['tax_on_order_commission'];
 
         $reportList = [];
-        if (!empty($request['date_range_type']) && !empty($request['calculate_tax_on'])) {
+        if (! empty($request['date_range_type']) && ! empty($request['calculate_tax_on'])) {
             $combinedResults = self::getOrderTaxes($request, $taxOnDeliveryChargeCommission, $taxOnOrderCommission, $startDate, $endDate);
             foreach ($combinedResults as $resultKey => $result) {
                 $taxRateIds = [];
                 if ($request['calculate_tax_on'] == 'all_source') {
                     $taxRateIds = $taxRates['tax_on_all_source'];
-                } else if ($request['calculate_tax_on'] == 'individual_source') {
+                } elseif ($request['calculate_tax_on'] == 'individual_source') {
                     if ($resultKey == 'admin_commission') {
                         $taxRateIds = $taxRates['tax_on_order_commission'];
                     } elseif ($resultKey == 'delivery_charge') {
@@ -72,23 +71,25 @@ class AdminTaxReportController extends Controller
                     'total_tax_percentage' => collect($taxRateIds)?->sum('tax_rate'),
                     'total_tax_amount' => collect($taxes)?->sum('applicable_amount'),
                     'taxes' => $taxes,
-                    'transactions' => $result['transactions'] ?? []
+                    'transactions' => $result['transactions'] ?? [],
                 ];
             }
         }
+
         return $reportList;
     }
 
     public function getTaxReport(Request $request)
     {
-        if (isset($request['calculate_tax_on']) && !isset($request['date_range_type'])) {
+        if (isset($request['calculate_tax_on']) && ! isset($request['date_range_type'])) {
             ToastMagic::error(translate('Please_select_a_date_range_type.'));
+
             return redirect()->route('admin.report.get-tax-report');
         }
 
         $dateRange = $this->getTaxReportDateRange(type: $request['date_range_type'], dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -104,8 +105,8 @@ class AdminTaxReportController extends Controller
         $totalTax = collect($reportList)->sum('total_tax_amount');
 
         $selectedTax = [
-            'tax_on_delivery_charge_commission' => !isset($request->tax_rate) ? $taxOnDeliveryChargeCommission?->select('id', 'tax_rate', 'name')?->toArray() : [],
-            'tax_on_order_commission' => !isset($request->tax_rate) ? $taxOnOrderCommission?->select('id', 'tax_rate', 'name')?->toArray() : [],
+            'tax_on_delivery_charge_commission' => ! isset($request->tax_rate) ? $taxOnDeliveryChargeCommission?->select('id', 'tax_rate', 'name')?->toArray() : [],
+            'tax_on_order_commission' => ! isset($request->tax_rate) ? $taxOnOrderCommission?->select('id', 'tax_rate', 'name')?->toArray() : [],
             'tax_rate' => Tax::all(),
         ];
 
@@ -133,15 +134,15 @@ class AdminTaxReportController extends Controller
             ->where(function ($query) {
                 return $query->orWhere(['delivered_by' => 'admin']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->where('transaction_id', 'like', "%{$request['search']}%")
-                ->orWhereHas('order', function ($query) use ($request) {
-                    return $query->where('id', 'like', "%{$request['search']}%");
-                })->orWhereHas('orderTaxes', function ($query) use ($request) {
-                    return $query->where('tax_name', 'like', "%{$request['search']}%");
-                });
+                    ->orWhereHas('order', function ($query) use ($request) {
+                        return $query->where('id', 'like', "%{$request['search']}%");
+                    })->orWhereHas('orderTaxes', function ($query) use ($request) {
+                        return $query->where('tax_name', 'like', "%{$request['search']}%");
+                    });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -177,7 +178,7 @@ class AdminTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(type: $request['date_range_type'], dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -191,7 +192,7 @@ class AdminTaxReportController extends Controller
         if ($request->source == 'admin_commission') {
             $totalAmount = collect($baseData['transactions'])->sum('admin_commission');
             $taxRates = $getTaxRates['tax_on_order_commission'];
-        } else if ($request->source == 'delivery_charge') {
+        } elseif ($request->source == 'delivery_charge') {
             $totalAmount = collect($baseData['transactions'])->sum('delivery_charge');
             $taxRates = $getTaxRates['tax_on_delivery_charge_commission'];
         } else {
@@ -208,7 +209,7 @@ class AdminTaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -224,7 +225,7 @@ class AdminTaxReportController extends Controller
             'total_tax_rate' => $baseData['total_tax_percentage'],
             'taxSource' => $baseData['type'],
             'transactions' => $transactions,
-            'taxRates' => $taxRates
+            'taxRates' => $taxRates,
         ]);
     }
 
@@ -236,7 +237,7 @@ class AdminTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(type: $request['date_range_type'], dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -250,7 +251,7 @@ class AdminTaxReportController extends Controller
         if ($request->source == 'admin_commission') {
             $totalAmount = collect($baseData['transactions'])->sum('admin_commission');
             $taxRates = $getTaxRates['tax_on_order_commission'];
-        } else if ($request->source == 'delivery_charge') {
+        } elseif ($request->source == 'delivery_charge') {
             $totalAmount = collect($baseData['transactions'])->sum('delivery_charge');
             $taxRates = $getTaxRates['tax_on_delivery_charge_commission'];
         } else {
@@ -271,16 +272,16 @@ class AdminTaxReportController extends Controller
             'total_tax_rate' => $baseData['total_tax_percentage'],
             'taxSource' => $baseData['type'],
             'transactions' => $transactions,
-            'taxRates' => $taxRates
+            'taxRates' => $taxRates,
         ];
 
         if ($request->export_type == 'excel') {
-            return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'] . ' ' . 'TaxExport.xlsx');
-        } else if ($request->export_type == 'csv') {
-            return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'] . ' ' . 'TaxExport.csv');
+            return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'].' '.'TaxExport.xlsx');
+        } elseif ($request->export_type == 'csv') {
+            return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'].' '.'TaxExport.csv');
         }
 
-        return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'] . ' ' . 'TaxExport.xlsx');
+        return Excel::download(new AdminTaxReportDetailsExport($data), $baseData['type'].' '.'TaxExport.xlsx');
     }
 
     /**
@@ -291,7 +292,7 @@ class AdminTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(type: $request['date_range_type'], dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -314,9 +315,10 @@ class AdminTaxReportController extends Controller
 
         if ($request->export_type == 'excel') {
             return Excel::download(new AdminTaxReportExport($data), 'AdminTaxExport.xlsx');
-        } else if ($request->export_type == 'csv') {
+        } elseif ($request->export_type == 'csv') {
             return Excel::download(new AdminTaxReportExport($data), 'AdminTaxExport.csv');
         }
+
         return Excel::download(new AdminTaxReportExport($data), 'AdminTaxExport.xlsx');
     }
 }

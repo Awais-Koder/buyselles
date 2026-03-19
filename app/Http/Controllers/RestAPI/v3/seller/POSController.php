@@ -14,11 +14,10 @@ use App\Models\BusinessSetting;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\PasswordResetService;
 use App\Models\User;
+use App\Services\PasswordResetService;
 use App\Traits\API\v3\VendorPOSManagement;
 use App\Traits\CustomerTrait;
-use App\Utils\CartManager;
 use App\Utils\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,37 +28,26 @@ use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class POSController extends Controller
 {
-
     use CustomerTrait;
     use VatTaxManagement;
     use VendorPOSManagement;
 
-    /**
-     * @param PasswordResetRepositoryInterface $passwordResetRepo
-     * @param DigitalProductVariationRepositoryInterface $digitalProductVariationRepo
-     * @param ProductRepositoryInterface $productRepo
-     * @param StorageRepositoryInterface $storageRepo
-     * @param PasswordResetService $passwordResetService
-     * @param CustomerRepositoryInterface $customerRepo
-     */
     public function __construct(
 
-        private readonly PasswordResetRepositoryInterface           $passwordResetRepo,
+        private readonly PasswordResetRepositoryInterface $passwordResetRepo,
         private readonly DigitalProductVariationRepositoryInterface $digitalProductVariationRepo,
-        private readonly ProductRepositoryInterface                 $productRepo,
-        private readonly StorageRepositoryInterface                 $storageRepo,
-        private readonly PasswordResetService                       $passwordResetService,
-        private readonly CustomerRepositoryInterface                $customerRepo,
-    )
-    {
-    }
-
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly StorageRepositoryInterface $storageRepo,
+        private readonly PasswordResetService $passwordResetService,
+        private readonly CustomerRepositoryInterface $customerRepo,
+    ) {}
 
     public function getProductDiscount($product, $price)
     {
         if ($product['discount_type'] == 'percent') {
             return ($price / 100) * $product['discount'];
         }
+
         return $product['discount'];
     }
 
@@ -78,7 +66,7 @@ class POSController extends Controller
 
         if ($product['product_type'] == 'physical') {
             $this->productRepo->updateByParams(params: ['id' => $product['id']], data: [
-                'current_stock' => $product['current_stock'] - $cartItem['quantity']
+                'current_stock' => $product['current_stock'] - $cartItem['quantity'],
             ]);
         }
     }
@@ -89,12 +77,14 @@ class POSController extends Controller
         if (Order::find($generateOrderID)) {
             $generateOrderID = Order::orderBy('id', 'DESC')->first()->id + 1;
         }
+
         return $generateOrderID;
     }
 
     public function get_categories(): JsonResponse
     {
         $categories = Category::with(['childes.childes'])->where(['position' => 0])->priority()->get();
+
         return response()->json($categories, 200);
     }
 
@@ -111,7 +101,7 @@ class POSController extends Controller
             'address' => 'required',
         ], [
             'f_name.required' => 'First name is required!',
-            'l_name.required' => 'Last name is required!'
+            'l_name.required' => 'Last name is required!',
         ]);
 
         if ($validator->fails()) {
@@ -127,7 +117,7 @@ class POSController extends Controller
             'zip' => $request['zip_code'],
             'street_address' => $request['address'],
             'is_active' => 1,
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         $token = Str::random(120);
@@ -138,18 +128,19 @@ class POSController extends Controller
             'userType' => 'customer',
             'templateName' => 'registration-from-pos',
             'subject' => translate('Customer_Registration_Successfully_Completed'),
-            'title' => translate('welcome_to') . ' ' . getWebConfig(name: 'company_name') . '!',
+            'title' => translate('welcome_to').' '.getWebConfig(name: 'company_name').'!',
             'resetPassword' => $resetRoute,
-            'message' => translate('thank_you_for_joining') . ' ' . getWebConfig(name: 'company_name') . '.' . translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone') . ' ' . ($request['phone']) . '.' . translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer') . '.',
+            'message' => translate('thank_you_for_joining').' '.getWebConfig(name: 'company_name').'.'.translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone').' '.($request['phone']).'.'.translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer').'.',
         ];
         event(new CustomerRegistrationEvent(email: $request['email'], data: $data));
+
         return response()->json(['message' => translate('customer added successfully!')], 200);
     }
 
-    public function customers(Request $request):JsonResponse
+    public function customers(Request $request): JsonResponse
     {
         $seller = $request->seller;
-        $customers = User::when(!empty($request['name']), function ($query) use ($request) {
+        $customers = User::when(! empty($request['name']), function ($query) use ($request) {
             $search = $request['name'];
             $query->where(function ($q) use ($search) {
                 $q->orWhere('f_name', 'like', "%{$search}%")
@@ -164,9 +155,9 @@ class POSController extends Controller
         if ($request->type != 'all') {
             array_shift($customers);
         }
-        $data = array(
-            'customers' => $customers
-        );
+        $data = [
+            'customers' => $customers,
+        ];
 
         return response()->json($data, 200);
     }
@@ -177,12 +168,12 @@ class POSController extends Controller
         $product = Product::withCount('reviews')->where([
             'added_by' => 'seller',
             'user_id' => $seller->id,
-            'code' => $request->code
+            'code' => $request->code,
         ])->with(['clearanceSale' => function ($query) {
             return $query->active()->with(['setup']);
         }])->first();
 
-        $final_product = array();
+        $final_product = [];
         if ($product) {
             $final_product = Helpers::product_data_formatting($product, false);
         }
@@ -201,7 +192,7 @@ class POSController extends Controller
         }])
             ->withCount('reviews')
             ->where(['added_by' => 'seller', 'user_id' => $seller['id'], 'status' => 1])
-            ->when(!empty($categoryIds), function ($query) use ($categoryIds) {
+            ->when(! empty($categoryIds), function ($query) use ($categoryIds) {
                 $query->where(function ($query) use ($categoryIds) {
                     return $query->whereIn('category_id', $categoryIds)
                         ->orWhereIn('sub_category_id', $categoryIds)
@@ -219,11 +210,12 @@ class POSController extends Controller
 
         $products_final = Helpers::product_data_formatting($products, true);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $products->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
         $data['products'] = $products_final;
+
         return response()->json($data, 200);
     }
 
@@ -237,9 +229,10 @@ class POSController extends Controller
             }
         }
 
-        if (!empty($cartIDs) && Product::whereIn('id', $cartIDs)->where(['product_type' => 'digital'])->count() > 0) {
+        if (! empty($cartIDs) && Product::whereIn('id', $cartIDs)->where(['product_type' => 'digital'])->count() > 0) {
             $isDigitalProduct = true;
         }
+
         return $isDigitalProduct;
     }
 
@@ -262,7 +255,7 @@ class POSController extends Controller
         if ($customerId == 0 && $isDigitalProduct) {
             return response()->json([
                 'checkProductTypeForWalkingCustomer' => true,
-                'message' => translate('To_order_digital_product') . ',' . translate('_kindly_fill_up_the_“Add_New_Customer”_form') . '.'
+                'message' => translate('To_order_digital_product').','.translate('_kindly_fill_up_the_“Add_New_Customer”_form').'.',
             ]);
         }
 
@@ -273,7 +266,7 @@ class POSController extends Controller
             } else {
                 return response()->json([
                     'need_balance' => true,
-                    'message' => translate('need_Sufficient_Amount_Balance')
+                    'message' => translate('need_Sufficient_Amount_Balance'),
                 ]);
             }
         }
@@ -287,10 +280,10 @@ class POSController extends Controller
                     $product = Product::where(['id' => $cartItem['id']])->with(['digitalVariation', 'clearanceSale' => function ($query) {
                         return $query->active();
                     }])->withCount('reviews')->first();
-                    if (!$product || $cartItem['quantity'] > $product['current_stock']) {
+                    if (! $product || $cartItem['quantity'] > $product['current_stock']) {
                         return response()->json([
                             'product_not_available' => true,
-                            'message' => $product['name'] . ' ' . translate('not_available_for_order_place')
+                            'message' => $product['name'].' '.translate('not_available_for_order_place'),
                         ]);
                     }
                 }
@@ -324,7 +317,7 @@ class POSController extends Controller
                             'variant' => $getProductArray['variant'],
                             'variation' => json_encode($cartItem['variation']),
                             'created_at' => now(),
-                            'updated_at' => now()
+                            'updated_at' => now(),
                         ];
                         self::getProductStockCalculate(cartItem: $cartItem, product: $product);
                         DB::table('order_details')->insert($orderDetailsData);
@@ -352,7 +345,7 @@ class POSController extends Controller
             'paid_amount' => $paidAmount,
             'discount_amount' => currencyConverter(amount: $couponDiscountAmount ?? 0),
             'coupon_code' => $couponCode ?? null,
-            'discount_type' => (isset($carts['coupon_code']) && $carts['coupon_code']) ? 'coupon_discount' : NULL,
+            'discount_type' => (isset($carts['coupon_code']) && $carts['coupon_code']) ? 'coupon_discount' : null,
             'coupon_discount_bearer' => $carts['coupon_bearer'] ?? 'inhouse',
             'created_at' => now(),
             'updated_at' => now(),
@@ -367,15 +360,16 @@ class POSController extends Controller
                 'templateName' => 'digital-product-download',
                 'order' => $order,
                 'subject' => translate('download_Digital_Product'),
-                'title' => translate('Congratulations') . '!',
+                'title' => translate('Congratulations').'!',
                 'emailId' => $order->customer['email'],
             ];
             event(new DigitalProductDownloadEvent(email: $order->customer['email'], data: $data));
         }
+
         return response()->json(['order_id' => $generateOrderID], 200);
     }
 
-    public function get_invoice(Request $request):JsonResponse
+    public function get_invoice(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $seller_pos = BusinessSetting::where('type', 'seller_pos')->first()->value;
@@ -392,6 +386,4 @@ class POSController extends Controller
 
         return response()->json($orders, 200);
     }
-
-
 }

@@ -2,7 +2,6 @@
 
 namespace Modules\AI\app\Services;
 
-use Illuminate\Support\Facades\Log;
 use Modules\AI\app\Exceptions\ImageValidationException;
 use Modules\AI\app\Exceptions\ValidationException;
 
@@ -78,7 +77,6 @@ class AIResponseValidatorService
         }
     }
 
-
     /**
      * @throws ImageValidationException
      */
@@ -88,9 +86,6 @@ class AIResponseValidatorService
             throw new ImageValidationException('The uploaded image is not valid for generating product content. Please provide a meaningful image.');
         }
     }
-
-
-
 
     /**
      * @throws ValidationException
@@ -105,7 +100,8 @@ class AIResponseValidatorService
     /**
      * @throws ValidationException
      */
-    public function validateBlogDescription(string $response, ?string $context = null): void{
+    public function validateBlogDescription(string $response, ?string $context = null): void
+    {
         if ($this->isInvalidProductDescription($response, $context)) {
             throw new ValidationException('The provided input is not valid for generating a blog description. Please provide a meaningful blog title or description.');
         }
@@ -137,6 +133,7 @@ class AIResponseValidatorService
             throw new ImageValidationException('The uploaded image is not valid for generating blog content. Please provide a meaningful image.');
         }
     }
+
     private function isInvalidProductTitle(string $response, ?string $context = null): bool
     {
         return $this->phraseCheck($response, $context);
@@ -167,6 +164,7 @@ class AIResponseValidatorService
                 return true;
             }
         }
+
         return false;
     }
 }

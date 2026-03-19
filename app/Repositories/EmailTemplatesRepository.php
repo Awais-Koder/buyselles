@@ -12,9 +12,8 @@ class EmailTemplatesRepository implements EmailTemplatesRepositoryInterface
 {
     public function __construct(
         private readonly EmailTemplate $emailTemplate,
-    )
-    {
-    }
+    ) {}
+
     public function add(array $data): string|object
     {
         return $this->emailTemplate->create($data);
@@ -28,8 +27,8 @@ class EmailTemplatesRepository implements EmailTemplatesRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->emailTemplate->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -38,8 +37,8 @@ class EmailTemplatesRepository implements EmailTemplatesRepositoryInterface
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         return $this->emailTemplate->with($relations)->where($filters)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             })->get();
 
     }

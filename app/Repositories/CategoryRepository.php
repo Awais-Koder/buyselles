@@ -3,8 +3,8 @@
 namespace App\Repositories;
 
 use App\Contracts\Repositories\CategoryRepositoryInterface;
-use App\Models\Translation;
 use App\Models\Category;
+use App\Models\Translation;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,11 +12,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class CategoryRepository implements CategoryRepositoryInterface
 {
     public function __construct(
-        private readonly Category    $category,
+        private readonly Category $category,
         private readonly Translation $translation
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -31,7 +29,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->category->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -42,7 +40,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     {
         $query = $this->category
             ->with($relations)
-            ->when(in_array('translations', $relations), function ($query) use ($filters) {
+            ->when(in_array('translations', $relations), function ($query) {
                 return $query->withoutGlobalScopes();
             })
             ->where($filters)
@@ -54,11 +52,12 @@ class CategoryRepository implements CategoryRepositoryInterface
                     })->pluck('translationable_id');
                 $query->where('name', 'like', "%$searchValue%")->orWhereIn('id', $translation_ids);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -66,7 +65,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     {
         $query = $this->category->with($relations)
             ->where($filters)
-            ->when(in_array('translations', $relations), function ($query) use ($filters) {
+            ->when(in_array('translations', $relations), function ($query) {
                 return $query->withoutGlobalScopes();
             })
             ->when(isset($searchValue), function ($query) use ($searchValue) {
@@ -77,24 +76,24 @@ class CategoryRepository implements CategoryRepositoryInterface
                     })->pluck('translationable_id');
                 $query->where('name', 'like', "%$searchValue%")->orWhereIn('id', $translation_ids);
             })
-            ->when(!empty($whereIn), function ($query) use ($whereIn) {
+            ->when(! empty($whereIn), function ($query) use ($whereIn) {
                 foreach ($whereIn as $key => $filterIndex) {
-                    if (is_array($filterIndex) && !empty($filterIndex)) {
+                    if (is_array($filterIndex) && ! empty($filterIndex)) {
                         $query->whereIn($key, $filterIndex);
                     }
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
 
     public function update(string $id, array $data): bool
     {
@@ -122,7 +121,7 @@ class CategoryRepository implements CategoryRepositoryInterface
 
         $this->translation->where('translationable_type', 'App\Models\Category')->where('translationable_id', $params['id'])->delete();
         $this->category->where('id', $params['id'])->delete();
+
         return true;
     }
-
 }

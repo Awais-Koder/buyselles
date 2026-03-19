@@ -12,14 +12,11 @@ use Illuminate\Http\Request;
 
 class VendorPaymentInfoController extends Controller
 {
-
     public function __construct(
         private readonly VendorWithdrawMethodInfoRepositoryInterface $vendorWithdrawMethodInfoRepo,
-        private readonly WithdrawalMethodRepositoryInterface         $withdrawalMethodRepo,
-        private readonly VendorPaymentInformationService             $vendorPaymentInformationService,
-    )
-    {
-    }
+        private readonly WithdrawalMethodRepositoryInterface $withdrawalMethodRepo,
+        private readonly VendorPaymentInformationService $vendorPaymentInformationService,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -33,11 +30,12 @@ class VendorPaymentInfoController extends Controller
             dataLimit: $limit,
             offset: $request['offset'] ?? 1
         );
+
         return response()->json([
             'data' => $withdrawMethods->values(),
             'total_size' => $limit == 'all' ? $withdrawMethods->count() : $withdrawMethods->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
         ]);
     }
 
@@ -52,17 +50,17 @@ class VendorPaymentInfoController extends Controller
         return response()->json([
             'data' => $withdrawalMethods->values(),
             'total_size' => $withdrawalMethods->count(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
         ]);
     }
-
 
     public function add(PaymentInfoApiRequest $request): JsonResponse
     {
         $fields = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['withdraw_method_id']]);
         $data = $this->vendorPaymentInformationService->getApiAddData(sellerID: $request['seller']?->id, request: $request, fields: $fields['method_fields']);
         $this->vendorWithdrawMethodInfoRepo->add(data: $data);
+
         return response()->json(['status' => true], 200);
     }
 
@@ -70,7 +68,8 @@ class VendorPaymentInfoController extends Controller
     {
         $fields = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['withdraw_method_id']]);
         $data = $this->vendorPaymentInformationService->getApiAddData(sellerID: $request['seller']?->id, request: $request, fields: $fields['method_fields']);
-         $this->vendorWithdrawMethodInfoRepo->updateOrInsert(params: ['id' => $request['id']], data: $data);
+        $this->vendorWithdrawMethodInfoRepo->updateOrInsert(params: ['id' => $request['id']], data: $data);
+
         return response()->json(['status' => true], 200);
     }
 
@@ -81,13 +80,14 @@ class VendorPaymentInfoController extends Controller
             params: ['id' => $request['id']],
             data: ['is_default' => 1, 'is_active' => 1]
         );
+
         return response()->json(['status' => true], 200);
     }
-
 
     public function updateStatus(Request $request): JsonResponse
     {
         $this->vendorWithdrawMethodInfoRepo->updateWhere(params: ['id' => $request['id']], data: ['is_active' => $request['status'] ?? 0]);
+
         return response()->json(['status' => true], 200);
     }
 
@@ -95,6 +95,7 @@ class VendorPaymentInfoController extends Controller
     {
         $seller = $request['seller'];
         $this->vendorWithdrawMethodInfoRepo->delete(params: ['id' => $request['id'], 'user_id' => $seller['id']]);
+
         return response()->json(['status' => true], 200);
     }
 }

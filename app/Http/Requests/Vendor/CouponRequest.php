@@ -8,20 +8,16 @@ class CouponRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    public function authorize():bool
+    public function authorize(): bool
     {
         return true;
     }
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
-    public function rules():array
+    public function rules(): array
     {
         $data = [
             'coupon_type' => 'required',
@@ -38,13 +34,14 @@ class CouponRequest extends FormRequest
         if (isset($this['discount_type']) && $this['discount_type'] == 'percentage' && empty($this['max_discount'])) {
             $data['max_discount'] = 'required';
         }
+
         return $data;
     }
 
     /**
-    * @return array
-    * Get the validation error message
-    */
+     * @return array
+     *               Get the validation error message
+     */
     public function messages(): array
     {
         $data = [
@@ -59,7 +56,7 @@ class CouponRequest extends FormRequest
         if (isset($this['discount_type']) && $this['discount_type'] == 'percentage' && empty($this['max_discount'])) {
             $data['max_discount.required'] = translate('max_discount_amount_is_required!');
         }
+
         return $data;
     }
-
 }

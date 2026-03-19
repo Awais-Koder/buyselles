@@ -21,8 +21,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class AddFundBonusCategories extends Model
 {

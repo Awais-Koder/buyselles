@@ -32,25 +32,21 @@ class SiteMapController extends BaseController
 
     public function __construct(
         private readonly ProductRepositoryInterface $productRepo,
-        private readonly ShopRepositoryInterface    $shopRepo,
-    )
-    {
-    }
+        private readonly ShopRepositoryInterface $shopRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
-        if (!File::isDirectory(storage_path('app/public/sitemap'))) {
+        if (! File::isDirectory(storage_path('app/public/sitemap'))) {
             File::makeDirectory(storage_path('app/public/sitemap'));
         }
         $siteMapList = self::getAllSitemapFiles(directory: storage_path('app/public/sitemap'));
         $collection = new Collection($siteMapList);
-        $dataLimit = !empty(getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)) ? getWebConfig(name: WebConfigKey::PAGINATION_LIMIT) : 25;
+        $dataLimit = ! empty(getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)) ? getWebConfig(name: WebConfigKey::PAGINATION_LIMIT) : 25;
         $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
         $totalSize = $collection->count();
         $results = $collection->forPage($currentPage, $dataLimit);
@@ -66,6 +62,7 @@ class SiteMapController extends BaseController
     public function getGenerateAndDownload(Request $request): JsonResponse
     {
         $filePath = self::processGenerateAndDownload(action: 'generate');
+
         return response()->json([
             'status' => 1,
             'filePath' => $filePath,
@@ -77,9 +74,11 @@ class SiteMapController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         self::processGenerateAndDownload(action: 'upload');
+
         return redirect()->route('admin.seo-settings.sitemap');
     }
 
@@ -90,21 +89,22 @@ class SiteMapController extends BaseController
 
         foreach ($files as $file) {
             if ($file != '.' && $file != '..') {
-                $filePath = $directory . '/' . $file;
+                $filePath = $directory.'/'.$file;
                 $createdTime = Carbon::createFromTimestamp(filectime($filePath));
                 $modifiedTime = Carbon::createFromTimestamp(filemtime($filePath));
                 $fileDetails[] = [
                     'name' => $file,
                     'size' => FileManagerLogic::formatBytes(filesize($filePath)),
-                    'path' => asset('storage/app/public/sitemap/' . $file),
+                    'path' => asset('storage/app/public/sitemap/'.$file),
                     'created_at' => $createdTime,
                     'modified_at' => $modifiedTime,
                 ];
             }
         }
-        usort($fileDetails, function($a, $b) {
+        usort($fileDetails, function ($a, $b) {
             return $b['modified_at'] <=> $a['modified_at'];
         });
+
         return $fileDetails;
     }
 
@@ -115,9 +115,9 @@ class SiteMapController extends BaseController
         $currentTime = Carbon::now();
         $generator = SitemapGenerator::create(url('/'));
         $generator->shouldCrawl(function ($url) {
-            return !str_contains($url, '/products')
-                && !str_contains($url, '/product')
-                && !str_contains($url, '/vendor-shop');
+            return ! str_contains($url, '/products')
+                && ! str_contains($url, '/product')
+                && ! str_contains($url, '/vendor-shop');
         });
 
         $productsUrl = $this->productRepo->getWebListWithScope(scope: 'active', dataLimit: 'all')->pluck('slug');
@@ -144,7 +144,7 @@ class SiteMapController extends BaseController
             ->setPriority(0.8);
         $generator->getSitemap()->add($urlObject);
 
-        $urlObject = Url::create(route('vendor-shop', ['slug' => getInHouseShopConfig(key:'slug')]))
+        $urlObject = Url::create(route('vendor-shop', ['slug' => getInHouseShopConfig(key: 'slug')]))
             ->setLastModificationDate($currentTime)
             ->setChangeFrequency('weekly')
             ->setPriority(0.8);
@@ -192,22 +192,23 @@ class SiteMapController extends BaseController
             $url->setPriority(0.8)
                 ->setLastModificationDate($currentTime)
                 ->setChangeFrequency('weekly');
+
             return $url;
         });
 
         $directory = storage_path('app/public/sitemap');
-        if (!File::exists($directory)) {
+        if (! File::exists($directory)) {
             File::makeDirectory($directory, 0777, true, true);
         }
 
-        $fileName = 'sitemap-' . Str::slug(Carbon::now()) . '.xml';
-        $generator->writeToFile(storage_path('app/public/sitemap/' . $fileName));
+        $fileName = 'sitemap-'.Str::slug(Carbon::now()).'.xml';
+        $generator->writeToFile(storage_path('app/public/sitemap/'.$fileName));
 
         if ($action == 'upload') {
             $generator->writeToFile(public_path('sitemap.xml'));
             $generator->writeToFile(base_path('sitemap.xml'));
-        } else{
-            return dynamicStorage('storage/app/public/sitemap/' . $fileName);
+        } else {
+            return dynamicStorage('storage/app/public/sitemap/'.$fileName);
         }
     }
 
@@ -215,10 +216,11 @@ class SiteMapController extends BaseController
     {
         if ($request['path']) {
             $fileName = base64_decode($request['path']);
-            if (File::exists(storage_path('app/public/sitemap/' . $fileName))) {
-                return response()->download(storage_path('app/public/sitemap/' . $fileName));
+            if (File::exists(storage_path('app/public/sitemap/'.$fileName))) {
+                return response()->download(storage_path('app/public/sitemap/'.$fileName));
             }
         }
+
         return redirect()->route('admin.seo-settings.sitemap');
     }
 
@@ -227,7 +229,7 @@ class SiteMapController extends BaseController
         if ($request->file('xml_file')->getClientOriginalExtension() != 'xml') {
             ToastMagic::error(translate('Please_upload_a_xml_file'));
         } elseif ($request->file('xml_file')) {
-            $fileName = 'sitemap-' . Str::slug(Carbon::now()) . '.xml';
+            $fileName = 'sitemap-'.Str::slug(Carbon::now()).'.xml';
             $request->file('xml_file')->storeAs('public/sitemap', $fileName);
             if (File::exists(public_path('sitemap.xml'))) {
                 File::delete(public_path('sitemap.xml'));
@@ -239,6 +241,7 @@ class SiteMapController extends BaseController
             File::put(base_path('sitemap.xml'), $request->file('xml_file'));
             ToastMagic::success(translate('successfully_upload'));
         }
+
         return redirect()->route('admin.seo-settings.sitemap');
     }
 
@@ -246,11 +249,12 @@ class SiteMapController extends BaseController
     {
         if ($request['path']) {
             $fileName = base64_decode($request['path']);
-            if (File::exists(storage_path('app/public/sitemap/' . $fileName))) {
-                File::delete(storage_path('app/public/sitemap/' . $fileName));
+            if (File::exists(storage_path('app/public/sitemap/'.$fileName))) {
+                File::delete(storage_path('app/public/sitemap/'.$fileName));
                 ToastMagic::success(translate('successfully_delete'));
             }
         }
+
         return redirect()->route('admin.seo-settings.sitemap');
     }
 }

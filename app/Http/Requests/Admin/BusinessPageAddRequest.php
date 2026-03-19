@@ -36,5 +36,4 @@ class BusinessPageAddRequest extends FormRequest
             'banner.max' => translate('banner_image_max_size_is_2_MB'),
         ];
     }
-
 }

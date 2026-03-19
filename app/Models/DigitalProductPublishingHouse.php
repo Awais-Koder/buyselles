@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Class DigitalProductPublishingHouse
  *
- * @package App\Models
  * @property int $id
  * @property int $publishing_house_id
  * @property int|null $product_id
@@ -46,5 +45,4 @@ class DigitalProductPublishingHouse extends Model
     {
         return $this->belongsTo(Product::class);
     }
-
 }

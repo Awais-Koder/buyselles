@@ -28,7 +28,7 @@ class OrderDetailsService
             'variant' => $item['variant'],
             'variation' => json_encode($item['variations']),
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ];
     }
 }

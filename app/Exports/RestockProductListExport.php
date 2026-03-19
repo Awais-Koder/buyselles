@@ -18,7 +18,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class RestockProductListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class RestockProductListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -61,8 +61,9 @@ class RestockProductListExport implements FromView, ShouldAutoSize, WithStyles, 
         ]);
 
         $sheet->setShowGridlines(false);
+
         return [
-            'A1:H' . ($this->data['products']->count() + 4) => [
+            'A1:H'.($this->data['products']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -82,16 +83,16 @@ class RestockProductListExport implements FromView, ShouldAutoSize, WithStyles, 
          * @throws Exception
          */ function ($item, $index) use ($workSheet) {
             $tempImagePath = null;
-            $filePath = 'product/thumbnail/' . $item?->product?->thumbnail_full_url['key'];
+            $filePath = 'product/thumbnail/'.$item?->product?->thumbnail_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item?->product?->thumbnail_full_url['path'] && !$fileCheck) {
+            if ($item?->product?->thumbnail_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item?->product?->thumbnail_full_url['path']);
                 $imagePath = getImageForExport($item?->product?->thumbnail_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/products.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/products.png'));
             }
             $drawing->setName($item?->product?->name);
             $drawing->setDescription($item?->product?->name);
@@ -116,7 +117,7 @@ class RestockProductListExport implements FromView, ShouldAutoSize, WithStyles, 
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:H' . ($this->data['products']->count() + 4))
+                $event->sheet->getStyle('A4:H'.($this->data['products']->count() + 4))
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
@@ -146,7 +147,7 @@ class RestockProductListExport implements FromView, ShouldAutoSize, WithStyles, 
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

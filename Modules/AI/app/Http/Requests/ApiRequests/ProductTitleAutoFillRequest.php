@@ -3,10 +3,9 @@
 namespace Modules\AI\app\Http\Requests\ApiRequests;
 
 use App\Traits\ResponseHandler;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
 
 class ProductTitleAutoFillRequest extends FormRequest
 {
@@ -26,7 +25,6 @@ class ProductTitleAutoFillRequest extends FormRequest
     /**
      * Determine if the user is authorized to make this request.
      */
-
     public function messages(): array
     {
         return [

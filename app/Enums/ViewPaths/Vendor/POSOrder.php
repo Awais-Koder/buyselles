@@ -8,16 +8,19 @@ enum POSOrder
         URI => 'order-details',
         VIEW => 'vendor-views.pos.order.order-details',
     ];
+
     const ORDER_PLACE = [
-      VIEW => 'vendor-views.pos.order.order-details',
-      URI => 'order-place'
+        VIEW => 'vendor-views.pos.order.order-details',
+        URI => 'order-place',
 
     ];
-    const CANCEL_ORDER =[
+
+    const CANCEL_ORDER = [
         VIEW => 'vendor-views.pos.partials._view-hold-orders',
         URI => 'cancel-order',
     ];
-    const HOLD_ORDERS =[
+
+    const HOLD_ORDERS = [
         VIEW => 'vendor-views.pos.partials._view-hold-orders',
         URI => 'view-hold-orders',
 

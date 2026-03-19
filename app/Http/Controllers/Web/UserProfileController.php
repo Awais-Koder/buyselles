@@ -5,24 +5,20 @@ namespace App\Http\Controllers\Web;
 use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Contracts\Repositories\OrderDetailsRewardsRepositoryInterface;
 use App\Contracts\Repositories\OrderStatusHistoryRepositoryInterface;
-use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Contracts\Repositories\RestockProductCustomerRepositoryInterface;
+use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Contracts\Repositories\RobotsMetaContentRepositoryInterface;
 use App\Enums\WebConfigKey;
 use App\Events\RefundEvent;
-use App\Http\Requests\Web\CustomerProfileUpdateRequest;
-use App\Models\OfflinePaymentMethod;
-use App\Models\OrderEditHistory;
-use App\Models\OrderStatusHistory;
-use App\Models\SupportTicketConv;
-use App\Services\OrderStatusHistoryService;
-use App\Traits\PdfGenerator;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Web\CustomerProfileUpdateRequest;
 use App\Models\Coupon;
 use App\Models\DeliveryMan;
 use App\Models\DeliveryZipCode;
+use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\OrderEditHistory;
 use App\Models\Product;
 use App\Models\ProductCompare;
 use App\Models\RefundRequest;
@@ -30,9 +26,12 @@ use App\Models\Review;
 use App\Models\Seller;
 use App\Models\ShippingAddress;
 use App\Models\SupportTicket;
-use App\Models\Wishlist;
-use App\Traits\CommonTrait;
+use App\Models\SupportTicketConv;
 use App\Models\User;
+use App\Models\Wishlist;
+use App\Services\OrderStatusHistoryService;
+use App\Traits\CommonTrait;
+use App\Traits\PdfGenerator;
 use App\Utils\CustomerManager;
 use App\Utils\Helpers;
 use App\Utils\ImageManager;
@@ -44,6 +43,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
 use function App\Utils\payment_gateways;
 
 class UserProfileController extends Controller
@@ -51,24 +51,21 @@ class UserProfileController extends Controller
     use CommonTrait, PdfGenerator;
 
     public function __construct(
-        private Order                                              $order,
-        private Seller                                             $seller,
-        private Product                                            $product,
-        private Review                                             $review,
-        private DeliveryMan                                        $deliver_man,
-        private ProductCompare                                     $compare,
-        private Wishlist                                           $wishlist,
-        private readonly BusinessSettingRepositoryInterface        $businessSettingRepo,
-        private readonly RobotsMetaContentRepositoryInterface      $robotsMetaContentRepo,
-        private readonly RestockProductRepositoryInterface         $restockProductRepo,
+        private Order $order,
+        private Seller $seller,
+        private Product $product,
+        private Review $review,
+        private DeliveryMan $deliver_man,
+        private ProductCompare $compare,
+        private Wishlist $wishlist,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+        private readonly RobotsMetaContentRepositoryInterface $robotsMetaContentRepo,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
         private readonly RestockProductCustomerRepositoryInterface $restockProductCustomerRepo,
-        private readonly OrderDetailsRewardsRepositoryInterface    $orderDetailsRewardsRepo,
-        private readonly OrderStatusHistoryRepositoryInterface     $orderStatusHistoryRepo,
-        private readonly OrderStatusHistoryService                 $orderStatusHistoryService,
-    )
-    {
-
-    }
+        private readonly OrderDetailsRewardsRepositoryInterface $orderDetailsRewardsRepo,
+        private readonly OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepo,
+        private readonly OrderStatusHistoryService $orderStatusHistoryService,
+    ) {}
 
     public function user_profile(Request $request)
     {
@@ -88,6 +85,7 @@ class UserProfileController extends Controller
     {
         $country_restrict_status = getWebConfig(name: 'delivery_country_restriction');
         $customerDetail = User::where('id', auth('customer')->id())->first();
+
         return view(VIEW_FILE_NAMES['user_account'], compact('customerDetail'));
 
     }
@@ -108,6 +106,7 @@ class UserProfileController extends Controller
         ]);
 
         Toastr::info(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -133,19 +132,22 @@ class UserProfileController extends Controller
             $order = Order::where('customer_id', $user->id)->whereIn('order_status', $ongoing)->count();
             if ($order > 0) {
                 Toastr::warning(translate('you_can_not_delete_account_due_ongoing_order'));
+
                 return redirect()->back();
             }
             auth()->guard('customer')->logout();
 
-            ImageManager::delete('/profile/' . $user['image']);
+            ImageManager::delete('/profile/'.$user['image']);
             session()->forget('wish_list');
 
             $user->delete();
             Toastr::info(translate('Your_account_deleted_successfully!!'));
+
             return redirect()->route('home');
         }
 
-        Toastr::warning(translate('access_denied') . '!!');
+        Toastr::warning(translate('access_denied').'!!');
+
         return back();
     }
 
@@ -166,6 +168,7 @@ class UserProfileController extends Controller
 
         if (auth('customer')->check()) {
             $shippingAddresses = ShippingAddress::where('customer_id', auth('customer')->id())->latest()->get();
+
             return view('web-views.users-profile.account-address', compact('shippingAddresses', 'country_restrict_status', 'zip_restrict_status', 'countries', 'zip_codes', 'countriesName', 'countriesCode'));
         } else {
             return redirect()->route('home');
@@ -200,13 +203,15 @@ class UserProfileController extends Controller
         $country_exist = self::delivery_country_exist_check($request->country);
         $zipcode_exist = self::delivery_zipcode_exist_check($request->zip);
 
-        if ($country_restrict_status && !$country_exist) {
+        if ($country_restrict_status && ! $country_exist) {
             Toastr::error(translate('Delivery_unavailable_in_this_country!'));
+
             return back();
         }
 
-        if ($zip_restrict_status && !$zipcode_exist) {
+        if ($zip_restrict_status && ! $zipcode_exist) {
             Toastr::error(translate('Delivery_unavailable_in_this_zip_code_area!'));
+
             return back();
         }
 
@@ -256,6 +261,7 @@ class UserProfileController extends Controller
             return view(VIEW_FILE_NAMES['account_address_edit'], compact('shippingAddress', 'country_restrict_status', 'zip_restrict_status', 'delivery_countries', 'delivery_zipcodes', 'countriesName', 'countriesCode'));
         } else {
             Toastr::warning(translate('access_denied'));
+
             return back();
         }
     }
@@ -288,13 +294,15 @@ class UserProfileController extends Controller
         $country_exist = self::delivery_country_exist_check($request->country);
         $zipcode_exist = self::delivery_zipcode_exist_check($request->zip);
 
-        if ($country_restrict_status && !$country_exist) {
+        if ($country_restrict_status && ! $country_exist) {
             Toastr::error(translate('Delivery_unavailable_in_this_country!'));
+
             return back();
         }
 
-        if ($zip_restrict_status && !$zipcode_exist) {
+        if ($zip_restrict_status && ! $zipcode_exist) {
             Toastr::error(translate('Delivery_unavailable_in_this_zip_code_area!'));
+
             return back();
         }
 
@@ -318,6 +326,7 @@ class UserProfileController extends Controller
         } else {
             Toastr::error(translate('Insufficient_permission!'));
         }
+
         return theme_root_path() == 'default' ? redirect()->route('account-address') : redirect()->route('user-profile');
     }
 
@@ -326,6 +335,7 @@ class UserProfileController extends Controller
         if (auth('customer')->check()) {
             ShippingAddress::destroy($request->id);
             Toastr::success(translate('address_Delete_Successfully'));
+
             return redirect()->back();
         } else {
             return redirect()->back();
@@ -372,6 +382,7 @@ class UserProfileController extends Controller
                 ->orderBy('id', $order_by)
                 ->paginate(10);
         }
+
         return view(VIEW_FILE_NAMES['account_orders'], compact(
             'orders',
             'order_by',
@@ -391,7 +402,7 @@ class UserProfileController extends Controller
             $offlinePaymentMethods = OfflinePaymentMethod::where('status', 1)->get();
             $offlinePaymentStatus = getWebConfig(name: 'offline_payment');
             $paymentGatewayList = payment_gateways();
-            $isPhysicalProduct = $order->details()->whereHas('product', fn($q) => $q->where('product_type', 'physical'))->exists();;
+            $isPhysicalProduct = $order->details()->whereHas('product', fn ($q) => $q->where('product_type', 'physical'))->exists();
             $cashOnDeliveryStatus = getWebConfig(name: 'cash_on_delivery');
 
             if ($cashOnDeliveryStatus && $cashOnDeliveryStatus['status'] && $isPhysicalProduct) {
@@ -417,10 +428,11 @@ class UserProfileController extends Controller
                     }
                 }
                 $detail['reviewData'] = $reviewData;
+
                 return $order;
             });
 
-//            $latestEditHistory =
+            //            $latestEditHistory =
 
             return view(VIEW_FILE_NAMES['account_order_details'], [
                 'order' => $order,
@@ -438,6 +450,7 @@ class UserProfileController extends Controller
         }
 
         Toastr::warning(translate('invalid_order'));
+
         return redirect()->route('account-oder');
     }
 
@@ -449,8 +462,9 @@ class UserProfileController extends Controller
         $cashOnDeliveryStatus = getWebConfig(name: 'cash_on_delivery');
 
         $order = $this->order->with(['seller.shop'])->find($request->id);
-        if (!$order) {
+        if (! $order) {
             Toastr::warning(translate('invalid_order'));
+
             return redirect()->route('account-oder');
         }
 
@@ -482,8 +496,9 @@ class UserProfileController extends Controller
             return $query->withCount('review');
         }])->find($request->id);
 
-        if (!$order) {
+        if (! $order) {
             Toastr::warning(translate('invalid_order'));
+
             return redirect()->route('account-oder');
         }
 
@@ -527,24 +542,26 @@ class UserProfileController extends Controller
                         $reviewData = $review;
                     }
                 }
-                if (isset($reviews[0]) && !$reviewData) {
+                if (isset($reviews[0]) && ! $reviewData) {
                     $reviewData = ($reviews[0]['order_id'] != null ? $reviews[0] : null);
                 }
                 $detail['reviewData'] = $reviewData;
+
                 return $order;
             });
 
             return view(VIEW_FILE_NAMES['order_details_review'], compact('order', 'paymentGatewayList', 'cashOnDeliveryStatus', 'offlinePaymentMethods', 'offlinePaymentStatus'));
         }
         Toastr::warning(translate('invalid_order'));
+
         return redirect()->route('account-oder');
     }
-
 
     public function account_wishlist()
     {
         if (auth('customer')->check()) {
             $wishlists = Wishlist::where('customer_id', auth('customer')->id())->get();
+
             return view('web-views.products.wishlist', compact('wishlists'));
         } else {
             return redirect()->route('home');
@@ -555,6 +572,7 @@ class UserProfileController extends Controller
     {
         if (auth('customer')->check()) {
             $supportTickets = SupportTicket::where('customer_id', auth('customer')->id())->latest()->paginate(10);
+
             return view(VIEW_FILE_NAMES['account_tickets'], compact('supportTickets'));
         } else {
             return redirect()->route('home');
@@ -602,6 +620,7 @@ class UserProfileController extends Controller
             'updated_at' => now(),
         ];
         DB::table('support_tickets')->insert($ticket);
+
         return back();
     }
 
@@ -612,17 +631,20 @@ class UserProfileController extends Controller
                 $sub_query->orderBy('id', 'desc');
             });
         }])->where('id', $request->id)->where('customer_id', auth()->guard('customer')->id())->first();
-        if (!$ticket) {
+        if (! $ticket) {
             Toastr::warning(translate('Invalid_ticket'));
+
             return back();
         }
+
         return view(VIEW_FILE_NAMES['ticket_view'], compact('ticket'));
     }
 
     public function comment_submit(Request $request, $id)
     {
         if ($request->file('image') == null && empty($request['comment'])) {
-            Toastr::error(translate('type_something') . '!');
+            Toastr::error(translate('type_something').'!');
+
             return back();
         }
 
@@ -634,7 +656,7 @@ class UserProfileController extends Controller
         $image = [];
         if ($request->file('image')) {
             $validator = $request->validate([
-                'image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:6000'
+                'image.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:6000',
             ]);
             foreach ($request->image as $key => $value) {
                 $image_name = ImageManager::upload('support-ticket/', 'webp', $value);
@@ -653,7 +675,8 @@ class UserProfileController extends Controller
             'updated_at' => now(),
         ];
         SupportTicketConv::create($data);
-        Toastr::success(translate('message_send_successfully') . '!');
+        Toastr::success(translate('message_send_successfully').'!');
+
         return back();
     }
 
@@ -663,10 +686,10 @@ class UserProfileController extends Controller
             'status' => 'close',
             'updated_at' => now(),
         ]);
-        Toastr::success(translate('ticket_closed') . '!');
+        Toastr::success(translate('ticket_closed').'!');
+
         return redirect('/account-tickets');
     }
-
 
     public function support_ticket_delete(Request $request)
     {
@@ -674,30 +697,31 @@ class UserProfileController extends Controller
         if (auth('customer')->check()) {
             $support = SupportTicket::find($request->id);
 
-            if ($support->attachment && !is_array($support->attachment) && count(json_decode($support->attachment)) > 0) {
+            if ($support->attachment && ! is_array($support->attachment) && count(json_decode($support->attachment)) > 0) {
                 foreach (json_decode($support->attachment, true) as $image) {
-                    ImageManager::delete('/support-ticket/' . $image);
+                    ImageManager::delete('/support-ticket/'.$image);
                 }
-            } else if ($support->attachment && is_array($support->attachment) && count($support->attachment) > 0) {
+            } elseif ($support->attachment && is_array($support->attachment) && count($support->attachment) > 0) {
                 foreach ($support->attachment as $image) {
-                    ImageManager::delete('/support-ticket/' . $image['file_name']);
+                    ImageManager::delete('/support-ticket/'.$image['file_name']);
                 }
             }
 
             foreach ($support->conversations as $conversation) {
-                if ($conversation->attachment && !is_array($support->attachment) && count(json_decode($conversation->attachment)) > 0) {
+                if ($conversation->attachment && ! is_array($support->attachment) && count(json_decode($conversation->attachment)) > 0) {
                     foreach (json_decode($conversation->attachment, true) as $image) {
-                        ImageManager::delete('/support-ticket/' . $image);
+                        ImageManager::delete('/support-ticket/'.$image);
                     }
-                } else if ($conversation->attachment && is_array($conversation->attachment) && count($conversation->attachment) > 0) {
+                } elseif ($conversation->attachment && is_array($conversation->attachment) && count($conversation->attachment) > 0) {
                     foreach ($conversation->attachment as $image) {
-                        ImageManager::delete('/support-ticket/' . $image['file_name']);
+                        ImageManager::delete('/support-ticket/'.$image['file_name']);
                     }
                 }
             }
             $support->conversations()->delete();
 
             $support->delete();
+
             return redirect()->back();
         } else {
             return redirect()->back();
@@ -708,11 +732,12 @@ class UserProfileController extends Controller
     public function track_order(): View
     {
         $robotsMetaContentData = $this->robotsMetaContentRepo->getFirstWhere(params: ['page_name' => 'track-order']);
-        if (!$robotsMetaContentData) {
+        if (! $robotsMetaContentData) {
             $robotsMetaContentData = $this->robotsMetaContentRepo->getFirstWhere(params: ['page_name' => 'default']);
         }
+
         return view(VIEW_FILE_NAMES['tracking-page'], [
-            'robotsMetaContentData' => $robotsMetaContentData
+            'robotsMetaContentData' => $robotsMetaContentData,
         ]);
     }
 
@@ -728,14 +753,17 @@ class UserProfileController extends Controller
                 $query->where('customer_id', (auth('customer')->id()));
             })->first();
 
-            if (!$orderDetails) {
+            if (! $orderDetails) {
                 Toastr::warning(translate('invalid_order'));
+
                 return redirect()->route('account-oder');
             }
 
             $isOrderOnlyDigital = self::getCheckIsOrderOnlyDigital($orderDetails);
+
             return view(VIEW_FILE_NAMES['track_order_wise_result'], compact('orderDetails', 'isOrderOnlyDigital', 'paymentGatewayList', 'cashOnDeliveryStatus', 'offlinePaymentMethods', 'offlinePaymentStatus'));
         }
+
         return back();
     }
 
@@ -750,6 +778,7 @@ class UserProfileController extends Controller
                 }
             }
         }
+
         return $isOrderOnlyDigital;
     }
 
@@ -774,20 +803,20 @@ class UserProfileController extends Controller
             ->where(['id' => $request['order_id'], 'order_type' => 'default_type'])
             ->first();
 
-        if (!isset($user)) {
+        if (! isset($user)) {
             $userInfo = User::where('phone', $request['phone_number'])->orWhere('phone', 'like', "%{$request['phone_number']}%")->first();
 
             if ($order && $order->is_guest) {
 
-                $shippingAddress = (array)($order['shipping_address_data'] ?? []);
-                $billingAddress = (array)($order['billing_address_data'] ?? []);
+                $shippingAddress = (array) ($order['shipping_address_data'] ?? []);
+                $billingAddress = (array) ($order['billing_address_data'] ?? []);
                 if ($order && $order?->shippingAddress && $order?->shippingAddress->phone == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($shippingAddress['phone'] == $request['phone_number']) {
+                } elseif ($shippingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($order && $order?->billingAddress && $order?->billingAddress->phone == $request['phone_number']) {
+                } elseif ($order && $order?->billingAddress && $order?->billingAddress->phone == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($billingAddress['phone'] == $request['phone_number']) {
+                } elseif ($billingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
                 }
 
@@ -797,21 +826,22 @@ class UserProfileController extends Controller
                 })->first();
             } else {
                 Toastr::error(translate('invalid_Order_Id_or_phone_Number'));
+
                 return redirect()->route('track-order.index', ['order_id' => $request['order_id'], 'phone_number' => $request['phone_number']]);
             }
         } else {
             $order = Order::with('details', 'latestEditHistory')->where('id', $request['order_id'])->first();
             if ($order && $order->is_guest) {
 
-                $shippingAddress = (array)($order['shipping_address_data'] ?? []);
-                $billingAddress = (array)($order['billing_address_data'] ?? []);
+                $shippingAddress = (array) ($order['shipping_address_data'] ?? []);
+                $billingAddress = (array) ($order['billing_address_data'] ?? []);
                 if ($order && $order?->shippingAddress && $order?->shippingAddress->phone == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($shippingAddress['phone'] == $request['phone_number']) {
+                } elseif ($shippingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($order && $order?->billingAddress && $order?->billingAddress->phone == $request['phone_number']) {
+                } elseif ($order && $order?->billingAddress && $order?->billingAddress->phone == $request['phone_number']) {
                     $orderExist = $order;
-                } else if ($billingAddress['phone'] == $request['phone_number']) {
+                } elseif ($billingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
                 }
 
@@ -830,14 +860,16 @@ class UserProfileController extends Controller
 
         if (isset($orderExist)) {
             if ($orderExist['order_type'] == 'POS') {
-                Toastr::error(translate('this_order_is_created_by_') . ($orderExist['seller_is'] == 'seller' ? 'vendor' : 'admin') . translate('_from POS') . ',' . translate('please_contact_with_') . ($orderDetails['seller_is'] == 'seller' ? 'vendor' : 'admin') . translate('_to_know_more_details') . '.');
+                Toastr::error(translate('this_order_is_created_by_').($orderExist['seller_is'] == 'seller' ? 'vendor' : 'admin').translate('_from POS').','.translate('please_contact_with_').($orderDetails['seller_is'] == 'seller' ? 'vendor' : 'admin').translate('_to_know_more_details').'.');
+
                 return redirect()->back();
             }
-            if ($orderExist && $orderExist->orderDetails()->whereHas('product', fn($q) => $q->where('product_type', 'physical'))->exists()) {
+            if ($orderExist && $orderExist->orderDetails()->whereHas('product', fn ($q) => $q->where('product_type', 'physical'))->exists()) {
                 $isPhysicalProduct = true;
             }
             $isOrderOnlyDigital = self::getCheckIsOrderOnlyDigital($orderExist);
             $orderDetails = $orderExist;
+
             return view(VIEW_FILE_NAMES['track_order'], compact(
                 'orderDetails',
                 'user_phone',
@@ -856,6 +888,7 @@ class UserProfileController extends Controller
         }
 
         Toastr::error(translate('invalid_Order_Id_or_phone_Number'));
+
         return redirect()->route('track-order.index', ['order_id' => $request['order_id'], 'phone_number' => $request['phone_number']]);
     }
 
@@ -883,7 +916,7 @@ class UserProfileController extends Controller
             $this->orderStatusHistoryRepo->add($orderStatusHistoryData);
             OrderManager::removeOldStatusHistory(orderId: $id, orderStatus: 'canceled');
             Order::where(['id' => $id])->update([
-                'order_status' => 'canceled'
+                'order_status' => 'canceled',
             ]);
             Toastr::success(translate('successfully_canceled'));
         } elseif ($order['payment_method'] == 'offline_payment') {
@@ -891,6 +924,7 @@ class UserProfileController extends Controller
         } else {
             Toastr::error(translate('status_not_changable_now'));
         }
+
         return back();
     }
 
@@ -903,7 +937,8 @@ class UserProfileController extends Controller
         if ($loyaltyPointStatus == 1) {
             $loyaltyPoint = CustomerManager::countLoyaltyPointForAmount($id);
             if ($user['loyalty_point'] < $loyaltyPoint) {
-                Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order') . '!!');
+                Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order').'!!');
+
                 return back();
             }
         }
@@ -918,14 +953,15 @@ class UserProfileController extends Controller
         $request->validate([
             'order_details_id' => 'required',
             'amount' => 'required',
-            'refund_reason' => 'required'
+            'refund_reason' => 'required',
 
         ]);
         if ($request->file('images')) {
             foreach ($request->file('images') as $img) {
                 $extension = $img->getClientOriginalExtension();
                 if (in_array($extension, getDisallowedExtensionsListArray())) {
-                    Toastr::error(translate('Invalid_file_format_given_') . $extension);
+                    Toastr::error(translate('Invalid_file_format_given_').$extension);
+
                     return redirect()->back();
                 }
             }
@@ -935,7 +971,8 @@ class UserProfileController extends Controller
         $user = auth('customer')->user();
 
         if ($orderDetailsReward && $user->loyalty_point < $orderDetailsReward['reward_amount']) {
-            Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order') . '!!');
+            Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order').'!!');
+
             return back();
         }
         $refundRequest = new RefundRequest;
@@ -966,6 +1003,7 @@ class UserProfileController extends Controller
         event(new RefundEvent(status: 'refund_request', order: $order, refund: $refundRequest, orderDetails: $orderDetails));
 
         Toastr::success(translate('refund_requested_successful!!'));
+
         return redirect()->route('account-order-details', ['id' => $orderDetails->order_id]);
     }
 
@@ -992,6 +1030,7 @@ class UserProfileController extends Controller
                     'view' => view(VIEW_FILE_NAMES['refund_details'], compact('order_details', 'refund', 'product', 'order'))->render(),
                 ]);
             }
+
             return response()->json(['status' => 0, 'message' => translate('product_not_found')]);
         }
 
@@ -1000,6 +1039,7 @@ class UserProfileController extends Controller
         }
 
         Toastr::error(translate('product_not_found'));
+
         return redirect()->back();
     }
 
@@ -1009,8 +1049,9 @@ class UserProfileController extends Controller
             $q->where(['customer_id' => auth('customer')->id(), 'payment_status' => 'paid']);
         })->first();
 
-        if (!$order_details) {
+        if (! $order_details) {
             Toastr::error(translate('invalid_order!'));
+
             return redirect('/');
         }
 
@@ -1020,8 +1061,9 @@ class UserProfileController extends Controller
     public function refer_earn(Request $request): View|RedirectResponse
     {
         $refEarningStatus = getWebConfig(name: 'ref_earning_status') ?? 0;
-        if (!$refEarningStatus) {
+        if (! $refEarningStatus) {
             Toastr::error(translate('you_have_no_permission'));
+
             return redirect('/');
         }
         $customer_detail = User::where('id', auth('customer')->id())->first();
@@ -1058,6 +1100,7 @@ class UserProfileController extends Controller
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
         $productIdsArray = $restockProducts->pluck('product_id')->toArray();
+
         return view(VIEW_FILE_NAMES['user_restock_requests'], compact('restockProducts', 'productIdsArray'));
     }
 
@@ -1078,6 +1121,7 @@ class UserProfileController extends Controller
         });
 
         Toastr::success(translate('product_restock_request_removed_successfully'));
+
         return redirect()->route('user-restock-requests');
     }
 }

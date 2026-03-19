@@ -16,6 +16,7 @@ class ContactService
             'message' => $request['message'],
         ];
     }
+
     public function getMailData(object $request, array $data, object $contact, string $companyName): array
     {
         Mail::send('email-templates.customer-message', $data, function ($message) use ($contact, $request, $companyName) {
@@ -26,9 +27,8 @@ class ContactService
         return [
             'reply' => json_encode([
                 'subject' => $request['subject'],
-                'body' => $request['mail_body']
-            ])
+                'body' => $request['mail_body'],
+            ]),
         ];
     }
-
 }

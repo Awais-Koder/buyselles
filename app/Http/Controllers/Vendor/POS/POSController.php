@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Vendor\POS;
 
+use App\Contracts\Repositories\AuthorRepositoryInterface;
 use App\Contracts\Repositories\BrandRepositoryInterface;
 use App\Contracts\Repositories\CategoryRepositoryInterface;
 use App\Contracts\Repositories\CouponRepositoryInterface;
@@ -12,12 +13,12 @@ use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Contracts\Repositories\PublishingHouseRepositoryInterface;
 use App\Contracts\Repositories\ShopRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
-use App\Contracts\Repositories\AuthorRepositoryInterface;
 use App\Enums\SessionKey;
 use App\Enums\ViewPaths\Vendor\POS;
 use App\Http\Controllers\BaseController;
 use App\Services\CartService;
 use App\Services\POSService;
+use App\Services\ProductService;
 use App\Traits\CalculatorTrait;
 use App\Traits\CommonTrait;
 use App\Traits\CustomerTrait;
@@ -31,52 +32,30 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
-use App\Services\ProductService;
 use Throwable;
 
 class POSController extends BaseController
 {
     use CalculatorTrait, CommonTrait, CustomerTrait;
 
-    /**
-     * @param AuthorRepositoryInterface $authorRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     * @param BrandRepositoryInterface $brandRepo
-     * @param CategoryRepositoryInterface $categoryRepo
-     * @param ProductRepositoryInterface $productRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param ShopRepositoryInterface $shopRepo
-     * @param CouponRepositoryInterface $couponRepo
-     * @param OrderRepositoryInterface $orderRepo
-     * @param CartService $cartService
-     * @param POSService $POSService
-     * @param DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo
-     * @param ProductService $productService
-     * @param PublishingHouseRepositoryInterface $publishingHouseRepo
-     */
     public function __construct(
-        private readonly AuthorRepositoryInterface          $authorRepo,
-        private readonly VendorRepositoryInterface          $vendorRepo,
-        private readonly BrandRepositoryInterface           $brandRepo,
-        private readonly CategoryRepositoryInterface        $categoryRepo,
-        private readonly ProductRepositoryInterface         $productRepo,
-        private readonly CustomerRepositoryInterface        $customerRepo,
-        private readonly ShopRepositoryInterface            $shopRepo,
-        private readonly CouponRepositoryInterface          $couponRepo,
-        private readonly OrderRepositoryInterface           $orderRepo,
-        private readonly CartService                        $cartService,
-        private readonly POSService                         $POSService,
+        private readonly AuthorRepositoryInterface $authorRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly BrandRepositoryInterface $brandRepo,
+        private readonly CategoryRepositoryInterface $categoryRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
+        private readonly CouponRepositoryInterface $couponRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly CartService $cartService,
+        private readonly POSService $POSService,
         private readonly DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo,
-        private readonly ProductService                     $productService,
+        private readonly ProductService $productService,
         private readonly PublishingHouseRepositoryInterface $publishingHouseRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
      * @throws Exception
      */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
@@ -94,15 +73,15 @@ class POSController extends BaseController
         $filter['added_by'] = 'seller';
         $filter['seller_id'] = $vendorId;
         $searchValue = $request['searchValue'] ?? null;
-        if (!empty($searchValue)) {
+        if (! empty($searchValue)) {
             $allSearchResults = $this->productRepo->getWebListWithScope(searchValue: $searchValue, scope: 'active', filters: $filter, whereIn: $filterWhereIn, dataLimit: getWebConfig('pagination_limit'));
             if ($allSearchResults->count() > 0) {
                 $firstProductType = $allSearchResults->first()?->product_type;
-                if (!$request->has('product_type')) {
+                if (! $request->has('product_type')) {
                     $productType = $firstProductType;
                 } else {
                     $hasResultsInRequestedType = $allSearchResults->contains('product_type', $productType);
-                    if (!$hasResultsInRequestedType) {
+                    if (! $hasResultsInRequestedType) {
                         $productType = $firstProductType;
                     }
                 }
@@ -118,10 +97,10 @@ class POSController extends BaseController
             relations: [
                 'clearanceSale' => function ($query) {
                     return $query->active();
-                }
+                },
             ], dataLimit: getWebConfig('pagination_limit')
         );
-        $cartId = 'walk-in-customer-' . rand(10, 1000);
+        $cartId = 'walk-in-customer-'.rand(10, 1000);
         $this->cartService->getNewCartSession(cartId: $cartId);
         $customers = $this->customerRepo->getListWhereNotIn(ids: [0]);
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
@@ -167,26 +146,23 @@ class POSController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function changeCustomer(Request $request): JsonResponse
     {
-        $cartId = ($request['user_id'] != 0 ? 'saved-customer-' . $request['user_id'] : 'walk-in-customer-' . rand(10, 1000));
+        $cartId = ($request['user_id'] != 0 ? 'saved-customer-'.$request['user_id'] : 'walk-in-customer-'.rand(10, 1000));
         $this->POSService->UpdateSessionWhenCustomerChange(cartId: $cartId);
         $getCurrentCustomerData = $this->getCustomerDataFromSessionForPOS();
         $summaryData = array_merge($this->POSService->getSummaryData(), $getCurrentCustomerData);
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'view' => view('vendor-views.pos.partials._vendor-pos-customer-info', compact('summaryData', 'cartItems'))->render(),
-            'cart_view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render()
+            'cart_view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function updateDiscount(Request $request): JsonResponse
@@ -197,9 +173,10 @@ class POSController extends BaseController
             $text = $request['discount'] > 0 ? 'Extra_discount_can_not_be_less_than_0_percent' :
                 'Extra_discount_can_not_be_more_than_100_percent';
             ToastMagic::error(translate($text));
+
             return response()->json([
-                'extraDiscount' => "amount_low",
-                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                'extraDiscount' => 'amount_low',
+                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
             ]);
         }
         $cart = session($cartId, collect());
@@ -225,33 +202,34 @@ class POSController extends BaseController
             $total = $totalProductPrice - $productDiscount - $couponDiscount - $extraDiscount;
             if ($total < 0) {
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
-                    'extraDiscount' => "amount_low",
-                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                    'extraDiscount' => 'amount_low',
+                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
                 ]);
             } else {
                 $cart['ext_discount'] = $request['type'] == 'percent' ? $request['discount'] : currencyConverter(amount: $request['discount']);
                 $cart['ext_discount_type'] = $request['type'];
                 session()->put($cartId, $cart);
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
                     'extraDiscountAmount' => $extraDiscount ?? 0,
-                    'extraDiscount' => "success",
-                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                    'extraDiscount' => 'success',
+                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
                 ]);
             }
         } else {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
-                'extraDiscount' => "empty",
-                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                'extraDiscount' => 'empty',
+                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
             ]);
         }
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getCouponDiscount(Request $request): JsonResponse
@@ -267,7 +245,7 @@ class POSController extends BaseController
                     'limit' => $usedCoupon,
                     'start_date' => now(),
                     'expire_date' => now(),
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
 
@@ -278,15 +256,16 @@ class POSController extends BaseController
                     'coupon_bearer' => 'seller',
                     'start_date' => now(),
                     'expire_date' => now(),
-                    'status' => 1
+                    'status' => 1,
                 ]
             );
         }
-        if (!$coupon || $coupon['coupon_type'] == 'free_delivery' || $coupon['coupon_type'] == 'first_order') {
+        if (! $coupon || $coupon['coupon_type'] == 'free_delivery' || $coupon['coupon_type'] == 'first_order') {
             $cartItems = $this->getCartData(cartName: $cartId);
+
             return response()->json([
                 'coupon' => 'coupon_invalid',
-                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
             ]);
         }
 
@@ -321,9 +300,10 @@ class POSController extends BaseController
                     $total = $totalProductPrice - $productDiscount - $couponDiscount - $extraDiscount;
                     if ($total < 0) {
                         $cartItems = $this->getCartData(cartName: $cartId);
+
                         return response()->json([
-                            'coupon' => "amount_low",
-                            'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                            'coupon' => 'amount_low',
+                            'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
                         ]);
                     }
 
@@ -335,23 +315,26 @@ class POSController extends BaseController
                         couponCode: $request['coupon_code']
                     );
                     $cartItems = $this->getCartData(cartName: $cartId);
+
                     return response()->json([
                         'coupon' => 'success',
-                        'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                        'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
                     ]);
                 }
             } else {
                 $cartItems = $this->getCartData(cartName: $cartId);
+
                 return response()->json([
                     'coupon' => 'cart_empty',
-                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+                    'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
                 ]);
             }
         }
         $cartItems = $this->getCartData(cartName: $cartId);
+
         return response()->json([
             'coupon' => 'coupon_invalid',
-            'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render()
+            'view' => view(POS::CART[VIEW], compact('cartId', 'cartItems'))->render(),
         ]);
     }
 
@@ -371,15 +354,13 @@ class POSController extends BaseController
         $digitalProductAuthors = $this->authorRepo->getListWhere(dataLimit: 'all');
         $productPublishingHouseIds = $this->productService->getProductPublishingHouseInfo(product: $product)['ids'];
         $publishingHouseRepo = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
+
         return response()->json([
             'success' => 1,
-            'view' => view(POS::QUICK_VIEW[VIEW], compact('product', 'digitalProductAuthors', 'productAuthorIds', 'productPublishingHouseIds', 'publishingHouseRepo','productSubtotal'))->render(),
+            'view' => view(POS::QUICK_VIEW[VIEW], compact('product', 'digitalProductAuthors', 'productAuthorIds', 'productPublishingHouseIds', 'publishingHouseRepo', 'productSubtotal'))->render(),
         ]);
     }
 
-    /**
-     * @return array
-     */
     protected function getCustomerDataFromSessionForPOS(): array
     {
         if (Str::contains(session(SessionKey::CURRENT_USER), 'walk-in-customer')) {
@@ -390,23 +371,20 @@ class POSController extends BaseController
             $currentCustomerData = $this->customerRepo->getFirstWhere(params: ['id' => $userId]);
             $currentCustomerInfo = $this->cartService->getCustomerInfo(currentCustomerData: $currentCustomerData, customerId: $userId);
         }
+
         return [
             'currentCustomer' => $currentCustomerInfo['customerName'],
-            'currentCustomerData' => $currentCustomerData
+            'currentCustomerData' => $currentCustomerData,
         ];
     }
 
-    /**
-     * @param string $cartName
-     * @return array
-     */
     protected function getCustomerCartData(string $cartName): array
     {
         $customerCartData = [];
         if (Str::contains($cartName, 'walk-in-customer')) {
             $currentCustomerInfo = [
                 'customerName' => 'Walk-In Customer',
-                'customerPhone' => "",
+                'customerPhone' => '',
             ];
             $customerId = 0;
         } else {
@@ -419,6 +397,7 @@ class POSController extends BaseController
             'customerPhone' => $currentCustomerInfo['customerPhone'],
             'customerId' => $customerId,
         ];
+
         return $customerCartData;
     }
 
@@ -471,6 +450,7 @@ class POSController extends BaseController
         $totalCalculation = $this->cartService->getTotalCalculation(
             subTotalCalculation: $subTotalCalculation, cartName: $cartName
         );
+
         return [
             'countItem' => $subTotalCalculation['countItem'],
             'total' => $totalCalculation['total'],
@@ -489,6 +469,7 @@ class POSController extends BaseController
     {
         $customerCartData = $this->getCustomerCartData(cartName: $cartName);
         $cartItemData = $this->calculateCartItemsData(cartName: $cartName, customerCartData: $customerCartData);
+
         return array_merge($customerCartData[$cartName], $cartItemData);
     }
 
@@ -502,7 +483,7 @@ class POSController extends BaseController
                 'seller_id' => auth('seller')->id(),
                 'keywords' => $request['name'],
                 'search_from' => 'pos',
-                'status' => 1
+                'status' => 1,
             ],
             relations: ['clearanceSale' => function ($query) {
                 return $query->active();
@@ -512,7 +493,7 @@ class POSController extends BaseController
 
         $data = [
             'count' => $products->count(),
-            'result' => view(POS::SEARCH[VIEW], compact('products'))->render()
+            'result' => view(POS::SEARCH[VIEW], compact('products'))->render(),
         ];
         if ($products->count() > 0) {
             $data += ['id' => $products[0]->id];

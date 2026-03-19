@@ -17,18 +17,15 @@ use Modules\Blog\app\Traits\BlogTrait;
 
 class FrontendBlogController extends Controller
 {
-
-    use BlogTrait;
     use BlogCategoryTrait;
+    use BlogTrait;
 
     public function __construct(
         private readonly FrontendBlogService $frontendBlogService,
-        private readonly Blog                $blog,
-        private readonly BlogTranslation     $blogTranslation,
-        private readonly BlogCategory        $blogCategory
-    )
-    {
-    }
+        private readonly Blog $blog,
+        private readonly BlogTranslation $blogTranslation,
+        private readonly BlogCategory $blogCategory
+    ) {}
 
     public function index(Request $request): View
     {
@@ -84,7 +81,7 @@ class FrontendBlogController extends Controller
             return $query->active();
         }, 'translations', 'seoInfo'])->where(['slug' => $request['slug']])->first();
 
-        if (!$blogData) {
+        if (! $blogData) {
             if ($request->ajax()) {
                 return response()->json([
                     'message' => translate('Blog_not_found'),
@@ -92,11 +89,12 @@ class FrontendBlogController extends Controller
                 ]);
             }
             Toastr::error(translate('Blog_not_found'));
+
             return redirect()->back();
         }
 
         $draftData = json_decode($blogData['draft_data'] ?? '', true);
-        if (\request('source') == 'draft' && !empty($draftData)) {
+        if (\request('source') == 'draft' && ! empty($draftData)) {
             $translatedData = $this->blogTranslation->where(['translation_id' => $blogData['id'], 'locale' => getDefaultLanguage(), 'is_draft' => 1])->get();
             $draftCategory = $this->blogCategory->where('id', ($draftData['category_id'] ?? 0))->first();
             $blogData->title = $translatedData?->firstWhere('key', 'title')?->value ?? $draftData['title'] ?? '';
@@ -107,7 +105,7 @@ class FrontendBlogController extends Controller
             $blogData->image = $blogData?->draft_image ?? null;
         }
 
-        if (request('source') == '' && !in_array($blogData['id'], session('user_visited_blog_ids', []))) {
+        if (request('source') == '' && ! in_array($blogData['id'], session('user_visited_blog_ids', []))) {
             session(['user_visited_blog_ids' => [$blogData['id']]]);
             $blogData->increment('click_count');
         }
@@ -142,7 +140,7 @@ class FrontendBlogController extends Controller
                         ->orWhere('writer', 'like', "%{$search}%")
                         ->orWhereHas('category', function ($query) use ($search) {
                             return $query->where('name', 'like', "%{$search}%");
-                        });;
+                        });
                 });
             })
             ->when($request['writer'], function ($query) use ($request) {

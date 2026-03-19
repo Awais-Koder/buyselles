@@ -9,24 +9,15 @@ class VendorService
 {
     use FileManagerTrait;
 
-    /**
-     * @param string $email
-     * @param string $password
-     * @param string|bool|null $rememberToken
-     * @return bool
-     */
     public function isLoginSuccessful(string $email, string $password, string|null|bool $rememberToken): bool
     {
         if (auth('seller')->attempt(['email' => $email, 'password' => $password], $rememberToken)) {
             return true;
         }
+
         return false;
     }
 
-    /**
-     * @param int $vendorId
-     * @return array
-     */
     public function getInitialWalletData(int $vendorId): array
     {
         return [
@@ -48,10 +39,6 @@ class VendorService
         session()->invalidate();
     }
 
-    /**
-     * @param object $request
-     * @return array
-     */
     public function getFreeDeliveryOverAmountData(object $request): array
     {
         return [
@@ -63,14 +50,14 @@ class VendorService
     public function getMinimumOrderAmount(object $request): array
     {
         return [
-            'minimum_order_amount' => currencyConverter($request['minimum_order_amount'], 'usd')
+            'minimum_order_amount' => currencyConverter($request['minimum_order_amount'], 'usd'),
         ];
     }
 
     public function getVendorStockLimit(object $request): array
     {
         return [
-            'stock_limit' => $request['stock_limit'] ?? 1
+            'stock_limit' => $request['stock_limit'] ?? 1,
         ];
     }
 
@@ -84,17 +71,14 @@ class VendorService
             $data['tin_certificate'] = $this->fileUpload(dir: 'shop/documents/', format: $request->file('tin_certificate')->getClientOriginalExtension(), file: $request->file('tin_certificate'));
             $data['tin_certificate_storage_type'] = config('filesystems.disks.default') ?? 'public';
         }
+
         return $data;
     }
 
-    /**
-     * @param object $request
-     * @param object $vendor
-     * @return array
-     */
     public function getVendorDataForUpdate(object $request, object $vendor): array
     {
         $image = $request['image'] ? $this->update(dir: 'seller/', oldImage: $vendor['image'], format: 'webp', image: $request->file('image')) : $vendor['image'];
+
         return [
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
@@ -113,10 +97,6 @@ class VendorService
         ];
     }
 
-    /**
-     * @param object $request
-     * @return array
-     */
     public function getVendorBankInfoData(object $request): array
     {
         return [

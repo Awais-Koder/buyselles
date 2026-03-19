@@ -5,31 +5,32 @@ namespace Modules\AI\app\PromptTemplates;
 use Modules\AI\app\Contracts\PromptTemplateInterface;
 use Modules\AI\app\Services\ProductResourceService;
 
-class GeneralSetupTemplates implements  PromptTemplateInterface
+class GeneralSetupTemplates implements PromptTemplateInterface
 {
     protected ProductResourceService $productResource;
 
     public function __construct()
     {
-        $this->productResource = new ProductResourceService();
+        $this->productResource = new ProductResourceService;
     }
 
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $resource = $this->productResource->productGeneralSetupData();
-        $categories      = $resource['categories'];
-        $subCategories   = $resource['sub_categories'];
+        $categories = $resource['categories'];
+        $subCategories = $resource['sub_categories'];
         $subSubCategories = $resource['sub_sub_categories'];
-        $brands          = $resource['brands'];
-        $units           = $resource['units'];
-        $productTypes    = $resource['product_types'];
-        $deliveryType    = implode("', '",$resource['delivery_types']);
+        $brands = $resource['brands'];
+        $units = $resource['units'];
+        $productTypes = $resource['product_types'];
+        $deliveryType = implode("', '", $resource['delivery_types']);
         $categories = implode("', '", array_keys($categories));
         $subCategories = implode("', '", array_keys($subCategories));
         $subSubCategories = implode("', '", array_keys($subSubCategories));
         $brands = implode("', '", array_keys($brands));
         $units = implode("', '", $units);
         $productTypes = implode("', '", $productTypes);
+
         return <<<PROMPT
             Analyze the product with these details:
             - Name: '{$context}'
@@ -72,12 +73,10 @@ class GeneralSetupTemplates implements  PromptTemplateInterface
              - Do not return generic explanations, fallback messages, or apologies.
         PROMPT;
 
-
     }
 
     public function getType(): string
     {
         return 'general_setup';
     }
-
 }

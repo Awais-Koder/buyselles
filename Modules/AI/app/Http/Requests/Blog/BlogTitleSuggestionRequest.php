@@ -8,7 +8,8 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BlogTitleSuggestionRequest extends FormRequest
 {
-    use   ResponseHandler;
+    use ResponseHandler;
+
     /**
      * Get the validation rules that apply to the request.
      */
@@ -23,6 +24,7 @@ class BlogTitleSuggestionRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */

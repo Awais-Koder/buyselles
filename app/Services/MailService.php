@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use Exception;
 use App\Mail\TestEmailSender;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 
 class MailService
@@ -11,30 +11,30 @@ class MailService
     public function getData(object $request): array
     {
         return [
-            "status" => $request->get('status', 0),
-            "name" => $request['name'],
-            "host" => $request['host'],
-            "driver" => $request['driver'],
-            "port" => $request['port'],
-            "username" => $request['username'],
-            "email_id" => $request['email'],
-            "encryption" => $request['encryption'],
-            "password" => $request['password']
+            'status' => $request->get('status', 0),
+            'name' => $request['name'],
+            'host' => $request['host'],
+            'driver' => $request['driver'],
+            'port' => $request['port'],
+            'username' => $request['username'],
+            'email_id' => $request['email'],
+            'encryption' => $request['encryption'],
+            'password' => $request['password'],
         ];
     }
 
     public function getMailData(object|array $mailData): array
     {
         return [
-            "status" => 0,
-            "name" => $mailData['name'],
-            "host" => $mailData['host'],
-            "driver" => $mailData['driver'],
-            "port" => $mailData['port'],
-            "username" => $mailData['username'],
-            "email_id" => $mailData['email_id'],
-            "encryption" => $mailData['encryption'],
-            "password" => $mailData['password']
+            'status' => 0,
+            'name' => $mailData['name'],
+            'host' => $mailData['host'],
+            'driver' => $mailData['driver'],
+            'port' => $mailData['port'],
+            'username' => $mailData['username'],
+            'email_id' => $mailData['email_id'],
+            'encryption' => $mailData['encryption'],
+            'password' => $mailData['password'],
         ];
     }
 
@@ -48,17 +48,17 @@ class MailService
                 $emailServicesSmtp = getWebConfig(name: 'mail_config_sendgrid');
             }
             if ($emailServicesSmtp['status'] == 1) {
-                Mail::to($request->email)->send(new TestEmailSender());
+                Mail::to($request->email)->send(new TestEmailSender);
                 $status = 1;
             }
         } catch (Exception $exception) {
             $message = $exception->getMessage();
             $status = 2;
         }
+
         return [
             'status' => $status,
-            'message' => $message
+            'message' => $message,
         ];
     }
-
 }

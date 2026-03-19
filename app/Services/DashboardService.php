@@ -18,7 +18,7 @@ class DashboardService
             $to = Carbon::now()->endOfYear()->format('Y-m-d');
             $range = range(1, 12);
             $type = 'month';
-            $keyRange = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            $keyRange = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         } elseif ($dateType == 'MonthEarn') {
             $from = date('Y-m-01');
             $to = date('Y-m-t 23:59:59');
@@ -33,12 +33,13 @@ class DashboardService
             $type = 'day_of_week';
             $keyRange = $range;
         }
+
         return [
             'from' => $from,
             'to' => $to,
             'range' => $range,
             'type' => $type,
-            'keyRange' => $keyRange
+            'keyRange' => $keyRange,
         ];
     }
 
@@ -50,13 +51,14 @@ class DashboardService
         }
         foreach ($range as $value) {
             if (count($amountArray) > 0) {
-                $amountArray->map(function ($amount) use ($type, $range, &$dateWiseAmount, $value) {
+                $amountArray->map(function ($amount) use ($type, &$dateWiseAmount, $value) {
                     if ($amount[$type] == $value) {
                         $dateWiseAmount[$value] = usdToDefaultCurrency(amount: $amount['sums']);
                     }
                 });
             }
         }
+
         return $dateWiseAmount;
     }
 
@@ -68,13 +70,14 @@ class DashboardService
         }
         foreach ($range as $value) {
             if (count($amountArray) > 0) {
-                $amountArray->map(function ($amount) use ($type, $range, &$dateWiseAmount, $value) {
+                $amountArray->map(function ($amount) use ($type, &$dateWiseAmount, $value) {
                     if ($amount[$type] == $value) {
                         $dateWiseAmount[$value] = $amount['sums'];
                     }
                 });
             }
         }
+
         return $dateWiseAmount;
     }
 }

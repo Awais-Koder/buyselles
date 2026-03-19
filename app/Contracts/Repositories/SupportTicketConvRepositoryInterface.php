@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface SupportTicketConvRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface SupportTicketConvRepositoryInterface extends RepositoryInterface {}

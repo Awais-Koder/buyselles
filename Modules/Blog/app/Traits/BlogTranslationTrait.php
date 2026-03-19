@@ -17,11 +17,12 @@ trait BlogTranslationTrait
                         'locale' => $key,
                         'key' => $type,
                         'value' => $request[$type][$index],
-                        'is_draft' => $request['is_draft'] ?? 0
+                        'is_draft' => $request['is_draft'] ?? 0,
                     ]);
                 }
             }
         }
+
         return true;
     }
 
@@ -50,20 +51,22 @@ trait BlogTranslationTrait
                 }
             }
         }
+
         return true;
     }
 
     public function updateTranslationById(string $id, string $lang, string $key, string $value): bool
     {
         BlogTranslation::updateOrInsert([
-                'translation_type' => 'Modules\Blog\app\Models\Blog',
-                'translation_id' => $id,
-                'locale' => $lang,
-                'key' => $key
-            ], [
-                'value' => $value,
-                'is_draft' => $request['is_draft'] ?? 0
-            ]);
+            'translation_type' => 'Modules\Blog\app\Models\Blog',
+            'translation_id' => $id,
+            'locale' => $lang,
+            'key' => $key,
+        ], [
+            'value' => $value,
+            'is_draft' => $request['is_draft'] ?? 0,
+        ]);
+
         return true;
     }
 
@@ -71,8 +74,9 @@ trait BlogTranslationTrait
     {
         BlogTranslation::where([
             'translation_type' => 'Modules\Blog\app\Models\Blog',
-            'translation_id' => $id
+            'translation_id' => $id,
         ])->delete();
+
         return true;
     }
 }

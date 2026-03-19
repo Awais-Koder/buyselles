@@ -21,10 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $collected_cash
  * @property float $total_tax_collected
  */
-
 class SellerWallet extends Model
 {
-
     protected $fillable = [
         'seller_id',
         'total_earning',

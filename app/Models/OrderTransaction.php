@@ -28,8 +28,6 @@ use Modules\TaxModule\app\Models\OrderTax;
  * @property string $delivered_by
  * @property string|null $payment_method
  * @property string|null $transaction_id
- *
- * @package App\Models
  */
 class OrderTransaction extends Model
 {
@@ -107,5 +105,4 @@ class OrderTransaction extends Model
     {
         return $this->hasMany(OrderTax::class, 'order_id', 'order_id');
     }
-
 }

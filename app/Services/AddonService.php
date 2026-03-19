@@ -13,15 +13,15 @@ use ZipArchive;
 
 class AddonService
 {
-    use SettingsTrait;
-    use FileManagerTrait;
     use ActivationClass;
     use AddonHelper;
+    use FileManagerTrait;
+    use SettingsTrait;
 
     public function getUploadData(object $request): array
     {
         $tempFolderPath = storage_path('app/temp/');
-        if (!File::exists($tempFolderPath)) {
+        if (! File::exists($tempFolderPath)) {
             File::makeDirectory($tempFolderPath, 0775, true);
         }
 
@@ -29,13 +29,13 @@ class AddonService
         $filename = $file->getClientOriginalName();
         $tempPath = $file->storeAs('temp', $filename);
 
-        $zip = new ZipArchive();
-        if ($zip->open(storage_path('app/' . $tempPath)) === TRUE) {
+        $zip = new ZipArchive;
+        if ($zip->open(storage_path('app/'.$tempPath)) === true) {
 
             $genFolderName = explode('/', $zip->getNameIndex(0))[0];
-            if ($genFolderName === "__MACOSX") {
+            if ($genFolderName === '__MACOSX') {
                 for ($i = 0; $i < $zip->numFiles; $i++) {
-                    if (strpos($zip->getNameIndex($i), "__MACOSX") === false) {
+                    if (strpos($zip->getNameIndex($i), '__MACOSX') === false) {
                         $getAddonFolder = explode('/', $zip->getNameIndex($i))[0];
                         break;
                     }
@@ -44,20 +44,20 @@ class AddonService
             $getAddonFolder = explode('.', $genFolderName)[0];
 
             $zip->extractTo(storage_path('app/temp'));
-            $infoPath = storage_path('app/temp/' . $getAddonFolder . '/Addon/info.php');
+            $infoPath = storage_path('app/temp/'.$getAddonFolder.'/Addon/info.php');
 
             if (File::exists($infoPath)) {
                 $extractPath = base_path('Modules');
-                if (!File::exists($extractPath)) {
+                if (! File::exists($extractPath)) {
                     File::makeDirectory($extractPath, 0775, true);
                 }
-                if (File::exists($extractPath . '/' . $getAddonFolder)) {
+                if (File::exists($extractPath.'/'.$getAddonFolder)) {
                     $message = translate('already_installed');
                     $status = 'error';
                 } else {
                     $zip->extractTo($extractPath);
                     $zip->close();
-                    File::chmod($extractPath . '/' . $getAddonFolder . '/Addon', 0777);
+                    File::chmod($extractPath.'/'.$getAddonFolder.'/Addon', 0777);
                     $status = 'success';
                     $message = translate('upload_successfully');
 
@@ -85,13 +85,13 @@ class AddonService
 
         return [
             'status' => $status,
-            'message' => $message
+            'message' => $message,
         ];
     }
 
     public function getPublishData(object $request): array
     {
-        $fullData = include(base_path($request['path'] . '/Addon/info.php'));
+        $fullData = include base_path($request['path'].'/Addon/info.php');
         $path = $request['path'];
         $addonName = $fullData['name'];
         if ($fullData['purchase_code'] == null || $fullData['username'] == null) {
@@ -101,22 +101,22 @@ class AddonService
             ];
         }
         $fullData['is_published'] = $fullData['is_published'] ? 0 : 1;
-        $str = "<?php return " . var_export($fullData, true) . ";";
-        file_put_contents(base_path($request['path'] . '/Addon/info.php'), $str);
+        $str = '<?php return '.var_export($fullData, true).';';
+        file_put_contents(base_path($request['path'].'/Addon/info.php'), $str);
 
         Artisan::call('optimize:clear');
         Artisan::call('view:clear');
 
         return [
             'status' => 'success',
-            'message' => translate('status_updated_successfully')
+            'message' => translate('status_updated_successfully'),
         ];
     }
 
     public function getActivationData(object $request): array
     {
         $url = $this->getCurrentDomain();
-        $full_data = include(base_path($request['path'] . '/Addon/info.php'));
+        $full_data = include base_path($request['path'].'/Addon/info.php');
 
         $post = [
             base64_decode('dXNlcm5hbWU=') => $request['username'],
@@ -128,22 +128,22 @@ class AddonService
         $response = Http::post(base64_decode('aHR0cHM6Ly9jaGVjay42YW10ZWNoLmNvbS9hcGkvdjEvYWN0aXZhdGlvbi1jaGVjaw=='), $post)->json();
         $status = isset($response['active']) ? base64_decode($response['active']) ?? 1 : 0;
 
-        if ((int)$status) {
+        if ((int) $status) {
             $full_data['is_published'] = 1;
             $full_data['username'] = $request['username'];
             $full_data['purchase_code'] = $request['purchase_code'];
-            $str = "<?php return " . var_export($full_data, true) . ";";
-            file_put_contents(base_path($request['path'] . '/Addon/info.php'), $str);
+            $str = '<?php return '.var_export($full_data, true).';';
+            file_put_contents(base_path($request['path'].'/Addon/info.php'), $str);
         }
 
         $activationUrl = base64_decode('aHR0cHM6Ly9hY3RpdmF0aW9uLjZhbXRlY2guY29t');
-        $activationUrl .= '?username=' . $request['username'];
-        $activationUrl .= '&purchase_code=' . $request['purchase_code'];
-        $activationUrl .= '&domain=' . url('/') . '&';
+        $activationUrl .= '?username='.$request['username'];
+        $activationUrl .= '&purchase_code='.$request['purchase_code'];
+        $activationUrl .= '&domain='.url('/').'&';
 
         return [
-            'status' => (int)$status,
-            'activationUrl' => $activationUrl
+            'status' => (int) $status,
+            'activationUrl' => $activationUrl,
         ];
 
     }
@@ -166,13 +166,13 @@ class AddonService
 
         return [
             'status' => $status,
-            'message' => $message
+            'message' => $message,
         ];
     }
 
     public function getCurrentDomain(): string
     {
-        return str_replace(["http://", "https://", "www."], "", url('/'));
+        return str_replace(['http://', 'https://', 'www.'], '', url('/'));
     }
 
     public function addonActivationProcess(object $request): array
@@ -190,9 +190,9 @@ class AddonService
         $status = $response['active'] ?? 0;
         $message = $response['message'] ?? translate('Activation_failed');
 
-        if ((int)$status) {
+        if ((int) $status) {
             return [
-                'status' => (int)$status,
+                'status' => (int) $status,
                 'activation_status' => 1,
                 'username' => $request['username'],
                 'purchase_code' => $request['purchase_code'],
@@ -200,9 +200,8 @@ class AddonService
         }
 
         return [
-            'status' => (int)$status,
-            'message' => $message
+            'status' => (int) $status,
+            'message' => $message,
         ];
     }
-
 }

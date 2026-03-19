@@ -8,7 +8,7 @@ class CouponService
 {
     /**
      * @return array
-     * This array return column name and there value when add coupon
+     *               This array return column name and there value when add coupon
      */
     public function getCouponData($request, $addedBy): array
     {
@@ -47,7 +47,7 @@ class CouponService
         if ($request['coupon_type'] == 'discount_on_purchase' || $request['coupon_type'] == 'free_delivery') {
             $data += [
                 'coupon_bearer' => $request['coupon_bearer'],
-                'seller_id' => $request['seller_id'] == 'inhouse' ? NULL : $request['seller_id'],
+                'seller_id' => $request['seller_id'] == 'inhouse' ? null : $request['seller_id'],
                 'customer_id' => $request['customer_id'],
                 'limit' => $request['limit'],
             ];
@@ -79,7 +79,7 @@ class CouponService
         if ($request['coupon_type'] == 'discount_on_purchase' || $request['coupon_type'] == 'free_delivery') {
             $data += [
                 'coupon_bearer' => $request['coupon_bearer'],
-                'seller_id' => $request['seller_id'] == 'inhouse' ? NULL : $request['seller_id'],
+                'seller_id' => $request['seller_id'] == 'inhouse' ? null : $request['seller_id'],
                 'customer_id' => $request['customer_id'],
                 'limit' => $request['limit'],
             ];
@@ -88,7 +88,7 @@ class CouponService
         if ($request['coupon_type'] == 'discount_on_purchase') {
             $data += [
                 'discount_type' => $request['discount_type'],
-                'seller_id' => $request['seller_id'] == 'inhouse' ? NULL : $request['seller_id'],
+                'seller_id' => $request['seller_id'] == 'inhouse' ? null : $request['seller_id'],
                 'customer_id' => $request['customer_id'],
                 'limit' => $request['limit'],
             ];
@@ -109,7 +109,7 @@ class CouponService
             $data['max_discount'] = 0;
         } elseif ($request['coupon_type'] == 'first_order') {
             $data['coupon_bearer'] = 'inhouse';
-            $data['seller_id'] = NULL;
+            $data['seller_id'] = null;
             $data['customer_id'] = 0;
             $data['limit'] = 0;
         }
@@ -121,12 +121,14 @@ class CouponService
     {
         if ($request['coupon_type'] == 'discount_on_purchase' && $request['discount_type'] == 'amount' && $request['discount'] > $request['min_purchase']) {
             Toastr::error(translate('the_minimum_purchase_amount_must_be_greater_than_discount_amount'));
+
             return false;
         } elseif ($request['discount_type'] == 'percentage' && $request['discount'] >= 100) {
             Toastr::error(translate('when_discount_type percentage,discount_amount_will_be_less_than_100'));
+
             return false;
         }
+
         return true;
     }
-
 }

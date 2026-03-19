@@ -30,11 +30,12 @@ class SubCategoryAddRequest extends FormRequest
         $rules = [
             'name' => 'required',
             'priority' => 'required',
-            'parent_id' => 'required'
+            'parent_id' => 'required',
         ];
         if (theme_root_path() == 'theme_aster' && $this['position'] == 1) {
-            $rules['image'] = 'required|mimes:jpeg,jpg,png,gif|max:'. getFileUploadMaxSize(unit: 'kb');
+            $rules['image'] = 'required|mimes:jpeg,jpg,png,gif|max:'.getFileUploadMaxSize(unit: 'kb');
         }
+
         return $rules;
     }
 
@@ -56,16 +57,16 @@ class SubCategoryAddRequest extends FormRequest
                 if (
                     isset($this['name'][0]) &&
                     Category::where(['name' => $this['name'][0], 'position' => $this['position']])
-                        ->when(isset($this['parent_id']) && !empty($this['parent_id']), function ($query) {
+                        ->when(isset($this['parent_id']) && ! empty($this['parent_id']), function ($query) {
                             return $query->where('parent_id', $this['parent_id']);
                         })
                         ->first()
                 ) {
                     $validator->errors()->add(
-                        'name.unique', translate('The_category_has_already_been_taken') . '!'
+                        'name.unique', translate('The_category_has_already_been_taken').'!'
                     );
                 }
-            }
+            },
         ];
     }
 }

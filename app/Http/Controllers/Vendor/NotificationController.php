@@ -17,48 +17,32 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class NotificationController extends BaseController
 {
-    /**
-     * @param ShopRepositoryInterface $shopRepo
-     * @param NotificationRepositoryInterface $notificationRepo
-     * @param NotificationSeenRepository $notificationSeenRepo
-     */
     public function __construct(
         private readonly ShopRepositoryInterface $shopRepo,
         private readonly NotificationRepositoryInterface $notificationRepo,
         private readonly NotificationSeenRepository $notificationSeenRepo,
-    )
-    {
-    }
+    ) {}
 
-
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return null;
     }
 
-    /**
-     * @param NotificationModalViewRequest $request
-     * @return JsonResponse
-     */
-    public function getNotificationModalView(NotificationModalViewRequest $request ):JsonResponse
+    public function getNotificationModalView(NotificationModalViewRequest $request): JsonResponse
     {
-        $shop = $this->shopRepo->getFirstWhere(params:['seller_id'=> auth('seller')->id()]);
+        $shop = $this->shopRepo->getFirstWhere(params: ['seller_id' => auth('seller')->id()]);
         $companyName = getWebConfig(name: 'company_name') ?? '';
 
-        $notificationSeenId = $this->notificationSeenRepo->getFirstWhere(params:['seller_id' => auth('seller')->id(), 'notification_id' => $request['id']]);
+        $notificationSeenId = $this->notificationSeenRepo->getFirstWhere(params: ['seller_id' => auth('seller')->id(), 'notification_id' => $request['id']]);
 
-        $this->notificationSeenRepo->update(id: $notificationSeenId['id'],data: [ 'created_at' => now()]);
+        $this->notificationSeenRepo->update(id: $notificationSeenId['id'], data: ['created_at' => now()]);
 
-        $data = $this->notificationRepo->getFirstWhere(params:['id' => $request['id']]);
+        $data = $this->notificationRepo->getFirstWhere(params: ['id' => $request['id']]);
 
-        $notification = $this->notificationRepo->getListWhereBetween(params:[auth('seller')->user()->created_at, now()],filters: ['sent_to'=>'seller'],relations: 'notificationSeenBy');
+        $notification = $this->notificationRepo->getListWhereBetween(params: [auth('seller')->user()->created_at, now()], filters: ['sent_to' => 'seller'], relations: 'notificationSeenBy');
 
         $notificationCount = count($notification);
+
         return response()->json([
             'notification_count' => $notificationCount,
             'view' => view(Notification::INDEX[VIEW], compact('shop', 'companyName', 'data'))->render(),

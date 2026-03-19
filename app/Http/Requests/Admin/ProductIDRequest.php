@@ -29,5 +29,4 @@ class ProductIDRequest extends FormRequest
             'product_id.required' => translate('please_select_at_least_one_product'),
         ];
     }
-
 }

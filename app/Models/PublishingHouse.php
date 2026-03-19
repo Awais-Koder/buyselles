@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class Author
  *
- * @package App\Models
  * @property int $id
  * @property string $name
  * @property Carbon $created_at
@@ -28,7 +27,6 @@ class PublishingHouse extends Model
         'updated_at',
     ];
 
-
     protected $casts = [
         'name' => 'string',
         'created_at' => 'datetime',
@@ -39,5 +37,4 @@ class PublishingHouse extends Model
     {
         return $this->hasMany(DigitalProductPublishingHouse::class, 'publishing_house_id');
     }
-
 }

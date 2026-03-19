@@ -5,18 +5,17 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DeliveryManWithdrawRequestExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class DeliveryManWithdrawRequestExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -54,15 +53,16 @@ class DeliveryManWithdrawRequestExport implements FromView, ShouldAutoSize, With
             'rotation' => 0,
             'color' => ['rgb' => '063C93'],
         ]);
-        $sheet->getStyle('E5:F' . ($this->data['withdraw_request']->count() + 4))->getFill()->applyFromArray([
+        $sheet->getStyle('E5:F'.($this->data['withdraw_request']->count() + 4))->getFill()->applyFromArray([
             'fillType' => 'solid',
             'rotation' => 0,
             'color' => ['rgb' => 'FFF9D1'],
         ]);
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:F' . ($this->data['withdraw_request']->count() + 4) => [
+            'A1:F'.($this->data['withdraw_request']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -78,15 +78,15 @@ class DeliveryManWithdrawRequestExport implements FromView, ShouldAutoSize, With
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:F1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:F' . ($this->data['withdraw_request']->count() + 4)) // Adjust the range as per your needs
-                ->getAlignment()
+                $event->sheet->getStyle('A4:F'.($this->data['withdraw_request']->count() + 4)) // Adjust the range as per your needs
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:F3') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -104,7 +104,7 @@ class DeliveryManWithdrawRequestExport implements FromView, ShouldAutoSize, With
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

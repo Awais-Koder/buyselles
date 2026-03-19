@@ -7,8 +7,8 @@ use App\Contracts\Repositories\SeoMetaInfoRepositoryInterface;
 use App\Contracts\Repositories\TranslationRepositoryInterface;
 use App\Exports\CategoryListExport;
 use App\Http\Controllers\BaseController;
-use App\Http\Requests\Admin\SubCategoryUpdateRequest;
 use App\Http\Requests\Admin\SubCategoryAddRequest;
+use App\Http\Requests\Admin\SubCategoryUpdateRequest;
 use App\Services\CategoryService;
 use App\Services\SeoMetaInfoService;
 use App\Traits\PaginatorTrait;
@@ -25,22 +25,18 @@ class SubCategoryController extends BaseController
     use PaginatorTrait;
 
     public function __construct(
-        private readonly CategoryRepositoryInterface    $categoryRepo,
-        private readonly SeoMetaInfoService             $seoMetaInfoService,
-        private readonly CategoryService                $categoryService,
+        private readonly CategoryRepositoryInterface $categoryRepo,
+        private readonly SeoMetaInfoService $seoMetaInfoService,
+        private readonly CategoryService $categoryService,
         private readonly SeoMetaInfoRepositoryInterface $seoMetaInfoRepo,
         private readonly TranslationRepositoryInterface $translationRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $parentCategoryIDs = $request['categories'] ?? [];
 
@@ -52,7 +48,7 @@ class SubCategoryController extends BaseController
             $orderBy = ['name' => 'asc'];
         } elseif ($request['sort_by'] == 'z-a') {
             $orderBy = ['name' => 'desc'];
-        } else  {
+        } else {
             $orderBy = ['updated_at' => 'desc'];
         }
 
@@ -102,6 +98,7 @@ class SubCategoryController extends BaseController
         $seoMetaData = $this->seoMetaInfoService->getModelSEOData(request: $request, seoMetaInfo: $savedCategory?->seo, type: 'App\Models\Category', modelId: $savedCategory->id, action: 'add');
         $this->seoMetaInfoRepo->add(data: $seoMetaData);
         ToastMagic::success(translate('Sub_Category_Added_Successfully'));
+
         return back();
     }
 
@@ -113,12 +110,14 @@ class SubCategoryController extends BaseController
         $this->translationRepo->update(request: $request, model: 'App\Models\Category', id: $request['id']);
 
         ToastMagic::success(translate('Sub_Category_Updated_Successfully'));
+
         return response()->json();
     }
 
     public function delete(Request $request): JsonResponse
     {
         $this->categoryRepo->delete(params: ['id' => $request['id']]);
+
         return response()->json(['message' => translate('Deleted_Successfully')]);
     }
 
@@ -133,7 +132,7 @@ class SubCategoryController extends BaseController
             $orderBy = ['name' => 'asc'];
         } elseif ($request['sort_by'] == 'z-a') {
             $orderBy = ['name' => 'desc'];
-        } else  {
+        } else {
             $orderBy = ['updated_at' => 'desc'];
         }
 
@@ -146,6 +145,7 @@ class SubCategoryController extends BaseController
 
         $active = $subCategories->where('home_status', 1)->count();
         $inactive = $subCategories->where('home_status', 0)->count();
+
         return Excel::download(new CategoryListExport([
             'categories' => $subCategories,
             'title' => 'sub_category',

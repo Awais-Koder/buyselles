@@ -22,13 +22,11 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
- * @package App\Models
  */
-
 class SupportTicket extends Model
 {
     use StorageTrait;
+
     protected $fillable = [
         'customer_id',
         'subject',
@@ -39,7 +37,7 @@ class SupportTicket extends Model
         'status',
         'created_at',
         'updated_at',
-        'attachment'
+        'attachment',
     ];
 
     protected $casts = [
@@ -49,25 +47,28 @@ class SupportTicket extends Model
         'status' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'attachment' => 'array'
+        'attachment' => 'array',
     ];
 
     public function conversations(): HasMany
     {
         return $this->hasMany(SupportTicketConv::class);
     }
-    public function getAttachmentFullUrlAttribute():array|null
+
+    public function getAttachmentFullUrlAttribute(): ?array
     {
         $images = [];
         $value = $this->attachment;
-        if ($value){
-            foreach ($value as $item){
-                $item = isset($item['file_name']) ? (array)$item : ['file_name' => $item, 'storage' => 'public'];
-                $images[] =  $this->storageLink('support-ticket',$item['file_name'],$item['storage'] ?? 'public');
+        if ($value) {
+            foreach ($value as $item) {
+                $item = isset($item['file_name']) ? (array) $item : ['file_name' => $item, 'storage' => 'public'];
+                $images[] = $this->storageLink('support-ticket', $item['file_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
+
     protected $appends = ['attachment_full_url'];
 
     public function customer(): BelongsTo

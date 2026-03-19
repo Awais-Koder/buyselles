@@ -12,13 +12,12 @@ class AuthorizationToolMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure(Request): (Response|RedirectResponse) $next
-     * @return Response|RedirectResponse
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
      */
     public function handle(Request $request, Closure $next): Response|RedirectResponse
     {
         $request->headers->set('Authorization', $request->headers->get('X-Access-Token'));
+
         return $next($request);
     }
 }

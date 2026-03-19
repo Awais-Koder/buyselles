@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Blog\app\Http\Controllers\Web\AppBlogController;
 use Modules\Blog\app\Http\Controllers\Web\FrontendBlogController;
 use Modules\Blog\app\Http\Middleware\BlogActiveStatusMiddleware;
 

@@ -12,17 +12,19 @@ class ProductVariationSetupAutoFillRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'required',
         ];
     }
 
-    public  function messages(): array{
+    public function messages(): array
+    {
         return [
             'name.required' => translate('product_name_is_required_to_generate_product_variation'),
             'description.required' => translate('product_description_is_required_to_generate_product_variation'),
         ];
     }
+
     /**
      * Determine if the user is authorized to make this request.
      */

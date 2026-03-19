@@ -23,24 +23,12 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CouponController extends BaseController
 {
-    /**
-     * @param CouponRepositoryInterface $couponRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     */
     public function __construct(
-        private readonly CouponRepositoryInterface   $couponRepo,
+        private readonly CouponRepositoryInterface $couponRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-        private readonly VendorRepositoryInterface   $vendorRepo,
-    )
-    {
-    }
+        private readonly VendorRepositoryInterface $vendorRepo,
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return $this->getAddListView(request: $request);
@@ -50,6 +38,7 @@ class CouponController extends BaseController
     {
         $coupons = $this->couponRepo->getListWhere(searchValue: $request['searchValue'], filters: ['added_by' => 'admin'], dataLimit: getWebConfig(name: 'pagination_limit'));
         $customers = $this->customerRepo->getListWhereNotIn([0]);
+
         return view('admin-views.coupon.add-new', compact('coupons', 'customers'));
     }
 
@@ -59,19 +48,20 @@ class CouponController extends BaseController
             if ($request['discount_type'] == 'amount' && $request['discount'] > $request['min_purchase']) {
                 return response()->json([
                     'status' => 0,
-                    'message' =>translate('the_minimum_purchase_amount_must_be_greater_than_discount_amount')
+                    'message' => translate('the_minimum_purchase_amount_must_be_greater_than_discount_amount'),
                 ]);
             }
             $data = $couponService->getAddData(request: $request);
             $this->couponRepo->add(data: $data);
+
             return response()->json([
                 'status' => 1,
-                'message' => translate('coupon_added_successfully')
+                'message' => translate('coupon_added_successfully'),
             ]);
-        }catch (Exception $e){
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 0,
-                'message' => translate($e->getMessage())
+                'message' => translate($e->getMessage()),
             ]);
         }
     }
@@ -85,31 +75,33 @@ class CouponController extends BaseController
             return view('admin-views.coupon.edit', compact('coupon', 'customers', 'sellers'));
         }
         ToastMagic::error(translate('invalid_Coupon'));
+
         return redirect()->route('admin.coupon.add');
     }
 
     public function update(CouponUpdateRequest $request, string|int $id, CouponService $couponService): JsonResponse
     {
-       try{
-           if ($request['discount_type'] == 'amount' && $request['discount'] > $request['min_purchase']) {
-               return response()->json([
-                   'status' => 0,
-                   'message' =>translate('the_minimum_purchase_amount_must_be_greater_than_discount_amount')
-               ]);
-           }
-           $data = $couponService->getUpdateData(request: $request);
-           $this->couponRepo->update(id: $id, data: $data);
-           return response()->json([
-               'status' => 1,
-               'message' => translate('coupon_updated_successfully'),
-               'redirect_url' => route('admin.coupon.add')
-           ]);
-       }catch (Exception $e){
-           return response()->json([
-               'status' => 0,
-               'message' => translate($e->getMessage()),
-           ]);
-       }
+        try {
+            if ($request['discount_type'] == 'amount' && $request['discount'] > $request['min_purchase']) {
+                return response()->json([
+                    'status' => 0,
+                    'message' => translate('the_minimum_purchase_amount_must_be_greater_than_discount_amount'),
+                ]);
+            }
+            $data = $couponService->getUpdateData(request: $request);
+            $this->couponRepo->update(id: $id, data: $data);
+
+            return response()->json([
+                'status' => 1,
+                'message' => translate('coupon_updated_successfully'),
+                'redirect_url' => route('admin.coupon.add'),
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => translate($e->getMessage()),
+            ]);
+        }
 
     }
 
@@ -119,16 +111,18 @@ class CouponController extends BaseController
         if ($request->ajax()) {
             return response()->json([
                 'status' => 1,
-                'message' => translate('coupon_status_updated')
+                'message' => translate('coupon_status_updated'),
             ]);
         }
         ToastMagic::success(translate('coupon_status_updated'));
+
         return back();
     }
 
     public function quickView(Request $request): JsonResponse
     {
         $coupon = $this->couponRepo->getFirstWhere(params: ['id' => $request['id'], 'added_by' => 'admin']);
+
         return response()->json([
             'view' => view('admin-views.coupon.details-quick-view', compact('coupon'))->render(),
         ]);
@@ -138,30 +132,32 @@ class CouponController extends BaseController
     {
         $this->couponRepo->delete(params: ['id' => $id, 'added_by' => 'admin']);
         ToastMagic::success(translate('Coupon_deleted_successfully'));
+
         return redirect()->back();
     }
 
     public function getVendorList(Request $request): JsonResponse
     {
         $sellers = $this->vendorRepo->getListWhere(filters: ['status' => 'approved'], relations: ['shop'], dataLimit: 'all');
-        $output = '<option value="" disabled selected>' . translate('select_vendor') . '</option><option value="0">' . translate('all_vendor') . '</option>';
-        $output .= $request['coupon_bearer'] == 'inhouse' ? '<option value="inhouse">' . getInHouseShopConfig(key:'name') . '</option>' : '';
+        $output = '<option value="" disabled selected>'.translate('select_vendor').'</option><option value="0">'.translate('all_vendor').'</option>';
+        $output .= $request['coupon_bearer'] == 'inhouse' ? '<option value="inhouse">'.getInHouseShopConfig(key: 'name').'</option>' : '';
         foreach ($sellers as $seller) {
             if ($seller?->shop) {
-                $output .= '<option value="' . $seller->id . '">' . $seller->shop->name . '</option>';
+                $output .= '<option value="'.$seller->id.'">'.$seller->shop->name.'</option>';
             }
         }
+
         return response()->json($output);
     }
 
     public function exportList(Request $request): BinaryFileResponse
     {
         $coupons = $this->couponRepo->getListWhere(searchValue: $request['searchValue'], filters: ['added_by' => 'admin'], dataLimit: 'all');
+
         return Excel::download(new CouponListExport([
             'coupon' => $coupons,
             'search' => $request['searchValue'],
         ]), 'Coupon-list.xlsx'
         );
     }
-
 }

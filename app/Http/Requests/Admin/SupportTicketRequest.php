@@ -22,7 +22,7 @@ class SupportTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'media.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:6000'
+            'media.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:6000',
         ];
     }
 
@@ -32,5 +32,4 @@ class SupportTicketRequest extends FormRequest
             'media.*' => translate('The_file_must_be_an_image'),
         ];
     }
-
 }

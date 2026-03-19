@@ -15,11 +15,9 @@ class CustomerRestockRequestController extends Controller
     use CommonTrait;
 
     public function __construct(
-        private readonly RestockProductRepositoryInterface         $restockProductRepo,
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
         private readonly RestockProductCustomerRepositoryInterface $restockProductCustomerRepo,
-    )
-    {
-    }
+    ) {}
 
     public function restockRequestsList(Request $request): JsonResponse
     {
@@ -36,6 +34,7 @@ class CustomerRestockRequestController extends Controller
         $requestList->map(function ($data) {
             $data->product = Helpers::product_data_formatting($data->product, false);
             $data->fcm_topic = getRestockProductFCMTopic(restockRequest: $data);
+
             return $data;
         });
 
@@ -53,16 +52,17 @@ class CustomerRestockRequestController extends Controller
 
         if ($request['type'] == 'all') {
             $this->restockProductCustomerRepo->delete(params: ['customer_id' => $user->id]);
-        } else if ($request['id']) {
+        } elseif ($request['id']) {
             $this->restockProductCustomerRepo->delete(params: ['restock_product_id' => $request['id'], 'customer_id' => $user->id]);
         }
 
-        $restockProducts = $this->restockProductRepo->getListWhere(relations:['restockProductCustomers'], dataLimit: 'all');
+        $restockProducts = $this->restockProductRepo->getListWhere(relations: ['restockProductCustomers'], dataLimit: 'all');
         $restockProducts->map(function ($restockProduct) {
-            if($restockProduct->restockProductCustomers->count() === 0) {
+            if ($restockProduct->restockProductCustomers->count() === 0) {
                 $this->restockProductRepo->delete(params: ['id' => $restockProduct['id']]);
             }
         });
+
         return response()->json(['message' => translate('Deleted_successfully')], 200);
     }
 }

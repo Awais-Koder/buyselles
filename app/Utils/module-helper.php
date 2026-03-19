@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\TaxModule\app\Models\SystemTaxSetup;
 use Modules\TaxModule\app\Models\Tax;
 
-if (!function_exists('digital_payment_success')) {
+if (! function_exists('digital_payment_success')) {
     function digital_payment_success($paymentData): void
     {
         if (isset($paymentData) && $paymentData['is_paid'] == 1) {
@@ -24,7 +24,7 @@ if (!function_exists('digital_payment_success')) {
 
             if ($newCustomerInfo) {
                 $checkCustomer = User::where(['email' => $newCustomerInfo['email']])->orWhere(['phone' => $newCustomerInfo['phone']])->first();
-                if (!$checkCustomer) {
+                if (! $checkCustomer) {
                     $addCustomer = User::create([
                         'name' => $newCustomerInfo['name'],
                         'f_name' => $newCustomerInfo['name'],
@@ -90,19 +90,16 @@ if (!function_exists('digital_payment_success')) {
     }
 }
 
-if (!function_exists('digital_payment_fail')) {
-    function digital_payment_fail($payment_data)
-    {
-
-    }
+if (! function_exists('digital_payment_fail')) {
+    function digital_payment_fail($payment_data) {}
 }
-if (!function_exists('customer_order_edit_pay_due_amount_success')) {
+if (! function_exists('customer_order_edit_pay_due_amount_success')) {
     /**
      * @throws Throwable
      */
     function customer_order_edit_pay_due_amount_success($payment_data): void
     {
-        if (!isset($payment_data) || ($payment_data['is_paid'] ?? 0) != 1) {
+        if (! isset($payment_data) || ($payment_data['is_paid'] ?? 0) != 1) {
             return;
         }
         $additionalData = json_decode($payment_data['additional_data'] ?? '{}', true);
@@ -130,10 +127,10 @@ if (!function_exists('customer_order_edit_pay_due_amount_success')) {
         AdminWallet::where(['admin_id' => 1])->increment('pending_amount', $additionalData['order_amount']);
     }
 }
-if (!function_exists('customer_order_edit_pay_due_amount_failed')) {
+if (! function_exists('customer_order_edit_pay_due_amount_failed')) {
     function customer_order_edit_pay_due_amount_failed($payment_data): void
     {
-        if (!isset($payment_data)) {
+        if (! isset($payment_data)) {
             return;
         }
         $additionalData = json_decode($payment_data['additional_data'] ?? '', true);
@@ -151,7 +148,7 @@ if (!function_exists('customer_order_edit_pay_due_amount_failed')) {
 }
 
 // Add Fund To Wallet - Success
-if (!function_exists('add_fund_to_wallet_success')) {
+if (! function_exists('add_fund_to_wallet_success')) {
     function add_fund_to_wallet_success($payment_data): void
     {
         if (isset($payment_data) && $payment_data['is_paid'] == 1) {
@@ -182,14 +179,11 @@ if (!function_exists('add_fund_to_wallet_success')) {
 }
 
 // Add Fund To Wallet - Fail
-if (!function_exists('add_fund_to_wallet_fail')) {
-    function add_fund_to_wallet_fail($payment_data)
-    {
-
-    }
+if (! function_exists('add_fund_to_wallet_fail')) {
+    function add_fund_to_wallet_fail($payment_data) {}
 }
 
-if (!function_exists('config_settings')) {
+if (! function_exists('config_settings')) {
     function config_settings($key, $settings_type)
     {
         try {
@@ -198,31 +192,34 @@ if (!function_exists('config_settings')) {
         } catch (Exception $exception) {
             return null;
         }
+
         return (isset($config)) ? $config : null;
     }
 }
 
-if (!function_exists('getCheckAddonPublishedStatus')) {
+if (! function_exists('getCheckAddonPublishedStatus')) {
     function getCheckAddonPublishedStatus(string $moduleName): int
     {
         try {
             if (file_exists(base_path("Modules/{$moduleName}/Addon/info.php"))) {
-                $full_data = include(base_path("Modules/{$moduleName}/Addon/info.php"));
+                $full_data = include base_path("Modules/{$moduleName}/Addon/info.php");
+
                 return $full_data['is_published'] == 1 ? 1 : 0;
             }
         } catch (Exception $exception) {
         }
+
         return 0;
     }
 }
 
-if (!function_exists('getTaxModuleSystemTypesConfig')) {
+if (! function_exists('getTaxModuleSystemTypesConfig')) {
     function getTaxModuleSystemTypesConfig($getTaxVatList = true, $tax_payer = 'vendor'): array
     {
-        $cacheKey = "tax_system_type_{$tax_payer}_" . ($getTaxVatList ? 'with_vat' : 'no_vat');
+        $cacheKey = "tax_system_type_{$tax_payer}_".($getTaxVatList ? 'with_vat' : 'no_vat');
 
         $cacheKeys = Cache::get('cache_tax_system_types_and_config', []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put('cache_tax_system_types_and_config', $cacheKeys, 60 * 60 * 24 * 7);
         }
@@ -237,7 +234,7 @@ if (!function_exists('getTaxModuleSystemTypesConfig')) {
                     ->where('is_default', 1)
                     ->first();
 
-                if (!$systemTaxVat) {
+                if (! $systemTaxVat) {
                     $systemTaxVat = SystemTaxSetup::create([
                         'tax_type' => 'order_wise',
                         'country_code' => null,
@@ -247,13 +244,14 @@ if (!function_exists('getTaxModuleSystemTypesConfig')) {
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+
                     return [
                         'SystemTaxVat' => $systemTaxVat ?? null,
                         'SystemTaxVatType' => $systemTaxVat?->tax_type ?? 'order_wise',
                         'is_included' => $systemTaxVat?->is_included ?? 0,
                         'productWiseTax' => false,
                         'categoryWiseTax' => false,
-                        'taxVats' => []
+                        'taxVats' => [],
                     ];
                 }
 
@@ -274,13 +272,13 @@ if (!function_exists('getTaxModuleSystemTypesConfig')) {
                 'is_included' => $systemTaxVat?->is_included ?? 0,
                 'productWiseTax' => $productWiseTax ?? false,
                 'categoryWiseTax' => $categoryWiseTax ?? false,
-                'taxVats' => $taxVats ?? []
+                'taxVats' => $taxVats ?? [],
             ];
         });
     }
 }
 
-if (!function_exists('getModuleDynamicAsset')) {
+if (! function_exists('getModuleDynamicAsset')) {
     function getModuleDynamicAsset(string $path): string
     {
         if (getModuleAssetsProcessingDirectory() == 'public') {
@@ -292,11 +290,12 @@ if (!function_exists('getModuleDynamicAsset')) {
         } else {
             $result = $path;
         }
+
         return asset($result);
     }
 }
 
-if (!function_exists('getModuleDynamicStorage')) {
+if (! function_exists('getModuleDynamicStorage')) {
     function getModuleDynamicStorage(string $path): string
     {
         if (getModuleAssetsProcessingDirectory() == 'public') {
@@ -304,14 +303,16 @@ if (!function_exists('getModuleDynamicStorage')) {
         } else {
             $result = $path;
         }
+
         return asset($result);
     }
 }
 
-if (!function_exists('getModuleAssetsProcessingDirectory')) {
+if (! function_exists('getModuleAssetsProcessingDirectory')) {
     function getModuleAssetsProcessingDirectory(): string
     {
-        $cacheKey = 'SYSTEM_DOMAIN_POINTED_DIRECTORY_' . md5($_SERVER['SCRIPT_FILENAME']);
+        $cacheKey = 'SYSTEM_DOMAIN_POINTED_DIRECTORY_'.md5($_SERVER['SCRIPT_FILENAME']);
+
         return Cache::rememberForever($cacheKey, function () {
             $scriptPath = realpath(dirname($_SERVER['SCRIPT_FILENAME']));
             $basePath = realpath(base_path());
@@ -322,6 +323,7 @@ if (!function_exists('getModuleAssetsProcessingDirectory')) {
             } elseif ($scriptPath === $basePath) {
                 return 'root';
             }
+
             return 'unknown';
         });
     }

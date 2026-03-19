@@ -10,7 +10,7 @@ trait MaintenanceModeTrait
     public function checkMaintenanceMode(): bool
     {
         $maintenanceModeStatus = false;
-        if (!auth()->guard('admin')->check()) {
+        if (! auth()->guard('admin')->check()) {
             $maintenance = Cache::get('system_maintenance_mode');
             if ($maintenance) {
                 $maintenanceStatus = $maintenance['status'];
@@ -18,7 +18,7 @@ trait MaintenanceModeTrait
                     if ($maintenance['selectedSystems']['vendor_panel'] == 1 && (request()->is('vendor/*') || request('maintenance_system') == 'vendor')) {
                         $maintenanceModeStatus = $this->checkForMaintenanceMode($maintenance);
                     }
-                    if (!request()->is('admin/*') && !request()->is('vendor/*') && $maintenance['selectedSystems']['user_website'] == 1) {
+                    if (! request()->is('admin/*') && ! request()->is('vendor/*') && $maintenance['selectedSystems']['user_website'] == 1) {
                         $maintenanceModeStatus = $this->checkForMaintenanceMode($maintenance);
                     }
                     if (request()->is('api/*')) {
@@ -28,6 +28,7 @@ trait MaintenanceModeTrait
                 }
             }
         }
+
         return $maintenanceModeStatus;
     }
 
@@ -49,6 +50,7 @@ trait MaintenanceModeTrait
                 }
             }
         }
+
         return $status;
     }
 }

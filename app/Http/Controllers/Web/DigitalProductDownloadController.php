@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Contracts\Repositories\OrderDetailRepositoryInterface;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Http\Controllers\Controller;
@@ -12,21 +11,16 @@ use Illuminate\Http\Request;
 
 class DigitalProductDownloadController extends Controller
 {
-
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepo,
         private readonly OrderDetailRepositoryInterface $orderDetailRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return $this->getListView($request);
     }
@@ -44,7 +38,7 @@ class DigitalProductDownloadController extends Controller
 
             $isDigitalProductReadyCount = 0;
             $isDigitalProductExist = 0;
-            foreach($orderDetails as $orderDetail) {
+            foreach ($orderDetails as $orderDetail) {
                 if ($orderDetail->product->product_type == 'digital') {
                     $isDigitalProductExist++;
                 }
@@ -65,8 +59,8 @@ class DigitalProductDownloadController extends Controller
             ]);
         } else {
             Toastr::warning(translate('invalid_order'));
+
             return view(VIEW_FILE_NAMES['digital_product_download']);
         }
     }
-
 }

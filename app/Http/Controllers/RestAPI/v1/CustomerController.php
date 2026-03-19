@@ -16,25 +16,23 @@ use App\Models\Review;
 use App\Models\ShippingAddress;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketConv;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Traits\CommonTrait;
-use App\Traits\PdfGenerator;
 use App\Traits\FileManagerTrait;
-use App\Models\User;
+use App\Traits\PdfGenerator;
 use App\Utils\CustomerManager;
 use App\Utils\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
-    use CommonTrait, PdfGenerator, FileManagerTrait;
+    use CommonTrait, FileManagerTrait, PdfGenerator;
 
-    public function info(Request $request):JsonResponse
+    public function info(Request $request): JsonResponse
     {
         $user = $request->user();
         $getUser = User::where(['id' => $user->id])->first();
@@ -44,6 +42,7 @@ class CustomerController extends Controller
         $user->is_phone_verified = $getUser->is_phone_verified;
         $user->email_verification_token = $getUser->email_verification_token;
         $user->email_verified_at = $getUser->email_verified_at;
+
         return response()->json($user, 200);
     }
 
@@ -74,6 +73,7 @@ class CustomerController extends Controller
                 ],
             ], 422);
         }
+
         return response()->json(['message' => 'Support ticket created successfully.'], 200);
     }
 
@@ -86,8 +86,9 @@ class CustomerController extends Controller
             if ($order > 0) {
                 return response()->json(['message' => 'You can not delete account due ongoing order!'], 403);
             }
-            $this->delete('/profile/' . $user['image']);
+            $this->delete('/profile/'.$user['image']);
             $user->delete();
+
             return response()->json(['message' => 'Your account deleted successfully'], 200);
         } else {
             return response()->json(['message' => 'access_denied!!'], 403);
@@ -112,12 +113,13 @@ class CustomerController extends Controller
             }
         }
 
-        $support = new SupportTicketConv();
+        $support = new SupportTicketConv;
         $support->support_ticket_id = $ticket_id;
         $support->attachment = $images;
         $support->admin_id = 0;
         $support->customer_message = $request['message'];
         $support->save();
+
         return response()->json(['message' => 'Support ticket reply sent.'], 200);
     }
 
@@ -134,7 +136,7 @@ class CustomerController extends Controller
         $conversations = $conversations->toArray();
 
         if ($support_ticket) {
-            $description = array(
+            $description = [
                 'support_ticket_id' => $ticket_id,
                 'admin_id' => null,
                 'customer_message' => $support_ticket->description,
@@ -144,9 +146,10 @@ class CustomerController extends Controller
                 'position' => 0,
                 'created_at' => $support_ticket->created_at,
                 'updated_at' => $support_ticket->updated_at,
-            );
+            ];
             array_unshift($conversations, $description);
         }
+
         return response()->json($conversations, 200);
     }
 
@@ -157,12 +160,14 @@ class CustomerController extends Controller
             $ticket->status = 'close';
             $ticket->updated_at = now();
             $ticket->save();
+
             return response()->json(['message' => 'Successfully close the ticket'], 200);
         }
+
         return response()->json(['message' => 'Ticket not found'], 403);
     }
 
-    public function add_to_wishlist(Request $request):JsonResponse
+    public function add_to_wishlist(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required',
@@ -179,13 +184,14 @@ class CustomerController extends Controller
             $wishlist->customer_id = $request->user()->id;
             $wishlist->product_id = $request->product_id;
             $wishlist->save();
+
             return response()->json(['message' => 'successfully added!'], 200);
         }
 
         return response()->json(['message' => 'Already in your wishlist'], 409);
     }
 
-    public function remove_from_wishlist(Request $request):JsonResponse
+    public function remove_from_wishlist(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'product_id' => 'required',
@@ -197,19 +203,21 @@ class CustomerController extends Controller
 
         $wishlist = Wishlist::where('customer_id', $request->user()->id)->where('product_id', $request->product_id)->first();
 
-        if (!empty($wishlist)) {
+        if (! empty($wishlist)) {
             Wishlist::where(['customer_id' => $request->user()->id, 'product_id' => $request->product_id])->delete();
+
             return response()->json(['message' => translate('successfully removed!')], 200);
 
         }
+
         return response()->json(['message' => translate('No such data found!')], 404);
     }
 
-    public function wish_list(Request $request):JsonResponse
+    public function wish_list(Request $request): JsonResponse
     {
         $wishlist = Wishlist::whereHas('wishlistProduct', function ($query) use ($request) {
-            return $query->when(isset($request['search']) && !empty($request['search']), function ($query) use ($request) {
-                return $query->where('name', 'like', '%' . $request['search'] . '%');
+            return $query->when(isset($request['search']) && ! empty($request['search']), function ($query) use ($request) {
+                return $query->where('name', 'like', '%'.$request['search'].'%');
             });
         })->with(['productFullInfo' => function ($query) {
             return $query->with(['reviews', 'rating', 'clearanceSale' => function ($query) {
@@ -219,6 +227,7 @@ class CustomerController extends Controller
 
         $wishlist->map(function ($data) {
             $data['productFullInfo'] = Helpers::product_data_formatting(json_decode($data['productFullInfo'], true));
+
             return $data;
         });
 
@@ -233,10 +242,11 @@ class CustomerController extends Controller
         } else {
             $data = ShippingAddress::where(['customer_id' => $user->id, 'is_guest' => '0'])->get();
         }
+
         return response()->json($data, 200);
     }
 
-    public function add_new_address(Request $request):JsonResponse
+    public function add_new_address(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'contact_person_name' => 'required',
@@ -248,7 +258,7 @@ class CustomerController extends Controller
             'phone' => 'required',
             'latitude' => 'required',
             'longitude' => 'required',
-            'is_billing' => 'required'
+            'is_billing' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -258,10 +268,10 @@ class CustomerController extends Controller
         $zip_restrict_status = getWebConfig(name: 'delivery_zip_code_area_restriction');
         $country_restrict_status = getWebConfig(name: 'delivery_country_restriction');
 
-        if ($country_restrict_status && !self::delivery_country_exist_check($request->input('country'))) {
+        if ($country_restrict_status && ! self::delivery_country_exist_check($request->input('country'))) {
             return response()->json(['message' => translate('Delivery_unavailable_for_this_country')], 403);
 
-        } elseif ($zip_restrict_status && !self::delivery_zipcode_exist_check($request->input('zip'))) {
+        } elseif ($zip_restrict_status && ! self::delivery_zipcode_exist_check($request->input('zip'))) {
             return response()->json(['message' => translate('Delivery_unavailable_for_this_zip_code_area')], 403);
         }
 
@@ -285,6 +295,7 @@ class CustomerController extends Controller
             'updated_at' => now(),
         ];
         ShippingAddress::insert($address);
+
         return response()->json(['message' => translate('successfully added!')], 200);
     }
 
@@ -294,19 +305,19 @@ class CustomerController extends Controller
 
         $shippingAddress = ShippingAddress::where([
             'customer_id' => $user == 'offline' ? $request->guest_id : $user->id,
-            'id' => $request->id
+            'id' => $request->id,
         ])->first();
 
-        if (!$shippingAddress) {
+        if (! $shippingAddress) {
             return response()->json(['message' => translate('not_found')], 200);
         }
 
         $zipRestrictStatus = getWebConfig(name: 'delivery_zip_code_area_restriction');
         $countryRestrictStatus = getWebConfig(name: 'delivery_country_restriction');
 
-        if ($countryRestrictStatus && !self::delivery_country_exist_check($request->input('country'))) {
+        if ($countryRestrictStatus && ! self::delivery_country_exist_check($request->input('country'))) {
             return response()->json(['error_type' => 'address', 'message' => translate('Delivery_unavailable_for_this_country')], 403);
-        } elseif ($zipRestrictStatus && !self::delivery_zipcode_exist_check($request->input('zip'))) {
+        } elseif ($zipRestrictStatus && ! self::delivery_zipcode_exist_check($request->input('zip'))) {
             return response()->json(['error_type' => 'zip_code', 'message' => translate('Delivery_unavailable_for_this_zip_code_area')], 403);
         }
 
@@ -330,7 +341,7 @@ class CustomerController extends Controller
         return response()->json(['message' => translate('update_successful')], 200);
     }
 
-    public function delete_address(Request $request):JsonResponse
+    public function delete_address(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'address_id' => 'required',
@@ -353,23 +364,24 @@ class CustomerController extends Controller
         if ($shipping_address && $shipping_address->delete()) {
             return response()->json(['message' => 'successfully removed!'], 200);
         }
+
         return response()->json(['message' => translate('No such data found!')], 404);
     }
 
     public function get_order_list(Request $request): JsonResponse
     {
-        $status = array(
+        $status = [
             'ongoing' => ['out_for_delivery', 'processing', 'confirmed', 'pending'],
             'canceled' => ['canceled', 'failed', 'returned'],
             'delivered' => ['delivered'],
-        );
+        ];
 
         $orders = Order::with(['details.product', 'deliveryMan', 'seller.shop', 'deliveryManReview'])
             ->withSum('details as order_details_count', 'qty')
             ->where(['customer_id' => $request->user()->id, 'is_guest' => '0'])
             ->when($request->status && $request->status != 'all', function ($query) use ($request, $status) {
                 $query->whereIn('order_status', $status[$request->status])
-                    ->when($request->type == 'reorder', function ($query) use ($request) {
+                    ->when($request->type == 'reorder', function ($query) {
                         $query->where('order_type', 'default_type');
                     });
             })
@@ -379,6 +391,7 @@ class CustomerController extends Controller
         $orders->map(function ($data) {
             $data->details->map(function ($query) {
                 $query['product'] = Helpers::product_data_formatting(json_decode($query['product'], true));
+
                 return $query;
             });
 
@@ -389,8 +402,9 @@ class CustomerController extends Controller
             'total_size' => $orders->total(),
             'limit' => $request['limit'],
             'offset' => $request['offset'],
-            'orders' => $orders->items()
+            'orders' => $orders->items(),
         ];
+
         return response()->json($orders, 200);
     }
 
@@ -410,7 +424,7 @@ class CustomerController extends Controller
             ->whereHas('order', function ($query) use ($request, $user) {
                 $query->where([
                     'customer_id' => $user == 'offline' ? $request->guest_id : $user->id,
-                    'is_guest' => $user == 'offline' ? 1 : '0'
+                    'is_guest' => $user == 'offline' ? 1 : '0',
                 ]);
             })
             ->where(['order_id' => $request['order_id']])
@@ -441,12 +455,14 @@ class CustomerController extends Controller
                 $reviewData = ($reviews[0]['order_id'] == null ? $reviews[0] : null);
             }
             $query['reviewData'] = $reviewData;
+
             return $query;
         });
+
         return response()->json($detailsList, 200);
     }
 
-    public function getOrderInvoice(Request $request):JsonResponse
+    public function getOrderInvoice(Request $request): JsonResponse
     {
         $order = Order::with('seller')->with('shipping')->where('id', $request['order_id'])->first();
         $invoiceSettings = json_decode(BusinessSetting::where(['type' => 'invoice_settings'])->first()?->value, true);
@@ -463,6 +479,7 @@ class CustomerController extends Controller
         $pdfContentStr = $mpdf->Output('', 'S');
         $pdfContentBytes = $pdfContentStr;
         $byteArray = array_values(unpack('C*', $pdfContentBytes));
+
         return response()->json($byteArray);
     }
 
@@ -481,10 +498,11 @@ class CustomerController extends Controller
             $order['offlinePayments']->payment_info = $order->offlinePayments->payment_info;
         }
         $order = json_decode(json_encode($order), true);
+
         return response()->json($order, 200);
     }
 
-    public function update_profile(UpdateProfileApiRequest $request):JsonResponse
+    public function update_profile(UpdateProfileApiRequest $request): JsonResponse
     {
         $user = User::where(['id' => $request->user()->id])->first();
         $imageName = $request->user()->image;
@@ -509,10 +527,11 @@ class CustomerController extends Controller
             'password' => $password,
             'updated_at' => now(),
         ]);
+
         return response()->json(['message' => translate('successfully updated!')], 200);
     }
 
-    public function update_cm_firebase_token(Request $request):JsonResponse
+    public function update_cm_firebase_token(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'cm_firebase_token' => 'required',
@@ -542,16 +561,16 @@ class CustomerController extends Controller
         $stored_countries = DeliveryCountryCode::orderBy('country_code', 'ASC')->pluck('country_code')->toArray();
         $country_list = COUNTRIES;
 
-        $countries = array();
+        $countries = [];
 
         foreach ($country_list as $country) {
             if (in_array($country['code'], $stored_countries)) {
-                $countries [] = $country['name'];
+                $countries[] = $country['name'];
             }
         }
 
         if ($request->search) {
-            $countries = array_values(preg_grep('~' . $request->search . '~i', $countries));
+            $countries = array_values(preg_grep('~'.$request->search.'~i', $countries));
         }
 
         return response()->json($countries, 200);

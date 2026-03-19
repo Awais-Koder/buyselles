@@ -3,11 +3,11 @@
 namespace App\Traits;
 
 use App\Mail\SendMail;
-use App\Models\SocialMedia;
 use App\Models\EmailTemplate;
+use App\Models\SocialMedia;
+use App\Services\EmailTemplateService;
 use Exception;
 use Illuminate\Support\Facades\Mail;
-use App\Services\EmailTemplateService;
 
 trait EmailTemplateTrait
 {
@@ -19,15 +19,16 @@ trait EmailTemplateTrait
     {
         $data = $value;
         if ($data) {
-            $data = $userName ? str_replace("{userName}", $userName, $data) : $data;
-            $data = $vendorName ? str_replace("{vendorName}", $vendorName, $data) : $data;
-            $data = $adminName ? str_replace("{adminName}", $adminName, $data) : $data;
-            $data = $shopName ? str_replace("{shopName}", $shopName, $data) : $data;
-            $data = $shopName ? str_replace("{shopId}", $shopId, $data) : $data;
-            $data = $deliveryManName ? str_replace("{deliveryManName}", $deliveryManName, $data) : $data;
-            $data = $orderId ? str_replace("{orderId}", $orderId, $data) : $data;
-            $data = $emailId ? str_replace("{emailId}", $emailId, $data) : $data;
+            $data = $userName ? str_replace('{userName}', $userName, $data) : $data;
+            $data = $vendorName ? str_replace('{vendorName}', $vendorName, $data) : $data;
+            $data = $adminName ? str_replace('{adminName}', $adminName, $data) : $data;
+            $data = $shopName ? str_replace('{shopName}', $shopName, $data) : $data;
+            $data = $shopName ? str_replace('{shopId}', $shopId, $data) : $data;
+            $data = $deliveryManName ? str_replace('{deliveryManName}', $deliveryManName, $data) : $data;
+            $data = $orderId ? str_replace('{orderId}', $orderId, $data) : $data;
+            $data = $emailId ? str_replace('{emailId}', $emailId, $data) : $data;
         }
+
         return $data;
     }
 
@@ -93,7 +94,7 @@ trait EmailTemplateTrait
             }
         }
         foreach ($emailTemplates as $value) {
-            if (!in_array($value['template_name'], $emailTemplateArray)) {
+            if (! in_array($value['template_name'], $emailTemplateArray)) {
                 EmailTemplate::find($value['id'])->delete();
             }
         }

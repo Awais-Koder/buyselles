@@ -8,22 +8,23 @@ use Illuminate\Support\Facades\Http;
 class FirebaseService
 {
     protected Client $client;
+
     public function __construct()
     {
-        $this->client = new Client();
+        $this->client = new Client;
     }
-
 
     public function sendOtp($phoneNumber): array
     {
         $fcmCredentials = getWebConfig('fcm_credentials') ?? [];
         $apiKey = $fcmCredentials['apiKey'] ?? '';
-        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=' . $apiKey, [
+        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key='.$apiKey, [
             'phoneNumber' => $phoneNumber,
             'recaptchaToken' => request('g-recaptcha-response') ?? session('g-recaptcha-response'),
         ]);
 
         $responseBody = $response->json();
+
         return [
             'result' => $responseBody,
             'sessionInfo' => trim($responseBody['sessionInfo'] ?? ''),
@@ -33,12 +34,11 @@ class FirebaseService
         ];
     }
 
-
     public function verifyOtp($sessionInfo, $phoneNumber, $otp): array
     {
         $fcmCredentials = getWebConfig('fcm_credentials') ?? [];
         $apiKey = $fcmCredentials['apiKey'] ?? '';
-        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=' . $apiKey, [
+        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key='.$apiKey, [
             'sessionInfo' => $sessionInfo,
             'code' => $otp,
             'phoneNumber' => $phoneNumber,

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface NotificationMessageRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface NotificationMessageRepositoryInterface extends RepositoryInterface {}

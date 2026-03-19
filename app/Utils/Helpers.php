@@ -3,24 +3,18 @@
 namespace App\Utils;
 
 use App\Models\AddFundBonusCategories;
-use App\Models\OrderStatusHistory;
-use App\Models\ShippingMethod;
-use App\Models\Shop;
-use App\Models\Admin;
 use App\Models\BusinessSetting;
-use App\Models\Category;
 use App\Models\Color;
-use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\NotificationMessage;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Models\Seller;
 use App\Models\Setting;
-use App\Traits\CommonTrait;
+use App\Models\ShippingMethod;
+use App\Models\Shop;
 use App\Models\User;
-use App\Utils\CartManager;
-use App\Utils\OrderManager;
-use Carbon\Carbon;
+use App\Traits\CommonTrait;
 use Exception;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
@@ -40,10 +34,10 @@ class Helpers
         } elseif (is_object($request) && method_exists($request, 'user')) {
             $user = $request->user() ?? $request->user;
 
-        } elseif (isset($request['payment_request_from']) && in_array($request['payment_request_from'], ['app']) && !isset($request->user)) {
+        } elseif (isset($request['payment_request_from']) && in_array($request['payment_request_from'], ['app']) && ! isset($request->user)) {
             $user = $request['is_guest'] ? 'offline' : User::find($request['customer_id']);
 
-        } elseif (session()->has('customer_id') && !session('is_guest')) {
+        } elseif (session()->has('customer_id') && ! session('is_guest')) {
             $user = User::find(session('customer_id'));
 
         } elseif (isset($request->user)) {
@@ -81,6 +75,7 @@ class Helpers
             Session::put('direction', $direction);
             $lang = $code;
         }
+
         return $lang;
     }
 
@@ -92,6 +87,7 @@ class Helpers
                 $config = $setting;
             }
         }
+
         return $config;
     }
 
@@ -104,24 +100,23 @@ class Helpers
         }
     }
 
-
     public static function set_data_format($data)
     {
         $colors = is_array($data['colors']) ? $data['colors'] : json_decode($data['colors']);
         $query_data = Color::whereIn('code', $colors)->pluck('name', 'code')->toArray();
         $color_process = [];
         foreach ($query_data as $key => $color) {
-            $color_process[] = array(
+            $color_process[] = [
                 'name' => $color,
                 'code' => $key,
-            );
+            ];
         }
         $colorsFormatted = [];
         foreach ($color_process as $color) {
             $colorImageName = null;
             if (isset($data['color_images_full_url']) && $data['color_images_full_url']) {
                 foreach ($data['color_images_full_url'] as $image) {
-                    if ($image['color'] && '#' . $image['color'] == $color['code']) {
+                    if ($image['color'] && '#'.$image['color'] == $color['code']) {
                         $colorImageName = $image['image_name']['key'];
                     }
                 }
@@ -135,15 +130,15 @@ class Helpers
 
         $variation = [];
         $data['category_ids'] = is_array($data['category_ids']) ? $data['category_ids'] : json_decode($data['category_ids']);
-//        $data['images'] = is_array($data['images']) ? $data['images'] : json_decode($data['images']);
+        //        $data['images'] = is_array($data['images']) ? $data['images'] : json_decode($data['images']);
         $data['colors'] = $colors;
-//        $data['color_image'] = $colorImage;
+        //        $data['color_image'] = $colorImage;
         $data['colors_formatted'] = $colorsFormatted;
         $attributes = [];
         if ((is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes'])) != null) {
             $attributes_arr = is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes']);
             foreach ($attributes_arr as $attribute) {
-                $attributes[] = (integer)$attribute;
+                $attributes[] = (int) $attribute;
             }
         }
         $data['attributes'] = $attributes;
@@ -152,16 +147,15 @@ class Helpers
         foreach ($variation_arr as $var) {
             $variation[] = [
                 'type' => $var['type'],
-                'price' => (double)$var['price'],
+                'price' => (float) $var['price'],
                 'sku' => $var['sku'],
-                'qty' => (integer)$var['qty'],
+                'qty' => (int) $var['qty'],
             ];
         }
         $data['variation'] = $variation;
 
         return $data;
     }
-
 
     public static function setDataFormatForJsonData($data): mixed
     {
@@ -184,7 +178,7 @@ class Helpers
             $colorImageName = null;
             if ($colorImage) {
                 foreach ($colorImage as $image) {
-                    if ($image->color && '#' . $image->color == $color['code']) {
+                    if ($image->color && '#'.$image->color == $color['code']) {
                         $colorImageName = $image->image_name;
                     }
                 }
@@ -207,7 +201,7 @@ class Helpers
         if ((isset($data['attributes']) && is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes'] ?? '')) != null) {
             $attributes_arr = is_array($data['attributes']) ? $data['attributes'] : json_decode($data['attributes']);
             foreach ($attributes_arr as $attribute) {
-                $attributes[] = (integer)$attribute;
+                $attributes[] = (int) $attribute;
             }
         }
         $data['attributes'] = $attributes;
@@ -216,12 +210,13 @@ class Helpers
         foreach ($variation_arr as $var) {
             $variation[] = [
                 'type' => $var['type'],
-                'price' => (double)$var['price'],
+                'price' => (float) $var['price'],
                 'sku' => $var['sku'],
-                'qty' => (integer)$var['qty'],
+                'qty' => (int) $var['qty'],
             ];
         }
         $data['variation'] = $variation;
+
         return $data;
     }
 
@@ -242,6 +237,7 @@ class Helpers
 
             return $data;
         }
+
         return null;
     }
 
@@ -262,6 +258,7 @@ class Helpers
 
             return $data;
         }
+
         return null;
     }
 
@@ -269,7 +266,7 @@ class Helpers
     {
         return [
             'ssl_commerz', 'paypal', 'stripe', 'razor_pay', 'paystack', 'senang_pay', 'paymob_accept',
-            'flutterwave', 'paytm', 'paytabs', 'liqpay', 'mercadopago', 'bkash'
+            'flutterwave', 'paytm', 'paytabs', 'liqpay', 'mercadopago', 'bkash',
         ];
     }
 
@@ -296,6 +293,7 @@ class Helpers
             }
             $result = $tmp;
         }
+
         return $result;
     }
 
@@ -305,6 +303,7 @@ class Helpers
         foreach ($validator->errors()->getMessages() as $index => $error) {
             $errorKeeper[] = ['code' => $index, 'message' => $error[0]];
         }
+
         return $errorKeeper;
     }
 
@@ -318,7 +317,7 @@ class Helpers
         if (session()->has('system_default_currency_info') == false || $default != $current['id']) {
             $id = getWebConfig(name: 'system_default_currency');
             $currency = Currency::find($id);
-            if (!$currency) {
+            if (! $currency) {
                 $currency = Currency::find(1);
             }
             session()->put('system_default_currency_info', $currency);
@@ -340,6 +339,7 @@ class Helpers
             $language = BusinessSetting::where('type', 'language')->first();
             \session()->put('language_settings', $language);
         }
+
         return $language;
     }
 
@@ -362,19 +362,20 @@ class Helpers
 
     public static function module_permission_check($mod_name): bool
     {
-        if (!auth('admin')->check() || !auth('admin')->user()) {
+        if (! auth('admin')->check() || ! auth('admin')->user()) {
             return false;
         }
 
         $user_role = auth('admin')->user()?->role;
         $permission = $user_role?->module_access ?? '';
-        if (isset($permission) && $user_role?->status == 1 && in_array($mod_name, (array)json_decode($permission)) == true) {
+        if (isset($permission) && $user_role?->status == 1 && in_array($mod_name, (array) json_decode($permission)) == true) {
             return true;
         }
 
         if (auth('admin')->user()->admin_role_id == 1) {
             return true;
         }
+
         return false;
     }
 
@@ -395,6 +396,7 @@ class Helpers
         } else {
             $price = floatval($price);
         }
+
         return $price;
     }
 
@@ -403,12 +405,13 @@ class Helpers
         $data = $value;
         if ($data) {
             $order = $order_id ? Order::find($order_id) : null;
-            $data = $user_name ? str_replace("{userName}", $user_name, $data) : $data;
-            $data = $shopName ? str_replace("{shopName}", $shopName, $data) : $data;
-            $data = $delivery_man_name ? str_replace("{deliveryManName}", $delivery_man_name, $data) : $data;
-            $data = $key == 'expected_delivery_date' ? ($order ? str_replace("{time}", $order->expected_delivery_date, $data) : $data) : ($time ? str_replace("{time}", $time, $data) : $data);
-            $data = $order_id ? str_replace("{orderId}", $order_id, $data) : $data;
+            $data = $user_name ? str_replace('{userName}', $user_name, $data) : $data;
+            $data = $shopName ? str_replace('{shopName}', $shopName, $data) : $data;
+            $data = $delivery_man_name ? str_replace('{deliveryManName}', $delivery_man_name, $data) : $data;
+            $data = $key == 'expected_delivery_date' ? ($order ? str_replace('{time}', $order->expected_delivery_date, $data) : $data) : ($time ? str_replace('{time}', $time, $data) : $data);
+            $data = $order_id ? str_replace('{orderId}', $order_id, $data) : $data;
         }
+
         return $data;
     }
 
@@ -445,11 +448,12 @@ class Helpers
             ];
             $data = NotificationMessage::with(['translations' => function ($query) use ($lang) {
                 $query->where('locale', $lang);
-            }])->where(['key' => $notification_key[$key], 'user_type' => $user_type])->first() ?? ["status" => 0, "message" => "", "translations" => []];
+            }])->where(['key' => $notification_key[$key], 'user_type' => $user_type])->first() ?? ['status' => 0, 'message' => '', 'translations' => []];
             if ($data) {
                 if ($data['status'] == 0) {
                     return 0;
                 }
+
                 return count($data->translations) > 0 ? $data->translations[0]->value : $data['message'];
             } else {
                 return false;
@@ -458,39 +462,38 @@ class Helpers
         }
     }
 
-
     /**
      * Device wise notification send
      */
     public static function send_push_notif_to_device($fcm_token, $data)
     {
         $key = BusinessSetting::where(['type' => 'push_notification_key'])->first()->value;
-        $url = "https://fcm.googleapis.com/fcm/send";
-        $header = array("authorization: key=" . $key . "",
-            "content-type: application/json"
-        );
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $header = ['authorization: key='.$key.'',
+            'content-type: application/json',
+        ];
 
         if (isset($data['order_id']) == false) {
             $data['order_id'] = null;
         }
 
         $postdata = '{
-            "to" : "' . $fcm_token . '",
+            "to" : "'.$fcm_token.'",
             "data" : {
-                "title" :"' . $data['title'] . '",
-                "body" : "' . $data['description'] . '",
-                "image" : "' . $data['image'] . '",
-                "order_id":"' . $data['order_id'] . '",
-                "type":"' . $data['type'] . '",
+                "title" :"'.$data['title'].'",
+                "body" : "'.$data['description'].'",
+                "image" : "'.$data['image'].'",
+                "order_id":"'.$data['order_id'].'",
+                "type":"'.$data['type'].'",
                 "is_read": 0
               },
               "notification" : {
-                "title" :"' . $data['title'] . '",
-                "body" : "' . $data['description'] . '",
-                "image" : "' . $data['image'] . '",
-                "order_id":"' . $data['order_id'] . '",
-                "title_loc_key":"' . $data['order_id'] . '",
-                "type":"' . $data['type'] . '",
+                "title" :"'.$data['title'].'",
+                "body" : "'.$data['description'].'",
+                "image" : "'.$data['image'].'",
+                "order_id":"'.$data['order_id'].'",
+                "title_loc_key":"'.$data['order_id'].'",
+                "type":"'.$data['type'].'",
                 "is_read": 0,
                 "icon" : "new",
                 "sound" : "default"
@@ -502,7 +505,7 @@ class Helpers
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 
@@ -513,7 +516,6 @@ class Helpers
 
         return $result;
     }
-
 
     public static function get_seller_by_token($request)
     {
@@ -531,10 +533,9 @@ class Helpers
 
         return [
             'success' => $success,
-            'data' => $data
+            'data' => $data,
         ];
     }
-
 
     public static function getSellerByToken($request)
     {
@@ -542,6 +543,7 @@ class Helpers
         if (count($token) > 1 && strlen($token[1]) > 30) {
             return Seller::where(['auth_token' => $token['1']])->first();
         }
+
         return null;
     }
 
@@ -550,8 +552,12 @@ class Helpers
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {
-                if ($object != "." && $object != "..") {
-                    if (filetype($dir . "/" . $object) == "dir") Helpers::remove_dir($dir . "/" . $object); else unlink($dir . "/" . $object);
+                if ($object != '.' && $object != '..') {
+                    if (filetype($dir.'/'.$object) == 'dir') {
+                        Helpers::remove_dir($dir.'/'.$object);
+                    } else {
+                        unlink($dir.'/'.$object);
+                    }
                 }
             }
             reset($objects);
@@ -569,6 +575,7 @@ class Helpers
             $system_default_currency_info = session('system_default_currency_info');
             $code = $system_default_currency_info->code;
         }
+
         return $code;
     }
 
@@ -600,11 +607,12 @@ class Helpers
         if (preg_match($pattern, $contents)) {
             $contents = preg_replace($pattern, $replacement, $contents);
         } else {
-            $contents .= PHP_EOL . $replacement . PHP_EOL;
+            $contents .= PHP_EOL.$replacement.PHP_EOL;
         }
         $fp = fopen($envFile, 'w');
         fwrite($fp, $contents);
         fclose($fp);
+
         return $formattedValue;
     }
 
@@ -612,6 +620,7 @@ class Helpers
     {
         $carts = CartManager::getCartListQuery(groupId: $cart_group_id);
         $cart_summery = OrderManager::getOrderSummaryBeforePlaceOrder($carts, $coupon_discount);
+
         return self::seller_sales_commission($carts[0]['seller_is'], $carts[0]['seller_id'], $cart_summery['order_total']);
     }
 
@@ -627,6 +636,7 @@ class Helpers
             }
             $commissionAmount = number_format(($order_total / 100) * $commission, 2);
         }
+
         return $commissionAmount;
     }
 
@@ -634,11 +644,12 @@ class Helpers
     {
         $decimal_point_settings = getWebConfig(name: 'decimal_point_settings');
         $position = getWebConfig(name: 'currency_symbol_position');
-        if (!is_null($position) && $position == 'left') {
-            $string = currency_symbol() . '' . number_format($amount, (!empty($decimal_point_settings) ? $decimal_point_settings : 0));
+        if (! is_null($position) && $position == 'left') {
+            $string = currency_symbol().''.number_format($amount, (! empty($decimal_point_settings) ? $decimal_point_settings : 0));
         } else {
-            $string = number_format($amount, !empty($decimal_point_settings) ? $decimal_point_settings : 0) . currency_symbol();
+            $string = number_format($amount, ! empty($decimal_point_settings) ? $decimal_point_settings : 0).currency_symbol();
         }
+
         return $string;
     }
 
@@ -661,7 +672,7 @@ class Helpers
         $mpdf_view = $view;
         $mpdf_view = $mpdf_view->render();
         $mpdf->WriteHTML($mpdf_view);
-        $mpdf->Output($file_prefix . $file_postfix . '.pdf', 'D');
+        $mpdf->Output($file_prefix.$file_postfix.'.pdf', 'D');
     }
 
     public static function generate_referer_code(): string
@@ -670,6 +681,7 @@ class Helpers
         if (User::where('referral_code', '=', $refCode)->exists()) {
             return Helpers::generate_referer_code();
         }
+
         return $refCode;
     }
 
@@ -696,8 +708,8 @@ class Helpers
     public static function inHouseBannerUpdateFromConfig($key): void
     {
         try {
-            $sourcePath = 'shop/' . $key;
-            $destinationPath = 'shop/banner/' . $key;
+            $sourcePath = 'shop/'.$key;
+            $destinationPath = 'shop/banner/'.$key;
 
             if (Storage::disk('public')->exists($sourcePath)) {
                 Storage::disk('public')->copy($sourcePath, $destinationPath);
@@ -709,20 +721,19 @@ class Helpers
     public static function createDefaultShop()
     {
         $shop = Shop::where('author_type', 'admin')->first();
-        if (!$shop) {
+        if (! $shop) {
 
             $shopBanner = getWebConfig(name: 'shop_banner');
             $offerBanner = getWebConfig(name: 'offer_banner');
             $bottomBanner = getWebConfig(name: 'bottom_banner');
             $companyFavIcon = getWebConfig(name: 'company_fav_icon');
 
-
             $vacationConfig = getWebConfig(name: 'vacation_add');
             $temporaryClose = getWebConfig(name: 'temporary_close');
 
             if ($companyFavIcon && isset($companyFavIcon['key'])) {
-                $sourcePath = 'company/' . $companyFavIcon['key'];
-                $destinationPath = 'shop/' . $companyFavIcon['key'];
+                $sourcePath = 'company/'.$companyFavIcon['key'];
+                $destinationPath = 'shop/'.$companyFavIcon['key'];
 
                 if (Storage::disk('public')->exists($sourcePath)) {
                     Storage::disk('public')->copy($sourcePath, $destinationPath);
@@ -745,7 +756,7 @@ class Helpers
                 'seller_id' => 0,
                 'author_type' => 'admin',
                 'name' => getWebConfig('company_name'),
-                'slug' => Str::slug(getWebConfig('company_name')) . '-' . rand(1000, 9999),
+                'slug' => Str::slug(getWebConfig('company_name')).'-'.rand(1000, 9999),
                 'contact' => getWebConfig('company_phone'),
                 'address' => getWebConfig('shop_address'),
                 'image' => $companyFavIcon['key'] ?? '',
@@ -763,14 +774,15 @@ class Helpers
                 'vacation_status' => $vacationConfig['status'] ?? 0,
                 'temporary_close' => $temporaryClose['status'] ?? 0,
             ];
+
             return \App\Models\Shop::create($data);
         }
+
         return $shop;
     }
 }
 
-
-if (!function_exists('currency_symbol')) {
+if (! function_exists('currency_symbol')) {
     function currency_symbol()
     {
         Helpers::currency_load();
@@ -780,33 +792,35 @@ if (!function_exists('currency_symbol')) {
             $system_default_currency_info = \session('system_default_currency_info');
             $symbol = $system_default_currency_info->symbol;
         }
+
         return $symbol;
     }
 }
 
-if (!function_exists('customer_info')) {
+if (! function_exists('customer_info')) {
     function customer_info()
     {
         return User::where('id', auth('customer')->id())->first();
     }
 }
 
-if (!function_exists('order_status_history')) {
+if (! function_exists('order_status_history')) {
     function order_status_history($order_id, $status)
     {
         return OrderStatusHistory::where(['order_id' => $order_id, 'status' => $status])->latest()->pluck('created_at')->first();
     }
 }
 
-if (!function_exists('get_shop_name')) {
+if (! function_exists('get_shop_name')) {
     function get_shop_name($seller_id)
     {
         $shop = Shop::where(['seller_id' => $seller_id])->first();
+
         return $shop ? $shop->name : null;
     }
 }
 
-if (!function_exists('payment_gateways')) {
+if (! function_exists('payment_gateways')) {
     function payment_gateways()
     {
         $paymentGatewayPublishedStatus = config('get_payment_publish_status') ?? 0;
@@ -821,7 +835,3 @@ if (!function_exists('payment_gateways')) {
         return $paymentGatewaysList;
     }
 }
-
-
-
-

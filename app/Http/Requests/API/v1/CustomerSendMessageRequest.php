@@ -3,14 +3,11 @@
 namespace App\Http\Requests\API\v1;
 
 use App\Enums\GlobalConstant;
-use App\Models\WithdrawalMethod;
 use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class CustomerSendMessageRequest extends FormRequest
 {
@@ -38,15 +35,15 @@ class CustomerSendMessageRequest extends FormRequest
             'message' => 'required_without_all:file,media',
             'media.*' => [
                 'file',
-                new DisallowedExtension(),
-                'max:' . $maximumUploadSize,
-                'mimes:' . str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
+                new DisallowedExtension,
+                'max:'.$maximumUploadSize,
+                'mimes:'.str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
             ],
             'file.*' => [
                 'file',
-                new DisallowedExtension(),
-                'max:' .$maximumUploadSize,
-                'mimes:' . str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
+                new DisallowedExtension,
+                'max:'.$maximumUploadSize,
+                'mimes:'.str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
             ],
         ];
     }
@@ -54,32 +51,28 @@ class CustomerSendMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'message.required_without_all' =>
-                translate('type_something') . '!',
+            'message.required_without_all' => translate('type_something').'!',
 
-            'media.*.mimes' =>
-                translate('the_media_format_is_not_supported') . ' ' .
-                translate('supported_format_are') . ' ' .
+            'media.*.mimes' => translate('the_media_format_is_not_supported').' '.
+                translate('supported_format_are').' '.
                 str_replace('.', '', implode(',', GlobalConstant::MEDIA_EXTENSION)),
 
-            'media.*.max' =>
-                translate('media_maximum_size') . ' ' .
-                getFileUploadMaxSize() . 'MB',
+            'media.*.max' => translate('media_maximum_size').' '.
+                getFileUploadMaxSize().'MB',
 
-            'file.*.mimes' =>
-                translate('the_file_format_is_not_supported') . ' ' .
-                translate('supported_format_are') . ' ' .
+            'file.*.mimes' => translate('the_file_format_is_not_supported').' '.
+                translate('supported_format_are').' '.
                 str_replace('.', '', implode(',', GlobalConstant::DOCUMENT_EXTENSION)),
 
-            'file.*.max' =>
-                translate('file_maximum_size_') . getFileUploadMaxSize() . 'MB',
+            'file.*.max' => translate('file_maximum_size_').getFileUploadMaxSize().'MB',
         ];
     }
+
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         throw new HttpResponseException(
             response()->json([
-                'errors' => $this->errorProcessor($validator)
+                'errors' => $this->errorProcessor($validator),
             ], 403)
         );
     }

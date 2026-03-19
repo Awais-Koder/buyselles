@@ -5,28 +5,26 @@ namespace App\Http\Controllers\Admin;
 use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Enums\ExportFileNames\Admin\Report;
 use App\Exports\VendorReportExport;
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryMan;
-use App\Models\RefundTransaction;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\RefundTransaction;
 use App\Models\Seller;
+use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Contracts\View\View as ViewResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Illuminate\Contracts\View\View as ViewResponse;
 
 class VendorProductSaleReportController extends Controller
 {
     public function __construct(
         private readonly VendorRepositoryInterface $vendorRepo,
-    )
-    {
-    }
+    ) {}
 
     public function vendorReport(Request $request): ViewResponse
     {
@@ -88,14 +86,14 @@ class VendorProductSaleReportController extends Controller
         $delivered_order = self::date_wise_common_filter($delivered_order_query, $date_type, $from, $to)->count();
 
         $deliveryman_query = DeliveryMan::when($seller_id && $seller_id != 'all', function ($query) use ($seller_id) {
-                $query->where('seller_id', $seller_id);
-            })
-            ->when($seller_id == 'all', function ($query) use ($seller_id) {
+            $query->where('seller_id', $seller_id);
+        })
+            ->when($seller_id == 'all', function ($query) {
                 $query->where('seller_id', '!=', '0');
             });
         $deliveryman = $deliveryman_query->count();
 
-        //total store earning calculate start
+        // total store earning calculate start
         $seller_earn_commission_query = Order::where(['seller_is' => 'seller', 'order_status' => 'delivered'])
             ->selectRaw('(sum(order_amount) - sum(shipping_cost)) as earn_from_order, sum(admin_commission) as admin_commission')
             ->when($seller_id && $seller_id != 'all', function ($query) use ($seller_id) {
@@ -104,8 +102,8 @@ class VendorProductSaleReportController extends Controller
         $seller_earn_commission = self::date_wise_common_filter($seller_earn_commission_query, $date_type, $from, $to)->first();
 
         $shipping_earn_query = Order::whereHas('deliveryMan', function ($query) {
-                $query->where('seller_id', '!=', '0');
-            })
+            $query->where('seller_id', '!=', '0');
+        })
             ->where(['order_status' => 'delivered'])
             ->selectRaw('sum(shipping_cost) as shipping_earn');
         $shipping_earn = self::date_wise_common_filter($shipping_earn_query, $date_type, $from, $to)->first();
@@ -118,12 +116,13 @@ class VendorProductSaleReportController extends Controller
         $refund = self::date_wise_common_filter($refund_query, $date_type, $from, $to)->first();
 
         $total_store_earning = $seller_earn_commission->earn_from_order + $shipping_earn->shipping_earn - $seller_earn_commission->admin_commission - $refund->refund_amount;
-        //total store earning end
+        // total store earning end
 
         $chartDataOrderAmountLabel = array_values(collect(array_keys($chart_data['order_amount']))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' '. date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -143,8 +142,9 @@ class VendorProductSaleReportController extends Controller
             $current_start_year = date('Y-01-01');
             $current_end_year = date('Y-12-31');
             $from_year = Carbon::parse($from)->format('Y');
+
             return self::seller_report_same_year($request, $current_start_year, $current_end_year, $from_year, $number, $default_inc);
-        } elseif ($date_type == 'this_month') { //this month table
+        } elseif ($date_type == 'this_month') { // this month table
             $current_month_start = date('Y-m-01');
             $current_month_end = date('Y-m-t');
             $inc = 1;
@@ -156,7 +156,7 @@ class VendorProductSaleReportController extends Controller
             return self::seller_report_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getSellerReportForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -186,7 +186,7 @@ class VendorProductSaleReportController extends Controller
 
         $order_amount = [];
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+            $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
             $order_amount[$month] = 0;
             foreach ($orders as $match) {
                 if ($match['month'] == $inc) {
@@ -203,13 +203,13 @@ class VendorProductSaleReportController extends Controller
     public function seller_report_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc): array
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = substr(date("F", strtotime("$year_month")), 0, 3);
+        $month = substr(date('F', strtotime("$year_month")), 0, 3);
 
         $orders = self::seller_report_chart_common_query($request, $start_date, $end_date)
             ->selectRaw('sum(order_amount) as order_amount, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
             ->groupBy(DB::raw("DATE_FORMAT(created_at, '%D')"))
             ->latest('created_at')->get();
-        $default_inc = (int)$default_inc;
+        $default_inc = (int) $default_inc;
 
         for ($inc = $default_inc; $inc <= $number; $inc++) {
             $order_amount[$inc] = 0;
@@ -219,9 +219,10 @@ class VendorProductSaleReportController extends Controller
                 }
             }
         }
-        return array(
+
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function seller_report_this_week($request): array
@@ -231,7 +232,7 @@ class VendorProductSaleReportController extends Controller
 
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             array_push($day_name, $date->format('l'));
         }
@@ -253,9 +254,9 @@ class VendorProductSaleReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function getSellerReportForToday($request): array
@@ -306,9 +307,9 @@ class VendorProductSaleReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function seller_report_chart_common_query($request, $start_date, $end_date)
@@ -362,6 +363,7 @@ class VendorProductSaleReportController extends Controller
             'refunds' => $refunds,
 
         ];
+
         return Excel::download(new VendorReportExport($data), Report::VENDOR_REPORT);
 
     }
@@ -381,7 +383,7 @@ class VendorProductSaleReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });
@@ -402,7 +404,7 @@ class VendorProductSaleReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });

@@ -14,10 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
-
 class AdminRole extends Model
 {
     protected $casts = [
@@ -34,5 +31,4 @@ class AdminRole extends Model
         'module_access',
         'status',
     ];
-
 }

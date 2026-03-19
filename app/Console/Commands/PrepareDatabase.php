@@ -33,8 +33,6 @@ class PrepareDatabase extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
@@ -42,6 +40,7 @@ class PrepareDatabase extends Command
         $routes = base_path('app/Providers/RouteServiceProvider.php');
         $new_routes = base_path('installation/activate_update_routes.txt');
         copy($new_routes, $routes);
+
         return 0;
     }
 }

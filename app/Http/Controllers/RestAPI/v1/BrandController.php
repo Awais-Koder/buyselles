@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Product;
 use App\Models\Shop;
-use App\Utils\BrandManager;
 use App\Utils\Helpers;
 use App\Utils\ProductManager;
 use Illuminate\Http\JsonResponse;
@@ -23,10 +22,10 @@ class BrandController extends Controller
 
         if ($shop) {
             $brand_ids = Product::active()
-                ->when($shop['author_type'] == 'admin', function ($query) use ($request) {
+                ->when($shop['author_type'] == 'admin', function ($query) {
                     return $query->where(['added_by' => 'admin']);
                 })
-                ->when($shop['author_type'] != 'admin', function ($query) use ($request, $shop) {
+                ->when($shop['author_type'] != 'admin', function ($query) use ($shop) {
                     return $query->where(['added_by' => 'seller'])->where('user_id', $shop['seller_id']);
                 })->pluck('brand_id');
             $brands = Brand::active()->whereIn('id', $brand_ids)->withCount('brandProducts');
@@ -43,15 +42,16 @@ class BrandController extends Controller
             'path' => Paginator::resolveCurrentPath(),
             'appends' => $request->all(),
         ]);
+
         return [
             'total_size' => $brands->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'brands' => $brands->values()
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'brands' => $brands->values(),
         ];
     }
 
-    function getPriorityWiseBrandProductsQuery($query): Collection
+    public function getPriorityWiseBrandProductsQuery($query): Collection
     {
         $brandProductSortBy = getWebConfig(name: 'brand_list_priority');
         if ($brandProductSortBy && ($brandProductSortBy['custom_sorting_status'] == 1)) {
@@ -60,6 +60,7 @@ class BrandController extends Controller
                     return $query->withCount('orderDetails');
                 }])->get()->map(function ($brand) {
                     $brand['order_count'] = $brand?->brandProducts?->sum('order_details_count') ?? 0;
+
                     return $brand;
                 })->sortByDesc('order_count');
             } elseif ($brandProductSortBy['sort_by'] == 'latest_created') {
@@ -88,7 +89,7 @@ class BrandController extends Controller
             ->with(['clearanceSale' => function ($query) {
                 return $query->active();
             }])
-            ->when($request->has('search') && !empty($request['search']), function ($query) use ($request) {
+            ->when($request->has('search') && ! empty($request['search']), function ($query) use ($request) {
                 $searchKey = $request['search'];
                 $productsIDArray = [];
                 $searchProducts = ProductManager::search_products($request, $searchKey);
@@ -102,9 +103,10 @@ class BrandController extends Controller
                 }
 
                 $searchName = str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', preg_replace('/\s\s+/', ' ', $searchKey));
-                return $query->when(!empty($productsIDArray), function ($query) use ($productsIDArray) {
+
+                return $query->when(! empty($productsIDArray), function ($query) use ($productsIDArray) {
                     return $query->whereIn('id', $productsIDArray);
-                })->when(empty($productsIDArray), function ($query) use ($productsIDArray) {
+                })->when(empty($productsIDArray), function ($query) {
                     return $query->whereIn('id', [0]);
                 })->orderByRaw("CASE WHEN name LIKE '%{$searchName}%' THEN 1 ELSE 2 END, LOCATE('{$searchName}', name), name");
             })
@@ -122,8 +124,8 @@ class BrandController extends Controller
 
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
             'products' => $productFinal,
         ], 200);
     }

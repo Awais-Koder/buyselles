@@ -14,8 +14,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $royalty_points
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class CustomerWallet extends Model
 {
@@ -33,5 +31,4 @@ class CustomerWallet extends Model
         'balance',
         'royalty_points',
     ];
-
 }

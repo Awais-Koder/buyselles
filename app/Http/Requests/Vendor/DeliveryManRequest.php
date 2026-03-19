@@ -10,10 +10,9 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class DeliveryManRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -22,10 +21,8 @@ class DeliveryManRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
-    public function rules():array
+    public function rules(): array
     {
         return [
             'f_name' => 'required',
@@ -37,9 +34,10 @@ class DeliveryManRequest extends FormRequest
             'password' => 'required|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/|same:confirm_password',
         ];
     }
+
     /**
      * @return array
-     * Get the validation error message
+     *               Get the validation error message
      */
     public function messages(): array
     {
@@ -61,6 +59,7 @@ class DeliveryManRequest extends FormRequest
             'password.min' => translate('The_password_must_be_at_least :min_characters', ['min' => 8]),
         ];
     }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));

@@ -20,11 +20,11 @@ trait InstallationTrail
     {
         try {
             $path = DOMAIN_POINTED_DIRECTORY == 'public' ? public_path('robots.txt') : base_path('robots.txt');
-            if (!File::exists($path)) {
-                fopen($path, "w") or die("Unable to open file!");
+            if (! File::exists($path)) {
+                fopen($path, 'w') or exit('Unable to open file!');
             }
-            $content = "User-agent: *\nDisallow: /login/admin/\nSitemap: " . url('/sitemap.xml');
-            if (!File::exists($path)) {
+            $content = "User-agent: *\nDisallow: /login/admin/\nSitemap: ".url('/sitemap.xml');
+            if (! File::exists($path)) {
                 File::put($path, $content);
             }
             File::put($path, $content);
@@ -42,7 +42,7 @@ trait InstallationTrail
             'phone' => $request['admin_phone'],
             'status' => 1,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         DB::table('admin_wallets')->insert([
@@ -65,7 +65,7 @@ trait InstallationTrail
         $this->businessSettingGetOrInsert(type: 'offline_payment', value: json_encode(['status' => 0]));
 
         DB::table('business_settings')->updateOrInsert(['type' => 'currency_model'], [
-            'value' => $request['currency_model']
+            'value' => $request['currency_model'],
         ]);
 
         $this->updateOrInsertPolicy(type: 'refund-policy');
@@ -77,12 +77,12 @@ trait InstallationTrail
             'status' => 0,
             'vacation_start_date' => null,
             'vacation_end_date' => null,
-            'vacation_note' => null
+            'vacation_note' => null,
         ]));
 
         $this->businessSettingGetOrInsert(type: 'cookie_setting', value: json_encode([
             'status' => 0,
-            'cookie_text' => null
+            'cookie_text' => null,
         ]));
 
         DB::table('colors')->whereIn('id', [16, 38, 93])->delete();
@@ -127,30 +127,30 @@ trait InstallationTrail
 
         $this->businessSettingGetOrInsert(type: 'app_activation', value: json_encode(['software_id' => '', 'is_active' => 0]));
 
-        if (!NotificationMessage::where(['key' => 'product_request_approved_message'])->first()) {
+        if (! NotificationMessage::where(['key' => 'product_request_approved_message'])->first()) {
             DB::table('notification_messages')->updateOrInsert([
-                'key' => 'product_request_approved_message'
+                'key' => 'product_request_approved_message',
             ],
                 [
                     'user_type' => 'seller',
                     'key' => 'product_request_approved_message',
                     'message' => 'customize your product request approved message message',
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]
             );
         }
 
-        if (!NotificationMessage::where(['key' => 'product_request_rejected_message'])->first()) {
+        if (! NotificationMessage::where(['key' => 'product_request_rejected_message'])->first()) {
             DB::table('notification_messages')->updateOrInsert([
-                'key' => 'product_request_rejected_message'
+                'key' => 'product_request_rejected_message',
             ],
                 [
                     'user_type' => 'seller',
                     'key' => 'product_request_rejected_message',
                     'message' => 'customize your product request rejected message message',
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ]
             );
         }
@@ -188,7 +188,7 @@ trait InstallationTrail
         $inHouseShop = getInHouseShopConfig();
         Shop::where('author_type', 'admin')->update([
             'name' => $request['company_name'],
-            'slug' => Str::slug($request['company_name']) . '-' . rand(1000, 9999),
+            'slug' => Str::slug($request['company_name']).'-'.rand(1000, 9999),
         ]);
         cacheRemoveByType(type: 'shops');
         cacheRemoveByType(type: 'in_house_shop');
@@ -220,7 +220,7 @@ trait InstallationTrail
                     [
                         'user_type' => 'customer',
                         'key' => $value,
-                        'message' => 'customize your' . ' ' . str_replace('_', ' ', $value) . ' ' . 'message',
+                        'message' => 'customize your'.' '.str_replace('_', ' ', $value).' '.'message',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]
@@ -250,7 +250,7 @@ trait InstallationTrail
                 DB::table('notification_messages')->insert([
                     'user_type' => 'seller',
                     'key' => $value,
-                    'message' => 'customize your' . ' ' . str_replace('_', ' ', $value) . ' ' . 'message',
+                    'message' => 'customize your'.' '.str_replace('_', ' ', $value).' '.'message',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -281,7 +281,7 @@ trait InstallationTrail
                 DB::table('notification_messages')->insert([
                     'user_type' => 'delivery_man',
                     'key' => $value,
-                    'message' => 'customize your' . ' ' . str_replace('_', ' ', $value) . ' ' . 'message',
+                    'message' => 'customize your'.' '.str_replace('_', ' ', $value).' '.'message',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -289,7 +289,6 @@ trait InstallationTrail
         }
         /**end for delivery man*/
     }
-
 
     public static function company_riliability_import()
     {
@@ -331,29 +330,29 @@ trait InstallationTrail
     {
         $key = base64_encode(random_bytes(32));
         $dbPassword = str_replace('"', '\"', $request['DB_PASSWORD']);
-        $dbPassword = '"' . $dbPassword . '"';
+        $dbPassword = '"'.$dbPassword.'"';
 
         $adminName = str_replace('"', '\"', session('admin_name'));
-        $adminName = '"' . $adminName . '"';
+        $adminName = '"'.$adminName.'"';
 
         $adminEmail = str_replace('"', '\"', session('admin_email'));
-        $adminEmail = '"' . $adminEmail . '"';
+        $adminEmail = '"'.$adminEmail.'"';
 
-        $output = 'APP_NAME=6valley' . time() . '
+        $output = 'APP_NAME=6valley'.time().'
         APP_ENV=live
-        APP_KEY=base64:' . $key . '
+        APP_KEY=base64:'.$key.'
         APP_DEBUG=false
         APP_INSTALL=true
         APP_LOG_LEVEL=debug
         APP_MODE=live
-        APP_URL=' . URL::to('/') . '
+        APP_URL='.URL::to('/').'
 
         DB_CONNECTION=mysql
-        DB_HOST=' . $request['DB_HOST'] . '
+        DB_HOST='.$request['DB_HOST'].'
         DB_PORT=3306
-        DB_DATABASE=' . $request['DB_DATABASE'] . '
-        DB_USERNAME=' . $request['DB_USERNAME'] . '
-        DB_PASSWORD=' . $dbPassword . '
+        DB_DATABASE='.$request['DB_DATABASE'].'
+        DB_USERNAME='.$request['DB_USERNAME'].'
+        DB_PASSWORD='.$dbPassword.'
 
         BROADCAST_DRIVER=log
         CACHE_DRIVER=file
@@ -376,13 +375,13 @@ trait InstallationTrail
         PUSHER_APP_SECRET=
         PUSHER_APP_CLUSTER=mt1
 
-        PURCHASE_CODE=' . session('purchase_key') . '
-        BUYER_USERNAME=' . session('username') . '
-        ADMIN_NAME=' . $adminName. '
-        ADMIN_IDENTIFIER=' . $adminEmail . '
+        PURCHASE_CODE='.session('purchase_key').'
+        BUYER_USERNAME='.session('username').'
+        ADMIN_NAME='.$adminName.'
+        ADMIN_IDENTIFIER='.$adminEmail.'
         SOFTWARE_ID=MzE0NDg1OTc=
 
-        SOFTWARE_VERSION=' . SOFTWARE_VERSION . '
+        SOFTWARE_VERSION='.SOFTWARE_VERSION.'
         ';
         $file = fopen(base_path('.env'), 'w');
         fwrite($file, $output);

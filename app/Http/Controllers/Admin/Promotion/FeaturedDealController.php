@@ -14,16 +14,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class FeaturedDealController extends BaseController
 {
-    /**
-     * @param FlashDealRepositoryInterface $flashDealRepo
-     * @param BusinessSettingRepositoryInterface $businessSettingRepo
-     */
     public function __construct(
-        private readonly FlashDealRepositoryInterface       $flashDealRepo,
+        private readonly FlashDealRepositoryInterface $flashDealRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -35,6 +29,7 @@ class FeaturedDealController extends BaseController
             dataLimit: getWebConfig('pagination_limit')
         );
         $featureDealPriority = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'feature_deal_priority'])['value']);
+
         return view('admin-views.deal.feature-index', compact('flashDeals', 'featureDealPriority'));
     }
 
@@ -42,6 +37,7 @@ class FeaturedDealController extends BaseController
     {
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.deal.feature-add', compact('language', 'defaultLanguage'));
     }
 
@@ -50,6 +46,7 @@ class FeaturedDealController extends BaseController
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
         $deal = $this->flashDealRepo->getFirstWhereWithoutGlobalScope(params: ['id' => $deal_id], relations: ['seo']);
+
         return view('admin-views.deal.feature-update', compact('language', 'defaultLanguage', 'deal'));
     }
 
@@ -57,6 +54,7 @@ class FeaturedDealController extends BaseController
     {
         $this->flashDealRepo->update(id: $request['id'], data: ['featured' => $request['featured']]);
         cacheRemoveByType(type: 'products');
+
         return response()->json([
             'success' => 1,
         ], 200);
@@ -67,9 +65,10 @@ class FeaturedDealController extends BaseController
         $this->flashDealRepo->updateWhere(params: ['status' => 1, 'deal_type' => 'feature_deal'], data: ['status' => 0]);
         $this->flashDealRepo->update(id: $request['id'], data: ['status' => $request->get('status', 0)]);
         cacheRemoveByType(type: 'products');
+
         return response()->json([
             'success' => 1,
-            'message' => translate('Feature_deal_status_updated!')
+            'message' => translate('Feature_deal_status_updated!'),
         ], 200);
     }
 }

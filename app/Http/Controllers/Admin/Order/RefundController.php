@@ -35,19 +35,17 @@ class RefundController extends BaseController
     use CustomerTrait;
 
     public function __construct(
-        private readonly RefundRequestRepositoryInterface           $refundRequestRepo,
-        private readonly CustomerRepositoryInterface                $customerRepo,
-        private readonly OrderRepositoryInterface                   $orderRepo,
-        private readonly OrderDetailRepositoryInterface             $orderDetailRepo,
-        private readonly AdminWalletRepositoryInterface             $adminWalletRepo,
-        private readonly VendorWalletRepositoryInterface            $vendorWalletRepo,
-        private readonly RefundStatusRepositoryInterface            $refundStatusRepos,
-        private readonly RefundTransactionRepositoryInterface       $refundTransactionRepo,
+        private readonly RefundRequestRepositoryInterface $refundRequestRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly AdminWalletRepositoryInterface $adminWalletRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly RefundStatusRepositoryInterface $refundStatusRepos,
+        private readonly RefundTransactionRepositoryInterface $refundTransactionRepo,
         private readonly LoyaltyPointTransactionRepositoryInterface $loyaltyPointTransactionRepo,
-        private readonly OrderDetailsRewardsRepositoryInterface     $orderDetailsRewardsRepo,
-    )
-    {
-    }
+        private readonly OrderDetailsRewardsRepositoryInterface $orderDetailsRewardsRepo,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -60,23 +58,25 @@ class RefundController extends BaseController
             orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
             filters: [
-                'status'    => $status,
+                'status' => $status,
                 'from_date' => $fromDate,
-                'to_date'   => $toDate
+                'to_date' => $toDate,
             ],
             whereHas: 'order',
             whereHasFilters: ['seller_is' => $request['type']],
             relations: ['order', 'order.seller', 'order.deliveryMan', 'product'],
             dataLimit: getWebConfig('pagination_limit'),
         );
-        return view('admin-views.refund.list', compact('refundList', 'status','walletStatus','walletAddRefund'));
+
+        return view('admin-views.refund.list', compact('refundList', 'status', 'walletStatus', 'walletAddRefund'));
     }
 
     public function getDetailsView($id): View|RedirectResponse
     {
         $refund = $this->refundRequestRepo->getFirstWhere(params: ['id' => $id], relations: ['order.details']);
-        if (!$refund || !$refund?->orderDetails) {
+        if (! $refund || ! $refund?->orderDetails) {
             ToastMagic::error(translate('Refund Details not found'));
+
             return back();
         }
         $order = $refund->order;
@@ -109,18 +109,18 @@ class RefundController extends BaseController
     {
         $refund = $this->refundRequestRepo->getFirstWhere(params: ['id' => $request['id']]);
         if ($refund['status'] == 'refunded') {
-            return response()->json(['error' => translate('when_refund_status_refunded') . ',' . translate('then_you_can`t_change_refund_status') . '.']);
+            return response()->json(['error' => translate('when_refund_status_refunded').','.translate('then_you_can`t_change_refund_status').'.']);
         }
         $user = $this->customerRepo->getFirstWhere(params: ['id' => $refund['customer_id']]);
 
-        if (!isset($user)) {
-            return response()->json(['error' => translate('this_account_has_been_deleted_you_can_not_modify_the_status') . '.']);
+        if (! isset($user)) {
+            return response()->json(['error' => translate('this_account_has_been_deleted_you_can_not_modify_the_status').'.']);
         }
 
         $orderDetailsRewards = $this->orderDetailsRewardsRepo->getFirstWhere(params: ['order_details_id' => $refund['order_details_id'], 'reward_type' => 'loyalty_point']);
         $loyaltyPoint = $orderDetailsRewards['reward_amount'] ?? 0;
         if ($orderDetailsRewards && $user['loyalty_point'] < $orderDetailsRewards['reward_amount'] && ($request['refund_status'] == 'refunded' || $request['refund_status'] == 'approved')) {
-            return response()->json(['error' => translate('customer_has_not_sufficient_loyalty_point_to_take_refund_for_this_order') . '.']);
+            return response()->json(['error' => translate('customer_has_not_sufficient_loyalty_point_to_take_refund_for_this_order').'.']);
         }
 
         $order = $this->orderRepo->getFirstWhere(params: ['id' => $refund['order_id']]);
@@ -148,9 +148,10 @@ class RefundController extends BaseController
             $this->refundStatusRepos->add(data: $dataArray['refundStatus']);
 
             event(new RefundEvent(status: $request['refund_status'], order: $order, refund: $refund, orderDetails: $orderDetails));
-            return response()->json(['message' => translate('refund_status_updated') . '.']);
+
+            return response()->json(['message' => translate('refund_status_updated').'.']);
         } else {
-            return response()->json(['error' => translate('refunded_status_can_not_be_changed') . '.']);
+            return response()->json(['error' => translate('refunded_status_can_not_be_changed').'.']);
         }
     }
 
@@ -162,9 +163,9 @@ class RefundController extends BaseController
             orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
             filters: [
-                'status'    => $status,
+                'status' => $status,
                 'from_date' => $fromDate,
-                'to_date'   => $toDate
+                'to_date' => $toDate,
             ],
             whereHas: 'order',
             whereHasFilters: ['seller_is' => $request['type']],
@@ -178,9 +179,8 @@ class RefundController extends BaseController
             'search' => $request['searchValue'],
             'status' => $status,
             'from' => $fromDate,
-            'to'   => $toDate,
+            'to' => $toDate,
             'filter_By' => $request->get('type', 'all'),
         ]), RefundRequestExportFile::EXPORT_XLSX);
     }
-
 }

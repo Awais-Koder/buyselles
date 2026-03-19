@@ -2,24 +2,23 @@
 
 namespace App\Exports;
 
-
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class BrandListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class BrandListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -55,16 +54,17 @@ class BrandListExport implements FromView, ShouldAutoSize, WithStyles, WithColum
             'rotation' => 0,
             'color' => ['rgb' => '063C93'],
         ]);
-        $sheet->getStyle('F5:F' . ($this->data['brands']->count() + 4))->getFill()->applyFromArray([
+        $sheet->getStyle('F5:F'.($this->data['brands']->count() + 4))->getFill()->applyFromArray([
             'fillType' => 'solid',
             'rotation' => 0,
             'color' => ['rgb' => 'FFF9D1'],
         ]);
 
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:F' . ($this->data['brands']->count() + 4) => [
+            'A1:F'.($this->data['brands']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -81,16 +81,16 @@ class BrandListExport implements FromView, ShouldAutoSize, WithStyles, WithColum
          * @throws Exception
          */ function ($item, $index) use ($workSheet) {
             $tempImagePath = null;
-            $filePath = 'brand/' . $item->image_full_url['key'];
+            $filePath = 'brand/'.$item->image_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item->image_full_url['path'] && !$fileCheck) {
+            if ($item->image_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item->image_full_url['path']);
                 $imagePath = getImageForExport($item->image_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/brand.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/brand.png'));
             }
             $drawing->setName($item->name);
             $drawing->setDescription($item->name);
@@ -107,21 +107,20 @@ class BrandListExport implements FromView, ShouldAutoSize, WithStyles, WithColum
         });
     }
 
-
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:F1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:F' . ($this->data['brands']->count() + 4)) // Adjust the range as per your needs
-                ->getAlignment()
+                $event->sheet->getStyle('A4:F'.($this->data['brands']->count() + 4)) // Adjust the range as per your needs
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:F3') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -145,7 +144,7 @@ class BrandListExport implements FromView, ShouldAutoSize, WithStyles, WithColum
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

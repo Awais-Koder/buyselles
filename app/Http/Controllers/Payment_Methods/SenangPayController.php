@@ -22,14 +22,15 @@ class SenangPayController extends Controller
     private $config_values;
 
     private PaymentRequest $payment;
+
     private $user;
 
     public function __construct(PaymentRequest $payment, User $user)
     {
         $config = $this->payment_config('senang_pay', 'payment_config');
-        if (!is_null($config) && $config->mode == 'live') {
+        if (! is_null($config) && $config->mode == 'live') {
             $this->config_values = json_decode($config->live_values);
-        } elseif (!is_null($config) && $config->mode == 'test') {
+        } elseif (! is_null($config) && $config->mode == 'test') {
             $this->config_values = json_decode($config->test_values);
         }
         $this->payment = $payment;
@@ -39,7 +40,7 @@ class SenangPayController extends Controller
     public function index(Request $request): View|Factory|JsonResponse|Application
     {
         $validator = Validator::make($request->all(), [
-            'payment_id' => 'required|uuid'
+            'payment_id' => 'required|uuid',
         ]);
 
         if ($validator->fails()) {
@@ -47,12 +48,13 @@ class SenangPayController extends Controller
         }
 
         $payment_data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($payment_data)) {
+        if (! isset($payment_data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
         $payer = json_decode($payment_data['payer_information']);
         $config = $this->config_values;
         session()->put('payment_id', $payment_data->id);
+
         return view('payment.senang-pay', compact('payment_data', 'payer', 'config'));
     }
 
@@ -68,12 +70,14 @@ class SenangPayController extends Controller
             if (isset($data) && function_exists($data->success_hook)) {
                 call_user_func($data->success_hook, $data);
             }
-            return $this->payment_response($data,'success');
+
+            return $this->payment_response($data, 'success');
         }
         $payment_data = $this->payment::where(['id' => session()->get('payment_id')])->first();
         if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
             call_user_func($payment_data->failure_hook, $payment_data);
         }
-        return $this->payment_response($payment_data,'fail');
+
+        return $this->payment_response($payment_data, 'fail');
     }
 }

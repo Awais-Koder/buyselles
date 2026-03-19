@@ -19,8 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon $expires_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DigitalProductOtpVerification extends Model
 {
@@ -45,5 +43,4 @@ class DigitalProductOtpVerification extends Model
         'temp_block_time',
         'expires_at',
     ];
-
 }

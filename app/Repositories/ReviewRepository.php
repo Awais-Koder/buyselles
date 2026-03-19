@@ -10,10 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReviewRepository implements ReviewRepositoryInterface
 {
-
-    public function __construct(private readonly Review $review)
-    {
-    }
+    public function __construct(private readonly Review $review) {}
 
     public function add(array $data): string|object
     {
@@ -27,7 +24,7 @@ class ReviewRepository implements ReviewRepositoryInterface
 
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query = $this->review->with($relations)->when(!empty($orderBy), function ($query) use ($orderBy) {
+        $query = $this->review->with($relations)->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
@@ -37,7 +34,7 @@ class ReviewRepository implements ReviewRepositoryInterface
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->review->with($relations)
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 return $query->whereHas('order', function ($query) use ($searchValue) {
                     return $query->where('id', 'like', "%{$searchValue}%");
                 })->orWhere(function ($query) use ($searchValue) {
@@ -45,7 +42,7 @@ class ReviewRepository implements ReviewRepositoryInterface
                 });
             })
             ->when(isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
-                $query->whereBetween('created_at', [$filters['from'] . ' 00:00:00', $filters['to'] . ' 23:59:59']);
+                $query->whereBetween('created_at', [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59']);
             })
             ->when(isset($filters['rating']), function ($query) use ($filters) {
                 $query->where(['rating' => $filters['rating']]);
@@ -68,7 +65,7 @@ class ReviewRepository implements ReviewRepositoryInterface
             ->when(isset($filters['status']), function ($query) use ($filters) {
                 $query->where(['status' => $filters['status']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -83,19 +80,19 @@ class ReviewRepository implements ReviewRepositoryInterface
                     return $query->where('added_by', $filters['added_by']);
                 });
             })
-            ->when(!$globalScope, function ($query) {
+            ->when(! $globalScope, function ($query) {
                 return $query->withoutGlobalScopes();
             })
-            ->when(!empty($whereInFilters['product_id']) && $whereInFilters['product_id'] != 0, function ($query) use ($whereInFilters) {
+            ->when(! empty($whereInFilters['product_id']) && $whereInFilters['product_id'] != 0, function ($query) use ($whereInFilters) {
                 return $query->whereIn('product_id', $whereInFilters['product_id']);
-            })->when(!empty($whereInFilters['customer_id']) && $whereInFilters['customer_id'] != 0, function ($query) use ($whereInFilters) {
+            })->when(! empty($whereInFilters['customer_id']) && $whereInFilters['customer_id'] != 0, function ($query) use ($whereInFilters) {
                 return $query->whereIn('customer_id', $whereInFilters['customer_id']);
             })
-            ->when((isset($whereInFilters['product_id']) && empty($whereInFilters['product_id'])) && (isset($whereInFilters['customer_id']) && empty($whereInFilters['customer_id'])), function ($query) use ($whereInFilters) {
+            ->when((isset($whereInFilters['product_id']) && empty($whereInFilters['product_id'])) && (isset($whereInFilters['customer_id']) && empty($whereInFilters['customer_id'])), function ($query) {
                 return $query->where('id', null);
             })
             ->when(isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
-                return $query->whereBetween('created_at', [$filters['from'] . ' 00:00:00', $filters['to'] . ' 23:59:59']);
+                return $query->whereBetween('created_at', [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59']);
             })
             ->when(isset($filters['product_id']) && $filters['product_id'] != 0, function ($query) use ($filters) {
                 return $query->where('product_id', $filters['product_id']);
@@ -108,18 +105,18 @@ class ReviewRepository implements ReviewRepositoryInterface
                     return $query->where('user_id', $filters['product_user_id'])->where('added_by', 'seller');
                 });
             })
-            ->when(isset($filters['product_user_id']) && $filters['product_user_id'] == '0', function ($query) use ($filters) {
-                return $query->whereHas('product', function ($query) use ($filters) {
+            ->when(isset($filters['product_user_id']) && $filters['product_user_id'] == '0', function ($query) {
+                return $query->whereHas('product', function ($query) {
                     return $query->where('added_by', 'admin');
                 });
             })
             ->when(isset($filters['status']), function ($query) use ($filters) {
                 return $query->where('status', $filters['status']);
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 return $query->whereHas('order', function ($query) use ($searchValue) {
                     return $query->where('id', 'like', "%{$searchValue}%");
                 })->orWhere(function ($query) use ($searchValue) {
@@ -129,16 +126,17 @@ class ReviewRepository implements ReviewRepositoryInterface
                 })->orWhereHas('product', function ($query) use ($searchValue) {
                     return $query->where('name', 'like', "%{$searchValue}%");
                 })->orWhereHas('customer', function ($query) use ($searchValue) {
-                  return  $query->where('f_name', 'like', "%{$searchValue}%")
+                    return $query->where('f_name', 'like', "%{$searchValue}%")
                         ->orWhere('l_name', 'like', "%{$searchValue}%")
                         ->orWhereRaw("CONCAT(f_name, ' ', l_name) LIKE ?", ["%{$searchValue}%"]);
                 });
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -147,23 +145,23 @@ class ReviewRepository implements ReviewRepositoryInterface
         $query = $this->review->with($relations)
             ->whereHas($whereHas, function ($query) use ($whereHasFilter) {
                 return $query->where($whereHasFilter);
-            })->when(!$globalScope, function ($query) {
+            })->when(! $globalScope, function ($query) {
                 return $query->withoutGlobalScopes();
-            })->when(!empty($searchValue), function ($query) use ($searchValue) {
-                return  $query->whereHas('order', function ($query) use ($searchValue) {
+            })->when(! empty($searchValue), function ($query) use ($searchValue) {
+                return $query->whereHas('order', function ($query) use ($searchValue) {
                     return $query->where('id', 'like', "%{$searchValue}%");
                 });
-            })->when(!empty($whereInFilters['product_id']) && $whereInFilters['product_id'] != 0, function ($query) use ($whereInFilters) {
+            })->when(! empty($whereInFilters['product_id']) && $whereInFilters['product_id'] != 0, function ($query) use ($whereInFilters) {
                 return $query->whereIn('product_id', $whereInFilters['product_id']);
             })
             ->when(isset($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
-                return $query->whereBetween('created_at', [$filters['from'] . ' 00:00:00', $filters['to'] . ' 23:59:59']);
+                return $query->whereBetween('created_at', [$filters['from'].' 00:00:00', $filters['to'].' 23:59:59']);
             })
             ->when(isset($filters['from']) && empty($filters['to']), function ($query) use ($filters) {
-                return $query->where('created_at', '>=', $filters['from'] . ' 00:00:00');
+                return $query->where('created_at', '>=', $filters['from'].' 00:00:00');
             })
             ->when(empty($filters['from']) && isset($filters['to']), function ($query) use ($filters) {
-                return $query->where('created_at', '<=', $filters['to'] . ' 23:59:59');
+                return $query->where('created_at', '<=', $filters['to'].' 23:59:59');
             })
             ->when(isset($filters['customer_id']) && $filters['customer_id'] != 'all', function ($query) use ($filters) {
                 return $query->where('customer_id', $filters['customer_id']);
@@ -171,20 +169,21 @@ class ReviewRepository implements ReviewRepositoryInterface
             ->when(isset($filters['status']), function ($query) use ($filters) {
                 return $query->where('status', $filters['status']);
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
-    public function getCount(array $params = [], array $whereInFilters = []): int|null
+    public function getCount(array $params = [], array $whereInFilters = []): ?int
     {
-        return $this->review->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
+        return $this->review->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
             foreach ($whereInFilters as $key => $filterIndex) {
                 $query->orWhereIn($key, $filterIndex);
             }
@@ -199,18 +198,21 @@ class ReviewRepository implements ReviewRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->review->where($params)->update($data);
+
         return true;
     }
 
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->review->updateOrInsert($params, $data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->review->where($params)->delete();
+
         return true;
     }
 }

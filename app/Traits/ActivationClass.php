@@ -16,34 +16,35 @@ trait ActivationClass
 
     public function getDomain(): string
     {
-        return str_replace(["http://", "https://", "www."], "", url('/'));
+        return str_replace(['http://', 'https://', 'www.'], '', url('/'));
     }
 
-    public function getSystemAddonCacheKey(string|null $app = 'default'): string
+    public function getSystemAddonCacheKey(?string $app = 'default'): string
     {
-        return str_replace('-', '_', Str::slug('cache_system_addons_for_' . $app . '_' . $this->getDomain()));
+        return str_replace('-', '_', Str::slug('cache_system_addons_for_'.$app.'_'.$this->getDomain()));
     }
 
     public function getAddonsConfig(): array
     {
         if (file_exists(base_path('config/system-addons.php'))) {
-            return include(base_path('config/system-addons.php'));
+            return include base_path('config/system-addons.php');
         }
 
         $apps = ['admin_panel', 'vendor_panel', 'user_app', 'vendor_app', 'deliveryman_app', 'theme_lifestyle'];
         $appConfig = [];
         foreach ($apps as $app) {
             $appConfig[$app] = [
-                "active" => "0",
-                "name" => "",
-                "identifier" => "",
-                "username" => "",
-                "purchase_key" => "",
-                "software_id" => "",
-                "domain" => "",
-                "software_type" => $app == 'admin_panel' ? "product" : 'addon',
+                'active' => '0',
+                'name' => '',
+                'identifier' => '',
+                'username' => '',
+                'purchase_key' => '',
+                'software_id' => '',
+                'domain' => '',
+                'software_type' => $app == 'admin_panel' ? 'product' : 'addon',
             ];
         }
+
         return $appConfig;
     }
 
@@ -52,11 +53,11 @@ trait ActivationClass
         return 60 * 60 * 24 * $days;
     }
 
-    public function getRequestConfig(string|null $username = null, string|null $purchaseKey = null, string|null $softwareId = null, string|null $softwareType = null, string|null $name = null, string|null $identifier = null): array
+    public function getRequestConfig(?string $username = null, ?string $purchaseKey = null, ?string $softwareId = null, ?string $softwareType = null, ?string $name = null, ?string $identifier = null): array
     {
         $errors = [];
         $activeStatus = base64_encode(1);
-        if(!$this->is_local()) {
+        if (! $this->is_local()) {
             try {
                 $response = Http::post(base64_decode('aHR0cHM6Ly9jaGVjay42YW10ZWNoLmNvbS9hcGkvdjIvcmVnaXN0ZXItZG9tYWlu'), [
                     base64_decode('dXNlcm5hbWU=') => trim($username),
@@ -68,7 +69,7 @@ trait ActivationClass
                     base64_decode('ZW1haWw=') => $identifier ?? base64_decode(env('ADMIN_IDENTIFIER', '')),
                 ])->json();
                 $activeStatus = $response['active'] ?? base64_encode(1);
-                if (!base64_decode($activeStatus) && !empty($response['errors'])) {
+                if (! base64_decode($activeStatus) && ! empty($response['errors'])) {
                     $errors = $response['errors'];
                 }
             } catch (Exception $exception) {
@@ -77,21 +78,21 @@ trait ActivationClass
         }
 
         return [
-            "active" => base64_decode($activeStatus),
-            "name" => $name,
-            "identifier" => $identifier,
-            "username" => trim($username),
-            "purchase_key" => $purchaseKey,
-            "software_id" => $softwareId ?? SOFTWARE_ID,
-            "domain" => $this->getDomain(),
-            "software_type" => $softwareType,
-            "errors" => $errors,
+            'active' => base64_decode($activeStatus),
+            'name' => $name,
+            'identifier' => $identifier,
+            'username' => trim($username),
+            'purchase_key' => $purchaseKey,
+            'software_id' => $softwareId ?? SOFTWARE_ID,
+            'domain' => $this->getDomain(),
+            'software_type' => $softwareType,
+            'errors' => $errors,
         ];
     }
 
-    public function checkActivationCache(string|null $app)
+    public function checkActivationCache(?string $app)
     {
-        return  true;
+        return true;
         if ($this->is_local() || is_null($app) || env('DEVELOPMENT_ENVIRONMENT', false) || env('APP_MODE') == 'demo') {
             return true;
         }
@@ -99,15 +100,18 @@ trait ActivationClass
         $config = $this->getAddonsConfig();
         $cacheKey = $this->getSystemAddonCacheKey(app: $app);
 
-        if (isset($config[$app]) && (!isset($config[$app]['active']) || $config[$app]['active'] == 0)) {
+        if (isset($config[$app]) && (! isset($config[$app]['active']) || $config[$app]['active'] == 0)) {
             Cache::forget($cacheKey);
+
             return false;
         } else {
             $appConfig = $config[$app];
+
             return Cache::remember($cacheKey, $this->getCacheTimeoutByDays(days: 1), function () use ($app, $appConfig) {
                 $response = $this->getRequestConfig(username: $appConfig['username'], purchaseKey: $appConfig['purchase_key'], softwareId: $appConfig['software_id'], softwareType: $appConfig['software_type'] ?? base64_decode('cHJvZHVjdA=='));
                 $this->updateActivationConfig(app: $app, response: $response);
-                return (bool)$response['active'];
+
+                return (bool) $response['active'];
             });
         }
     }
@@ -116,7 +120,7 @@ trait ActivationClass
     {
         $config = $this->getAddonsConfig();
         $config[$app] = $response;
-        $configContents = "<?php return " . var_export($config, true) . ";";
+        $configContents = '<?php return '.var_export($config, true).';';
         file_put_contents(base_path('config/system-addons.php'), $configContents);
     }
 }

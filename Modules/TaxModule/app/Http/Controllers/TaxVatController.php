@@ -24,21 +24,18 @@ class TaxVatController extends Controller
 
     public function __construct(
         private readonly TaxService $taxService,
-    )
-    {
-    }
-
+    ) {}
 
     public function index(Request $request): Renderable
     {
         $vatTaxes = Tax::when($request->has('search'), function ($query) use ($request) {
-                $keys = explode(' ', $request['search']);
-                foreach ($keys as $key) {
-                    $query->orWhere('name', 'LIKE', '%' . $key . '%')
-                        ->orWhere('id', 'LIKE', '%' . $key . '%')
-                        ->orWhere('tax_rate', 'LIKE', '%' . $key . '%');
-                }
-            })
+            $keys = explode(' ', $request['search']);
+            foreach ($keys as $key) {
+                $query->orWhere('name', 'LIKE', '%'.$key.'%')
+                    ->orWhere('id', 'LIKE', '%'.$key.'%')
+                    ->orWhere('tax_rate', 'LIKE', '%'.$key.'%');
+            }
+        })
             ->when($this->getCountryType() == 'single', function ($query) {
                 return $query->where('is_default', true);
             })
@@ -52,7 +49,7 @@ class TaxVatController extends Controller
 
         return view('taxmodule::6valley.tax.tax_list', [
             'vatTaxes' => $vatTaxes,
-            'existTaxVatData' => $existTaxVatData
+            'existTaxVatData' => $existTaxVatData,
         ]);
     }
 
@@ -61,6 +58,7 @@ class TaxVatController extends Controller
         Tax::insert($this->taxService->getAddTax(request: $request));
         SystemTaxSetupService::clearTaxSystemTypeCache();
         $this->showNotification('successMessage', translate('New_Tax_Added_Successfully'));
+
         return back();
     }
 
@@ -69,22 +67,24 @@ class TaxVatController extends Controller
         Tax::where('id', $request['id'])->update($this->taxService->getAddTax(request: $request));
         SystemTaxSetupService::clearTaxSystemTypeCache();
         $this->showNotification('successMessage', translate('updated_successfully'));
+
         return to_route('admin.vat-tax.index');
     }
 
     public function updateStatus(Request $request): JsonResponse|RedirectResponse
     {
         $taxVat = Tax::where('id', $request['id'])->first();
-        Tax::where('id', $request['id'])->update(['is_active' => !$taxVat['is_active']]);
+        Tax::where('id', $request['id'])->update(['is_active' => ! $taxVat['is_active']]);
         SystemTaxSetupService::clearTaxSystemTypeCache();
         if ($request->ajax()) {
             return response()->json([
                 'id' => $taxVat['id'],
                 'status' => $taxVat['is_active'],
-                'message' => translate('tax_status_updated')
+                'message' => translate('tax_status_updated'),
             ]);
         }
         $this->showNotification('successMessage', translate('updated_successfully'));
+
         return to_route('admin.vat-tax.index');
     }
 
@@ -95,11 +95,11 @@ class TaxVatController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         $vatTaxes = Tax::when($request->has('search'), function ($query) use ($request) {
-                $keys = explode(' ', $request['search']);
-                foreach ($keys as $key) {
-                    $query->orWhere('name', 'LIKE', '%' . $key . '%')->orWhere('tax_rate', 'LIKE', '%' . $key . '%');
-                }
-            })
+            $keys = explode(' ', $request['search']);
+            foreach ($keys as $key) {
+                $query->orWhere('name', 'LIKE', '%'.$key.'%')->orWhere('tax_rate', 'LIKE', '%'.$key.'%');
+            }
+        })
             ->when($this->getCountryType() == 'single', function ($query) {
                 return $query->where('is_default', true);
             })
@@ -116,6 +116,7 @@ class TaxVatController extends Controller
         if ($request['type'] == 'csv') {
             return Excel::download(new TaxVatExport($data), 'TaxList.csv');
         }
+
         return Excel::download(new TaxVatExport($data), 'TaxList.xlsx');
     }
 }

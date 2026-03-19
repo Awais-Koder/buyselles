@@ -24,18 +24,18 @@ use Modules\TaxModule\app\Traits\VatTaxConfiguration;
 
 class VendorTaxReportController extends Controller
 {
-    use VatTaxConfiguration, AdminTaxReportManagement;
+    use AdminTaxReportManagement, VatTaxConfiguration;
 
     private Tax $taxVat;
+
     private SystemTaxSetup $systemTaxVat;
 
     public function __construct(
-        private readonly TaxService              $taxService,
-        private readonly SystemTaxSetupService   $systemTaxSetupService,
-        private readonly TaxAdditionalSetup      $taxAdditionalSetup,
+        private readonly TaxService $taxService,
+        private readonly SystemTaxSetupService $systemTaxSetupService,
+        private readonly TaxAdditionalSetup $taxAdditionalSetup,
         private readonly ShopRepositoryInterface $shopRepo
-    )
-    {
+    ) {
         DB::statement("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));");
     }
 
@@ -43,7 +43,7 @@ class VendorTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -57,7 +57,7 @@ class VendorTaxReportController extends Controller
             ->when(isset($request['shop_id']) & $request['shop_id'] !== 'all', function ($query) use ($request) {
                 return $query->where('shop_id', $request['shop_id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('shop', function ($query) use ($request) {
                     return $query->where('name', 'like', "%{$request['search']}%")
                         ->orWhere('contact', 'like', "%{$request['search']}%");
@@ -65,7 +65,7 @@ class VendorTaxReportController extends Controller
                     return $query->where('tax_name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -74,7 +74,7 @@ class VendorTaxReportController extends Controller
     public function vendorWiseTaxes(Request $request)
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -99,7 +99,7 @@ class VendorTaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -116,11 +116,10 @@ class VendorTaxReportController extends Controller
         ]);
     }
 
-
     public function vendorWiseTaxExport(Request $request)
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -144,12 +143,12 @@ class VendorTaxReportController extends Controller
             'totalOrders' => $totalOrders,
             'totalOrderAmount' => $totalOrderAmount,
             'orderTransactions' => $orderTransactions,
-            'auth_type' => 'admin'
+            'auth_type' => 'admin',
         ];
 
         if ($request->export_type == 'excel') {
             return Excel::download(new VendorWiseTaxExport($data), 'VendorWiseTaxExport.xlsx');
-        } else if ($request->export_type == 'csv') {
+        } elseif ($request->export_type == 'csv') {
             return Excel::download(new VendorWiseTaxExport($data), 'VendorWiseTaxExport.csv');
         }
     }
@@ -158,7 +157,7 @@ class VendorTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -174,14 +173,14 @@ class VendorTaxReportController extends Controller
             ->when(isset($request['shop_id']) & $request['shop_id'] !== 'all', function ($query) use ($request) {
                 return $query->where('shop_id', $request['shop_id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('order', function ($query) use ($request) {
                     return $query->where('id', 'like', "%{$request['search']}%");
                 })->orWhereHas('orderTaxes', function ($query) use ($request) {
                     return $query->where('tax_name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -199,7 +198,7 @@ class VendorTaxReportController extends Controller
             $page,
             [
                 'path' => request()->url(),
-                'query' => request()->query()
+                'query' => request()->query(),
             ]
         );
 
@@ -219,7 +218,7 @@ class VendorTaxReportController extends Controller
     {
         $dateRange = $this->getTaxReportDateRange(dates: $request['dates']);
 
-        list($startDate, $endDate) = explode(' - ', $dateRange);
+        [$startDate, $endDate] = explode(' - ', $dateRange);
         $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
         $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
         $startDate = $startDate->startOfDay();
@@ -235,12 +234,12 @@ class VendorTaxReportController extends Controller
             ->when(isset($request['shop_id']) & $request['shop_id'] !== 'all', function ($query) use ($request) {
                 return $query->where('shop_id', $request['shop_id']);
             })
-            ->when(isset($request['search']) & !empty($request['search']), function ($query) use ($request) {
+            ->when(isset($request['search']) & ! empty($request['search']), function ($query) use ($request) {
                 return $query->whereHas('shop', function ($query) use ($request) {
                     return $query->where('name', 'like', "%{$request['search']}%");
                 });
             })
-            ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('updated_at', [$startDate, $endDate]);
             })
             ->latest('updated_at')->get();
@@ -260,11 +259,11 @@ class VendorTaxReportController extends Controller
             'search' => $request->search ?? null,
         ];
 
-        $fileName = $request['shop_id'] !== 'all' ? $shop['name'] . 's TaxExport' : 'All-Vendor-TaxExport';
+        $fileName = $request['shop_id'] !== 'all' ? $shop['name'].'s TaxExport' : 'All-Vendor-TaxExport';
         if ($request->export_type == 'excel') {
-            return Excel::download(new VendorTaxExport($data), $fileName . '.xlsx');
-        } else if ($request->export_type == 'csv') {
-            return Excel::download(new VendorTaxExport($data), $fileName . '.csv');
+            return Excel::download(new VendorTaxExport($data), $fileName.'.xlsx');
+        } elseif ($request->export_type == 'csv') {
+            return Excel::download(new VendorTaxExport($data), $fileName.'.csv');
         }
     }
 
@@ -273,7 +272,7 @@ class VendorTaxReportController extends Controller
         $summary = DB::table('orders')
             ->where('shop_id', $shop_id)
             ->whereIn('order_status', ['delivered', 'refund_requested', 'refund_request_canceled'])
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
             ->selectRaw('COUNT(*) as total_orders, SUM(order_amount) as total_order_amount, SUM(total_tax_amount) as total_tax')
             ->first();
 
@@ -281,15 +280,14 @@ class VendorTaxReportController extends Controller
             'orderTaxes' => function (MorphMany $query) {
                 $query->where('order_type', Order::class)
                     ->select('id', 'order_id', 'tax_name', 'tax_amount', 'tax_on', 'tax_type');
-            }
+            },
         ])
             ->where('shop_id', $shop_id)
             ->whereIn('order_status', ['delivered', 'refund_requested', 'refund_request_canceled'])
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+            ->when($startDate && $endDate, fn ($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
             ->select(['id', 'order_amount', 'total_tax_amount', 'order_type', 'created_at'])
             ->latest('created_at');
 
         return ['summary' => $summary, 'orders' => $orders];
     }
-
 }

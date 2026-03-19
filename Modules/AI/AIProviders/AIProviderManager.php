@@ -16,6 +16,7 @@ use Modules\AI\app\Utils\CurrentAuthUser;
 class AIProviderManager
 {
     use AIModuleManager;
+
     protected array $providers;
 
     public function __construct(array $providers = [])
@@ -33,6 +34,7 @@ class AIProviderManager
             if ($activeAiProvider->ai_name === $provider->getName()) {
                 $provider->setApiKey($activeAiProvider->api_key);
                 $provider->setOrganization($activeAiProvider->organization_id);
+
                 return $provider;
             }
         }
@@ -46,9 +48,10 @@ class AIProviderManager
     public function getActiveAIProvider(): AISetting
     {
         $provider = $this->getActiveAIProviderConfig();
-        if (!$provider) {
+        if (! $provider) {
             throw new AIProviderException('No active AI provider available at this moment.');
         }
+
         return $provider;
     }
 
@@ -62,30 +65,30 @@ class AIProviderManager
     {
         $providerObject = $this->getAvailableProviderObject();
         $activeProvider = $this->getActiveAIProvider();
-        $aiUsage = new AIUsageManagerService();
-        $aiValidator = new AIResponseValidatorService();
+        $aiUsage = new AIUsageManagerService;
+        $aiValidator = new AIResponseValidatorService;
         $isAdmin = CurrentAuthUser::isAdmin();
         $appMode = env('APP_MODE');
         $section = $options['section'] ?? '';
 
         if ($appMode === 'demo') {
             $ip = request()->header('x-forwarded-for');
-            $cacheKey = 'demo_ip_usage_' . $ip;
+            $cacheKey = 'demo_ip_usage_'.$ip;
             $count = Cache::get($cacheKey, 0);
             if ($count >= 10) {
-                throw new ValidationException("Demo limit reached: You can only generate 10 times.");
+                throw new ValidationException('Demo limit reached: You can only generate 10 times.');
             }
             Cache::forever($cacheKey, $count + 1);
         }
 
         $aiSettingLog = $aiUsage->getOrCreateLog($activeProvider);
 
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             $aiUsage->checkUsageLimits($aiSettingLog, $activeProvider, $imageUrl, $section);
         }
         $response = $providerObject->generate($prompt, $imageUrl);
 
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             $aiUsage->incrementUsage($aiSettingLog, $imageUrl, $section);
         }
 
@@ -111,5 +114,4 @@ class AIProviderManager
 
         return $response;
     }
-
 }

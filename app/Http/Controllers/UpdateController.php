@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdatePurchaseCodeRequest;
-use App\Utils\Helpers;
 use App\Traits\ActivationClass;
 use App\Traits\UpdateClass;
+use App\Utils\Helpers;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Artisan;
 
@@ -36,7 +35,7 @@ class UpdateController extends Controller
         Helpers::setEnvironmentValue('PURCHASE_CODE', $purchaseKey);
         Helpers::setEnvironmentValue('SOFTWARE_VERSION', SOFTWARE_VERSION);
         Helpers::setEnvironmentValue('APP_MODE', 'live');
-        Helpers::setEnvironmentValue('APP_NAME', '6valley' . time());
+        Helpers::setEnvironmentValue('APP_NAME', '6valley'.time());
         Helpers::setEnvironmentValue('SESSION_LIFETIME', '60');
 
         $response = $this->getRequestConfig(
@@ -50,7 +49,7 @@ class UpdateController extends Controller
         $this->updateActivationConfig(app: 'admin_panel', response: $response);
         $status = $response['active'] ?? 0;
 
-        if ((int)$status) {
+        if ((int) $status) {
             Artisan::call('migrate', ['--force' => true]);
             $previousRouteServiceProvider = base_path('app/Providers/RouteServiceProvider.php');
             $newRouteServiceProvider = base_path('app/Providers/RouteServiceProvider.txt');
@@ -63,10 +62,11 @@ class UpdateController extends Controller
 
             Artisan::call('optimize:clear');
             $this->getProcessAllVersionsUpdates();
+
             return redirect(env('APP_URL'));
         }
 
-        if (!empty($response['errors'])) {
+        if (! empty($response['errors'])) {
             foreach ($response['errors'] as $error) {
                 $message = is_array($error) ? ($error[0] ?? 'Unknown error') : $error;
                 ToastMagic::error($message);

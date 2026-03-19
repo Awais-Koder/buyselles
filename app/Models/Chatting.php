@@ -31,12 +31,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property int $shop_id
- *
- * @package App\Models
  */
 class Chatting extends Model
 {
     use StorageTrait;
+
     protected $casts = [
         'id' => 'integer',
         'user_id' => 'integer',
@@ -81,44 +80,51 @@ class Chatting extends Model
         'shop_id',
     ];
 
-    protected $guarded=[];
+    protected $guarded = [];
 
-    /* seller_info -> sellerInfo*/
-    public function sellerInfo():BelongsTo
+    /* seller_info -> sellerInfo */
+    public function sellerInfo(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'seller_id');
     }
-    public function seller():BelongsTo
+
+    public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'seller_id');
     }
-    public function customer():BelongsTo
+
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    public function shop():BelongsTo
+
+    public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class, 'shop_id');
     }
-    /* delivery_man -> deliveryMan*/
-    public function deliveryMan():BelongsTo
+
+    /* delivery_man -> deliveryMan */
+    public function deliveryMan(): BelongsTo
     {
         return $this->belongsTo(DeliveryMan::class, 'delivery_man_id');
     }
-    public function admin():BelongsTo
+
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'admin_id');
     }
-    public function getAttachmentFullUrlAttribute():array
+
+    public function getAttachmentFullUrlAttribute(): array
     {
         $images = [];
         $value = json_decode($this->attachment);
-        if ($value){
-            foreach ($value as $item){
-                $item = isset($item->file_name) ? (array)$item : ['file_name' => $item, 'storage' => 'public'];
-                $images[] =  $this->storageLink('chatting',$item['file_name'],$item['storage'] ?? 'public');
+        if ($value) {
+            foreach ($value as $item) {
+                $item = isset($item->file_name) ? (array) $item : ['file_name' => $item, 'storage' => 'public'];
+                $images[] = $this->storageLink('chatting', $item['file_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
 }

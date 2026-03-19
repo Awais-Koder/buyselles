@@ -8,10 +8,10 @@ class DeliveryManCashCollectService
     {
         return [
             'delivery_man_id' => $deliveryMan['id'],
-            'user_id'         => 0,
-            'user_type'       => 'admin',
-            'credit'           => currencyConverter(amount: $request['amount']),
-            'transaction_type' => 'cash_in_hand'
+            'user_id' => 0,
+            'user_type' => 'admin',
+            'credit' => currencyConverter(amount: $request['amount']),
+            'transaction_type' => 'cash_in_hand',
         ];
     }
 }

@@ -4,7 +4,7 @@ namespace Modules\AI\app\PromptTemplates;
 
 use Modules\AI\app\Contracts\PromptTemplateInterface;
 
-class ProductNameTemplate implements  PromptTemplateInterface
+class ProductNameTemplate implements PromptTemplateInterface
 {
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {

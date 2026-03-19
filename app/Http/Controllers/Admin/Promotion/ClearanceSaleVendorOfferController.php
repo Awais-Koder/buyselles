@@ -6,8 +6,8 @@ use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Contracts\Repositories\ShopRepositoryInterface;
 use App\Contracts\Repositories\StockClearanceSetupRepositoryInterface;
 use App\Http\Controllers\BaseController;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Carbon\Carbon;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -18,12 +18,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class ClearanceSaleVendorOfferController extends BaseController
 {
     public function __construct(
-        private readonly ShopRepositoryInterface                $shopRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
         private readonly StockClearanceSetupRepositoryInterface $stockClearanceSetupRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -66,6 +64,7 @@ class ClearanceSaleVendorOfferController extends BaseController
                 $vendor->average_rating = $productReviews->avg('rating') ?? 0;
                 $vendor->review_count = $productReviews->count();
             }
+
             return $vendor;
         });
     }
@@ -92,6 +91,7 @@ class ClearanceSaleVendorOfferController extends BaseController
             dataLimit: 'all'
         );
         $allVendorList = $this->getProcessVendorList(vendors: $allVendorList);
+
         return response()->json([
             'result' => view('admin-views.deal.clearance-sale.partials._search-vendor', compact('allVendorList'))->render(),
         ]);
@@ -101,9 +101,10 @@ class ClearanceSaleVendorOfferController extends BaseController
     {
         $this->businessSettingRepo->updateOrInsert(type: 'stock_clearance_vendor_offer_in_homepage',
             value: $request->get('homepage-status', 0));
+
         return response()->json([
             'status' => true,
-            'message' => translate('vendor_offer_status_updated_successfully')
+            'message' => translate('vendor_offer_status_updated_successfully'),
         ]);
     }
 
@@ -113,30 +114,31 @@ class ClearanceSaleVendorOfferController extends BaseController
         $message = translate('vendor_added_successfully');
 
         $stockClearanceSetUp = $this->stockClearanceSetupRepo->getFirstWhere(params: ['shop_id' => $request['shopId']]);
-        if($stockClearanceSetUp['show_in_homepage_once']) {
-                $status = false;
-                $message = translate('vendor_already_exists');
+        if ($stockClearanceSetUp['show_in_homepage_once']) {
+            $status = false;
+            $message = translate('vendor_already_exists');
         }
 
         $dataArray = [
             'show_in_homepage' => 1,
-            'show_in_homepage_once' => 1
+            'show_in_homepage_once' => 1,
         ];
 
         $this->stockClearanceSetupRepo->update(id: $stockClearanceSetUp['id'], data: $dataArray);
 
         return response()->json([
             'status' => $status,
-            'message' => $message
+            'message' => $message,
         ]);
     }
 
     public function updateVendorStatus(Request $request): JsonResponse
     {
         $this->stockClearanceSetupRepo->update(id: $request['id'], data: ['show_in_homepage' => $request->get('status', 0)]);
+
         return response()->json([
             'status' => true,
-            'message' => translate('vendor_status_successfully')
+            'message' => translate('vendor_status_successfully'),
         ]);
     }
 
@@ -144,8 +146,7 @@ class ClearanceSaleVendorOfferController extends BaseController
     {
         $this->stockClearanceSetupRepo->update(id: $request['id'], data: ['show_in_homepage_once' => 0]);
         ToastMagic::success(translate('vendor_deleted_successfully'));
+
         return back();
     }
-
-
 }

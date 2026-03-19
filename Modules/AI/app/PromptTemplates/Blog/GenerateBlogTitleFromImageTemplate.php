@@ -6,17 +6,16 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class GenerateBlogTitleFromImageTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode ??= 'en';
         $langCode = strtoupper($langCode);
 
-        $descriptionInstruction = !empty($description)
+        $descriptionInstruction = ! empty($description)
             ? "Additionally, consider the user's description: \"{$description}\" and incorporate it only if it adds clarity or relevance."
-            : "Ignore user description if irrelevant or missing.";
+            : 'Ignore user description if irrelevant or missing.';
 
-            return <<<PROMPT
+        return <<<PROMPT
             You are an advanced SEO content strategist, copywriter, and image recognition analyst.
             Analyze the uploaded blog image provided by the user.
             {$descriptionInstruction}

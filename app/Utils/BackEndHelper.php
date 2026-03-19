@@ -55,28 +55,30 @@ class BackEndHelper
         $decimal_point_settings = getWebConfig(name: 'decimal_point_settings');
         $position = getWebConfig(name: 'currency_symbol_position') ?? 'left';
         if ($position == 'left') {
-            return currency_symbol() . '' . number_format($amount, (!empty($decimal_point_settings) ? $decimal_point_settings: 0));
+            return currency_symbol().''.number_format($amount, (! empty($decimal_point_settings) ? $decimal_point_settings : 0));
         }
-        return number_format($amount, !empty($decimal_point_settings) ? $decimal_point_settings: 0) . currency_symbol();
+
+        return number_format($amount, ! empty($decimal_point_settings) ? $decimal_point_settings : 0).currency_symbol();
     }
 
     public static function currency_code()
     {
         $currency = Currency::where('id', getWebConfig(name: 'system_default_currency'))->first();
+
         return $currency->code;
     }
 
     public static function order_status($status): string
     {
         return match ($status) {
-            "pending" => "Pending",
-            "confirmed" => "Confirmed",
-            "processing" => "Packaging",
-            "out_for_delivery" => "Out for Delivery",
-            "delivered" => "Delivered",
-            "returned" => "Returned",
-            "failed" => "Failed to Deliver",
-            "canceled" => "Canceled",
+            'pending' => 'Pending',
+            'confirmed' => 'Confirmed',
+            'processing' => 'Packaging',
+            'out_for_delivery' => 'Out for Delivery',
+            'delivered' => 'Delivered',
+            'returned' => 'Returned',
+            'failed' => 'Failed to Deliver',
+            'canceled' => 'Canceled',
             default => '',
         };
     }

@@ -14,8 +14,6 @@ use Illuminate\Support\Carbon;
  * @property string $payment_info
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class OfflinePayments extends Model
 {

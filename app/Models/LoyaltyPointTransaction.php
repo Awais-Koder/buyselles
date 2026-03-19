@@ -20,10 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $transaction_type
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
- * @package App\Models
  */
-
 class LoyaltyPointTransaction extends Model
 {
     use HasFactory;
@@ -43,8 +40,8 @@ class LoyaltyPointTransaction extends Model
         'user_id' => 'integer',
         'credit' => 'float',
         'debit' => 'float',
-        'balance'=>'float',
-        'reference'=>'string',
+        'balance' => 'float',
+        'reference' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -17,39 +17,39 @@ class GenerateEntity extends Command
         $entity = $this->argument('entity');
         // Create directory for models if not exists
         $modelPath = app_path('Models');
-        if (!File::isDirectory($modelPath)) {
+        if (! File::isDirectory($modelPath)) {
             File::makeDirectory($modelPath, 0755, true);
         }
 
         // Create model file if not exists
         $modelPath = "{$modelPath}/{$entity}.php";
-        if (!File::exists($modelPath)) {
+        if (! File::exists($modelPath)) {
             $modelContent = "<?php\n\nnamespace App\Models;\n\nuse Illuminate\Database\Eloquent\Model;\n\nclass {$entity} extends Model\n{\n   //Define model properties and relationships here\n}\n";
             File::put($modelPath, $modelContent);
         }
 
         // Create directory for repository interfaces if not exists
         $interfacePath = app_path('Contracts/Repositories');
-        if (!File::isDirectory($interfacePath)) {
+        if (! File::isDirectory($interfacePath)) {
             File::makeDirectory($interfacePath, 0755, true);
         }
 
         // Create repository interface file if not exists
         $interfacePath = "{$interfacePath}/{$entity}RepositoryInterface.php";
-        if (!File::exists($interfacePath)) {
+        if (! File::exists($interfacePath)) {
             $interfaceContent = "<?php\n\nnamespace App\Contracts\Repositories;\n\ninterface {$entity}RepositoryInterface extends RepositoryInterface\n{\n    // Define interface methods here\n}\n";
             File::put($interfacePath, $interfaceContent);
         }
 
         // Create directory for repository classes if not exists
         $repositoryPath = app_path('Repositories');
-        if (!File::isDirectory($repositoryPath)) {
+        if (! File::isDirectory($repositoryPath)) {
             File::makeDirectory($repositoryPath, 0755, true);
         }
 
         // Create repository class file if not exists
         $repositoryPath = "{$repositoryPath}/{$entity}Repository.php";
-        if (!File::exists($repositoryPath)) {
+        if (! File::exists($repositoryPath)) {
             $repositoryContent = "<?php\n\n";
             $repositoryContent .= "namespace App\Repositories;\n\n";
             $repositoryContent .= "use App\Contracts\Repositories\\{$entity}RepositoryInterface;\n";
@@ -92,7 +92,7 @@ class GenerateEntity extends Command
         }
 
         // Create migration file
-        $migrationName = 'create_' . Str::plural(Str::snake($entity)) . '_table';
+        $migrationName = 'create_'.Str::plural(Str::snake($entity)).'_table';
         $this->call('make:migration', ['name' => $migrationName]);
         $this->info("{$entity} model, repository interface, and class generated successfully.");
     }

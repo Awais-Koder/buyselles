@@ -19,29 +19,27 @@ class AttributeController extends BaseController
     use PaginatorTrait;
 
     public function __construct(
-        private readonly AttributeRepositoryInterface   $attributeRepo,
+        private readonly AttributeRepositoryInterface $attributeRepo,
         private readonly TranslationRepositoryInterface $translationRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $attributes = $this->attributeRepo->getListWhere(searchValue: $request->get('searchValue'), dataLimit: getWebConfig(name: 'pagination_limit'));
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.attribute.view', compact('attributes', 'language', 'defaultLanguage'));
     }
 
     public function getList(): JsonResponse
     {
         $attributes = $this->attributeRepo->getList(dataLimit: 'all');
+
         return response()->json(AttributeResource::collection($attributes));
     }
 
@@ -50,19 +48,20 @@ class AttributeController extends BaseController
         $attribute = $this->attributeRepo->getFirstWhere(params: ['id' => $id], relations: ['translations']);
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.attribute.edit', compact('attribute', 'language', 'defaultLanguage'));
     }
 
-    public function getTranslationData(string|int $id):JsonResponse
+    public function getTranslationData(string|int $id): JsonResponse
     {
         $attribute = $this->attributeRepo->getFirstWhere(params: ['id' => $id], relations: ['translations']);
+
         return response()->json([
             'id' => $attribute['id'],
             'name' => $attribute['name'],
-            'translations' => $attribute['translations']
+            'translations' => $attribute['translations'],
         ]);
     }
-
 
     public function add(AttributeRequest $request): JsonResponse|RedirectResponse
     {
@@ -78,6 +77,7 @@ class AttributeController extends BaseController
             $this->translationRepo->add(request: $request, model: 'App\Models\Attribute', id: $savedAttributes->id);
             ToastMagic::success(translate('attribute_added_successfully'));
         }
+
         return back();
     }
 
@@ -91,6 +91,7 @@ class AttributeController extends BaseController
         $this->translationRepo->update(request: $request, model: 'App\Models\Attribute', id: $request['id']);
 
         ToastMagic::success(translate('attribute_updated_successfully'));
+
         return back();
     }
 
@@ -98,7 +99,7 @@ class AttributeController extends BaseController
     {
         $this->attributeRepo->delete(params: ['id' => $request['id']]);
         $this->translationRepo->delete(model: 'App\Models\Attribute', id: $request['id']);
+
         return response()->json(['message' => translate('attribute_deleted_successfully')]);
     }
-
 }

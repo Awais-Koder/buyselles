@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Enums\ExportFileNames\Admin\Report;
-use App\Utils\Helpers;
 use App\Exports\OrderReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Seller;
+use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use FontLib\Table\Type\name;
 use Illuminate\Contracts\View\View as ViewResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +22,7 @@ class OrderReportController extends Controller
 {
     public function __construct(
         private readonly VendorRepositoryInterface $vendorRepo,
-    )
-    {
-    }
+    ) {}
 
     public function order_list(Request $request): ViewResponse
     {
@@ -51,12 +48,12 @@ class OrderReportController extends Controller
         $delivered_order_query = Order::where('order_status', 'delivered');
         $delivered_order = self::order_count($request, $delivered_order_query);
 
-        $order_count = array(
+        $order_count = [
             'ongoing_order' => $ongoing_order,
             'canceled_order' => $canceled_order,
             'delivered_order' => $delivered_order,
             'total_order' => $canceled_order + $ongoing_order + $delivered_order,
-        );
+        ];
 
         $due_amount_order_query = Order::whereNotIn('order_status', ['delivered', 'canceled', 'returned', 'failed'])
             ->when($seller_id != 'all', function ($query) use ($seller_id) {
@@ -92,8 +89,9 @@ class OrderReportController extends Controller
 
         $chartDataOrderAmountLabel = array_values(collect(array_keys($chart_data['order_amount']))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' '. date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -123,38 +121,43 @@ class OrderReportController extends Controller
 
         foreach ($orderEditHistory as $editHistory) {
 
-            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
-                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && !in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
+            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
+                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && ! in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'cash_on_delivery' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'wallet' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'offline_payment' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_return_payment_status == 'returned') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_return_amount');
         }
@@ -172,7 +175,6 @@ class OrderReportController extends Controller
         ];
     }
 
-
     public function order_report_chart_filter($request)
     {
         $from = $request['from'];
@@ -185,19 +187,21 @@ class OrderReportController extends Controller
             $current_start_year = date('Y-01-01');
             $current_end_year = date('Y-12-31');
             $from_year = Carbon::parse($from)->format('Y');
+
             return self::order_report_same_year($request, $current_start_year, $current_end_year, $from_year, $number, $default_inc);
-        } elseif ($date_type == 'this_month') { //this month table
+        } elseif ($date_type == 'this_month') { // this month table
             $current_month_start = date('Y-m-01');
             $current_month_end = date('Y-m-t');
             $inc = 1;
             $month = date('m');
             $number = date('d', strtotime($current_month_end));
+
             return self::order_report_same_month($request, $current_month_start, $current_month_end, $month, $number, $inc);
         } elseif ($date_type == 'this_week') {
             return self::order_report_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getOrderReportForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -226,7 +230,7 @@ class OrderReportController extends Controller
             ->latest('created_at')->get();
 
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+            $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
             $orderAmount[$month] = 0;
             foreach ($orders as $match) {
                 if ($match['month'] == $inc) {
@@ -243,7 +247,7 @@ class OrderReportController extends Controller
     public function order_report_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc)
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = substr(date("F", strtotime("$year_month")), 0, 3);
+        $month = substr(date('F', strtotime("$year_month")), 0, 3);
 
         $orders = self::order_report_chart_common_query($request, $start_date, $end_date)
             ->selectRaw('sum(order_amount) as order_amount, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
@@ -259,9 +263,9 @@ class OrderReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function order_report_this_week($request)
@@ -271,7 +275,7 @@ class OrderReportController extends Controller
 
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             array_push($day_name, $date->format('l'));
         }
@@ -293,9 +297,9 @@ class OrderReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function getOrderReportForToday($request): array
@@ -341,14 +345,15 @@ class OrderReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function order_report_chart_common_query($request, $start_date, $end_date)
     {
         $sellerId = $request['seller_id'] ?? 'all';
+
         return Order::where(['order_status' => 'delivered'])
             ->when($sellerId != 'all', function ($query) use ($sellerId) {
                 $query->when($sellerId == 'inhouse', function ($q) {
@@ -388,8 +393,9 @@ class OrderReportController extends Controller
             'vendor' => $vendor,
             'from' => $request['from'],
             'to' => $request['to'],
-            'dateType' => $request['date_type'] ?? 'this_year'
+            'dateType' => $request['date_type'] ?? 'this_year',
         ];
+
         return Excel::download(new OrderReportExport($data), Report::ORDER_REPORT_LIST);
     }
 
@@ -413,6 +419,7 @@ class OrderReportController extends Controller
                     $q->where(['seller_id' => $seller_id, 'seller_is' => 'seller']);
                 });
             });
+
         return self::date_wise_common_filter($orders_query, $date_type, $from, $to);
     }
 
@@ -449,7 +456,7 @@ class OrderReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });

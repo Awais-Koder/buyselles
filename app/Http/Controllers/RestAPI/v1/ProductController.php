@@ -11,8 +11,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\v1\DeliveryManReviewSubmitRequest;
 use App\Models\Author;
 use App\Models\Category;
-use App\Models\DigitalProductAuthor;
-use App\Models\DigitalProductPublishingHouse;
 use App\Models\MostDemanded;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -28,7 +26,6 @@ use App\Traits\CacheManagerTrait;
 use App\Traits\FileManagerTrait;
 use App\Utils\CategoryManager;
 use App\Utils\Helpers;
-use App\Utils\ImageManager;
 use App\Utils\ProductManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,26 +34,25 @@ use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    use FileManagerTrait, CacheManagerTrait;
+    use CacheManagerTrait, FileManagerTrait;
 
     public function __construct(
-        private Product                                            $product,
-        private Order                                              $order,
-        private MostDemanded                                       $most_demanded,
-        private readonly AuthorRepositoryInterface                 $authorRepo,
-        private readonly PublishingHouseRepositoryInterface        $publishingHouseRepo,
-        private readonly ProductService                            $productService,
+        private Product $product,
+        private Order $order,
+        private MostDemanded $most_demanded,
+        private readonly AuthorRepositoryInterface $authorRepo,
+        private readonly PublishingHouseRepositoryInterface $publishingHouseRepo,
+        private readonly ProductService $productService,
         private readonly RestockProductCustomerRepositoryInterface $restockProductCustomerRepo,
-        private readonly RestockProductRepositoryInterface         $restockProductRepo,
-        private readonly CategoryRepositoryInterface               $categoryRepo,
-    )
-    {
-    }
+        private readonly RestockProductRepositoryInterface $restockProductRepo,
+        private readonly CategoryRepositoryInterface $categoryRepo,
+    ) {}
 
     public function get_latest_products(Request $request): JsonResponse
     {
         $products = ProductManager::get_latest_products($request, $request['limit'], $request['offset']);
         $products['products'] = Helpers::product_data_formatting($products['products'], true);
+
         return response()->json($products, 200);
     }
 
@@ -64,11 +60,12 @@ class ProductController extends Controller
     {
         $products = ProductManager::getNewArrivalProducts($request, $request['limit'], $request['offset']);
         $productsList = $products->total() > 0 ? Helpers::product_data_formatting($products->items(), true) : [];
+
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
@@ -76,6 +73,7 @@ class ProductController extends Controller
     {
         $products = ProductManager::getFeaturedProductsList($request, $request['limit'], $request['offset']);
         $products['products'] = Helpers::product_data_formatting($products['products'], true);
+
         return response()->json($products, 200);
     }
 
@@ -83,11 +81,12 @@ class ProductController extends Controller
     {
         $products = ProductManager::getTopRatedProducts($request, $request['limit'], $request['offset']);
         $productsList = count($products->items()) > 0 ? Helpers::product_data_formatting($products->items(), true) : [];
+
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
@@ -107,6 +106,7 @@ class ProductController extends Controller
             $products = ProductManager::translated_product_search(base64_encode($request['name']), 'all', $request['limit'], $request['offset']);
         }
         $products['products'] = Helpers::product_data_formatting($products['products'], true);
+
         return response()->json($products, 200);
     }
 
@@ -130,7 +130,7 @@ class ProductController extends Controller
 
         $productIdsForPublisher = [];
         foreach ($publishingHouseList as $publishingHouseGroup) {
-            if (!empty($publishingHouseGroup?->publishingHouseProducts)) {
+            if (! empty($publishingHouseGroup?->publishingHouseProducts)) {
                 foreach ($publishingHouseGroup->publishingHouseProducts as $publishingHouse) {
                     $productIdsForPublisher[] = $publishingHouse->product_id;
                 }
@@ -150,7 +150,7 @@ class ProductController extends Controller
         $productIdsForAuthor = [];
 
         foreach ($authorList as $authorGroup) {
-            if (!empty($authorGroup?->digitalProductAuthor)) {
+            if (! empty($authorGroup?->digitalProductAuthor)) {
                 foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                     $productIdsForAuthor[] = $authorItem->product_id;
                 }
@@ -162,7 +162,7 @@ class ProductController extends Controller
         }])->where(['product_type' => 'digital'])->whereNotIn('id', $productIdsForAuthor)->pluck('id')->toArray();
 
         $productsIDArray = [];
-        if ($request->has('search') && !empty($request['search'])) {
+        if ($request->has('search') && ! empty($request['search'])) {
             $productsIDArray = [0];
             $searchProducts = ProductManager::search_products($request, base64_decode($request->search), 'all', $request['limit'], $request['offset']);
             if ($searchProducts['products'] == null || app()->getLocale() !== 'en') {
@@ -183,7 +183,7 @@ class ProductController extends Controller
         $products = Product::active()->with(['rating', 'tags', 'clearanceSale' => function ($query) {
             return $query->active();
         }])
-            ->when(!empty($productsIDArray), function ($query) use ($productsIDArray) {
+            ->when(! empty($productsIDArray), function ($query) use ($productsIDArray) {
                 return $query->whereIn('id', $productsIDArray);
             })
             ->withCount(['reviews' => function ($query) {
@@ -192,7 +192,7 @@ class ProductController extends Controller
             ->when(in_array($request['product_type'], ['physical', 'digital']), function ($query) use ($request) {
                 return $query->where(['product_type' => $request['product_type']]);
             })
-            ->when($request->has('brand') && count($brand) > 0, function ($query) use ($request, $brand) {
+            ->when($request->has('brand') && count($brand) > 0, function ($query) use ($brand) {
                 return $query->whereIn('brand_id', $brand);
             })
             ->when($request->has('category') && count($categoryList) > 0, function ($query) use ($categoryList, $subCategoryIds, $subSubCategoryIds) {
@@ -203,7 +203,7 @@ class ProductController extends Controller
                         return $query->whereIn('sub_sub_category_id', $subSubCategoryIds);
                     });
             })
-            ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($request, $publishingHouses, $productIdsForUnknownPublisher) {
+            ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($publishingHouses, $productIdsForUnknownPublisher) {
                 $publishingHouseList = PublishingHouse::whereIn('id', $publishingHouses)->with(['publishingHouseProducts'])->withCount(['publishingHouseProducts' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -212,7 +212,7 @@ class ProductController extends Controller
 
                 $publishingHouseProductIds = [];
                 foreach ($publishingHouseList as $publishingHouseGroup) {
-                    if (!empty($publishingHouseGroup?->publishingHouseProducts)) {
+                    if (! empty($publishingHouseGroup?->publishingHouseProducts)) {
                         foreach ($publishingHouseGroup->publishingHouseProducts as $publishingHouse) {
                             $publishingHouseProductIds[] = $publishingHouse->product_id;
                         }
@@ -225,7 +225,7 @@ class ProductController extends Controller
 
                 return $query->where(['product_type' => 'digital'])->whereIn('id', $publishingHouseProductIds);
             })
-            ->when($request->has('product_authors') && $productAuthors, function ($query) use ($request, $productAuthors, $productIdsForUnknownAuthor) {
+            ->when($request->has('product_authors') && $productAuthors, function ($query) use ($productAuthors, $productIdsForUnknownAuthor) {
                 $authorList = Author::whereIn('id', $productAuthors)->withCount(['digitalProductAuthor' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -234,7 +234,7 @@ class ProductController extends Controller
 
                 $authorProductIds = [];
                 foreach ($authorList as $authorGroup) {
-                    if (!empty($authorGroup?->digitalProductAuthor)) {
+                    if (! empty($authorGroup?->digitalProductAuthor)) {
                         foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                             $authorProductIds[] = $authorItem->product_id;
                         }
@@ -243,12 +243,13 @@ class ProductController extends Controller
                 if (in_array(0, $productAuthors)) {
                     $authorProductIds = array_merge($authorProductIds, $productIdsForUnknownAuthor);
                 }
+
                 return $query->where(['product_type' => 'digital'])->whereIn('id', $authorProductIds);
             })
-            ->when($request->has('sort_by') && !empty($request->sort_by), function ($query) use ($request) {
-                    return $query->when($request['sort_by'] == 'low-high', function ($query) {
-                        return $query->orderBy('unit_price', 'ASC');
-                    })
+            ->when($request->has('sort_by') && ! empty($request->sort_by), function ($query) use ($request) {
+                return $query->when($request['sort_by'] == 'low-high', function ($query) {
+                    return $query->orderBy('unit_price', 'ASC');
+                })
                     ->when($request['sort_by'] == 'high-low', function ($query) {
                         return $query->orderBy('unit_price', 'DESC');
                     })
@@ -264,9 +265,10 @@ class ProductController extends Controller
             })
             ->when($request['offer_type'] == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
-            ->when(!empty($request['price_min']) || !empty($request['price_max']), function ($query) use ($request) {
+            ->when(! empty($request['price_min']) || ! empty($request['price_max']), function ($query) use ($request) {
                 return $query->whereBetween('unit_price', [$request['price_min'], $request['price_max']]);
             });
 
@@ -319,8 +321,8 @@ class ProductController extends Controller
         $user = Helpers::getCustomerInformation($request);
 
         $product = Product::active()->with(['reviews.customer', 'seller.shop', 'tags', 'digitalVariation', 'clearanceSale' => function ($query) {
-                return $query->active();
-            }])
+            return $query->active();
+        }])
             ->withCount(['wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
             }])
@@ -330,7 +332,7 @@ class ProductController extends Controller
             $restockRequestedIds = $this->restockProductRepo->getListWhere(filters: ['product_id' => $product['id']], dataLimit: 'all')?->pluck('id')->toArray() ?? [];
 
             $product = Helpers::product_data_formatting($product, false);
-            if (isset($product->reviews) && !empty($product->reviews)) {
+            if (isset($product->reviews) && ! empty($product->reviews)) {
                 $overallRating = getOverallRating($product?->reviews);
                 $product['average_review'] = $overallRating[0];
             } else {
@@ -354,6 +356,7 @@ class ProductController extends Controller
                 $product['is_restock_requested'] = 0;
             }
         }
+
         return response()->json($product, 200);
     }
 
@@ -361,19 +364,20 @@ class ProductController extends Controller
     {
         $products = ProductManager::getBestSellingProductsList($request, $request['limit'], $request['offset']);
         $productsList = $products->total() > 0 ? Helpers::product_data_formatting($products->items(), true) : [];
+
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
     public function get_home_categories(Request $request)
     {
-        $cacheKey = 'cache_home_categories_api_list' . (str_replace(' ', '_', strtolower(app()->getLocale())));
+        $cacheKey = 'cache_home_categories_api_list'.(str_replace(' ', '_', strtolower(app()->getLocale())));
         $cacheKeys = Cache::get(CACHE_HOME_CATEGORIES_API_LIST, []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_HOME_CATEGORIES_API_LIST, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -387,10 +391,13 @@ class ProductController extends Controller
 
             $getCategories->map(function ($data) use ($request) {
                 $data['products'] = Helpers::product_data_formatting(CategoryManager::products($data['id'], $request, 8), true);
+
                 return $data;
             });
+
             return $getCategories;
         });
+
         return response()->json($categories, 200);
     }
 
@@ -400,25 +407,28 @@ class ProductController extends Controller
         if ($product) {
             $products = ProductManager::get_related_products($product->id, $request);
             $products = Helpers::product_data_formatting($products, true);
+
             return response()->json($products, 200);
         }
+
         return response()->json([
-            'errors' => ['code' => 'product-001', 'message' => translate('product_not_found')]
+            'errors' => ['code' => 'product-001', 'message' => translate('product_not_found')],
         ], 404);
     }
 
     public function get_product_reviews($slug)
     {
         $product = Product::where('slug', $slug)->first();
-        if (!$product) {
+        if (! $product) {
             return response()->json([
-                'errors' => ['code' => 'product-001', 'message' => translate('product_not_found')]
+                'errors' => ['code' => 'product-001', 'message' => translate('product_not_found')],
             ], 404);
         }
         $reviews = Review::with(['customer', 'reply'])->where(['product_id' => $product->id])->get();
         foreach ($reviews as $item) {
             $item['attachment_full_url'] = $item->attachment_full_url;
         }
+
         return response()->json($reviews, 200);
     }
 
@@ -432,7 +442,7 @@ class ProductController extends Controller
                 $reviewData = $review;
             }
         }
-        if (isset($reviews[0]) && !$reviewData) {
+        if (isset($reviews[0]) && ! $reviewData) {
             $reviewData = ($reviews[0]['order_id'] == null) ? $reviews[0] : null;
         }
         if ($reviewData) {
@@ -452,20 +462,22 @@ class ProductController extends Controller
             if ($imageName != $request['name']) {
                 $array[] = $image;
             } else {
-                $this->delete(filePath: 'review/' . $request['name']);
+                $this->delete(filePath: 'review/'.$request['name']);
             }
         }
 
         $review->attachment = $array;
         $review->save();
+
         return response()->json(translate('review_image_removed_successfully'), 200);
     }
 
-    public function get_product_rating($id):JsonResponse
+    public function get_product_rating($id): JsonResponse
     {
         try {
             $product = Product::find($id);
             $overallRating = getOverallRating($product?->reviews);
+
             return response()->json(floatval($overallRating[0]), 200);
         } catch (\Exception $e) {
             return response()->json(['errors' => $e], 403);
@@ -478,6 +490,7 @@ class ProductController extends Controller
             $product = Product::where('slug', $slug)->first();
             $countOrder = OrderDetail::where('product_id', $product->id)->count();
             $countWishlist = Wishlist::where('product_id', $product->id)->count();
+
             return response()->json(['order_count' => $countOrder, 'wishlist_count' => $countWishlist], 200);
         } catch (\Exception $e) {
             return response()->json(['errors' => $e], 403);
@@ -489,13 +502,14 @@ class ProductController extends Controller
         $product = Product::where('slug', $product_id)->first();
         try {
             $link = route('product', $product->slug);
+
             return response()->json($link, 200);
         } catch (\Exception $e) {
             return response()->json(['errors' => $e], 403);
         }
     }
 
-    public function submit_product_review(Request $request):JsonResponse
+    public function submit_product_review(Request $request): JsonResponse
     {
 
         $validator = Validator::make($request->all(), [
@@ -509,7 +523,7 @@ class ProductController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
         $image_array = [];
-        if (!empty($request->file('fileUpload'))) {
+        if (! empty($request->file('fileUpload'))) {
             foreach ($request->file('fileUpload') as $image) {
                 if ($image != null) {
                     $image_array[] = [
@@ -519,7 +533,6 @@ class ProductController extends Controller
                 }
             }
         }
-
 
         $reviewData = Review::where([
             'delivery_man_id' => null,
@@ -545,12 +558,11 @@ class ProductController extends Controller
                 'attachment' => $image_array,
             ];
 
-
             $oldReview = Review::where(['order_id' => $request['order_id']])->get();
             if (count($oldReview) > 0) {
-                $review_id = $oldReview[0]['order_id'] . (count($oldReview) + 1);
+                $review_id = $oldReview[0]['order_id'].(count($oldReview) + 1);
             } else {
-                $review_id = $request['order_id'] . '1';
+                $review_id = $request['order_id'].'1';
             }
             $reviewArray['id'] = $review_id;
             Review::create($reviewArray);
@@ -579,7 +591,7 @@ class ProductController extends Controller
                 $image_array[] = $image;
             }
         }
-        if (!empty($request->file('fileUpload'))) {
+        if (! empty($request->file('fileUpload'))) {
             foreach ($request->file('fileUpload') as $image) {
                 if ($image != null) {
                     $image_array[] = [
@@ -609,7 +621,7 @@ class ProductController extends Controller
             'customer_id' => $request->user()->id,
             'payment_status' => 'paid'])->first();
 
-        if (!isset($order->delivery_man_id)) {
+        if (! isset($order->delivery_man_id)) {
             return response()->json(['message' => translate('invalid_review')], 403);
         }
 
@@ -617,7 +629,7 @@ class ProductController extends Controller
             [
                 'delivery_man_id' => $order->delivery_man_id,
                 'customer_id' => $request->user()->id,
-                'order_id' => $order->id
+                'order_id' => $order->id,
             ],
             [
                 'customer_id' => $request->user()->id,
@@ -633,13 +645,15 @@ class ProductController extends Controller
     public function get_shipping_methods(Request $request)
     {
         $methods = ShippingMethod::where(['status' => 1])->get();
+
         return response()->json($methods, 200);
     }
 
-    public function get_discounted_product(Request $request):JsonResponse
+    public function get_discounted_product(Request $request): JsonResponse
     {
         $products = ProductManager::get_discounted_product($request, $request['limit'], $request['offset']);
         $products['products'] = Helpers::product_data_formatting($products['products'], true);
+
         return response()->json($products, 200);
     }
 
@@ -693,12 +707,12 @@ class ProductController extends Controller
             $products?->map(function ($product) {
                 $product['reviews_count'] = $product->reviews->count();
                 unset($product->reviews);
+
                 return $product;
             });
         } else {
             $products = [];
         }
-
 
         return response()->json($products, 200);
     }
@@ -706,8 +720,8 @@ class ProductController extends Controller
     public function just_for_you(Request $request): JsonResponse
     {
         $user = Helpers::getCustomerInformation($request);
-        $limit = (int)($request['limit'] ?? 8);
-        $offset = (int)($request['offset'] ?? 1);
+        $limit = (int) ($request['limit'] ?? 8);
+        $offset = (int) ($request['offset'] ?? 1);
 
         if ($user != 'offline') {
             $orders = $this->order->where(['customer_id' => $user->id])->with(['details'])->get();
@@ -719,12 +733,14 @@ class ProductController extends Controller
                         if (isset($product['category_id'])) {
                             $detail['category_id'] = $product['category_id'];
                         }
+
                         return $detail;
                     });
                     if ($order_details?->first() !== null) {
                         $order['id'] = $order_details?->first()?->id;
                         $order['category_id'] = $order_details?->first()?->category_id ?? null;
                     }
+
                     return $order;
                 });
 
@@ -737,13 +753,13 @@ class ProductController extends Controller
                 $ids = array_unique($categories);
 
                 $products = $this->product->with([
-                        'compareList' => function ($query) use ($user) {
-                            return $query->where('user_id', $user != 'offline' ? $user->id : 0);
-                        },
-                        'clearanceSale' => function ($query) {
-                            return $query->active();
-                        }
-                    ])
+                    'compareList' => function ($query) use ($user) {
+                        return $query->where('user_id', $user != 'offline' ? $user->id : 0);
+                    },
+                    'clearanceSale' => function ($query) {
+                        return $query->active();
+                    },
+                ])
                     ->withCount(['wishList' => function ($query) use ($user) {
                         $query->where('customer_id', $user != 'offline' ? $user->id : '0');
                     }])
@@ -751,21 +767,21 @@ class ProductController extends Controller
                     ->where(function ($query) use ($ids) {
                         foreach ($ids as $id) {
                             $query->orWhere('category_id', 'like', "%{$id}%")
-                                    ->orWhere('sub_category_id', 'like', "%{$id}%")
-                                    ->orWhere('sub_category_id', 'like', "%{$id}%");
+                                ->orWhere('sub_category_id', 'like', "%{$id}%")
+                                ->orWhere('sub_category_id', 'like', "%{$id}%");
                         }
                     })
                     ->inRandomOrder()
                     ->paginate($limit, ['*'], 'page', $offset);
             } else {
                 $products = $this->product->with([
-                        'compareList' => function ($query) use ($user) {
-                            return $query->where('user_id', $user != 'offline' ? $user->id : 0);
-                        },
-                        'clearanceSale' => function ($query) {
-                            return $query->active();
-                        }
-                    ])
+                    'compareList' => function ($query) use ($user) {
+                        return $query->where('user_id', $user != 'offline' ? $user->id : 0);
+                    },
+                    'clearanceSale' => function ($query) {
+                        return $query->active();
+                    },
+                ])
                     ->withCount(['wishList' => function ($query) use ($user) {
                         $query->where('customer_id', $user != 'offline' ? $user->id : '0');
                     }])
@@ -775,13 +791,13 @@ class ProductController extends Controller
             }
         } else {
             $products = $this->product->with([
-                    'compareList' => function ($query) use ($user) {
-                        return $query->where('user_id', $user != 'offline' ? $user->id : 0);
-                    },
-                    'clearanceSale' => function ($query) {
-                        return $query->active();
-                    }
-                ])
+                'compareList' => function ($query) use ($user) {
+                    return $query->where('user_id', $user != 'offline' ? $user->id : 0);
+                },
+                'clearanceSale' => function ($query) {
+                    return $query->active();
+                },
+            ])
                 ->withCount(['wishList' => function ($query) use ($user) {
                     $query->where('customer_id', $user != 'offline' ? $user->id : '0');
                 }])
@@ -794,9 +810,9 @@ class ProductController extends Controller
 
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
@@ -804,11 +820,12 @@ class ProductController extends Controller
     {
         $products = ProductManager::getBestSellingProductsList($request, $request['limit'], $request['offset']);
         $productsList = $products->total() > 0 ? Helpers::product_data_formatting($products->items(), true) : [];
+
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
-            'products' => $productsList
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
+            'products' => $productsList,
         ]);
     }
 
@@ -819,10 +836,11 @@ class ProductController extends Controller
             ->when($shop && $shop['author_type'] == 'admin', function ($query) {
                 return $query->where(['added_by' => 'admin']);
             })
-            ->when($shop && $shop['author_type'] != 'admin', function ($query) use ($request, $shop) {
+            ->when($shop && $shop['author_type'] != 'admin', function ($query) use ($shop) {
                 return $query->where(['added_by' => 'seller', 'user_id' => $shop['seller_id']]);
             })->pluck('id')->toArray();
         $authors = ProductManager::getProductAuthorList(productIds: $productIds);
+
         return response()->json($authors->values());
     }
 
@@ -833,10 +851,11 @@ class ProductController extends Controller
             ->when($shop && $shop['author_type'] == 'admin', function ($query) {
                 return $query->where(['added_by' => 'admin']);
             })
-            ->when($shop && $shop['author_type'] != 'admin', function ($query) use ($request, $shop) {
+            ->when($shop && $shop['author_type'] != 'admin', function ($query) use ($shop) {
                 return $query->where(['added_by' => 'seller', 'user_id' => $shop['seller_id']]);
             })->pluck('id')->toArray();
         $publishingHouseList = ProductManager::getPublishingHouseList(productIds: $productIds);
+
         return response()->json($publishingHouseList->values());
     }
 
@@ -844,6 +863,7 @@ class ProductController extends Controller
     {
         $productIds = StockClearanceProduct::active()->whereHas('setup', function ($query) {
             $addedBy = getWebConfig(name: 'stock_clearance_vendor_offer_in_homepage') ? ['admin', 'vendor'] : ['admin'];
+
             return $query->where('show_in_homepage', 1)->whereIn('setup_by', $addedBy);
         })->whereHas('product', function ($query) {
             return $query->active()->with(['reviews', 'rating', 'clearanceSale' => function ($query) {
@@ -855,13 +875,13 @@ class ProductController extends Controller
             return $query->active();
         }])->withCount('reviews');
 
-        $products = ProductManager::getPriorityWiseClearanceSaleProductsQuery(query: $basedQuery, dataLimit: (int)($request['limit'] ?? 10));
+        $products = ProductManager::getPriorityWiseClearanceSaleProductsQuery(query: $basedQuery, dataLimit: (int) ($request['limit'] ?? 10));
 
         return response()->json([
             'total_size' => $products->total(),
-            'limit' => (int)($request['limit'] ?? 10),
-            'offset' => (int)($request['offset'] ?? 1),
-            'products' => Helpers::product_data_formatting($products->items(), true)
+            'limit' => (int) ($request['limit'] ?? 10),
+            'offset' => (int) ($request['offset'] ?? 1),
+            'products' => Helpers::product_data_formatting($products->items(), true),
         ]);
     }
 }

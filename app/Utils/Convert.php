@@ -58,6 +58,7 @@ class Convert
         } else {
             $value = floatval($amount);
         }
+
         return round($value, 2);
     }
 

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface LoginSetupRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface LoginSetupRepositoryInterface extends RepositoryInterface {}

@@ -17,8 +17,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $multiply_qty
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class CategoryShippingCost extends Model
 {
@@ -41,7 +39,7 @@ class CategoryShippingCost extends Model
         'multiply_qty',
     ];
 
-    public function category():BelongsTo
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'category_id');
     }

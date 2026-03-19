@@ -4,7 +4,6 @@ namespace App\Services;
 
 class VendorPaymentInformationService
 {
-
     public function getAddData(object|array $request, object|array $fields = []): array
     {
         $dynamicFields = [];

@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 /**
  * Class RobotsMetaContent
  *
- * @package App\Models
  * @property int $id
  * @property string|null $page_title
  * @property string|null $page_name
@@ -87,8 +86,9 @@ class RobotsMetaContent extends Model
     {
         $value = $this->meta_image;
         if (count($this->storage) > 0 && $this->storageConnectionCheck() == 's3') {
-            $storage = $this->storage->where('key','meta_image')->first();
+            $storage = $this->storage->where('key', 'meta_image')->first();
         }
+
         return $this->storageLink('robots-meta-content', $value, $storage['value'] ?? 'public');
     }
 
@@ -117,5 +117,4 @@ class RobotsMetaContent extends Model
             cacheRemoveByType(type: 'robots_meta_contents');
         });
     }
-
 }

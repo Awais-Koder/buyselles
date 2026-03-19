@@ -16,7 +16,7 @@ class DeliveryZipCodeAddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'zipcode' => 'required'
+            'zipcode' => 'required',
         ];
     }
 
@@ -26,5 +26,4 @@ class DeliveryZipCodeAddRequest extends FormRequest
             'zipcode.required' => translate('the_zipcode_field_is_required'),
         ];
     }
-
 }

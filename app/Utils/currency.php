@@ -2,15 +2,12 @@
 
 use App\Models\Currency;
 
-if (!function_exists('loadCurrency')) {
-    /**
-     * @return void
-     */
+if (! function_exists('loadCurrency')) {
     function loadCurrency(): void
     {
         $defaultCurrency = getWebConfig(name: 'system_default_currency');
         $currentCurrencyInfo = session('system_default_currency_info');
-        if (!session()->has('system_default_currency_info') || $defaultCurrency != $currentCurrencyInfo['id']) {
+        if (! session()->has('system_default_currency_info') || $defaultCurrency != $currentCurrencyInfo['id']) {
             $id = getWebConfig(name: 'system_default_currency');
             $currency = Currency::find($id);
             session()->put('system_default_currency_info', $currency);
@@ -25,13 +22,10 @@ if (!function_exists('loadCurrency')) {
     }
 }
 
-if (!function_exists('currencyConverter')) {
+if (! function_exists('currencyConverter')) {
     /** system default currency to usd convert
-     * @param float|null $amount
-     * @param string $to
-     * @return float|int
      */
-    function currencyConverter(float|null $amount = 0, string $to = USD): float|int
+    function currencyConverter(?float $amount = 0, string $to = USD): float|int
     {
         $amount = is_null($amount) ? 0 : $amount;
         $currencyModel = getWebConfig('currency_model');
@@ -47,15 +41,14 @@ if (!function_exists('currencyConverter')) {
         } else {
             $value = $amount;
         }
+
         return $value;
     }
 }
 
-if (!function_exists('usdToDefaultCurrency')) {
+if (! function_exists('usdToDefaultCurrency')) {
     /**
      * system usd currency to default convert
-     * @param float|int|null $amount
-     * @return float|int
      */
     function usdToDefaultCurrency(float|int|null $amount = 0): float|int
     {
@@ -82,15 +75,14 @@ if (!function_exists('usdToDefaultCurrency')) {
         }
 
         $decimalPointSettings = getWebConfig('decimal_point_settings') ?? 2;
+
         return round($value, $decimalPointSettings);
     }
 }
 
-if (!function_exists('webCurrencyConverter')) {
+if (! function_exists('webCurrencyConverter')) {
     /**
      * currency convert for web panel
-     * @param string|int|float|null $amount
-     * @return float|string
      */
     function webCurrencyConverter(string|int|float|null $amount = 0): float|string
     {
@@ -109,48 +101,43 @@ if (!function_exists('webCurrencyConverter')) {
             $rate = 1;
         }
         $decimalPointSettings = getWebConfig('decimal_point_settings') ?? 2;
+
         return setCurrencySymbol(amount: round($amount * $rate, $decimalPointSettings), currencyCode: getCurrencyCode(type: 'web'), type: 'web');
     }
 }
 
-if (!function_exists('localToDefaultCurrency')) {
+if (! function_exists('localToDefaultCurrency')) {
     /** system default currency to usd convert
-     * @param float|null $amount
-     * @param string $type
-     * @return float|int|string
      */
-    function localToDefaultCurrency(float|null $amount = 0, string $type = 'default'): float|int|string
+    function localToDefaultCurrency(?float $amount = 0, string $type = 'default'): float|int|string
     {
         $value = is_null($amount) || $amount != 0 ? $amount / session('currency_exchange_rate') : 0;
         if ($type == 'web') {
             return setCurrencySymbol(amount: $value, currencyCode: getCurrencyCode(type: 'web'), type: 'web');
         }
+
         return $value;
     }
 }
 
-if (!function_exists('loyaltyPointToLocalCurrency')) {
+if (! function_exists('loyaltyPointToLocalCurrency')) {
     /** system default currency to usd convert
-     * @param float|null $amount
-     * @param string $type
-     * @return string
      */
-    function loyaltyPointToLocalCurrency(float|null $amount = 0, string $type = 'default'): string
+    function loyaltyPointToLocalCurrency(?float $amount = 0, string $type = 'default'): string
     {
         $loyaltyPointExchangeRate = getWebConfig(name: 'loyalty_point_exchange_rate');
         $value = ((session('currency_exchange_rate') * 1) / $loyaltyPointExchangeRate) * $amount;
         if ($type == 'web') {
             return setCurrencySymbol(amount: $value, currencyCode: session('currency_code'), type: 'web');
         }
+
         return $value;
     }
 }
 
-if (!function_exists('webCurrencyConverterOnlyDigit')) {
+if (! function_exists('webCurrencyConverterOnlyDigit')) {
     /**
      * currency convert for web panel
-     * @param string|int|float|null $amount
-     * @return float|string
      */
     function webCurrencyConverterOnlyDigit(string|int|float|null $amount = 0): float|string
     {
@@ -170,16 +157,14 @@ if (!function_exists('webCurrencyConverterOnlyDigit')) {
         }
 
         $decimalPointSettings = getWebConfig('decimal_point_settings') ?? 2;
+
         return round($amount * $rate, $decimalPointSettings);
     }
 }
 
-if (!function_exists('usdToAnotherCurrencyConverter')) {
+if (! function_exists('usdToAnotherCurrencyConverter')) {
     /**
      * currency convert for web panel
-     * @param string $currencyCode
-     * @param string|int|float|null $amount
-     * @return float|string
      */
     function usdToAnotherCurrencyConverter(string $currencyCode, string|int|float|null $amount = 0): float|string
     {
@@ -190,27 +175,19 @@ if (!function_exists('usdToAnotherCurrencyConverter')) {
         $myCurrency = Currency::where(['code' => $currencyCode])->first()->exchange_rate;
         $rate = $myCurrency / $usd;
         $decimalPointSettings = getWebConfig('decimal_point_settings') ?? 2;
+
         return round($amount * $rate, $decimalPointSettings);
     }
 }
 
-if (!function_exists('exchangeRate')) {
-    /**
-     * @param string $currencyCode
-     * @return float|int
-     */
+if (! function_exists('exchangeRate')) {
     function exchangeRate(string $currencyCode = USD): float|int
     {
         return Currency::where('code', $currencyCode)->first()->exchange_rate ?? 1;
     }
 }
 
-if (!function_exists('getCurrencySymbol')) {
-    /**
-     * @param string $currencyCode
-     * @param string $type
-     * @return float|int|string
-     */
+if (! function_exists('getCurrencySymbol')) {
     function getCurrencySymbol(string $currencyCode = USD, string $type = 'default'): float|int|string
     {
         loadCurrency();
@@ -220,34 +197,29 @@ if (!function_exists('getCurrencySymbol')) {
             $systemDefaultCurrencyInfo = session('system_default_currency_info');
             $currentSymbol = $systemDefaultCurrencyInfo->symbol;
         }
+
         return $currentSymbol;
     }
 }
 
-if (!function_exists('setCurrencySymbol')) {
-    /**
-     * @param string|int|float $amount
-     * @param string $currencyCode
-     * @param string $type
-     * @return string
-     */
+if (! function_exists('setCurrencySymbol')) {
     function setCurrencySymbol(string|int|float $amount, string $currencyCode = USD, string $type = 'default'): string
     {
         $decimalPointSettings = getWebConfig('decimal_point_settings');
         $position = getWebConfig('currency_symbol_position');
         if ($position === 'left') {
-            $string = getCurrencySymbol(currencyCode: $currencyCode, type: $type) . '' . number_format($amount, (!empty($decimalPointSettings) ? $decimalPointSettings : 0));
+            $string = getCurrencySymbol(currencyCode: $currencyCode, type: $type).''.number_format($amount, (! empty($decimalPointSettings) ? $decimalPointSettings : 0));
         } else {
-            $string = number_format($amount, !empty($decimalPointSettings) ? $decimalPointSettings : 0) . getCurrencySymbol(currencyCode: $currencyCode, type: $type);
+            $string = number_format($amount, ! empty($decimalPointSettings) ? $decimalPointSettings : 0).getCurrencySymbol(currencyCode: $currencyCode, type: $type);
         }
+
         return $string;
     }
 }
 
-if (!function_exists('getCurrencyCode')) {
+if (! function_exists('getCurrencyCode')) {
     /**
-     * @param string $type default,web
-     * @return string
+     * @param  string  $type  default,web
      */
     function getCurrencyCode(string $type = 'default'): string
     {
@@ -261,27 +233,24 @@ if (!function_exists('getCurrencyCode')) {
                 $currencyCode = Currency::where('id', $currencyId)->first()->code;
             }
         }
+
         return $currencyCode;
     }
 }
 
-if (!function_exists('getFormatCurrency')) {
-    /**
-     * @param string|int|float $amount
-     * @return string
-     */
+if (! function_exists('getFormatCurrency')) {
     function getFormatCurrency(string|int|float $amount): string
     {
-        $suffixes = ["1t+" => 1000000000000, "B+" => 1000000000, "M+" => 1000000, "K+" => 1000];
+        $suffixes = ['1t+' => 1000000000000, 'B+' => 1000000000, 'M+' => 1000000, 'K+' => 1000];
         foreach ($suffixes as $suffix => $factor) {
             if ($amount >= $factor) {
                 $div = $amount / $factor;
-                $formattedValue = number_format($div, 1) . $suffix;
+                $formattedValue = number_format($div, 1).$suffix;
                 break;
             }
         }
 
-        if (!isset($formattedValue)) {
+        if (! isset($formattedValue)) {
             $formattedValue = number_format($amount, 2);
         }
 
@@ -289,23 +258,24 @@ if (!function_exists('getFormatCurrency')) {
     }
 }
 
-
-if (!function_exists('getProductPriceByType')) {
+if (! function_exists('getProductPriceByType')) {
     function getProductPriceByType($product, $type, $result = 'value', $price = 0, $from = 'web'): float|int|string
     {
         if ($type == 'discount') {
             if ((isset($product['clearanceSale']) && $product['clearanceSale']) || isset($product['clearance_sale']) && $product['clearance_sale']) {
                 $clearanceSale = $product['clearanceSale'] ?? $product['clearance_sale'];
                 if ($clearanceSale['discount_type'] == 'percentage') {
-                    $amount = round($clearanceSale['discount_amount'], (!empty($decimalPointSettings) ? $decimalPointSettings: 0));
+                    $amount = round($clearanceSale['discount_amount'], (! empty($decimalPointSettings) ? $decimalPointSettings : 0));
+
                     return $result == 'value' ? $amount : $amount.'%';
-                } else if ($clearanceSale['discount_type'] =='flat') {
+                } elseif ($clearanceSale['discount_type'] == 'flat') {
                     return $result == 'value' ? $clearanceSale['discount_amount'] : webCurrencyConverter(amount: $clearanceSale['discount_amount']);
                 }
-            } else if (isset($product['discount_type']) && $product['discount_type'] == 'percent') {
-                $amount = round($product['discount'], (!empty($decimalPointSettings) ? $decimalPointSettings: 0));
+            } elseif (isset($product['discount_type']) && $product['discount_type'] == 'percent') {
+                $amount = round($product['discount'], (! empty($decimalPointSettings) ? $decimalPointSettings : 0));
+
                 return $result == 'value' ? $amount : $amount.'%';
-            } else if (isset($product['discount_type']) && $product['discount_type'] =='flat') {
+            } elseif (isset($product['discount_type']) && $product['discount_type'] == 'flat') {
                 return $result == 'value' ? $product['discount'] : webCurrencyConverter(amount: $product['discount']);
             }
         }
@@ -316,6 +286,7 @@ if (!function_exists('getProductPriceByType')) {
                 $clearanceSale = $product['clearanceSale'] ?? $product['clearance_sale'];
                 $discountType = $clearanceSale['discount_type'];
             }
+
             return $discountType;
         }
 
@@ -330,6 +301,7 @@ if (!function_exists('getProductPriceByType')) {
             if ($from == 'panel') {
                 return $result == 'value' ? $amount : setCurrencySymbol(amount: usdToDefaultCurrency(amount: $amount), currencyCode: getCurrencyCode());
             }
+
             return $result == 'value' ? $amount : webCurrencyConverter(amount: $amount);
         }
 
@@ -339,8 +311,8 @@ if (!function_exists('getProductPriceByType')) {
                 $discountAmount = 0;
                 if ($clearanceSale['discount_type'] == 'percentage') {
                     $discountAmount = ($price * getProductPriceByType(product: $product, type: 'discount', result: 'value')) / 100;
-                } else if ($clearanceSale['discount_type'] == 'flat') {
-                    $discountAmount =  $clearanceSale['discount_amount'];
+                } elseif ($clearanceSale['discount_type'] == 'flat') {
+                    $discountAmount = $clearanceSale['discount_amount'];
                 }
 
                 $amount = floatval($discountAmount);
@@ -350,10 +322,10 @@ if (!function_exists('getProductPriceByType')) {
             if ($from == 'panel') {
                 return $result == 'value' ? $amount : setCurrencySymbol(amount: usdToDefaultCurrency(amount: $amount), currencyCode: getCurrencyCode());
             }
+
             return $result == 'value' ? $amount : webCurrencyConverter(amount: $amount);
         }
 
         return 0;
     }
 }
-

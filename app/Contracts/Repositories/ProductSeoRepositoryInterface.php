@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface ProductSeoRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface ProductSeoRepositoryInterface extends RepositoryInterface {}

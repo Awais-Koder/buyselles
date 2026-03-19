@@ -12,9 +12,7 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
 {
     public function __construct(
         private readonly RefundRequest $refundRequest,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,7 +27,7 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->refundRequest->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -46,11 +44,12 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
             ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where(['id' => $filters['id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -65,9 +64,9 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
                         return $query->where(['seller_id' => $whereHasFilters['seller_id']]);
                     });
             });
-        })->when(isset($searchValue), function ($query) use ($searchValue, $relations) {
+        })->when(isset($searchValue), function ($query) use ($searchValue) {
             $key = explode(' ', $searchValue);
-            $query->where(function ($subQuery) use ($key, $relations) {
+            $query->where(function ($subQuery) use ($key) {
                 foreach ($key as $value) {
                     $subQuery->orWhere('order_id', 'like', "%{$value}%")
                         ->orWhere('id', 'like', "%{$value}%")
@@ -82,15 +81,16 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
         })->when(isset($filters['status']), function ($query) use ($filters) {
             $query->where(['status' => $filters['status']]);
         })->when(isset($filters['from_date']) && isset($filters['to_date']), function ($query) use ($filters) {
-            $query->whereBetween('created_at', [$filters['from_date'] . ' 00:00:00', $filters['to_date']   . ' 23:59:59']);
-        })->when(isset($filters['from_date']) && !isset($filters['to_date']), function ($query) use ($filters) {
+            $query->whereBetween('created_at', [$filters['from_date'].' 00:00:00', $filters['to_date'].' 23:59:59']);
+        })->when(isset($filters['from_date']) && ! isset($filters['to_date']), function ($query) use ($filters) {
             $query->whereDate('created_at', '>=', $filters['from_date']);
-        })->when(!isset($filters['from_date']) && isset($filters['to_date']), function ($query) use ($filters) {
+        })->when(! isset($filters['from_date']) && isset($filters['to_date']), function ($query) use ($filters) {
             $query->whereDate('created_at', '<=', $filters['to_date']);
         })
-        ->orderBy(key($orderBy), current($orderBy));
+            ->orderBy(key($orderBy), current($orderBy));
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -109,6 +109,7 @@ class RefundRequestRepository implements RefundRequestRepositoryInterface
     public function delete(array $params): bool
     {
         $this->refundRequest->where($params)->delete();
+
         return true;
     }
 }

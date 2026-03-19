@@ -2,12 +2,7 @@
 
 namespace App\Traits;
 
-use App\Contracts\Repositories\AdminRepositoryInterface;
-use App\Models\Admin;
 use App\Models\Product;
-use App\Models\Review;
-use App\Models\Seller;
-use App\Models\Shop;
 use Illuminate\Support\Str;
 
 trait GeneratesUniqueSlug
@@ -15,15 +10,13 @@ trait GeneratesUniqueSlug
     /**
      * Generate a unique slug for a given model type.
      *
-     * @param string|null $name
-     * @param string|null $type (e.g. 'brand', 'category', 'product')
-     * @param int|null $id The record ID to exclude (for updates)
-     * @return string
+     * @param  string|null  $type  (e.g. 'brand', 'category', 'product')
+     * @param  int|null  $id  The record ID to exclude (for updates)
      */
     public function generateModelUniqueSlug(?string $name = null, ?string $type = null, ?int $id = null): string
     {
         if (is_null($name) || is_null($type)) {
-            return Str::slug(Str::random(10) . '-' . time());
+            return Str::slug(Str::random(10).'-'.time());
         }
 
         $modelClass = $this->resolveModelClass($type);
@@ -33,11 +26,11 @@ trait GeneratesUniqueSlug
         $count = 2;
 
         while (
-        $modelClass::where('slug', $slug)
-            ->when($id, fn($q) => $q->where('id', '!=', $id))
-            ->exists()
+            $modelClass::where('slug', $slug)
+                ->when($id, fn ($q) => $q->where('id', '!=', $id))
+                ->exists()
         ) {
-            $slug = $originalSlug . '-' . str_pad($count, 2, '0', STR_PAD_LEFT);
+            $slug = $originalSlug.'-'.str_pad($count, 2, '0', STR_PAD_LEFT);
             $count++;
         }
 
@@ -46,9 +39,6 @@ trait GeneratesUniqueSlug
 
     /**
      * Resolve the model class based on the given type.
-     *
-     * @param string $type
-     * @return string
      */
     private function resolveModelClass(string $type): string
     {

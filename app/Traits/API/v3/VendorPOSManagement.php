@@ -23,11 +23,11 @@ trait VendorPOSManagement
             }
         }
 
-        if ($product['product_type'] == 'digital' && $product['digital_product_type'] == 'ready_product' && !empty($product['digital_file_ready']) && !isset($cartItem['variant_key'])) {
+        if ($product['product_type'] == 'digital' && $product['digital_product_type'] == 'ready_product' && ! empty($product['digital_file_ready']) && ! isset($cartItem['variant_key'])) {
             $product['storage_path'] = $product['digital_file_ready_storage_type'] ?? 'public';
         }
 
-        if ($product['product_type'] == 'digital' && isset($cartItem['variant_key']) && !empty($cartItem['variant_key'])) {
+        if ($product['product_type'] == 'digital' && isset($cartItem['variant_key']) && ! empty($cartItem['variant_key'])) {
             foreach ($product['digitalVariation'] as $digitalVariation) {
                 if ($digitalVariation['variant_key'] == $cartItem['variant_key']) {
                     $digitalProductVariation = $this->digitalProductVariationRepo->getFirstWhere(
@@ -37,7 +37,7 @@ trait VendorPOSManagement
                     if ($product['digital_product_type'] == 'ready_product' && $digitalProductVariation) {
                         $getStoragePath = $this->storageRepo->getFirstWhere(params: [
                             'data_id' => $digitalProductVariation['id'],
-                            "data_type" => "App\Models\DigitalProductVariation",
+                            'data_type' => "App\Models\DigitalProductVariation",
                         ]);
 
                         $product['digital_file_ready'] = $digitalProductVariation['file'];
@@ -54,6 +54,7 @@ trait VendorPOSManagement
         }
 
         $product['unit_price_amount'] = $unitPrice;
+
         return [
             'tax' => 0,
             'price' => $price,

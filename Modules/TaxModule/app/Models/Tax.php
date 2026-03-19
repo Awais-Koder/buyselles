@@ -2,8 +2,8 @@
 
 namespace Modules\TaxModule\app\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Modules\TaxModule\app\Services\SystemTaxSetupService;
 
 class Tax extends Model
@@ -30,5 +30,4 @@ class Tax extends Model
             SystemTaxSetupService::clearTaxSystemTypeCache();
         });
     }
-
 }

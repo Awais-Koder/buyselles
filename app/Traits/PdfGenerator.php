@@ -4,7 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Storage;
 
-trait  PdfGenerator
+trait PdfGenerator
 {
     public static function generatePdf($view, $filePrefix, $filePostfix, $pdfType = null, $requestFrom = 'admin'): string
     {
@@ -18,7 +18,7 @@ trait  PdfGenerator
         $mpdf_view = $view;
         $mpdf_view = $mpdf_view->render();
         $mpdf->WriteHTML($mpdf_view);
-        $mpdf->Output($filePrefix . $filePostfix . '.pdf', 'D');
+        $mpdf->Output($filePrefix.$filePostfix.'.pdf', 'D');
     }
 
     public static function storePdf($view, $filePrefix, $filePostfix, $pdfType = null, $requestFrom = 'admin'): string
@@ -34,13 +34,14 @@ trait  PdfGenerator
         $mpdf_view = $mpdf_view->render();
         $mpdf->WriteHTML($mpdf_view);
 
-        $fileName = $filePrefix . $filePostfix . '.pdf';
+        $fileName = $filePrefix.$filePostfix.'.pdf';
         $directory = 'invoices';
-        if (!Storage::disk('public')->exists($directory)) {
+        if (! Storage::disk('public')->exists($directory)) {
             Storage::disk('public')->makeDirectory($directory);
         }
-        $filePath = Storage::disk('public')->path($directory . '/' . $fileName);
+        $filePath = Storage::disk('public')->path($directory.'/'.$fileName);
         $mpdf->Output($filePath, \Mpdf\Output\Destination::FILE);
+
         return $filePath;
     }
 
@@ -55,13 +56,13 @@ trait  PdfGenerator
                     <table width="100%" style="font-size:10px;color:#303030;table-layout:fixed;">
                         <tr>
                             <td style="width:33.33%;padding:8px;text-align:left;">
-                                ' . url('/') . '
+                                '.url('/').'
                             </td>
                             <td style="width:33.33%;padding:8px;text-align:center;">
-                                ' . $getCompanyPhone . '
+                                '.$getCompanyPhone.'
                             </td>
                             <td style="width:33.33%;padding:8px;text-align:right;">
-                                ' . $getCompanyEmail . '
+                                '.$getCompanyEmail.'
                             </td>
                         </tr>
                     </table>
@@ -72,13 +73,13 @@ trait  PdfGenerator
                     <table width="100%" style="font-size:10px;color:#303030;table-layout:fixed;">
                         <tr>
                             <td style="width:33.33%;padding:8px;text-align:left;">
-                                ' . url('/') . '
+                                '.url('/').'
                             </td>
                             <td style="width:33.33%;padding:8px;text-align:center;">
-                                ' . $getCompanyPhone . '
+                                '.$getCompanyPhone.'
                             </td>
                             <td style="width:33.33%;padding:8px;text-align:right;">
-                                ' . $getCompanyEmail . '
+                                '.$getCompanyEmail.'
                             </td>
                         </tr>
                     </table>

@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\TaxModule\app\Http\Controllers\Admin\Reports\AdminTaxReportController;
+use Modules\TaxModule\app\Http\Controllers\Admin\Reports\VendorTaxReportController;
 use Modules\TaxModule\app\Http\Controllers\SystemTaxVatSetupController;
 use Modules\TaxModule\app\Http\Controllers\TaxVatController;
-use Modules\TaxModule\app\Http\Controllers\Admin\Reports\VendorTaxReportController;
 
 /*
 |--------------------------------------------------------------------------

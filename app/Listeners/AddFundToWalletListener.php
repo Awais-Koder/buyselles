@@ -21,9 +21,6 @@ class AddFundToWalletListener
 
     /**
      * Handle the event.
-     *
-     * @param AddFundToWalletEvent $event
-     * @return void
      */
     public function handle(AddFundToWalletEvent $event): void
     {

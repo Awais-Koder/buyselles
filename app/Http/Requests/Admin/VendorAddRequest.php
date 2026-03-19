@@ -34,7 +34,7 @@ class VendorAddRequest extends FormRequest
             'email' => 'required|unique:sellers',
             'image' => getRulesStringForImageValidation(
                 rules: ['required'],
-                skipMimes: ['.svg','.gif'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed : true
             ),
@@ -43,19 +43,19 @@ class VendorAddRequest extends FormRequest
             'shop_address' => 'required',
             'logo' => getRulesStringForImageValidation(
                 rules: ['required'],
-                skipMimes: ['.svg','.gif'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed : true
             ),
             'banner' => getRulesStringForImageValidation(
                 rules: ['required'],
-                skipMimes: ['.svg','.gif'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed : true
             ),
             'bottom_banner' => getRulesStringForImageValidation(
                 rules: ['nullable'],
-                skipMimes: ['.svg','.gif'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed : true
             ),
@@ -77,24 +77,24 @@ class VendorAddRequest extends FormRequest
             'email.required' => translate('The_email_field_is_required'),
             'email.unique' => translate('The_email_has_already_been_taken'),
             'image.required' => translate('The_image_field_is_required'),
-            'image.mimes' => translate('The_image_type_must_be_'). getFileUploadFormats(skip: ['.svg','.gif'], asMessage: 'true'),
-            'image.max' => translate('vendor_image_may_not_be_greater_than_'). getFileUploadMaxSize()."MB",
+            'image.mimes' => translate('The_image_type_must_be_').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: 'true'),
+            'image.max' => translate('vendor_image_may_not_be_greater_than_').getFileUploadMaxSize().'MB',
             'password.required' => translate('The_password_field_is_required'),
             'password.same' => translate('The_password_and_confirm_password_must_match'),
             'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter').','.translate('_one_lowercase_letter').','.translate('_one_digit_').','.translate('_one_special_character').','.translate('_and_no_spaces').'.',
             'shop_name.required' => translate('The_shop_name_field_is_required'),
             'shop_address.required' => translate('The_shop_address_field_is_required'),
-            'logo.mimes' => translate('The_logo_type_must_be_'). getFileUploadFormats(skip: ['.svg','.gif'], asMessage: 'true'),
-            'logo.max' => translate('shop_logo_may_not_be_greater_than_'). getFileUploadMaxSize()."MB",
-            'banner.mimes' => translate('The_banner_type_must_be_').getFileUploadFormats(skip: ['.svg','.gif'], asMessage: 'true'),
-            'banner.max' => translate('shop_cover_may_not_be_greater_than_'). getFileUploadMaxSize()."MB",
-            'bottom_banner.mimes' => translate('The_bottom_banner_type_must_be_').getFileUploadFormats(skip: ['.svg','.gif'], asMessage: 'true'),
-            'bottom_banner.max' => translate('bottom_banner_may_not_be_greater_than_').getFileUploadMaxSize()."MB",
+            'logo.mimes' => translate('The_logo_type_must_be_').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: 'true'),
+            'logo.max' => translate('shop_logo_may_not_be_greater_than_').getFileUploadMaxSize().'MB',
+            'banner.mimes' => translate('The_banner_type_must_be_').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: 'true'),
+            'banner.max' => translate('shop_cover_may_not_be_greater_than_').getFileUploadMaxSize().'MB',
+            'bottom_banner.mimes' => translate('The_bottom_banner_type_must_be_').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: 'true'),
+            'bottom_banner.max' => translate('bottom_banner_may_not_be_greater_than_').getFileUploadMaxSize().'MB',
             'tax_identification_number.string' => translate('The_tin_identification_number_must_be_string'),
             'tin_expire_date.date' => translate('The_tin_expire_date_must_be_a_valid_date_format'),
             'tin_expire_date.after_or_equal' => translate('The_tin_expire_date_must_be_a_future_date'),
             'tin_certificate.mimes' => translate('The_tin_certificate_must_be_a_file_of_type_pdf_doc_docx_jpg_jpeg'),
-            'tin_certificate.max' => translate('The_tin_certificate_must_not_exceed_'). getFileUploadMaxSize(type: 'file'). "MB",
+            'tin_certificate.max' => translate('The_tin_certificate_must_not_exceed_').getFileUploadMaxSize(type: 'file').'MB',
         ];
     }
 

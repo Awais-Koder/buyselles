@@ -29,10 +29,10 @@ use Illuminate\Support\Facades\DB;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-
 class EmailTemplate extends Model
 {
     use HasFactory,StorageTrait;
+
     protected $fillable = [
         'template_name',
         'user_type',
@@ -54,6 +54,7 @@ class EmailTemplate extends Model
         'order_information_status',
         'status',
     ];
+
     protected $casts = [
         'template_name' => 'string',
         'user_type' => 'string',
@@ -77,60 +78,71 @@ class EmailTemplate extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
     public function translations(): MorphMany
     {
         return $this->morphMany('App\Models\Translation', 'translationable');
     }
+
     public function translationCurrentLanguage(): MorphMany
     {
         return $this->morphMany('App\Models\Translation', 'translationable')->where('locale', getDefaultLanguage());
     }
-    public function getImageFullUrlAttribute():string|null|array
+
+    public function getImageFullUrlAttribute(): string|null|array
     {
         $value = $this->image;
         if (count($this->storage) > 0 && $this->storageConnectionCheck() == 's3') {
             foreach ($this->storage as $storage) {
                 if ($storage['key'] == 'image') {
-                    return $this->storageLink('email-template',$value,$storage['value']);
+                    return $this->storageLink('email-template', $value, $storage['value']);
                 }
             }
         }
-        return $this->storageLink('email-template',$value,'public');
+
+        return $this->storageLink('email-template', $value, 'public');
     }
-    public function getLogoFullUrlAttribute():string|null|array
+
+    public function getLogoFullUrlAttribute(): string|null|array
     {
         $value = $this->logo;
         if (count($this->storage) > 0 && $this->storageConnectionCheck() == 's3') {
             foreach ($this->storage as $storage) {
                 if ($storage['key'] == 'logo') {
-                    return $this->storageLink('email-template',$value,$storage['value']);
+                    return $this->storageLink('email-template', $value, $storage['value']);
                 }
             }
         }
-        return $this->storageLink('email-template',$value,'public');
+
+        return $this->storageLink('email-template', $value, 'public');
     }
-    public function getBannerImageFullUrlAttribute():string|null|array
+
+    public function getBannerImageFullUrlAttribute(): string|null|array
     {
         $value = $this->banner_image;
         if (count($this->storage) > 0 && $this->storageConnectionCheck() == 's3') {
             foreach ($this->storage as $storage) {
                 if ($storage['key'] == 'banner_image') {
-                    return $this->storageLink('email-template',$value,$storage['value']);
+                    return $this->storageLink('email-template', $value, $storage['value']);
                 }
             }
         }
-        return $this->storageLink('email-template',$value,'public');
+
+        return $this->storageLink('email-template', $value, 'public');
     }
-    protected $with = ['translations','translationCurrentLanguage','storage'];
-    protected $appends = ['logo_full_url','image_full_url','banner_image_full_url'];
+
+    protected $with = ['translations', 'translationCurrentLanguage', 'storage'];
+
+    protected $appends = ['logo_full_url', 'image_full_url', 'banner_image_full_url'];
+
     protected static function boot(): void
     {
         parent::boot();
         static::saved(function ($model) {
-            $fileArray =['logo','image','banner_image'];
+            $fileArray = ['logo', 'image', 'banner_image'];
             $storage = config('filesystems.disks.default') ?? 'public';
             foreach ($fileArray as $file) {
-                if($model->isDirty($file)){
+                if ($model->isDirty($file)) {
                     $value = $storage;
                     DB::table('storages')->updateOrInsert([
                         'data_type' => get_class($model),

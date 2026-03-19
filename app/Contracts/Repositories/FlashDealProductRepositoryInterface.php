@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface FlashDealProductRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface FlashDealProductRepositoryInterface extends RepositoryInterface {}

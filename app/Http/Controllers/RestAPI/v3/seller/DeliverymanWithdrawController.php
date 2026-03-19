@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\DeliveryMan;
 use App\Models\DeliverymanWallet;
 use App\Models\WithdrawRequest;
-use App\Utils\Convert;
 use App\Utils\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,11 +16,11 @@ class DeliverymanWithdrawController extends Controller
     {
         $seller = $request->seller;
         $status = null;
-        if($request->status == 'approved'){
+        if ($request->status == 'approved') {
             $status = 1;
-        }elseif($request->status == 'denied'){
+        } elseif ($request->status == 'denied') {
             $status = 2;
-        }elseif($request->status == 'pending'){
+        } elseif ($request->status == 'pending') {
             $status = '0';
         }
 
@@ -31,17 +30,18 @@ class DeliverymanWithdrawController extends Controller
             ->when($request->status == 'all', function ($query) {
                 return $query;
             })
-            ->when($status!=null, function ($query) use($status){
+            ->when($status != null, function ($query) use ($status) {
                 return $query->where('approved', $status);
             })
             ->latest()
             ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
-        $data = array();
+        $data = [];
         $data['total_size'] = $withdraws->total();
         $data['limit'] = $request['limit'];
         $data['offset'] = $request['offset'];
         $data['withdraws'] = $withdraws->items();
+
         return response()->json($data, 200);
     }
 
@@ -53,7 +53,7 @@ class DeliverymanWithdrawController extends Controller
             ->where(['seller_id' => $seller->id])
             ->find($id);
 
-        return response()->json(['details'=>$details], 200);
+        return response()->json(['details' => $details], 200);
     }
 
     public function status_update(Request $request): JsonResponse
@@ -61,7 +61,7 @@ class DeliverymanWithdrawController extends Controller
         $id = $request->id;
         $seller = $request->seller;
         $withdraw = WithdrawRequest::where(['seller_id' => $seller->id])->find($id);
-        if(!$withdraw){
+        if (! $withdraw) {
             return response()->json(['message' => translate('Invalid_withdraw!')], 403);
         }
         $withdraw->approved = $request->approved;
@@ -71,15 +71,15 @@ class DeliverymanWithdrawController extends Controller
         $delivery_man = DeliveryMan::find($withdraw->delivery_man_id);
         $delivery_man_fcm_token = $delivery_man?->fcm_token;
 
-        if(!empty($delivery_man_fcm_token)) {
+        if (! empty($delivery_man_fcm_token)) {
             $lang = $delivery_man?->app_language ?? $lang;
-            $value_delivery_man = Helpers::push_notificatoin_message('withdraw_request_status_message','delivery_man',$lang);
+            $value_delivery_man = Helpers::push_notificatoin_message('withdraw_request_status_message', 'delivery_man', $lang);
             if ($value_delivery_man != null) {
                 $data = [
-                    'title' => translate('withdraw_request_' . ($request->approved == 1 ? 'approved' : 'denied')),
+                    'title' => translate('withdraw_request_'.($request->approved == 1 ? 'approved' : 'denied')),
                     'description' => $value_delivery_man,
                     'image' => '',
-                    'type' => 'notification'
+                    'type' => 'notification',
                 ];
                 Helpers::send_push_notif_to_device($delivery_man_fcm_token, $data);
             }
@@ -87,14 +87,14 @@ class DeliverymanWithdrawController extends Controller
 
         $wallet = DeliverymanWallet::where('delivery_man_id', $withdraw->delivery_man_id)->first();
         if ($request->approved == 1) {
-            $wallet->total_withdraw   += $withdraw['amount'];
+            $wallet->total_withdraw += $withdraw['amount'];
             $wallet->pending_withdraw -= $withdraw['amount'];
-            $wallet->current_balance  -= $withdraw['amount'];
+            $wallet->current_balance -= $withdraw['amount'];
             $wallet->save();
             $withdraw->save();
 
             return response()->json(['message' => translate('Delivery_man_payment_has_been_approved_successfully!')], 200);
-        }else{
+        } else {
             $wallet->pending_withdraw -= $withdraw['amount'];
             $wallet->save();
             $withdraw->save();

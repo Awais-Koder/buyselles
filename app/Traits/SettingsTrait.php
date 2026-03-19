@@ -22,11 +22,12 @@ trait SettingsTrait
         if (preg_match($pattern, $contents)) {
             $contents = preg_replace($pattern, $replacement, $contents);
         } else {
-            $contents .= PHP_EOL . $replacement . PHP_EOL;
+            $contents .= PHP_EOL.$replacement.PHP_EOL;
         }
         $fp = fopen($envFile, 'w');
         fwrite($fp, $contents);
         fclose($fp);
+
         return $formattedValue;
     }
 
@@ -38,6 +39,7 @@ trait SettingsTrait
                 $config = $this->storageDataProcessing($type, $setting);
             }
         }
+
         return $config;
     }
 
@@ -48,6 +50,7 @@ trait SettingsTrait
             $imageData = json_decode($value->value, true) ?? ['image_name' => $value['value'], 'storage' => 'public'];
             $value['value'] = $this->storageLink('company', $imageData['image_name'], $imageData['storage']);
         }
+
         return $value;
     }
 }

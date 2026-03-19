@@ -16,7 +16,6 @@ use App\Repositories\DealOfTheDayRepository;
 use App\Repositories\WishlistRepository;
 use App\Services\ProductService;
 use App\Traits\ProductTrait;
-use App\Utils\CartManager;
 use App\Utils\ProductManager;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Contracts\View\View;
@@ -29,24 +28,18 @@ class ProductDetailsController extends Controller
     use ProductTrait;
 
     public function __construct(
-        private readonly ProductRepositoryInterface        $productRepo,
-        private readonly WishlistRepository                $wishlistRepo,
-        private readonly ReviewRepositoryInterface         $reviewRepo,
-        private readonly OrderDetailRepositoryInterface    $orderDetailRepo,
-        private readonly DealOfTheDayRepository            $dealOfTheDayRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly WishlistRepository $wishlistRepo,
+        private readonly ReviewRepositoryInterface $reviewRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly DealOfTheDayRepository $dealOfTheDayRepo,
         private readonly ProductCompareRepositoryInterface $compareRepo,
-        private readonly ProductTagRepositoryInterface     $productTagRepo,
-        private readonly TagRepositoryInterface            $tagRepo,
-        private readonly SellerRepositoryInterface         $sellerRepo,
-        private readonly ProductService                    $productService,
-    )
-    {
-    }
+        private readonly ProductTagRepositoryInterface $productTagRepo,
+        private readonly TagRepositoryInterface $tagRepo,
+        private readonly SellerRepositoryInterface $sellerRepo,
+        private readonly ProductService $productService,
+    ) {}
 
-    /**
-     * @param string $slug
-     * @return View|RedirectResponse
-     */
     public function index(string $slug): View|RedirectResponse
     {
         $theme_name = theme_root_path();
@@ -135,11 +128,12 @@ class ProductDetailsController extends Controller
 
             $previewFileInfo = getFileInfoFromURL(url: $product?->preview_file_full_url['path']);
 
-            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'initialProductConfig', 'initialProductQuantity','initialProductPrice','countWishlist', 'countOrder', 'relatedProducts',
+            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'initialProductConfig', 'initialProductQuantity', 'initialProductPrice', 'countWishlist', 'countOrder', 'relatedProducts',
                 'dealOfTheDay', 'currentDate', 'overallRating', 'wishlistStatus', 'productReviews', 'rating', 'totalReviews', 'productsForReview', 'moreProductFromSeller', 'decimalPointSettings', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
         }
 
         Toastr::error(translate('not_found'));
+
         return back();
     }
 
@@ -151,7 +145,7 @@ class ProductDetailsController extends Controller
             withCount: ['orderDetails' => 'orderDetails', 'wishList' => 'wishList']
         );
 
-        if ($product ) {
+        if ($product) {
             $initialProductConfig = ProductManager::getInitialProductQuantity($product);
             $productDetailsMeta = $product?->seoInfo;
             $productAuthorsInfo = $this->productService->getProductAuthorsInfo(product: $product);
@@ -186,6 +180,7 @@ class ProductDetailsController extends Controller
                 }
                 $product['flash_deal_status'] = $flash_deal_status;
                 $product['flash_deal_end_date'] = $flash_deal_end_date;
+
                 return $product;
             });
 
@@ -250,12 +245,13 @@ class ProductDetailsController extends Controller
             $positiveReview = $ratingCount != 0 ? ($vendorRattingStatusPositive * 100) / $ratingCount : 0;
             $previewFileInfo = getFileInfoFromURL(url: $product?->preview_file_full_url['path']);
 
-            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'wishlistStatus','initialProductConfig', 'countWishlist',
+            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'wishlistStatus', 'initialProductConfig', 'countWishlist',
                 'countOrder', 'relatedProducts', 'dealOfTheDay', 'currentDate', 'overallRating', 'decimalPointSettings', 'moreProductFromSeller', 'productsForReview', 'totalReviews', 'rating', 'productReviews',
                 'avgRating', 'compareList', 'positiveReview', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
         }
 
         Toastr::error(translate('not_found'));
+
         return back();
 
     }
@@ -389,6 +385,7 @@ class ProductDetailsController extends Controller
                 $product_count = $seller->product->count();
                 $randomSingleProduct = Arr::random($seller->product->toArray(), $product_count < 3 ? $product_count : 3);
                 $seller['product'] = $randomSingleProduct;
+
                 return $seller;
             });
             $newSellers = $sellerList->sortByDesc('id')->take(12);
@@ -431,10 +428,11 @@ class ProductDetailsController extends Controller
 
             return view(VIEW_FILE_NAMES['products_details'], compact('product', 'wishlistStatus', 'countWishlist',
                 'relatedProducts', 'currentDate', 'rattingStatus', 'productsLatest',
-                 'positiveReview', 'overallRating', 'decimalPointSettings', 'moreProductFromSeller', 'productsForReview', 'productsCount', 'totalReviews', 'rating', 'productReviews', 'avgRating', 'topRatedShops', 'newSellers', 'deliveryInfo', 'productsTopRated', 'productsThisStoreTopRated', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
+                'positiveReview', 'overallRating', 'decimalPointSettings', 'moreProductFromSeller', 'productsForReview', 'productsCount', 'totalReviews', 'rating', 'productReviews', 'avgRating', 'topRatedShops', 'newSellers', 'deliveryInfo', 'productsTopRated', 'productsThisStoreTopRated', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
         }
 
         Toastr::error(translate('not_found'));
+
         return back();
     }
 }

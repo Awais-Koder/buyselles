@@ -22,6 +22,7 @@ class TaxController extends Controller
         }
 
         $data = Tax::where('is_active', 1)->select('id', 'name', 'tax_rate')->latest()->paginate($request->limit ?? 50, ['*'], 'page', $request->offset ?? 1);
+
         return response()->json($data->items(), 200);
     }
 
@@ -55,9 +56,9 @@ class TaxController extends Controller
             orderId: $request?->orderId,
             countryCode: $request?->countryCode
         );
+
         return response()->json($data);
     }
-
 
     private function error_processor($validator)
     {
@@ -65,6 +66,7 @@ class TaxController extends Controller
         foreach ($validator->errors()->getMessages() as $index => $error) {
             $err_keeper[] = ['code' => $index, 'message' => translate($error[0])];
         }
+
         return $err_keeper;
     }
 }

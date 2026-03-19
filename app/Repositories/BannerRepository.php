@@ -12,13 +12,12 @@ class BannerRepository implements BannerRepositoryInterface
 {
     public function __construct(
         private readonly Banner $banner,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'banners');
+
         return $this->banner->create($data);
     }
 
@@ -30,29 +29,31 @@ class BannerRepository implements BannerRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->banner->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->banner->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 return $query->orWhere('banner_type', 'like', "%$searchValue%");
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             })
-            ->when(isset($filters['resource_type']) && isset($filters['resource_id']), function ($query) use($filters){
-                return $query->where(['resource_type'=>$filters['resource_type'],'resource_id'=>$filters['resource_id']]);
+            ->when(isset($filters['resource_type']) && isset($filters['resource_id']), function ($query) use ($filters) {
+                return $query->where(['resource_type' => $filters['resource_type'], 'resource_id' => $filters['resource_id']]);
             })
-            ->when(isset($filters['theme']), function ($query) use($filters){
+            ->when(isset($filters['theme']), function ($query) use ($filters) {
                 return $query->where('theme', $filters['theme']);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -60,32 +61,33 @@ class BannerRepository implements BannerRepositoryInterface
     {
         $query = $this->banner
             ->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 return $query->orWhere('banner_type', 'like', "%$searchValue%");
             })
-            ->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
-                foreach ($whereInFilters as $key => $filterIndex){
-                    $query->whereIn($key , $filterIndex);
+            ->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
+                foreach ($whereInFilters as $key => $filterIndex) {
+                    $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-            })->when($filters['theme'], function ($query) use($filters){
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            })->when($filters['theme'], function ($query) use ($filters) {
                 return $query->where('theme', $filters['theme']);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
 
     public function update(string $id, array $data): bool
     {
         cacheRemoveByType(type: 'banners');
         $this->banner->find($id)->update($data);
+
         return true;
     }
 
@@ -93,6 +95,7 @@ class BannerRepository implements BannerRepositoryInterface
     {
         cacheRemoveByType(type: 'banners');
         $this->banner->where($params)->delete();
+
         return true;
     }
 }

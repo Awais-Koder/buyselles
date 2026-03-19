@@ -2,40 +2,18 @@
 
 namespace App\Http\Controllers\RestAPI\v1;
 
-use App\Events\DigitalProductOtpVerificationEvent;
-use App\Events\RefundEvent;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\API\v1\RefundStoreRequest;
-use App\Models\AdminWallet;
-use App\Models\Cart;
 use App\Models\Currency;
-use App\Models\DigitalProductOtpVerification;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
-use App\Models\OrderDetail;
-use App\Models\OrderDetailsRewards;
 use App\Models\OrderEditHistory;
-use App\Models\RefundRequest;
-use App\Models\Setting;
-use App\Models\ShippingAddress;
 use App\Services\OrderService;
 use App\Traits\CommonTrait;
 use App\Traits\FileManagerTrait;
 use App\Traits\OrderEditManager;
-use App\Traits\SmsGateway;
-use App\Models\User;
-use App\Utils\CartManager;
-use App\Utils\Convert;
-use App\Utils\CustomerManager;
 use App\Utils\Helpers;
-use App\Utils\ImageManager;
-use App\Utils\OrderManager;
-use App\Utils\SMSModule;
-use Carbon\Carbon;
-use Carbon\CarbonInterval;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 
 class OrderEditController extends Controller
@@ -44,9 +22,7 @@ class OrderEditController extends Controller
 
     public function __construct(
         private readonly OrderService $orderService,
-    )
-    {
-    }
+    ) {}
 
     public function duePaymentByWallet(Request $request): JsonResponse
     {
@@ -60,7 +36,7 @@ class OrderEditController extends Controller
         }
 
         $order = Order::with(['latestEditHistory'])->where('id', $request['order_id'])->first();
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => translate('Order_not_found')], 401);
         }
 
@@ -71,6 +47,7 @@ class OrderEditController extends Controller
         $user = Helpers::getCustomerInformation($request);
         if ($user != 'offline') {
             $response = $this->payEditOrderDueByCustomerWallet(order: $order, customer: $user);
+
             return response()->json([
                 'message' => $response['message'],
             ], ($response['status'] ? 200 : 403));
@@ -91,10 +68,9 @@ class OrderEditController extends Controller
         }
 
         $order = Order::with(['latestEditHistory'])->where('id', $request['order_id'])->first();
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => translate('Order_not_found')], 401);
         }
-
 
         OrderEditHistory::where('id', $order?->latestEditHistory?->id)->update([
             'order_due_payment_method' => 'cash_on_delivery',
@@ -110,6 +86,7 @@ class OrderEditController extends Controller
                 'bring_change_amount_currency' => $currencyCode,
             ]);
         }
+
         return response()->json(['message' => translate('payment_method_updated')], 200);
     }
 
@@ -127,7 +104,7 @@ class OrderEditController extends Controller
         }
 
         $order = Order::with(['latestEditHistory'])->where('id', $request['order_id'])->first();
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => translate('Order_not_found')], 401);
         }
 
@@ -136,11 +113,11 @@ class OrderEditController extends Controller
 
         if (isset($method)) {
             $fields = array_column($method->method_informations, 'customer_input');
-            $values = (array)json_decode(base64_decode($request['method_informations']));
+            $values = (array) json_decode(base64_decode($request['method_informations']));
             $offlinePaymentInfo['method_id'] = $request['method_id'];
             $offlinePaymentInfo['method_name'] = $method->method_name;
             foreach ($fields as $field) {
-                if (key_exists($field, $values)) {
+                if (array_key_exists($field, $values)) {
                     $offlinePaymentInfo[$field] = $values[$field];
                 }
             }
@@ -151,6 +128,7 @@ class OrderEditController extends Controller
             'order_due_payment_info' => $offlinePaymentInfo,
             'order_due_payment_note' => $request['order_due_payment_note'] ?? '',
         ]);
+
         return response()->json(['message' => translate('Payment_Method_Updated')], 200);
     }
 
@@ -167,14 +145,14 @@ class OrderEditController extends Controller
         }
 
         $order = Order::with(['latestEditHistory'])->where('id', $request['order_id'])->first();
-        if (!$order) {
+        if (! $order) {
             return response()->json(['message' => translate('Order_not_found')], 401);
         }
 
         $customer = Helpers::getCustomerInformation($request);
         $response = $this->payEditOrderDueByDigitalPayment(request: $request, order: $order, customer: $customer);
 
-        if (!$response['status'] && isset($response['message'])) {
+        if (! $response['status'] && isset($response['message'])) {
             return response()->json(['message' => $response['message']], 401);
         }
 
@@ -184,5 +162,4 @@ class OrderEditController extends Controller
 
         return response()->json(['message' => $response['message'] ?? 'Failed'], 403);
     }
-
 }

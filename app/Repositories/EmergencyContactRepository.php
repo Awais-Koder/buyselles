@@ -8,14 +8,11 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class EmergencyContactRepository  implements EmergencyContactRepositoryInterface
+class EmergencyContactRepository implements EmergencyContactRepositoryInterface
 {
     public function __construct(
         private readonly EmergencyContact $emergencyContact
-    )
-    {
-
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,8 +27,8 @@ class EmergencyContactRepository  implements EmergencyContactRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->emergencyContact->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -50,6 +47,7 @@ class EmergencyContactRepository  implements EmergencyContactRepositoryInterface
     public function updateWhere(array $params, array $data): bool
     {
         $this->emergencyContact->where($params)->update($data);
+
         return true;
     }
 

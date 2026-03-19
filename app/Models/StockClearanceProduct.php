@@ -21,12 +21,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $shop_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
  */
 class StockClearanceProduct extends Model
 {
-    use HasFactory;
     use CacheManagerTrait;
+    use HasFactory;
 
     protected $fillable = [
         'added_by',
@@ -59,7 +58,7 @@ class StockClearanceProduct extends Model
         return $query
             ->where(['is_active' => 1])
             ->whereIn('added_by', ['admin', 'vendor'])
-        ->CheckConfig();
+            ->CheckConfig();
     }
 
     public function scopeCheckConfig($query): void
@@ -71,14 +70,14 @@ class StockClearanceProduct extends Model
                 ->whereDate('duration_end_date', '>=', Carbon::now())
                 ->where(function ($subQuery) use ($currentTime) {
                     return $subQuery->where(function ($query) use ($currentTime) {
-                            return $query->where('offer_active_time', 'specific_time')
-                                ->whereTime('offer_active_range_start', '<=', $currentTime)
-                                ->whereTime('offer_active_range_end', '>=', $currentTime);
-                        })->orWhere(function ($query) {
-                            return $query->where('offer_active_time', 'always')
-                                ->whereNull('offer_active_range_start')
-                                ->whereNull('offer_active_range_end');
-                        });
+                        return $query->where('offer_active_time', 'specific_time')
+                            ->whereTime('offer_active_range_start', '<=', $currentTime)
+                            ->whereTime('offer_active_range_end', '>=', $currentTime);
+                    })->orWhere(function ($query) {
+                        return $query->where('offer_active_time', 'always')
+                            ->whereNull('offer_active_range_start')
+                            ->whereNull('offer_active_range_end');
+                    });
                 });
         });
     }

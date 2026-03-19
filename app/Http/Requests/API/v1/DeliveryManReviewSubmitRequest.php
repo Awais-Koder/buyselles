@@ -2,13 +2,10 @@
 
 namespace App\Http\Requests\API\v1;
 
-use App\Models\WithdrawalMethod;
 use App\Traits\ResponseHandler;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class DeliveryManReviewSubmitRequest extends FormRequest
 {
@@ -31,8 +28,8 @@ class DeliveryManReviewSubmitRequest extends FormRequest
     {
         return [
             'order_id' => 'required|exists:orders,id',
-            'comment'  => 'required|string',
-            'rating'   => 'required|numeric|min:1|max:5',
+            'comment' => 'required|string',
+            'rating' => 'required|numeric|min:1|max:5',
         ];
     }
 
@@ -40,11 +37,11 @@ class DeliveryManReviewSubmitRequest extends FormRequest
     {
         return [
             'order_id.required' => translate('Order ID is required.'),
-            'order_id.exists'   => translate('Invalid order.'),
-            'comment.required'  => translate('Comment is required.'),
-            'rating.required'   => translate('Rating is required.'),
-            'rating.min'        => translate('Rating must be at least 1.'),
-            'rating.max'        => translate('Rating may not be greater than 5.'),
+            'order_id.exists' => translate('Invalid order.'),
+            'comment.required' => translate('Comment is required.'),
+            'rating.required' => translate('Rating is required.'),
+            'rating.min' => translate('Rating must be at least 1.'),
+            'rating.max' => translate('Rating may not be greater than 5.'),
         ];
     }
 
@@ -52,7 +49,7 @@ class DeliveryManReviewSubmitRequest extends FormRequest
     {
         throw new HttpResponseException(
             response()->json([
-                'errors' => $this->errorProcessor($validator)
+                'errors' => $this->errorProcessor($validator),
             ], 403)
         );
     }

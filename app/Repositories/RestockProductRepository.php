@@ -16,10 +16,8 @@ class RestockProductRepository implements RestockProductRepositoryInterface
 
     public function __construct(
         private readonly RestockProduct $restockProduct,
-        private readonly Translation    $translation,
-    )
-    {
-    }
+        private readonly Translation $translation,
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -34,8 +32,8 @@ class RestockProductRepository implements RestockProductRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->restockProduct->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -50,7 +48,7 @@ class RestockProductRepository implements RestockProductRepositoryInterface
                 $query->whereHas('product', function ($query) use ($filters) {
                     $query->when($this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) {
                         return $query->where(['added_by' => 'admin']);
-                    })->when(!$this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) use ($filters) {
+                    })->when(! $this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) use ($filters) {
                         return $query->where(['added_by' => 'seller'])
                             ->when(isset($filters['seller_id']) && $filters['seller_id'] != 'all', function ($query) use ($filters) {
                                 return $query->where(['user_id' => $filters['seller_id']]);
@@ -71,14 +69,15 @@ class RestockProductRepository implements RestockProductRepositoryInterface
             })
             ->when(isset($filters['product_id']), function ($query) use ($filters) {
                 return $query->where(['product_id' => $filters['product_id']]);
-            })->when(isset($filters['variant']) && !empty($filters['variant']), function ($query) use ($filters) {
+            })->when(isset($filters['variant']) && ! empty($filters['variant']), function ($query) use ($filters) {
                 return $query->where(['variant' => $filters['variant']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -87,8 +86,8 @@ class RestockProductRepository implements RestockProductRepositoryInterface
         $query = $this->restockProduct
             ->with($relations)
             ->withCount(['restockProductCustomers'])
-            ->when(is_array($relations) && in_array('product', $relations), function ($query) use ($filters) {
-                $query->whereHas('product', function ($query) use ($filters) {
+            ->when(is_array($relations) && in_array('product', $relations), function ($query) {
+                $query->whereHas('product', function ($query) {
                     return $query->withCount(['reviews' => function ($query) {
                         $query->active()->whereNull('delivery_man_id');
                     }]);
@@ -98,7 +97,7 @@ class RestockProductRepository implements RestockProductRepositoryInterface
                 $query->whereHas('product', function ($query) use ($filters) {
                     $query->when($this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) {
                         return $query->where(['added_by' => 'admin']);
-                    })->when(!$this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) use ($filters) {
+                    })->when(! $this->isAddedByInHouse(addedBy: $filters['added_by']), function ($query) use ($filters) {
                         return $query->where(['added_by' => 'seller'])
                             ->when(isset($filters['seller_id']) && $filters['seller_id'] != 'all', function ($query) use ($filters) {
                                 return $query->where(['user_id' => $filters['seller_id']]);
@@ -108,12 +107,12 @@ class RestockProductRepository implements RestockProductRepositoryInterface
                     }]);
                 });
             })
-            ->when(isset($filters['brand_ids']) && !empty($filters['brand_ids']), function ($query) use ($filters) {
+            ->when(isset($filters['brand_ids']) && ! empty($filters['brand_ids']), function ($query) use ($filters) {
                 $query->whereHas('product', function ($query) use ($filters) {
                     return $query->whereIn('brand_id', $filters['brand_ids']);
                 });
             })
-            ->when(!empty($searchValue), function ($query) use ($searchValue, $filters) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue, $filters) {
                 $query->whereHas('product', function ($query) use ($searchValue, $filters) {
                     $productIds = $this->translation->where('translationable_type', 'App\Models\Product')
                         ->where('key', 'name')
@@ -124,18 +123,18 @@ class RestockProductRepository implements RestockProductRepositoryInterface
                         ->orWhere(function ($query) use ($searchValue) {
                             $query->where('code', 'like', "%{$searchValue}%");
                         })
-                        ->when(isset($filters['added_by']) && !$this->isAddedByInHouse($filters['added_by']), function ($query) use ($filters, $productIds) {
+                        ->when(isset($filters['added_by']) && ! $this->isAddedByInHouse($filters['added_by']), function ($query) use ($filters, $productIds) {
                             $query->whereIn('id', $productIds)
                                 ->where(['added_by' => 'seller'])
                                 ->when(isset($filters['seller_id']), function ($query) use ($filters) {
                                     return $query->where(['user_id' => $filters['seller_id']]);
                                 });
                         })
-                        ->when(isset($filters['added_by']) && $this->isAddedByInHouse($filters['added_by']), function ($query) use ($filters, $productIds) {
+                        ->when(isset($filters['added_by']) && $this->isAddedByInHouse($filters['added_by']), function ($query) use ($productIds) {
                             $query->orWhereIn('id', $productIds)->where(['added_by' => 'admin']);
                         });
                 });
-            })->when(!empty($whereBetween) && !empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
+            })->when(! empty($whereBetween) && ! empty($whereBetweenFilters), function ($query) use ($whereBetween, $whereBetweenFilters) {
                 $query->whereBetween($whereBetween, $whereBetweenFilters);
             })->when(isset($filters['brand_id']) && $filters['brand_id'] != 'all', function ($query) use ($filters) {
                 $query->whereHas('product', function ($query) use ($filters) {
@@ -149,9 +148,10 @@ class RestockProductRepository implements RestockProductRepositoryInterface
                 $query->whereHas('product', function ($query) use ($filters) {
                     return $query->where('sub_category_id', $filters['sub_category_id']);
                 });
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -174,5 +174,4 @@ class RestockProductRepository implements RestockProductRepositoryInterface
     {
         return $this->restockProduct->where($params)->delete();
     }
-
 }

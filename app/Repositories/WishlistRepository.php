@@ -10,9 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class WishlistRepository implements WishlistRepositoryInterface
 {
-    public function __construct(private readonly Wishlist $wishlist)
-    {
-    }
+    public function __construct(private readonly Wishlist $wishlist) {}
 
     public function add(array $data): string|object
     {
@@ -24,11 +22,11 @@ class WishlistRepository implements WishlistRepositoryInterface
         return $this->wishlist->where($params)->first();
     }
 
-    public function getCount(array $params): int|null
+    public function getCount(array $params): ?int
     {
-        return $this->wishlist->when(isset($params['product_id']), function ($query) use($params){
+        return $this->wishlist->when(isset($params['product_id']), function ($query) use ($params) {
             return $query->where('product_id', $params['product_id']);
-        })->when(isset($params['customer_id']), function ($query) use($params){
+        })->when(isset($params['customer_id']), function ($query) use ($params) {
             return $query->where('customer_id', $params['customer_id']);
         })->count();
     }
@@ -36,17 +34,17 @@ class WishlistRepository implements WishlistRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->wishlist->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
-    public function getListWhere(array $orderBy=[], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
+    public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         return $this->wishlist->whereIn('seller_id', [auth('seller')->id(), '0'])
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 $key = explode(' ', $searchValue);
                 foreach ($key as $value) {
                     $query->where('title', 'like', "%{$value}%")

@@ -33,21 +33,21 @@ class RestockProductNotificationListener
             'message' => [
                 'topic' => $data['topic'],
                 'data' => [
-                    'title' => (string)$data['title'],
-                    'product_id' => (string)($data['product_id'] ?? ''),
-                    'slug' => (string)($data['slug'] ?? ''),
-                    'body' => (string)$data['description'],
+                    'title' => (string) $data['title'],
+                    'product_id' => (string) ($data['product_id'] ?? ''),
+                    'slug' => (string) ($data['slug'] ?? ''),
+                    'body' => (string) $data['description'],
                     'image' => $data['image'] ?? '',
-                    'type' => (string)$data['type'] ?? '',
-                    'status' => (string)$data['status'] ?? '',
-                    'route' => (string)$data['route'] ?? '',
-                    'is_read' => '0'
+                    'type' => (string) $data['type'] ?? '',
+                    'status' => (string) $data['status'] ?? '',
+                    'route' => (string) $data['route'] ?? '',
+                    'is_read' => '0',
                 ],
                 'notification' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
-                ]
-            ]
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
+                ],
+            ],
         ]);
     }
 }

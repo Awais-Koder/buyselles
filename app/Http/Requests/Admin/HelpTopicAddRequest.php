@@ -28,5 +28,4 @@ class HelpTopicAddRequest extends FormRequest
             'ranking.required' => translate('the_ranking_field_cannot_be_empty'),
         ];
     }
-
 }

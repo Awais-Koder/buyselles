@@ -2,7 +2,4 @@
 
 namespace App\Services;
 
-class RefundRequestService
-{
-
-}
+class RefundRequestService {}

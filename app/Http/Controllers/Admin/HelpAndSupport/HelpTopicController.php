@@ -16,21 +16,18 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class HelpTopicController extends BaseController
 {
-
     public function __construct(
         private readonly HelpTopicRepositoryInterface $helpTopicRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $searchValue = $request->searchValue ?? '';
-        $helps = $this->helpTopicRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $searchValue, filters: ['type' => 'default'],dataLimit: 10);
+        $helps = $this->helpTopicRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $searchValue, filters: ['type' => 'default'], dataLimit: 10);
+
         return view('admin-views.pages-and-media.help-topics.list', compact('helps'));
     }
-
 
     public function add(HelpTopicAddRequest $request): RedirectResponse
     {
@@ -42,33 +39,37 @@ class HelpTopicController extends BaseController
             'ranking' => $request['ranking'],
         ]);
         ToastMagic::success(translate('FAQ_added_successfully'));
+
         return back();
     }
 
     public function updateFeatureStatus(Request $request): JsonResponse
     {
         $this->businessSettingRepo->updateOrInsert(type: 'vendor_registration_faq_status', value: $request['status'] ?? 0);
+
         return response()->json([
             'status' => true,
-            'message' => translate('Status_updated_successfully')
+            'message' => translate('Status_updated_successfully'),
         ]);
     }
 
     public function updateStatus($id): JsonResponse
     {
-        $helpTopic = $this->helpTopicRepo->getFirstWhere(params: ['id'=>$id]);
+        $helpTopic = $this->helpTopicRepo->getFirstWhere(params: ['id' => $id]);
         $this->helpTopicRepo->update(id: $id, data: [
-            'status' => $helpTopic['status'] ? 0:1,
+            'status' => $helpTopic['status'] ? 0 : 1,
         ]);
+
         return response()->json([
             'status' => true,
-            'message' => translate('Status_updated_successfully')
+            'message' => translate('Status_updated_successfully'),
         ]);
     }
 
     public function getUpdateResponse($id): JsonResponse
     {
-        $helpTopic = $this->helpTopicRepo->getFirstWhere(params: ['id'=>$id]);
+        $helpTopic = $this->helpTopicRepo->getFirstWhere(params: ['id' => $id]);
+
         return response()->json($helpTopic);
     }
 
@@ -81,13 +82,14 @@ class HelpTopicController extends BaseController
             'status' => $request->get('status', 0),
         ]);
         ToastMagic::success(translate('FAQ_Update_successfully'));
+
         return back();
     }
 
     public function delete(Request $request): RedirectResponse
     {
-        $this->helpTopicRepo->delete(params: ['id'=>$request['id']]);
+        $this->helpTopicRepo->delete(params: ['id' => $request['id']]);
+
         return back();
     }
-
 }

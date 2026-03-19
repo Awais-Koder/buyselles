@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class GuestUser
  *
- * @package App\Models
  *
  * @property int $id
  * @property string|null $ip_address

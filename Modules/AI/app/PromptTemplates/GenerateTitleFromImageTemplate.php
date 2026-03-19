@@ -6,7 +6,6 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class GenerateTitleFromImageTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode ??= 'en';
@@ -34,6 +33,6 @@ class GenerateTitleFromImageTemplate implements PromptTemplateInterface
 
     public function getType(): string
     {
-       return 'generate_title_from_image';
+        return 'generate_title_from_image';
     }
 }

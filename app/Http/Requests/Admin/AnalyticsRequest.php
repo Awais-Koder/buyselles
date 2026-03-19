@@ -20,7 +20,7 @@ class AnalyticsRequest extends FormRequest
     {
         return [
             'type' => 'required',
-            'value' => 'required'
+            'value' => 'required',
         ];
     }
 
@@ -31,5 +31,4 @@ class AnalyticsRequest extends FormRequest
             'value.required' => translate('id_is_required'),
         ];
     }
-
 }

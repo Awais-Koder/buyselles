@@ -13,34 +13,30 @@ use App\Services\SettingService;
 use App\Traits\PaymentGatewayTrait;
 use App\Traits\Processor;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class PaymentMethodController extends BaseController
 {
-    use Processor;
     use PaymentGatewayTrait;
+    use Processor;
 
     public function __construct(
-        private readonly SettingRepositoryInterface              $settingRepo,
-        private readonly BusinessSettingRepositoryInterface      $businessSettingRepo,
-        private readonly SettingService                          $settingService,
-        private readonly CurrencyRepositoryInterface             $currencyRepo,
+        private readonly SettingRepositoryInterface $settingRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+        private readonly SettingService $settingService,
+        private readonly CurrencyRepositoryInterface $currencyRepo,
         private readonly OfflinePaymentMethodRepositoryInterface $offlinePaymentMethodRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     * Index function is the starting point of a controller
+     *                                                                             Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
+    public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $paymentGatewayPublishedStatus = config('get_payment_publish_status') ?? 0;
         $paymentGatewaysList = $this->settingRepo->getListWhereIn(
@@ -65,6 +61,7 @@ class PaymentMethodController extends BaseController
         })->values()->all();
 
         $paymentUrl = $this->settingService->getVacationData(type: 'payment_setup');
+
         return view('admin-views.third-party.payment-method.index', [
             'paymentGatewaysList' => $paymentGatewaysList,
             'paymentGatewayPublishedStatus' => $paymentGatewayPublishedStatus,
@@ -75,7 +72,7 @@ class PaymentMethodController extends BaseController
         ]);
     }
 
-    function checkPaymentGatewaySupportedCurrencies($gateway, $currencyCodes, $paymentGateways): array
+    public function checkPaymentGatewaySupportedCurrencies($gateway, $currencyCodes, $paymentGateways): array
     {
         $getPaymentGatewaySupportedCurrencies = $this->getPaymentGatewaySupportedCurrencies(key: $gateway->key_name);
         $isEnabledToUse = 0;
@@ -107,26 +104,28 @@ class PaymentMethodController extends BaseController
 
         $gatewayKeys = [];
         foreach (GATEWAYS_PAYMENT_METHODS as $method) {
-            $gatewayKeys[] = $method["key"];
+            $gatewayKeys[] = $method['key'];
         }
         $paymentGatewaysList = $this->settingRepo->getListWhereIn(
             filters: ['is_active' => 1],
             whereInFilters: [
                 'settings_type' => ['payment_config'],
-                'key_name' => $paymentGatewayStatus ? $gatewayKeys : GlobalConstant::DEFAULT_PAYMENT_GATEWAYS
+                'key_name' => $paymentGatewayStatus ? $gatewayKeys : GlobalConstant::DEFAULT_PAYMENT_GATEWAYS,
             ],
             dataLimit: 'all',
         );
-        return !(count($paymentGatewaysList) == 0);
+
+        return ! (count($paymentGatewaysList) == 0);
     }
 
     public function UpdatePaymentConfig(PaymentMethodUpdateRequest $request): RedirectResponse
     {
         if (env('APP_MODE') == 'demo') {
             Toastr::info(translate('This_option_is_disabled_for_demo'));
+
             return back();
         }
-        collect(['status'])->each(fn($item, $key) => $request[$item] = $request->has($item) ? (int)$request[$item] : 0);
+        collect(['status'])->each(fn ($item, $key) => $request[$item] = $request->has($item) ? (int) $request[$item] : 0);
         $settings = $this->settingRepo->getFirstWhere(params: ['key_name' => $request['gateway'], 'settings_type' => 'payment_config']);
         $additionalDataImage = $settings['additional_data'] != null ? json_decode($settings['additional_data']) : null;
         if ($request->has('gateway_image')) {
@@ -170,6 +169,7 @@ class PaymentMethodController extends BaseController
             ToastMagic::success(translate('Updated_successfully'));
         }
         updateSetupGuideCacheKey(key: 'digital_payment_setup', panel: 'admin');
+
         return redirect()->route('admin.third-party.payment-method.index');
     }
 
@@ -180,6 +180,7 @@ class PaymentMethodController extends BaseController
             foreach ($payment['live_values'] as $key => $value) {
                 if (empty($value) && $value != 0) {
                     ToastMagic::error(translate('Please_update_the_configuration_first'));
+
                     return redirect()->route('admin.third-party.payment-method.index');
                 }
             }
@@ -188,6 +189,7 @@ class PaymentMethodController extends BaseController
 
         updateSetupGuideCacheKey(key: 'digital_payment_setup', panel: 'admin');
         ToastMagic::success(translate('Updated_successfully'));
+
         return redirect()->route('admin.third-party.payment-method.index');
     }
 }

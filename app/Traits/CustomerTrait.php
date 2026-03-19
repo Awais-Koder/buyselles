@@ -9,23 +9,21 @@ use App\Contracts\Repositories\PhoneOrEmailVerificationRepositoryInterface;
 use App\Models\BusinessSetting;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Utils\Convert;
+use App\Utils\Helpers;
 use Carbon\CarbonInterval;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Utils\Helpers;
-use App\Utils\Convert;
 
 trait CustomerTrait
 {
     public function __construct(
-        private readonly OrderDetailRepositoryInterface              $orderDetailRepo,
-        private readonly CustomerRepositoryInterface                 $customerRepo,
-        private readonly LoyaltyPointTransactionRepositoryInterface  $loyaltyPointTransactionRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly LoyaltyPointTransactionRepositoryInterface $loyaltyPointTransactionRepo,
         private readonly PhoneOrEmailVerificationRepositoryInterface $phoneOrEmailVerificationRepo,
-    )
-    {
-    }
+    ) {}
 
     protected function convertAmountToLoyaltyPoint(object $orderDetails): int
     {
@@ -34,18 +32,21 @@ trait CustomerTrait
         if ($loyaltyPointStatus == 1) {
             $getLoyaltyPointOnPurchase = getWebConfig('loyalty_point_item_purchase_point');
             $subtotal = ($orderDetails['price'] * $orderDetails['qty']) - $orderDetails['discount'] + $orderDetails['tax'];
-            $loyaltyPoint = (int)(usdToDefaultCurrency(amount: $subtotal) * $getLoyaltyPointOnPurchase / 100);
+            $loyaltyPoint = (int) (usdToDefaultCurrency(amount: $subtotal) * $getLoyaltyPointOnPurchase / 100);
         }
+
         return $loyaltyPoint;
     }
 
     protected function createWalletTransaction($user_id, float $amount, $transaction_type, $reference, $payment_data = []): bool|WalletTransaction
     {
-        if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) return false;
+        if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) {
+            return false;
+        }
         $user = User::find($user_id);
         $currentBalance = $user->wallet_balance;
 
-        $walletTransaction = new WalletTransaction();
+        $walletTransaction = new WalletTransaction;
         $walletTransaction->user_id = $user->id;
         $walletTransaction->transaction_id = \Str::uuid();
         $walletTransaction->reference = $reference;
@@ -61,10 +62,10 @@ trait CustomerTrait
             if ($transaction_type == 'add_fund') {
                 $walletTransaction->admin_bonus = Helpers::add_fund_to_wallet_bonus(Convert::usd($amount ?? 0));
                 $addFundToWalletBonus = Helpers::add_fund_to_wallet_bonus(Convert::usd($amount ?? 0));
-            } else if ($transaction_type == 'loyalty_point') {
+            } elseif ($transaction_type == 'loyalty_point') {
                 $credit = localToDefaultCurrency(amount: loyaltyPointToLocalCurrency(amount: $amount));
             }
-        } else if ($transaction_type == 'order_place') {
+        } elseif ($transaction_type == 'order_place') {
             $debit = $amount;
         }
 
@@ -82,16 +83,20 @@ trait CustomerTrait
             $user->save();
             $walletTransaction->save();
             DB::commit();
-            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin'])) return $walletTransaction;
+            if (in_array($transaction_type, ['loyalty_point', 'order_place', 'add_fund_by_admin'])) {
+                return $walletTransaction;
+            }
+
             return true;
         } catch (Exception $ex) {
             info($ex);
             DB::rollback();
+
             return false;
         }
     }
 
-    public function checkCustomerOTPBlockTimeOrInvalid(object|array|null $verificationData, string|null $identity): array
+    public function checkCustomerOTPBlockTimeOrInvalid(object|array|null $verificationData, ?string $identity): array
     {
         $maxOTPHit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
         $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
@@ -105,8 +110,8 @@ trait CustomerTrait
                 $time = $tempBlockTime - Carbon::parse($verificationData->temp_block_time)->DiffInSeconds();
                 $status = 1;
                 $code = 'otp_block_time';
-                $message = translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
-            } else if ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['created_at'])->DiffInSeconds() >= $tempBlockTime) {
+                $message = translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
+            } elseif ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['created_at'])->DiffInSeconds() >= $tempBlockTime) {
                 $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
                     'otp_hit_count' => 0,
                     'is_temp_blocked' => 0,
@@ -116,7 +121,7 @@ trait CustomerTrait
                 $status = 1;
                 $code = 'otp_block_time';
                 $message = translate('OTP_is_not_matched');
-            } else if ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
+            } elseif ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
                 $this->phoneOrEmailVerificationRepo->updateOrCreate(params: ['phone_or_email' => $identity], value: [
                     'is_temp_blocked' => 1,
                     'temp_block_time' => now(),
@@ -124,7 +129,7 @@ trait CustomerTrait
                 $time = $tempBlockTime - Carbon::parse($verificationData['temp_block_time'])->DiffInSeconds();
                 $status = 1;
                 $code = 'otp_temp_blocked';
-                $message = translate('Too_many_attempts.') . ' ' . translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                $message = translate('Too_many_attempts.').' '.translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
             }
 
             $verificationNewData = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $identity]);
@@ -141,11 +146,11 @@ trait CustomerTrait
         return [
             'status' => $status,
             'code' => $code,
-            'message' => $message
+            'message' => $message,
         ];
     }
 
-    public function checkPasswordResetOTPBlockTimeOrInvalid(object|array|null $verificationData, string|null $identity): array
+    public function checkPasswordResetOTPBlockTimeOrInvalid(object|array|null $verificationData, ?string $identity): array
     {
         $maxOTPHit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
         $maxOTPHitTime = getWebConfig(name: 'otp_resend_time') ?? 60; // seconds
@@ -159,8 +164,8 @@ trait CustomerTrait
                 $time = $tempBlockTime - Carbon::parse($verificationData->temp_block_time)->DiffInSeconds();
                 $status = 1;
                 $code = 'otp_block_time';
-                $message = translate('please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
-            } else if ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['created_at'])->DiffInSeconds() >= $tempBlockTime) {
+                $message = translate('please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
+            } elseif ($verificationData['is_temp_blocked'] == 1 && Carbon::parse($verificationData['created_at'])->DiffInSeconds() >= $tempBlockTime) {
                 $this->passwordResetRepo->updateOrCreate(params: ['identity' => $identity], value: [
                     'otp_hit_count' => 0,
                     'is_temp_blocked' => 0,
@@ -168,7 +173,7 @@ trait CustomerTrait
                 ]);
                 $status = 1;
                 $code = 'otp_block_time';
-            } else if ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
+            } elseif ($verificationData['otp_hit_count'] >= $maxOTPHit && Carbon::parse($verificationData['updated_at'])->DiffInSeconds() < $maxOTPHitTime && $verificationData['is_temp_blocked'] == 0) {
                 $this->passwordResetRepo->updateOrCreate(params: ['identity' => $identity], value: [
                     'is_temp_blocked' => 1,
                     'temp_block_time' => now(),
@@ -176,7 +181,7 @@ trait CustomerTrait
                 $time = $tempBlockTime - Carbon::parse($verificationData['temp_block_time'])->DiffInSeconds();
                 $status = 1;
                 $code = 'otp_temp_blocked';
-                $message = translate('Too_many_attempts.') . ' ' . translate(' please_try_again_after_') . CarbonInterval::seconds($time)->cascade()->forHumans();
+                $message = translate('Too_many_attempts.').' '.translate(' please_try_again_after_').CarbonInterval::seconds($time)->cascade()->forHumans();
             }
             $verificationNewData = $this->passwordResetRepo->getFirstWhere(params: ['identity' => $identity]);
             $this->passwordResetRepo->updateOrCreate(params: ['identity' => $identity], value: [
@@ -192,9 +197,7 @@ trait CustomerTrait
         return [
             'status' => $status,
             'code' => $code,
-            'message' => $message
+            'message' => $message,
         ];
     }
-
-
 }

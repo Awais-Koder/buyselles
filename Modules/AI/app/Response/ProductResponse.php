@@ -17,7 +17,7 @@ class ProductResponse
 
     public function __construct()
     {
-        $this->productResource = new ProductResourceService();
+        $this->productResource = new ProductResourceService;
     }
 
     public function productGeneralSetupAutoFillFormat(string $result): array
@@ -25,21 +25,21 @@ class ProductResponse
         $resource = $this->productResource->productGeneralSetupData();
         $data = json_decode($result, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidArgumentException('Invalid JSON: ' . json_last_error_msg());
+            throw new InvalidArgumentException('Invalid JSON: '.json_last_error_msg());
         }
 
-        if (empty($data['category_name']) || !is_string($data['category_name'])) {
+        if (empty($data['category_name']) || ! is_string($data['category_name'])) {
             throw new InvalidArgumentException('The "category_name" field is required and must be a non-empty string.');
         }
-        if (empty($data['unit_name']) || !is_string($data['unit_name'])) {
+        if (empty($data['unit_name']) || ! is_string($data['unit_name'])) {
             throw new InvalidArgumentException('The "unit_name" field is required and must be a non-empty string.');
         }
-        if (empty($data['unit_name']) || !is_string($data['product_type'])) {
+        if (empty($data['unit_name']) || ! is_string($data['product_type'])) {
             throw new InvalidArgumentException('The "product_type" field is required and must be a non-empty string.');
         }
 
         $processedData = $this->productGeneralSetConvertNamesToIds($data, $resource);
-        if (!$processedData['success']) {
+        if (! $processedData['success']) {
             return $processedData;
         }
         $data = $processedData['data'];
@@ -50,11 +50,11 @@ class ProductResponse
             'brand_name',
             'unit_name',
             'product_type',
-            'search_tags'
+            'search_tags',
         ];
 
         foreach ($fields as $field) {
-            if (!array_key_exists($field, $data)) {
+            if (! array_key_exists($field, $data)) {
                 $data[$field] = null;
             }
         }
@@ -66,7 +66,7 @@ class ProductResponse
     public function productPriceAndOthersAutoFill($result): array|JsonResponse
     {
         $taxData = $this->getTaxSystemType();
-        $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
+        $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
         $taxVats = $taxData['taxVats'];
         $data = json_decode($result, true);
 
@@ -81,7 +81,7 @@ class ProductResponse
         }
         $data['vatTax'] = $taxVats;
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidArgumentException('Invalid JSON: ' . json_last_error_msg());
+            throw new InvalidArgumentException('Invalid JSON: '.json_last_error_msg());
         }
         $fields = [
             'unit_price',
@@ -95,18 +95,19 @@ class ProductResponse
         $errors = [];
 
         foreach ($fields as $field) {
-            if (!array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
+            if (! array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
                 $errors[$field] = "$field is required.";
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return response()->json(
                 $this->formatAIGenerationValidationErrors($errors),
                 422
             );
         }
         $data['unit_price'] = round($data['unit_price']);
+
         return $data;
     }
 
@@ -115,7 +116,7 @@ class ProductResponse
         $data = json_decode($result, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidArgumentException('Invalid JSON: ' . json_last_error_msg());
+            throw new InvalidArgumentException('Invalid JSON: '.json_last_error_msg());
         }
 
         $fields = [
@@ -136,12 +137,12 @@ class ProductResponse
 
         $errors = [];
         foreach ($fields as $field) {
-            if (!array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
+            if (! array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
                 $errors[$field] = "$field is required.";
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new RuntimeException($this->formatAIGenerationValidationErrors($errors));
         }
 
@@ -156,7 +157,7 @@ class ProductResponse
             $messages[] = $message;
         }
 
-        return 'AI couldn’t generate product ' . implode(' ', $messages);
+        return 'AI couldn’t generate product '.implode(' ', $messages);
     }
 
     /**
@@ -167,12 +168,12 @@ class ProductResponse
         $data = json_decode($result, true);
         $errors = [];
 
-        if (empty($data['choice_attributes']) || !is_array($data['choice_attributes'])) {
+        if (empty($data['choice_attributes']) || ! is_array($data['choice_attributes'])) {
             $errors['choice_attributes'] = 'choice attributes .Please provide a more specific product name and a clear description';
         }
 
         if (isset($data['colors_active']) && $data['colors_active'] == 1) {
-            if (empty($data['colors']) || !is_array($data['colors'])) {
+            if (empty($data['colors']) || ! is_array($data['colors'])) {
                 $errors['colors'] = 'Color variation. Please provide a more specific product name and a clear description';
             }
         }
@@ -186,11 +187,12 @@ class ProductResponse
             'data' => $data,
         ];
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new ValidationException($this->formatAIGenerationValidationErrors($errors));
         }
 
         $response['status'] = 'success';
+
         return $response;
     }
 
@@ -230,13 +232,13 @@ class ProductResponse
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw new \RuntimeException($this->formatAIGenerationValidationErrors($errors));
         }
 
         return [
             'success' => true,
-            'data' => $data
+            'data' => $data,
         ];
     }
 }

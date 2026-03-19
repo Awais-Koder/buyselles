@@ -8,6 +8,7 @@ use App\Traits\EmailTemplateTrait;
 class CustomerStatusUpdateListener
 {
     use EmailTemplateTrait;
+
     public function __construct()
     {
         //
@@ -18,9 +19,10 @@ class CustomerStatusUpdateListener
         $this->sendMail($event);
     }
 
-    private function sendMail(CustomerStatusUpdateEvent $event):void{
+    private function sendMail(CustomerStatusUpdateEvent $event): void
+    {
         $email = $event->email;
         $data = $event->data;
-        $this->sendingMail(sendMailTo: $email,userType: $data['userType'],templateName: $data['templateName'],data: $data);
+        $this->sendingMail(sendMailTo: $email, userType: $data['userType'], templateName: $data['templateName'], data: $data);
     }
 }

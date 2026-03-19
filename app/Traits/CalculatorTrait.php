@@ -11,6 +11,7 @@ trait CalculatorTrait
         } else {
             $value = $discount;
         }
+
         return round($value, 4);
     }
 
@@ -19,13 +20,14 @@ trait CalculatorTrait
         return ($price / 100) * $tax;
     }
 
-    function getDivideWithDynamicPrecision($numerator, $denominator, $maxPrecision = 100): string
+    public function getDivideWithDynamicPrecision($numerator, $denominator, $maxPrecision = 100): string
     {
         if ($denominator == 0) {
             return 0;
         }
         $result = $numerator / $denominator;
         $resultStr = rtrim(number_format($result, $maxPrecision, '.', ''), '0');
+
         return (substr($resultStr, -1) === '.') ? substr($resultStr, 0, -1) : $resultStr;
     }
 }

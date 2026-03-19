@@ -8,19 +8,19 @@ class FeaturesSectionService
 {
     use FileManagerTrait;
 
-    public function getBottomSectionData(object $request, object|null $featuresBottomSection = null): array
+    public function getBottomSectionData(object $request, ?object $featuresBottomSection = null): array
     {
         $bottomSectionData = [];
-        if($featuresBottomSection) {
+        if ($featuresBottomSection) {
             $bottomSectionData = json_decode($featuresBottomSection['value']);
         }
-        foreach($request['features_section_bottom']['title'] as $key => $value) {
+        foreach ($request['features_section_bottom']['title'] as $key => $value) {
             $iconArray = null;
-            if (!empty($request['features_section_bottom_icon']) && isset($request['features_section_bottom_icon'][$key])) {
+            if (! empty($request['features_section_bottom_icon']) && isset($request['features_section_bottom_icon'][$key])) {
                 $image = $this->upload(dir: 'banner/', format: 'webp', image: $request['features_section_bottom_icon'][$key]);
                 $iconArray = [
-                    'image_name' =>  $image,
-                    'storage' => config('filesystems.disks.default') ?? 'public'
+                    'image_name' => $image,
+                    'storage' => config('filesystems.disks.default') ?? 'public',
                 ];
             }
             $bottomSectionData[] = [
@@ -29,19 +29,21 @@ class FeaturesSectionService
                 'icon' => $iconArray,
             ];
         }
+
         return $bottomSectionData;
     }
 
     public function getDeleteData(object $request, object $data): array
     {
         $newArray = [];
-        foreach(json_decode($data->value) as $item) {
-            if($request->title != $item->title && $request->subtitle != $item->subtitle){
+        foreach (json_decode($data->value) as $item) {
+            if ($request->title != $item->title && $request->subtitle != $item->subtitle) {
                 $newArray[] = $item;
-            }else{
-                $this->delete(filePath: "/banner/" . ($item?->icon?->image_name ?? $item?->icon));
+            } else {
+                $this->delete(filePath: '/banner/'.($item?->icon?->image_name ?? $item?->icon));
             }
         }
+
         return $newArray;
     }
 
@@ -55,10 +57,10 @@ class FeaturesSectionService
         foreach ($decodedData as $key => $itemData) {
             $index = $key + 1;
 
-            $itemKey = 'item_' . $index;
-            $titleKey = 'title_' . $index;
-            $statusKey = 'status_' . $index;
-            $imageKey = 'image_' . $index;
+            $itemKey = 'item_'.$index;
+            $titleKey = 'title_'.$index;
+            $statusKey = 'status_'.$index;
+            $imageKey = 'image_'.$index;
 
             $imageArray = null;
 
@@ -70,7 +72,7 @@ class FeaturesSectionService
                         format: 'webp',
                         image: $request->file($imageKey)
                     ),
-                    'storage' => $storage
+                    'storage' => $storage,
                 ];
             }
 
@@ -95,5 +97,4 @@ class FeaturesSectionService
 
         return $items;
     }
-
 }

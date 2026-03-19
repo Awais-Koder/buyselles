@@ -33,5 +33,4 @@ class SocialMediaRequest extends FormRequest
             'link.required' => translate('the_link_field_is_required'),
         ];
     }
-
 }

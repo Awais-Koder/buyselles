@@ -18,8 +18,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $delivery_charge_earned
  * @property float $pending_amount
  * @property float $total_tax_collected
- *
- * @package App\Models
  */
 class AdminWallet extends Model
 {

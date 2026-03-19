@@ -33,44 +33,25 @@ use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class POSOrderController extends BaseController
 {
-    use CustomerTrait;
     use CalculatorTrait;
+    use CustomerTrait;
     use VatTaxManagement;
 
-
-    /**
-     * @param ProductRepositoryInterface $productRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param OrderRepositoryInterface $orderRepo
-     * @param OrderDetailRepositoryInterface $orderDetailRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     * @param DigitalProductVariationRepositoryInterface $digitalProductVariationRepo
-     * @param StorageRepositoryInterface $storageRepo
-     * @param POSService $POSService
-     * @param CartService $cartService
-     * @param OrderDetailsService $orderDetailsService
-     * @param OrderService $orderService
-     */
     public function __construct(
-        private readonly ProductRepositoryInterface                 $productRepo,
-        private readonly CustomerRepositoryInterface                $customerRepo,
-        private readonly OrderRepositoryInterface                   $orderRepo,
-        private readonly OrderDetailRepositoryInterface             $orderDetailRepo,
-        private readonly VendorRepositoryInterface                  $vendorRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly DigitalProductVariationRepositoryInterface $digitalProductVariationRepo,
-        private readonly StorageRepositoryInterface                 $storageRepo,
-        private readonly POSService                                 $POSService,
-        private readonly CartService                                $cartService,
-        private readonly OrderDetailsService                        $orderDetailsService,
-        private readonly OrderService                               $orderService,
-    )
-    {
-    }
+        private readonly StorageRepositoryInterface $storageRepo,
+        private readonly POSService $POSService,
+        private readonly CartService $cartService,
+        private readonly OrderDetailsService $orderDetailsService,
+        private readonly OrderService $orderService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
      * @throws Exception
      */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
@@ -79,8 +60,6 @@ class POSOrderController extends BaseController
     }
 
     /**
-     * @param string $id
-     * @return View|RedirectResponse
      * @throws Exception
      */
     public function getOrderDetails(string $id): View|RedirectResponse
@@ -90,15 +69,15 @@ class POSOrderController extends BaseController
         $getPOSStatus = getWebConfig('seller_pos');
         if ($vendor['pos_status'] == 0 || $getPOSStatus == 0) {
             ToastMagic::warning(translate('access_denied!!'));
+
             return redirect()->back();
         }
         $order = $this->orderRepo->getFirstWhere(params: ['id' => $id], relations: ['details', 'shipping', 'seller']);
+
         return view(POSOrder::ORDER_DETAILS[VIEW], compact('order'));
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
     public function placeOrder(Request $request): JsonResponse
@@ -117,12 +96,13 @@ class POSOrderController extends BaseController
                 $this->createWalletTransaction(user_id: $userId, amount: floatval($amount), transaction_type: 'order_place', reference: 'order_place_in_pos');
             } else {
                 ToastMagic::error(translate('need_Sufficient_Amount_Balance'));
+
                 return response()->json();
             }
         }
         $checkProductTypeDigital = $this->cartService->checkProductTypeDigital(cartId: $cartId);
         if ($userId == 0 && $checkProductTypeDigital) {
-            return response()->json(['checkProductTypeForWalkingCustomer' => true, 'message' => translate('To_order_digital_product') . ',' . translate('_kindly_fill_up_the_“Add_New_Customer”_form') . '.']);
+            return response()->json(['checkProductTypeForWalkingCustomer' => true, 'message' => translate('To_order_digital_product').','.translate('_kindly_fill_up_the_“Add_New_Customer”_form').'.']);
         }
 
         $taxConfig = self::getTaxSystemType();
@@ -154,12 +134,12 @@ class POSOrderController extends BaseController
                             if ($product['digital_product_type'] == 'ready_product') {
                                 $getStoragePath = $this->storageRepo->getFirstWhere(params: [
                                     'data_id' => $digitalProductVariation['id'],
-                                    "data_type" => "App\Models\DigitalProductVariation",
+                                    'data_type' => "App\Models\DigitalProductVariation",
                                 ]);
                                 $product['digital_file_ready'] = $digitalProductVariation['file'];
                                 $product['storage_path'] = $getStoragePath ? $getStoragePath['value'] : 'public';
                             }
-                        } elseif ($product['digital_product_type'] == 'ready_product' && !empty($product['digital_file_ready'])) {
+                        } elseif ($product['digital_product_type'] == 'ready_product' && ! empty($product['digital_file_ready'])) {
                             $product['storage_path'] = $product['digital_file_ready_storage_type'] ?? 'public';
                         }
 
@@ -239,7 +219,7 @@ class POSOrderController extends BaseController
                     'templateName' => 'digital-product-download',
                     'order' => $order,
                     'subject' => translate('download_Digital_Product'),
-                    'title' => translate('Congratulations') . '!',
+                    'title' => translate('Congratulations').'!',
                     'emailId' => $order->customer['email'],
 
                 ];
@@ -260,16 +240,15 @@ class POSOrderController extends BaseController
         $totalHoldOrders = $this->POSService->getTotalHoldOrders();
         $cartNames = $this->POSService->getCartNames();
         $cartItems = $this->getHoldOrderCalculationData(cartNames: $cartNames);
+
         return response()->json([
-            'message' => $request['cart_id'] . ' ' . translate('order_is_cancel'),
+            'message' => $request['cart_id'].' '.translate('order_is_cancel'),
             'status' => 'success',
             'view' => view(POSOrder::CANCEL_ORDER[VIEW], compact('cartItems', 'totalHoldOrders'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws \Throwable
      */
     public function getAllHoldOrdersView(Request $request): JsonResponse
@@ -277,13 +256,14 @@ class POSOrderController extends BaseController
         $cartNames = $this->POSService->getCartNames();
         $cartItems = $this->getHoldOrderCalculationData(cartNames: $cartNames);
         $totalHoldOrders = $this->POSService->getTotalHoldOrders();
-        if (!empty($request['customer'])) {
+        if (! empty($request['customer'])) {
             $searchValue = strtolower($request['customer']);
             $filteredItems = collect($cartItems)->filter(function ($item) use ($searchValue) {
                 return str_contains(strtolower($item['customerName']), $searchValue) !== false;
             });
             $cartItems = $filteredItems->all();
         }
+
         return response()->json([
             'flag' => 'inactive',
             'totalHoldOrders' => $totalHoldOrders,
@@ -291,10 +271,6 @@ class POSOrderController extends BaseController
         ]);
     }
 
-    /**
-     * @param array $cartNames
-     * @return array
-     */
     protected function getHoldOrderCalculationData(array $cartNames): array
     {
         $CustomerCartData = [];
@@ -303,20 +279,17 @@ class POSOrderController extends BaseController
             $CartItemData = $this->calculateCartItemsData(cartName: $cartId, customerCartData: $CustomerData);
             $CustomerCartData[$cartId] = array_merge($CustomerData[$cartId], $CartItemData);
         }
+
         return $CustomerCartData;
     }
 
-    /**
-     * @param string $cartName
-     * @return array
-     */
     protected function getCustomerCartData(string $cartName): array
     {
         $customerCartData = [];
         if (Str::contains($cartName, 'walk-in-customer')) {
             $currentCustomerInfo = [
                 'customerName' => 'Walk-In Customer',
-                'customerPhone' => "",
+                'customerPhone' => '',
             ];
             $customerId = 0;
         } else {
@@ -329,6 +302,7 @@ class POSOrderController extends BaseController
             'customerPhone' => $currentCustomerInfo['customerPhone'],
             'customerId' => $customerId,
         ];
+
         return $customerCartData;
     }
 
@@ -381,6 +355,7 @@ class POSOrderController extends BaseController
         $totalCalculation = $this->cartService->getTotalCalculation(
             subTotalCalculation: $subTotalCalculation, cartName: $cartName
         );
+
         return [
             'countItem' => $subTotalCalculation['countItem'],
             'total' => $totalCalculation['total'],
@@ -394,5 +369,4 @@ class POSOrderController extends BaseController
             'customerOnHold' => $subTotalCalculation['customerOnHold'] ?? false,
         ];
     }
-
 }

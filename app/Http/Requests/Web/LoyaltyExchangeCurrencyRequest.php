@@ -5,7 +5,7 @@ namespace App\Http\Requests\Web;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * @property integer $point
+ * @property int $point
  */
 class LoyaltyExchangeCurrencyRequest extends FormRequest
 {
@@ -19,7 +19,7 @@ class LoyaltyExchangeCurrencyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'point' => 'required|integer|min:1'
+            'point' => 'required|integer|min:1',
         ];
     }
 
@@ -31,5 +31,4 @@ class LoyaltyExchangeCurrencyRequest extends FormRequest
             'point.min' => translate('the_point_field_must_be_at_least_one'),
         ];
     }
-
 }

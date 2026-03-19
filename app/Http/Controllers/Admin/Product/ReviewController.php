@@ -2,21 +2,18 @@
 
 namespace App\Http\Controllers\Admin\Product;
 
+use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\ProductRepositoryInterface;
 use App\Contracts\Repositories\ReviewReplyRepositoryInterface;
 use App\Contracts\Repositories\ReviewRepositoryInterface;
-use App\Contracts\Repositories\CustomerRepositoryInterface;
 use App\Contracts\Repositories\ShopRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
-use App\Enums\ViewPaths\Admin\Review;
 use App\Exports\CustomerReviewListExport;
 use App\Http\Controllers\BaseController;
 use App\Models\Order;
-use App\Models\Product;
 use App\Traits\InHouseTrait;
 use App\Utils\Helpers;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,23 +27,19 @@ class ReviewController extends BaseController
     use InHouseTrait;
 
     public function __construct(
-        private readonly ReviewRepositoryInterface      $reviewRepo,
-        private readonly ProductRepositoryInterface     $productRepo,
-        private readonly CustomerRepositoryInterface    $customerRepo,
+        private readonly ReviewRepositoryInterface $reviewRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly ReviewReplyRepositoryInterface $reviewReplyRepo,
-        private readonly VendorRepositoryInterface      $vendorRepo,
-        private readonly ShopRepositoryInterface        $shopRepo,
-    )
-    {
-    }
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
 
         $fromDateFinal = $request['from'];
@@ -109,20 +102,21 @@ class ReviewController extends BaseController
         $product = $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']]);
         $vendor = $this->shopRepo->getFirstWhere(params: ['id' => $request['vendor_id']]);
 
-        $customer = "all";
-        if ($request['customer_id'] != 'all' && !is_null($request['customer_id']) && $request->has('customer_id')) {
+        $customer = 'all';
+        if ($request['customer_id'] != 'all' && ! is_null($request['customer_id']) && $request->has('customer_id')) {
             $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]);
         }
 
-        $shopList =  $this->shopRepo->getListWhere(filters:['author_type'=>'vendor'], relations: ['products', 'products.reviews'], dataLimit: 'all')->each(function ($shopItem) {
+        $shopList = $this->shopRepo->getListWhere(filters: ['author_type' => 'vendor'], relations: ['products', 'products.reviews'], dataLimit: 'all')->each(function ($shopItem) {
             $productReviews = $shopItem->products->pluck('reviews')->collapse();
             $shopItem->average_rating = $productReviews->avg('rating');
             $shopItem->review_count = $productReviews->count();
             $shopItem->total_rating = $productReviews->sum('rating');
+
             return $shopItem;
         });
 
-        $inhouseProducts = $this->productRepo->getListWithScope(scope: 'active', filters: ['added_by' => 'in_house'] , relations: ['reviews', 'rating'], withCount: ['reviews'], dataLimit: 'all');
+        $inhouseProducts = $this->productRepo->getListWithScope(scope: 'active', filters: ['added_by' => 'in_house'], relations: ['reviews', 'rating'], withCount: ['reviews'], dataLimit: 'all');
         $inhouseProductCount = $inhouseProducts->count();
         $inhouseReviewData = $this->reviewRepo->getListWhereIn(globalScope: true, whereInFilters: ['product_id' => $inhouseProducts->pluck('id')->toArray()], dataLimit: 'all');
         $inhouseReviewDataCount = $inhouseReviewData->count();
@@ -167,10 +161,11 @@ class ReviewController extends BaseController
             $shopItem->average_rating = $productReviews->avg('rating');
             $shopItem->review_count = $productReviews->count();
             $shopItem->total_rating = $productReviews->sum('rating');
+
             return $shopItem;
         });
 
-        if (!(isset($request['searchValue']) && !str_contains(strtolower(getInHouseShopConfig(key: 'name')), strtolower($request['searchValue'])))) {
+        if (! (isset($request['searchValue']) && ! str_contains(strtolower(getInHouseShopConfig(key: 'name')), strtolower($request['searchValue'])))) {
             $shopList = $shopList->prepend(getInHouseShopConfig());
         }
 
@@ -182,7 +177,6 @@ class ReviewController extends BaseController
         ]);
     }
 
-
     public function updateStatus(Request $request): RedirectResponse|JsonResponse
     {
         $status = $request['status'] ?? 0;
@@ -191,10 +185,11 @@ class ReviewController extends BaseController
         if ($request->ajax()) {
             return response()->json([
                 'status' => 1,
-                'message' => translate('review_status_updated.')
+                'message' => translate('review_status_updated.'),
             ]);
         }
         ToastMagic::success(translate('review_status_updated'));
+
         return back();
     }
 
@@ -242,19 +237,21 @@ class ReviewController extends BaseController
         $data = [
             'data-from' => 'admin',
             'reviews' => $reviews,
-            'product_name' => $request->has('product_id') ? $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']])['name'] : "all_products",
-            'customer_name' => $request->has('customer_id') && $request->has('customer_id') != 'all' ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : "all_customers",
+            'product_name' => $request->has('product_id') ? $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']])['name'] : 'all_products',
+            'customer_name' => $request->has('customer_id') && $request->has('customer_id') != 'all' ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : 'all_customers',
             'from' => $request['from'],
             'to' => $request['to'],
             'status' => $request['status'],
             'key' => $request['search'],
         ];
+
         return Excel::download(new CustomerReviewListExport($data), 'Customer-Review-List.xlsx');
     }
 
     public function getCustomerList(Request $request): JsonResponse
     {
         $data = $this->customerRepo->getCustomerList(request: $request);
+
         return response()->json($data);
     }
 
@@ -265,6 +262,7 @@ class ReviewController extends BaseController
             scope: 'active',
             relations: ['category', 'brand', 'seller.shop'],
             dataLimit: 'all');
+
         return response()->json([
             'result' => view('admin-views.partials._search-product', compact('products'))->render(),
         ]);
@@ -275,7 +273,7 @@ class ReviewController extends BaseController
         $validator = Validator::make($request->all(), [
             'reply_text' => 'required_without_all:attachments',
         ], [
-            'required_without_all' => translate('reply_text_is_required') . '!',
+            'required_without_all' => translate('reply_text_is_required').'!',
         ]);
 
         if ($validator->fails()) {
@@ -283,6 +281,7 @@ class ReviewController extends BaseController
             foreach ($errors as $value) {
                 ToastMagic::error(translate($value['message']));
             }
+
             return back();
         }
 
@@ -290,13 +289,14 @@ class ReviewController extends BaseController
             params: [
                 'review_id' => $request['review_id'],
                 'added_by' => 'admin',
-                'added_by_id' => auth('admin')->id()
+                'added_by_id' => auth('admin')->id(),
             ], data: [
-            'reply_text' => $request['reply_text'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]
+                'reply_text' => $request['reply_text'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         );
+
         return back();
     }
 }

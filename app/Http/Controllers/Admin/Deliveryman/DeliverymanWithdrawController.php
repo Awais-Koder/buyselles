@@ -19,44 +19,38 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DeliverymanWithdrawController extends Controller
 {
-
-    /**
-     * @param WithdrawRequestRepositoryInterface $withdrawRequestRepo
-     * @param DeliveryManWalletRepositoryInterface $deliveryManWalletRepo
-     */
     public function __construct(
-        private readonly WithdrawRequestRepositoryInterface   $withdrawRequestRepo,
+        private readonly WithdrawRequestRepositoryInterface $withdrawRequestRepo,
         private readonly DeliveryManWalletRepositoryInterface $deliveryManWalletRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $withdrawRequests = $this->withdrawRequestRepo->getListWhere(
-            orderBy: ['id'=>'desc'],
+            orderBy: ['id' => 'desc'],
             searchValue: $request['order_search'],
-            filters: ['admin_id'=> 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['approved']],
+            filters: ['admin_id' => 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['approved']],
             relations: ['deliveryMan'],
             dataLimit: getWebConfig('pagination_limit')
         );
+
         return view('admin-views.delivery-man.withdraw.index', compact('withdrawRequests'));
     }
+
     public function getFiltered(Request $request): JsonResponse
     {
         $withdrawRequests = $this->withdrawRequestRepo->getListWhere(
-            orderBy: ['id'=>'desc'],
+            orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
-            filters: ['admin_id'=> 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['status']],
+            filters: ['admin_id' => 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['status']],
             relations: ['deliveryMan'],
             dataLimit: getWebConfig('pagination_limit')
         );
+
         return response()->json([
             'view' => view('admin-views.delivery-man.withdraw._table', compact('withdrawRequests'))->render(),
             'count' => $withdrawRequests->count(),
@@ -70,18 +64,18 @@ class DeliverymanWithdrawController extends Controller
             filters: ['whereNotNull' => 'delivery_man_id'],
             relations: ['deliveryMan'],
         );
-        return response()->json(['view'=>view('admin-views.delivery-man.withdraw._details',compact('details'))->render()]);
-    }
 
+        return response()->json(['view' => view('admin-views.delivery-man.withdraw._details', compact('details'))->render()]);
+    }
 
     public function updateStatus(DeliveryManWithdrawRequest $request, string|int $withdrawId, DeliveryManWithdrawService $deliveryManWithdrawService, DeliveryManWalletService $deliveryManWalletService): JsonResponse
     {
         $withdraw = $this->withdrawRequestRepo->getFirstWhere(params: ['id' => $withdrawId], relations: ['deliveryMan']);
-        if (!$withdraw) {
+        if (! $withdraw) {
             return response()->json(['error' => translate('Invalid_withdraw')]);
         }
         $wallet = $this->deliveryManWalletRepo->getFirstWhere(params: ['delivery_man_id' => $withdraw['delivery_man_id']]);
-        if(!$wallet){
+        if (! $wallet) {
             $deliverymanWalletData = $deliveryManWalletService->getDeliveryManData(id: $withdraw['delivery_man_id'], deliverymanCharge: 0, cashInHand: 0);
             $this->deliveryManWalletRepo->add(data: $deliverymanWalletData);
             $wallet = $this->deliveryManWalletRepo->getFirstWhere(params: ['delivery_man_id' => $withdraw['delivery_man_id']]);
@@ -91,7 +85,7 @@ class DeliverymanWithdrawController extends Controller
         $withdrawData = $formatData['withdraw'];
         $this->deliveryManWalletRepo->update(id: $wallet->id, data: $walletData);
         $this->withdrawRequestRepo->update(id: $withdrawId, data: $withdrawData);
-        if (!empty($withdraw->deliveryMan?->fcm_token)) {
+        if (! empty($withdraw->deliveryMan?->fcm_token)) {
             WithdrawStatusUpdateEvent::dispatch('withdraw_request_status_message', 'delivery_man', $withdraw->deliveryMan?->app_language ?? getDefaultLanguage(), $request['approved'], $withdraw->deliveryMan?->fcm_token);
         }
         if ($request['approved'] == 1) {
@@ -104,20 +98,21 @@ class DeliverymanWithdrawController extends Controller
     public function exportList(Request $request): BinaryFileResponse
     {
         $withdrawRequests = $this->withdrawRequestRepo->getListWhere(
-            orderBy: ['id'=>'desc'],
+            orderBy: ['id' => 'desc'],
             searchValue: $request['searchValue'],
-            filters: ['admin_id'=> 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['status']],
+            filters: ['admin_id' => 0, 'whereNotNull' => 'delivery_man_id', 'status' => $request['status']],
             relations: ['deliveryMan'],
             dataLimit: 'all'
         );
+
         return Excel::download(new DeliveryManWithdrawRequestExport([
-                    'withdraw_request'=>$withdrawRequests,
-                    'filter' => $request['status'],
-                    'searchValue'=> $request['searchValue'],
-                    'pending_request'=> $withdrawRequests->where('approved',0)->count(),
-                    'approved_request'=> $withdrawRequests->where('approved',1)->count(),
-                    'denied_request'=> $withdrawRequests->where('approved',2)->count(),
-                ]), DeliverymanWithdrawExport::EXPORT_XLSX
+            'withdraw_request' => $withdrawRequests,
+            'filter' => $request['status'],
+            'searchValue' => $request['searchValue'],
+            'pending_request' => $withdrawRequests->where('approved', 0)->count(),
+            'approved_request' => $withdrawRequests->where('approved', 1)->count(),
+            'denied_request' => $withdrawRequests->where('approved', 2)->count(),
+        ]), DeliverymanWithdrawExport::EXPORT_XLSX
         );
     }
 }

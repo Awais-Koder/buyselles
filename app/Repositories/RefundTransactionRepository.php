@@ -12,9 +12,7 @@ class RefundTransactionRepository implements RefundTransactionRepositoryInterfac
 {
     public function __construct(
         private readonly RefundTransaction $refundTransaction,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,8 +27,8 @@ class RefundTransactionRepository implements RefundTransactionRepositoryInterfac
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->refundTransaction->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -38,33 +36,34 @@ class RefundTransactionRepository implements RefundTransactionRepositoryInterfac
 
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-        $query =  $this->refundTransaction->with($relations)
-            ->when(isset($filters['payment_method']),function ($query)use($filters){
-                return $query->where('payment_method',$filters['payment_method']);
+        $query = $this->refundTransaction->with($relations)
+            ->when(isset($filters['payment_method']), function ($query) use ($filters) {
+                return $query->where('payment_method', $filters['payment_method']);
             })
-            ->when(isset($searchValue),function ($query)use($searchValue){
+            ->when(isset($searchValue), function ($query) use ($searchValue) {
                 $key = explode(' ', $searchValue);
                 foreach ($key as $value) {
                     return $query->orWhere('order_id', 'like', "%{$value}%")
                         ->orWhere('refund_id', 'like', "%{$value}%");
                 }
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(key($orderBy),current($orderBy));
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(key($orderBy), current($orderBy));
             });
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function getListWhereHas(array $orderBy = [], ?string $searchValue = null, array $filters = [], ?string $whereHas = null, array $whereHasFilters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->refundTransaction->whereHas($whereHas, function ($query) use ($whereHasFilters) {
-                return $query->when(isset($whereHasFilters['seller_is']) && $whereHasFilters['seller_is'] == 'admin', function ($query) use ($whereHasFilters) {
-                    return $query->where(['seller_is' => $whereHasFilters['seller_is']]);
-                })->when(isset($whereHasFilters['seller_is']) && $whereHasFilters['seller_is'] == 'seller', function ($query) use ($whereHasFilters) {
-                    return $query->where(['seller_is' => $whereHasFilters['seller_is']]);
-                });
-            })
+            return $query->when(isset($whereHasFilters['seller_is']) && $whereHasFilters['seller_is'] == 'admin', function ($query) use ($whereHasFilters) {
+                return $query->where(['seller_is' => $whereHasFilters['seller_is']]);
+            })->when(isset($whereHasFilters['seller_is']) && $whereHasFilters['seller_is'] == 'seller', function ($query) use ($whereHasFilters) {
+                return $query->where(['seller_is' => $whereHasFilters['seller_is']]);
+            });
+        })
             ->when(isset($searchValue), function ($query) use ($searchValue) {
                 $key = explode(' ', $searchValue);
                 $query->where(function ($subQuery) use ($key) {
@@ -80,6 +79,7 @@ class RefundTransactionRepository implements RefundTransactionRepositoryInterfac
             ->orderBy(key($orderBy), current($orderBy));
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -98,12 +98,14 @@ class RefundTransactionRepository implements RefundTransactionRepositoryInterfac
     public function updateWhere(array $params, array $data): bool
     {
         $this->refundTransaction->where($params)->update($data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->refundTransaction->where($params)->delete();
+
         return true;
     }
 }

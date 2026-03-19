@@ -2,12 +2,11 @@
 
 namespace App\Repositories;
 
-
-use App\Models\ReferralCustomer;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 use App\Contracts\Repositories\ReferByEarnCustomerRepositoryInterface;
+use App\Models\ReferralCustomer;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReferByEarnCustomerRepository implements ReferByEarnCustomerRepositoryInterface
 {
@@ -28,7 +27,7 @@ class ReferByEarnCustomerRepository implements ReferByEarnCustomerRepositoryInte
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->referalCustomer->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -48,11 +47,12 @@ class ReferByEarnCustomerRepository implements ReferByEarnCustomerRepositoryInte
             ->when(isset($filters['user_id']), function ($query) use ($filters) {
                 return $query->where(['user_id' => $filters['user_id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -69,43 +69,48 @@ class ReferByEarnCustomerRepository implements ReferByEarnCustomerRepositoryInte
             ->when(isset($filters['user_id']), function ($query) use ($filters) {
                 return $query->where(['user_id' => $filters['user_id']]);
             })
-            ->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
+            ->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
                 foreach ($whereInFilters as $key => $filterIndex) {
                     $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         $this->referalCustomer->where('id', $id)->update($data);
+
         return true;
     }
 
     public function updateWhere(array $params, array $data): bool
     {
         $this->referalCustomer->where($params)->update($data);
+
         return true;
     }
 
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->referalCustomer->updateOrInsert($params, $data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->referalCustomer->where($params)->delete();
+
         return true;
     }
 }

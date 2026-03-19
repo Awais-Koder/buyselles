@@ -34,7 +34,7 @@ class SMSModuleUpdateRequest extends FormRequest
 
     public function after(): array
     {
-        if($this['gateway'] == '2factor' && !$this['otp_template']){
+        if ($this['gateway'] == '2factor' && ! $this['otp_template']) {
             $twoFactor = Setting::where(['key_name' => '2factor', 'settings_type' => 'sms_config'])->first();
             if ($twoFactor && $twoFactor->live_values) {
                 $liveValues = is_array($twoFactor->live_values) ? $twoFactor->live_values : json_decode($twoFactor->live_values, true);
@@ -48,11 +48,11 @@ class SMSModuleUpdateRequest extends FormRequest
 
         return [
             function (Validator $validator) {
-                collect(['status'])->each(fn($item, $key) => $this[$item] = $this->has($item) ? (int)$this[$item] : 0);
+                collect(['status'])->each(fn ($item, $key) => $this[$item] = $this->has($item) ? (int) $this[$item] : 0);
 
                 $validation = [
                     'gateway' => 'required|in:releans,twilio,nexmo,2factor,msg91,hubtel,paradox,signal_wire,019_sms,viatech,global_sms,akandit_sms,sms_to,alphanet_sms',
-                    'mode' => 'required|in:live,test'
+                    'mode' => 'required|in:live,test',
                 ];
                 $additionalData = [];
                 if ($this['gateway'] == 'releans') {
@@ -60,7 +60,7 @@ class SMSModuleUpdateRequest extends FormRequest
                         'status' => 'required|in:1,0',
                         'api_key' => 'required',
                         'from' => 'required',
-                        'otp_template' => 'required'
+                        'otp_template' => 'required',
                     ];
                 } elseif ($this['gateway'] == 'twilio') {
                     $additionalData = [
@@ -69,7 +69,7 @@ class SMSModuleUpdateRequest extends FormRequest
                         'messaging_service_sid' => 'required',
                         'token' => 'required',
                         'from' => 'required',
-                        'otp_template' => 'required'
+                        'otp_template' => 'required',
                     ];
                 } elseif ($this['gateway'] == 'nexmo') {
                     $additionalData = [
@@ -78,13 +78,13 @@ class SMSModuleUpdateRequest extends FormRequest
                         'api_secret' => 'required',
                         'token' => 'required',
                         'from' => 'required',
-                        'otp_template' => 'required'
+                        'otp_template' => 'required',
                     ];
                 } elseif ($this['gateway'] == '2factor') {
                     $additionalData = [
                         'status' => 'required|in:1,0',
                         'api_key' => 'required',
-                        'otp_template' => 'required'
+                        'otp_template' => 'required',
                     ];
                 } elseif ($this['gateway'] == 'msg91') {
                     $additionalData = [
@@ -162,7 +162,7 @@ class SMSModuleUpdateRequest extends FormRequest
                     ];
                 }
                 $this->validate(array_merge($validation, $additionalData));
-            }
+            },
         ];
     }
 }

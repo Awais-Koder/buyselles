@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 /**

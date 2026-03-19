@@ -2,37 +2,32 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use Illuminate\Http\Request;
-use App\Services\LanguageService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\File;
-use Illuminate\Http\RedirectResponse;
+use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\LanguageRequest;
+use App\Services\LanguageService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class LanguageController extends BaseController
 {
-
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly LanguageService                    $languageService,
-    )
-    {
-    }
+        private readonly LanguageService $languageService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $languageList = getWebConfig(name: 'language');
-        if (request()->has('search') && !empty(request()->input('search'))) {
+        if (request()->has('search') && ! empty(request()->input('search'))) {
             $searchTerm = strtolower(request()->input('search'));
             $languageList = array_filter($languageList, function ($language) use ($searchTerm) {
                 return str_contains(strtolower($language['name']), $searchTerm) ||
@@ -76,9 +71,9 @@ class LanguageController extends BaseController
                     if (count($parts) === 3 && in_array($parts[1], ['Cyrl', 'Latn'])) {
                         foreach (['Cyrl', 'Latn'] as $localeScript) {
                             $countryNewObj = $country;
-                            $countryNewObj['locale'] = strtolower($country['iso2'] . '-' . $localeScript);
+                            $countryNewObj['locale'] = strtolower($country['iso2'].'-'.$localeScript);
                             $countryNewObj['script'] = $localeScript;
-                            $formatedLocales[strtolower($countryNewObj['iso2'] . '-' . $localeScript)] = $countryNewObj;
+                            $formatedLocales[strtolower($countryNewObj['iso2'].'-'.$localeScript)] = $countryNewObj;
                         }
                     } else {
                         $country['locale'] = strtolower($country['iso2']);
@@ -88,7 +83,7 @@ class LanguageController extends BaseController
                 }
             }
 
-            if (!in_array(strtolower($country['iso2']), $existCountriesISO)) {
+            if (! in_array(strtolower($country['iso2']), $existCountriesISO)) {
                 $country['locale'] = strtolower($country['iso2']);
                 $formatedLocales[strtolower($country['iso2'])] = $country;
             }
@@ -106,6 +101,7 @@ class LanguageController extends BaseController
         clearWebConfigCacheKeys();
         updateSetupGuideCacheKey(key: 'language_setup', panel: 'admin');
         ToastMagic::success(translate('Language_Added'));
+
         return back();
     }
 
@@ -116,6 +112,7 @@ class LanguageController extends BaseController
         clearWebConfigCacheKeys();
         $this->businessSettingRepo->updateOrInsert(type: 'language', value: $languageArray);
         updateSetupGuideCacheKey(key: 'language_setup', panel: 'admin');
+
         return response()->json([
             'status' => 1,
             'message' => translate('Language_Status_Updated'),
@@ -129,6 +126,7 @@ class LanguageController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'language', value: $languageArray);
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('Default_Language_Changed'));
+
         return back();
     }
 
@@ -140,6 +138,7 @@ class LanguageController extends BaseController
         clearWebConfigCacheKeys();
         updateSetupGuideCacheKey(key: 'language_setup', panel: 'admin');
         ToastMagic::success(translate('Language_updated'));
+
         return back();
     }
 
@@ -148,30 +147,32 @@ class LanguageController extends BaseController
         $languages = getWebConfig(name: 'language');
         $language = collect($languages)->firstWhere('code', $lang);
         $languageName = $language['name'] ?? '';
-        $totalMessages = count(include(base_path('resources/lang/' . $lang . '/new-messages.php')));
+        $totalMessages = count(include base_path('resources/lang/'.$lang.'/new-messages.php'));
         $messageGroup = 200;
+
         return view('admin-views.system-setup.language.translate', compact('lang', 'languageName', 'totalMessages', 'messageGroup'));
     }
 
     public function getTranslateList($lang, LanguageService $languageService): JsonResponse
     {
         $data = $languageService->getTranslateList(language: $lang);
+
         return response()->json($data);
     }
 
     public function deleteTranslateKey(Request $request, $lang): void
     {
-        $fullData = include(base_path('resources/lang/' . $lang . '/messages.php'));
+        $fullData = include base_path('resources/lang/'.$lang.'/messages.php');
         unset($fullData[$request['key']]);
-        $string = "<?php return " . var_export($fullData, true) . ";";
-        file_put_contents(base_path('resources/lang/' . $lang . '/messages.php'), $string);
+        $string = '<?php return '.var_export($fullData, true).';';
+        file_put_contents(base_path('resources/lang/'.$lang.'/messages.php'), $string);
     }
 
     public function updateTranslate(Request $request, $lang): JsonResponse
     {
-        $translatedMessagesArray = include(base_path('resources/lang/' . $lang . '/messages.php'));
-        $newMessagesArray = include(base_path('resources/lang/' . $lang . '/new-messages.php'));
-        $textKey = $request->has('key') && !empty($request['key']) ? base64_decode($request['key']) : '';
+        $translatedMessagesArray = include base_path('resources/lang/'.$lang.'/messages.php');
+        $newMessagesArray = include base_path('resources/lang/'.$lang.'/new-messages.php');
+        $textKey = $request->has('key') && ! empty($request['key']) ? base64_decode($request['key']) : '';
         $dataFiltered = [];
 
         if (array_key_exists($textKey, $translatedMessagesArray)) {
@@ -180,25 +181,26 @@ class LanguageController extends BaseController
             }
             $dataFiltered[base64_decode($request['key'])] = removeSpecialCharacters($request['value']);
             $this->languageService->updateAdvancedSearchKeyWords($lang, $textKey, removeSpecialCharacters($request['value']));
-            $string = "<?php return " . var_export($dataFiltered, true) . ";";
-            file_put_contents(base_path('resources/lang/' . $lang . '/messages.php'), $string);
+            $string = '<?php return '.var_export($dataFiltered, true).';';
+            file_put_contents(base_path('resources/lang/'.$lang.'/messages.php'), $string);
         } elseif (array_key_exists($textKey, $newMessagesArray)) {
             foreach ($newMessagesArray as $key => $data) {
                 $dataFiltered[removeSpecialCharacters(text: $key)] = $data;
             }
             $dataFiltered[base64_decode($request['key'])] = removeSpecialCharacters($request['value']);
             $this->languageService->updateAdvancedSearchKeyWords($lang, $textKey, removeSpecialCharacters($request['value']));
-            $string = "<?php return " . var_export($dataFiltered, true) . ";";
-            file_put_contents(base_path('resources/lang/' . $lang . '/new-messages.php'), $string);
+            $string = '<?php return '.var_export($dataFiltered, true).';';
+            file_put_contents(base_path('resources/lang/'.$lang.'/new-messages.php'), $string);
         }
+
         return response()->json(['message' => translate('Message_Updated')]);
     }
 
     public function getAutoTranslate(Request $request, $lang): JsonResponse
     {
-        $translatedMessagesArray = include(base_path('resources/lang/' . $lang . '/messages.php'));
-        $newMessagesArray = include(base_path('resources/lang/' . $lang . '/new-messages.php'));
-        $textKey = $request->has('key') && !empty($request['key']) ? base64_decode($request['key']) : '';
+        $translatedMessagesArray = include base_path('resources/lang/'.$lang.'/messages.php');
+        $newMessagesArray = include base_path('resources/lang/'.$lang.'/new-messages.php');
+        $textKey = $request->has('key') && ! empty($request['key']) ? base64_decode($request['key']) : '';
         $dataFiltered = [];
 
         if ($textKey) {
@@ -210,11 +212,12 @@ class LanguageController extends BaseController
                 }
 
                 $translated = autoTranslator($textKey, 'en', $langCode);
-                $this->languageService->updateAdvancedSearchKeyWords($lang,$textKey, removeSpecialCharacters($translated));
+                $this->languageService->updateAdvancedSearchKeyWords($lang, $textKey, removeSpecialCharacters($translated));
                 $dataFiltered[$textKey] = removeSpecialCharacters($translated);
 
-                $string = "<?php return " . var_export($dataFiltered, true) . ";";
-                file_put_contents(base_path('resources/lang/' . $lang . '/messages.php'), $string);
+                $string = '<?php return '.var_export($dataFiltered, true).';';
+                file_put_contents(base_path('resources/lang/'.$lang.'/messages.php'), $string);
+
                 return response()->json(['translated_data' => $translated]);
             } elseif (array_key_exists($textKey, $newMessagesArray)) {
                 foreach ($newMessagesArray as $key => $data) {
@@ -225,11 +228,13 @@ class LanguageController extends BaseController
                 $this->languageService->updateAdvancedSearchKeyWords($lang, $textKey, removeSpecialCharacters($translated));
                 $dataFiltered[$textKey] = removeSpecialCharacters($translated);
 
-                $string = "<?php return " . var_export($dataFiltered, true) . ";";
-                file_put_contents(base_path('resources/lang/' . $lang . '/new-messages.php'), $string);
+                $string = '<?php return '.var_export($dataFiltered, true).';';
+                file_put_contents(base_path('resources/lang/'.$lang.'/new-messages.php'), $string);
+
                 return response()->json(['translated_data' => $translated]);
             }
         }
+
         return response()->json(['message' => 'empty_data']);
     }
 
@@ -237,15 +242,17 @@ class LanguageController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('This_option_is_disabled_for_demo'));
+
             return back();
         }
 
         $response = $languageService->getAllMessagesTranslateProcess(language: $lang, count: 200);
+
         return response()->json([
             'status' => $response['status'],
             'message' => $response['message'],
             'due_message' => $response['due_message'],
-            'translate_success_message' => $response['translateCountSuccess'] > 0 ? translate('your') . ' ' . $response['translateCountSuccess'] . ' ' . translate('messages_successfully_translated') : translate('all_messages_are_in_translated'),
+            'translate_success_message' => $response['translateCountSuccess'] > 0 ? translate('your').' '.$response['translateCountSuccess'].' '.translate('messages_successfully_translated') : translate('all_messages_are_in_translated'),
         ]);
     }
 
@@ -255,7 +262,7 @@ class LanguageController extends BaseController
         $languageArray = $languageService->getLangDelete(language: $language, code: $lang);
         $this->businessSettingRepo->updateOrInsert(type: 'language', value: $languageArray);
 
-        $languages = array();
+        $languages = [];
         $pncLanguage = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'pnc_language']);
         foreach (json_decode($pncLanguage['value'], true) as $key => $data) {
             if ($data != $lang) {
@@ -268,15 +275,15 @@ class LanguageController extends BaseController
         array_unshift($languages, 'en');
         $this->businessSettingRepo->updateOrInsert(type: 'pnc_language', value: json_encode($languages));
 
-        //language json file delete
-        $filePath = public_path('json/admin/lang/' . $lang . '.json');
+        // language json file delete
+        $filePath = public_path('json/admin/lang/'.$lang.'.json');
         if (file_exists($filePath)) {
             @unlink($filePath);
         }
 
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('Removed_Successfully'));
+
         return back();
     }
-
 }

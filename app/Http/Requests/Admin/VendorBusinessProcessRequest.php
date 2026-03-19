@@ -21,7 +21,7 @@ class VendorBusinessProcessRequest extends FormRequest
         for ($i = 1; $i <= 3; $i++) {
             $rules["section_{$i}_title"] = 'required|string|max:51';
             $rules["section_{$i}_description"] = 'required|string|max:161';
-            $rules["section_{$i}_image"] = 'nullable|image|'.getFileUploadFormats(skip: '.svg,.gif', asRule: 'true').'|max:'. getFileUploadMaxSize(unit: 'kb');
+            $rules["section_{$i}_image"] = 'nullable|image|'.getFileUploadFormats(skip: '.svg,.gif', asRule: 'true').'|max:'.getFileUploadMaxSize(unit: 'kb');
         }
 
         return $rules;

@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use App\Utils\Helpers;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Madnest\Madzipper\Facades\Madzipper;
 
 class InstallablePackage extends Command
@@ -38,7 +38,6 @@ class InstallablePackage extends Command
     /**
      * Execute the console command.
      *
-     * @return void
      * @throws Exception
      */
     public function handle(): void
@@ -50,16 +49,16 @@ class InstallablePackage extends Command
         Madzipper::make('installation/backup/public.zip')->extractTo('storage/app');
 
         $folder = base_path('resources/themes');
-        $directories = glob($folder . '/*', GLOB_ONLYDIR);
+        $directories = glob($folder.'/*', GLOB_ONLYDIR);
         foreach ($directories as $directory) {
             $array = explode('/', $directory);
-            if (File::isDirectory($directory) && !in_array(end($array), ["default", "theme_aster"])) {
+            if (File::isDirectory($directory) && ! in_array(end($array), ['default', 'theme_aster'])) {
                 File::deleteDirectory($directory);
             }
         }
 
         $addOnFolder = base_path('Modules');
-        $addOnDirectories = glob($addOnFolder . '/*', GLOB_ONLYDIR);
+        $addOnDirectories = glob($addOnFolder.'/*', GLOB_ONLYDIR);
         foreach ($addOnDirectories as $directory) {
             $array = explode('/', $directory);
             $directoryName = end($array);

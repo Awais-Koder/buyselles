@@ -18,25 +18,20 @@ use Illuminate\Http\Request;
 
 class PagesController extends BaseController
 {
-
     use UpdateClass;
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly BusinessPageRepositoryInterface    $businessPageRepo,
-        private readonly AttachmentRepositoryInterface      $attachmentRepo,
-        private readonly BusinessPageService                $businessPageService,
-    )
-    {
-    }
+        private readonly BusinessPageRepositoryInterface $businessPageRepo,
+        private readonly AttachmentRepositoryInterface $attachmentRepo,
+        private readonly BusinessPageService $businessPageService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $defaultPages = [
             'about_us' => 'about-us',
@@ -55,7 +50,7 @@ class PagesController extends BaseController
                 foreach ($idsToDelete as $id) {
                     $this->businessPageRepo->delete(params: ['id' => $id]);
                 }
-                if (!empty($idsToDelete)) {
+                if (! empty($idsToDelete)) {
                     \App\Models\BusinessPage::destroy($idsToDelete);
                 }
                 cacheRemoveByType(type: 'business_pages');
@@ -67,6 +62,7 @@ class PagesController extends BaseController
             $this->addOrUpdateBusinessPagesData();
             $businessPages = $this->businessPageRepo->getListWhere(orderBy: ['default_status' => 'desc'], dataLimit: 'all');
         }
+
         return view('admin-views.pages-and-media.list', compact('businessPages'));
     }
 
@@ -74,6 +70,7 @@ class PagesController extends BaseController
     {
         if ($this->businessPageRepo->getListWhere(dataLimit: 'all')->count() >= 17) {
             ToastMagic::warning(translate('Can_not_add_custom_business_page_more_then_10'));
+
             return back();
         }
 
@@ -90,12 +87,14 @@ class PagesController extends BaseController
             $this->attachmentRepo->add(data: $attachmentData);
         }
         ToastMagic::success(translate('Page_add_successfully'));
+
         return redirect()->route('admin.pages-and-media.list');
     }
 
     public function getUpdateView(Request $request): View
     {
         $businessPage = $this->businessPageRepo->getFirstWhere(params: ['slug' => $request['slug']], relations: ['banner']);
+
         return view('admin-views.pages-and-media.update', compact('businessPage'));
     }
 
@@ -108,7 +107,7 @@ class PagesController extends BaseController
             $oldImage = $this->attachmentRepo->getFirstWhere(params: [
                 'attachable_type' => 'App\Models\BusinessPage',
                 'attachable_id' => $request['id'],
-                'file_type' => 'banner'
+                'file_type' => 'banner',
             ]);
             $this->attachmentRepo->updateOrInsert(params: [
                 'attachable_type' => 'App\Models\BusinessPage',
@@ -123,15 +122,17 @@ class PagesController extends BaseController
             ]);
         }
         ToastMagic::success(translate('Update_successfully'));
+
         return redirect()->route('admin.pages-and-media.list');
     }
 
     public function updateStatus(Request $request): JsonResponse
     {
         $this->businessPageRepo->updateWhere(params: ['id' => $request['id']], data: ['status' => $request['status'] ?? 0]);
+
         return response()->json([
             'status' => 1,
-            'message' => translate('Status_updated_successfully')
+            'message' => translate('Status_updated_successfully'),
         ]);
     }
 
@@ -141,7 +142,7 @@ class PagesController extends BaseController
         $fileName = $data?->banner?->file_name;
 
         if ($fileName) {
-            $name = "business-pages/". $fileName;
+            $name = 'business-pages/'.$fileName;
             $deleteFromDirectory = $this->delete($name);
             if ($deleteFromDirectory['success']) {
                 $this->attachmentRepo->updateOrInsert(
@@ -156,18 +157,19 @@ class PagesController extends BaseController
                 );
             }
             ToastMagic::success(translate('Banner_Image_Deleted_Successfully'));
+
             return redirect()->route('admin.pages-and-media.list');
         }
         ToastMagic::success(translate('Banner_Image_Path_Not_Found'));
+
         return redirect()->route('admin.pages-and-media.list');
     }
-
 
     public function getDelete(Request $request): RedirectResponse
     {
         $this->businessPageRepo->delete(params: ['slug' => $request['slug']]);
         ToastMagic::success(translate('Delete_successfully'));
+
         return redirect()->route('admin.pages-and-media.list');
     }
-
 }

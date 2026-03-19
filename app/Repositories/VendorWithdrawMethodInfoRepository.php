@@ -2,20 +2,17 @@
 
 namespace App\Repositories;
 
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
 use App\Contracts\Repositories\VendorWithdrawMethodInfoRepositoryInterface;
 use App\Models\VendorWithdrawMethodInfo;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class VendorWithdrawMethodInfoRepository implements VendorWithdrawMethodInfoRepositoryInterface
 {
     public function __construct(
         private readonly VendorWithdrawMethodInfo $vendorWithDrawMethodInfo,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,7 +27,7 @@ class VendorWithdrawMethodInfoRepository implements VendorWithdrawMethodInfoRepo
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->vendorWithDrawMethodInfo->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -59,11 +56,12 @@ class VendorWithdrawMethodInfoRepository implements VendorWithdrawMethodInfoRepo
             ->when(isset($filters['is_default']), function ($query) use ($filters) {
                 return $query->where(['is_default' => $filters['is_default']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -80,43 +78,48 @@ class VendorWithdrawMethodInfoRepository implements VendorWithdrawMethodInfoRepo
             ->when(isset($filters['user_type']), function ($query) use ($filters) {
                 return $query->where(['user_type' => $filters['user_type']]);
             })
-            ->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
+            ->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
                 foreach ($whereInFilters as $key => $filterIndex) {
                     $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         $this->vendorWithDrawMethodInfo->where('id', $id)->update($data);
+
         return true;
     }
 
     public function updateWhere(array $params, array $data): bool
     {
         $this->vendorWithDrawMethodInfo->where($params)->update($data);
+
         return true;
     }
 
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->vendorWithDrawMethodInfo->updateOrInsert($params, $data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->vendorWithDrawMethodInfo->where($params)->delete();
+
         return true;
     }
 }

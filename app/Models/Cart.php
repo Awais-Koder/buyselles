@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int $quantity
  * @property float $price
  * @property float $tax
- * @property integer $is_checked
+ * @property int $is_checked
  * @property float $discount
  * @property string $tax_model
  * @property string $slug
@@ -37,19 +37,16 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float $shipping_cost
  * @property string $shipping_type
  * @property int $is_guest
- *
- * @package App\Models
  */
 class Cart extends Model
 {
-
     protected $casts = [
         'id' => 'integer',
         'customer_id' => 'integer',
         'product_id' => 'integer',
-//        'choices' => 'array',
-//        'variations' => 'array',
-//        'variant' => 'array',
+        //        'choices' => 'array',
+        //        'variations' => 'array',
+        //        'variant' => 'array',
         'quantity' => 'integer',
         'price' => 'float',
         'tax' => 'float',
@@ -91,17 +88,19 @@ class Cart extends Model
 
     public function cartShipping(): HasOne
     {
-        return $this->hasOne(CartShipping::class,'cart_group_id','cart_group_id');
+        return $this->hasOne(CartShipping::class, 'cart_group_id', 'cart_group_id');
     }
 
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->where('status', 1);
     }
+
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'seller_id');
     }
+
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class, 'seller_id', 'seller_id');

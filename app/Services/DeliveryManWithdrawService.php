@@ -4,22 +4,15 @@ namespace App\Services;
 
 class DeliveryManWithdrawService
 {
-    /**
-     * @param object $request
-     * @return array
-     */
-    public function getDeliveryManWithdrawData(object $request) : array
+    public function getDeliveryManWithdrawData(object $request): array
     {
-        return  [
+        return [
             'approved' => $request['approved'],
-            'transaction_note' => $request['note']
+            'transaction_note' => $request['note'],
         ];
     }
 
     /**
-     * @param object $request
-     * @param object $wallet
-     * @param object $withdraw
      * @return array[]
      */
     public function getUpdateData(object $request, ?object $wallet, object $withdraw): array

@@ -16,41 +16,27 @@ use Illuminate\Http\Request;
 
 class PushNotificationSettingsController extends BaseController
 {
-
-    /**
-     * @param BusinessSettingRepositoryInterface $businessSettingRepo
-     * @param NotificationMessageRepositoryInterface $notificationMessageRepo
-     * @param PushNotificationService $pushNotificationService
-     * @param TranslationRepositoryInterface $translationRepo
-     */
     public function __construct(
-        private readonly BusinessSettingRepositoryInterface     $businessSettingRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
         private readonly NotificationMessageRepositoryInterface $notificationMessageRepo,
-        private readonly PushNotificationService                $pushNotificationService,
-        private readonly TranslationRepositoryInterface         $translationRepo,
-    )
-    {
-    }
+        private readonly PushNotificationService $pushNotificationService,
+        private readonly TranslationRepositoryInterface $translationRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $customerMessages = $this->getPushNotificationMessageData(userType: 'customer');
         $vendorMessages = $this->getPushNotificationMessageData(userType: 'seller');
         $deliveryManMessages = $this->getPushNotificationMessageData(userType: 'delivery_man');
         $language = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'pnc_language']);
+
         return view('admin-views.push-notification.index', compact('customerMessages', 'vendorMessages', 'deliveryManMessages', 'language'));
     }
 
-    /**
-     * @param $userType
-     * @return Collection
-     */
     protected function getPushNotificationMessageData($userType): Collection
     {
         $pushNotificationMessages = $this->notificationMessageRepo->getListWhere(orderBy: ['key' => 'asc'], filters: ['user_type' => $userType]);
@@ -64,21 +50,21 @@ class PushNotificationSettingsController extends BaseController
             }
         }
         foreach ($pushNotificationMessages as $value) {
-            if (!in_array($value['key'], $pushNotificationMessagesKeyArray)) {
+            if (! in_array($value['key'], $pushNotificationMessagesKeyArray)) {
                 $this->notificationMessageRepo->delete(params: ['id' => $value['id']]);
             }
         }
+
         return $this->notificationMessageRepo->getListWhere(orderBy: ['key' => 'asc'], filters: ['user_type' => $userType]);
     }
-
 
     public function updatePushNotificationMessage(Request $request): RedirectResponse
     {
         $pushNotificationMessages = $this->notificationMessageRepo->getListWhere(filters: ['user_type' => $request['type']]);
         foreach ($pushNotificationMessages as $pushNotificationMessage) {
-            $message = 'message' . $pushNotificationMessage['id'];
-            $status = 'status' . $pushNotificationMessage['id'];
-            $lang = 'lang' . $pushNotificationMessage['id'];
+            $message = 'message'.$pushNotificationMessage['id'];
+            $status = 'status'.$pushNotificationMessage['id'];
+            $lang = 'lang'.$pushNotificationMessage['id'];
             $this->notificationMessageRepo->update(
                 id: $pushNotificationMessage['id'],
                 data: $this->pushNotificationService->getUpdateData(
@@ -108,6 +94,7 @@ class PushNotificationSettingsController extends BaseController
 
         updateSetupGuideCacheKey(key: 'notification_configuration', panel: 'admin');
         ToastMagic::success(translate('update_successfully'));
+
         return redirect()->route('admin.push-notification.index');
     }
 
@@ -118,7 +105,8 @@ class PushNotificationSettingsController extends BaseController
         $pushNotificationKey = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'push_notification_key'])->value ?? '';
         $configData = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'fcm_credentials'])->value ?? '';
         $projectId = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'fcm_project_id'])->value ?? '';
-        return view("admin-views.third-party.firebase-configuration.index", [
+
+        return view('admin-views.third-party.firebase-configuration.index', [
             'firebaseOTPVerification' => json_decode($firebaseOTPVerification, true),
             'pushNotificationKey' => $pushNotificationKey,
             'projectId' => $projectId,
@@ -143,8 +131,6 @@ class PushNotificationSettingsController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return RedirectResponse
      * @throws Exception
      */
     public function getFirebaseConfigurationUpdate(Request $request): RedirectResponse
@@ -158,7 +144,7 @@ class PushNotificationSettingsController extends BaseController
         clearWebConfigCacheKeys();
 
         ToastMagic::success(translate('settings_updated'));
+
         return back();
     }
-
 }

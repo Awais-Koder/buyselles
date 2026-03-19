@@ -18,9 +18,9 @@ use App\Models\ReviewReply;
 use App\Models\Seller;
 use App\Models\SellerWallet;
 use App\Models\Shop;
+use App\Models\User;
 use App\Models\WithdrawalMethod;
 use App\Models\WithdrawRequest;
-use App\Models\User;
 use App\Repositories\OrderTransactionRepository;
 use App\Services\DashboardService;
 use App\Traits\FileManagerTrait;
@@ -34,7 +34,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use phpDocumentor\Reflection\Types\Boolean;
 
 class SellerController extends Controller
 {
@@ -42,13 +41,11 @@ class SellerController extends Controller
 
     public function __construct(
         private readonly OrderTransactionRepository $orderTransactionRepo,
-        private readonly DashboardService           $dashboardService,
-        private readonly OrderRepositoryInterface   $orderRepo,
+        private readonly DashboardService $dashboardService,
+        private readonly OrderRepositoryInterface $orderRepo,
         private readonly ProductRepositoryInterface $productRepo,
-        private readonly ReviewRepositoryInterface  $reviewRepo,
-    )
-    {
-    }
+        private readonly ReviewRepositoryInterface $reviewRepo,
+    ) {}
 
     public function shop_info(Request $request): JsonResponse
     {
@@ -61,12 +58,12 @@ class SellerController extends Controller
 
         $shop['stock_limit'] = $seller['stock_limit'];
         $shop['total_products'] = count($allProductids);
-        $shop['total_orders'] = $this->orderRepo->getListWhere(filters: ['seller_is' => 'seller', 'seller_id' => $seller['id']], dataLimit: 'all')->count();;
+        $shop['total_orders'] = $this->orderRepo->getListWhere(filters: ['seller_is' => 'seller', 'seller_id' => $seller['id']], dataLimit: 'all')->count();
         $shop['total_reviews'] = $this->reviewRepo->getListWhereIn(filters: [
             'seller_is' => 'seller',
             'seller_id' => $seller['id'],
         ], whereInFilters: [
-            'product_id' => !empty($allProductids) ? $allProductids : [null],
+            'product_id' => ! empty($allProductids) ? $allProductids : [null],
         ], dataLimit: 'all')->count();
 
         return response()->json($shop, 200);
@@ -80,7 +77,7 @@ class SellerController extends Controller
         return response()->json($delivery_men, 200);
     }
 
-    public function shop_product_reviews(Request $request):JsonResponse
+    public function shop_product_reviews(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $product_ids = Product::where(['user_id' => $seller['id'], 'added_by' => 'seller'])->pluck('id')->toArray();
@@ -92,7 +89,7 @@ class SellerController extends Controller
                     $q->where('name', 'like', "%{$value}%");
                 }
             })->pluck('id')->toArray();
-            $product_id = !empty($product_id) ? $product_id : [0];
+            $product_id = ! empty($product_id) ? $product_id : [0];
 
             $customer_id = User::where(function ($q) use ($key) {
                 foreach ($key as $value) {
@@ -119,8 +116,8 @@ class SellerController extends Controller
                 ->when($request['status'] != null, function ($query) use ($request) {
                     $query->where('status', $request['status']);
                 })
-                ->when(!empty($request['from']) && !empty($request['to']), function ($query) use ($request) {
-                    $query->whereBetween('created_at', [$request->from . ' 00:00:00', $request->to . ' 23:59:59']);
+                ->when(! empty($request['from']) && ! empty($request['to']), function ($query) use ($request) {
+                    $query->whereBetween('created_at', [$request->from.' 00:00:00', $request->to.' 23:59:59']);
                 });
         } else {
             $reviews = Review::with(['product', 'customer', 'reply'])->whereHas('product', function ($query) use ($seller) {
@@ -135,8 +132,8 @@ class SellerController extends Controller
                 ->when($request['status'] != null, function ($query) use ($request) {
                     $query->where('status', $request['status']);
                 })
-                ->when(!empty($request['from']) && !empty($request['to']), function ($query) use ($request) {
-                    $query->whereBetween('created_at', [$request->from . ' 00:00:00', $request->to . ' 23:59:59']);
+                ->when(! empty($request['from']) && ! empty($request['to']), function ($query) use ($request) {
+                    $query->whereBetween('created_at', [$request->from.' 00:00:00', $request->to.' 23:59:59']);
                 });
         }
         $reviews = $reviews->latest()->paginate($request['limit'], ['*'], 'page', $request['offset']);
@@ -144,6 +141,7 @@ class SellerController extends Controller
         $reviewsFilters = $reviews->map(function ($data) {
             $data['attachment_full_url'] = $data->attachment_full_url;
             $data['product'] = Helpers::product_data_formatting($data['product']);
+
             return $data;
         });
 
@@ -151,7 +149,7 @@ class SellerController extends Controller
             'total_size' => $reviews->total(),
             'limit' => $request['limit'],
             'offset' => $request['offset'],
-            'reviews' => $reviewsFilters->values()
+            'reviews' => $reviewsFilters->values(),
         ], 200);
     }
 
@@ -159,7 +157,7 @@ class SellerController extends Controller
     {
         $seller = $request->seller;
         $review = ReviewReply::where(['review_id' => $request['review_id'], 'added_by' => 'seller', 'added_by_id' => $seller['id']])->first();
-        if (!$review) {
+        if (! $review) {
             ReviewReply::insert([
                 'review_id' => $request['review_id'],
                 'added_by' => 'seller',
@@ -172,7 +170,7 @@ class SellerController extends Controller
             ReviewReply::where([
                 'review_id' => $request['review_id'],
                 'added_by' => 'seller',
-                'added_by_id' => $seller['id']
+                'added_by_id' => $seller['id'],
             ])->update([
                 'reply_text' => $request['reply_text'],
                 'updated_at' => Carbon::now(),
@@ -182,11 +180,12 @@ class SellerController extends Controller
         return response()->json(['message' => translate('Review_reply_successfully')], 200);
     }
 
-    public function shop_product_reviews_status(Request $request):JsonResponse
+    public function shop_product_reviews_status(Request $request): JsonResponse
     {
         $reviews = Review::find($request->id);
         $reviews->status = $request->status;
         $reviews->save();
+
         return response()->json(['message' => translate('status updated successfully!!')], 200);
     }
 
@@ -245,25 +244,25 @@ class SellerController extends Controller
 
         if ($request->has('minimum_order_amount')) {
             Seller::where(['id' => $seller['id']])->update([
-                'minimum_order_amount' => BackEndHelper::currency_to_usd($request['minimum_order_amount'])
+                'minimum_order_amount' => BackEndHelper::currency_to_usd($request['minimum_order_amount']),
             ]);
         }
 
         if ($request->has('free_delivery_status')) {
             Seller::where(['id' => $seller['id']])->update([
-                'free_delivery_status' => $request['free_delivery_status']
+                'free_delivery_status' => $request['free_delivery_status'],
             ]);
         }
 
         if ($request->has('free_delivery_over_amount')) {
             Seller::where(['id' => $seller['id']])->update([
-                'free_delivery_over_amount' => BackEndHelper::currency_to_usd($request['free_delivery_over_amount'])
+                'free_delivery_over_amount' => BackEndHelper::currency_to_usd($request['free_delivery_over_amount']),
             ]);
         }
 
         if ($request->has('stock_limit')) {
             Seller::where(['id' => $seller['id']])->update([
-                'stock_limit' => $request['stock_limit']
+                'stock_limit' => $request['stock_limit'],
             ]);
         }
 
@@ -271,7 +270,7 @@ class SellerController extends Controller
             Shop::where(['seller_id' => $seller['id']])->update([
                 'tin_certificate' => $this->fileUpload(dir: 'shop/documents/', format: $request->file('tin_certificate')->getClientOriginalExtension(), file: $request->file('tin_certificate')),
                 'tin_certificate_storage_type' => config('filesystems.disks.default') ?? 'public',
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
 
@@ -285,7 +284,7 @@ class SellerController extends Controller
             'offer_banner' => $offer_banner,
             'tax_identification_number' => $request['tax_identification_number'],
             'tin_expire_date' => $request['tin_expire_date'],
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return response()->json(translate('Shop_info_updated_successfully'), 200);
@@ -305,11 +304,11 @@ class SellerController extends Controller
         $seller = $request->seller;
         $shop = Shop::where(['seller_id' => $seller['id']])->first();
         $setupGuideApp = is_array($shop['setup_guide_app']) ? $shop['setup_guide_app'] : json_decode($shop['setup_guide_app'], true);
-        $setupGuideApp[$request['key']] = (int)($request['value'] ?? 0);
+        $setupGuideApp[$request['key']] = (int) ($request['value'] ?? 0);
 
         Shop::where(['seller_id' => $seller['id']])->update([
             'setup_guide_app' => json_encode($setupGuideApp),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return response()->json(translate('Shop_info_updated_successfully'), 200);
@@ -337,12 +336,12 @@ class SellerController extends Controller
             'phone' => $request['phone'],
             'password' => $request['password'] != null ? bcrypt($request['password']) : Seller::where(['id' => $seller['id']])->first()->password,
             'image' => $imageName,
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         if ($request['password'] != null) {
             Seller::where(['id' => $seller['id']])->update([
-                'auth_token' => Str::random('50')
+                'auth_token' => Str::random('50'),
             ]);
         }
 
@@ -352,6 +351,7 @@ class SellerController extends Controller
     public function withdraw_method_list(Request $request): JsonResponse
     {
         $methods = WithdrawalMethod::ofStatus(1)->get();
+
         return response()->json($methods, 200);
     }
 
@@ -359,16 +359,16 @@ class SellerController extends Controller
     {
         $method = WithdrawalMethod::find($request['withdraw_method_id']);
 
-        if (!$method) {
+        if (! $method) {
             return response()->json(['message' => translate('Invalid_withdraw_request')], 403);
         }
 
-        $fields = !is_null($method->method_fields) ? array_column($method->method_fields, 'input_name') : [];
+        $fields = ! is_null($method->method_fields) ? array_column($method->method_fields, 'input_name') : [];
         $values = $request->all();
 
         $data['method_name'] = $method->method_name;
         foreach ($fields as $field) {
-            if (key_exists($field, $values)) {
+            if (array_key_exists($field, $values)) {
                 $data[$field] = $values[$field];
             }
         }
@@ -385,13 +385,15 @@ class SellerController extends Controller
                 'withdrawal_method_fields' => json_encode($data),
                 'approved' => 0,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
             $wallet->total_earning -= BackEndHelper::currency_to_usd($request['amount']);
             $wallet->pending_withdraw += BackEndHelper::currency_to_usd($request['amount']);
             $wallet->save();
+
             return response()->json(translate('Withdraw request sent successfully!'), 200);
         }
+
         return response()->json(['message' => translate('Invalid_withdraw_request')], 403);
     }
 
@@ -407,6 +409,7 @@ class SellerController extends Controller
             $wallet->pending_withdraw -= BackEndHelper::currency_to_usd($request['amount']);
             $wallet->save();
             $withdraw_request->delete();
+
             return response()->json(translate('Withdraw request has been closed successfully!'), 200);
         }
 
@@ -430,7 +433,7 @@ class SellerController extends Controller
                 $query->where('approved', $status);
             })
             ->when(($request->from && $request->to), function ($query) use ($request) {
-                $query->whereBetween('created_at', [$request->from . ' 00:00:00', $request->to . ' 23:59:59']);
+                $query->whereBetween('created_at', [$request->from.' 00:00:00', $request->to.' 23:59:59']);
             })
             ->latest()->get();
 
@@ -446,7 +449,7 @@ class SellerController extends Controller
         $seller_earnings = OrderTransaction::where([
             'seller_is' => 'seller',
             'seller_id' => $seller['id'],
-            'status' => 'disburse'
+            'status' => 'disburse',
         ])->select(
             DB::raw('IFNULL(sum(seller_amount),0) as sums'),
             DB::raw('YEAR(created_at) year, MONTH(created_at) month')
@@ -458,7 +461,7 @@ class SellerController extends Controller
                     $default = $match['sums'];
                 }
             }
-            $seller_data .= $default . ',';
+            $seller_data .= $default.',';
         }
 
         return response()->json($seller_data, 200);
@@ -474,7 +477,7 @@ class SellerController extends Controller
         $commission_earnings = OrderTransaction::where([
             'seller_is' => 'seller',
             'seller_id' => $seller['id'],
-            'status' => 'disburse'
+            'status' => 'disburse',
         ])->select(
             DB::raw('IFNULL(sum(admin_commission),0) as sums'),
             DB::raw('YEAR(created_at) year, MONTH(created_at) month')
@@ -486,7 +489,7 @@ class SellerController extends Controller
                     $default = $match['sums'];
                 }
             }
-            $commission_data .= $default . ',';
+            $commission_data .= $default.',';
         }
 
         return response()->json($commission_data, 200);
@@ -517,7 +520,7 @@ class SellerController extends Controller
             return response()->json(['status' => 'error', 'key' => 'ongoing_order_left', 'message' => translate('please_make_sure_you_don`t_have_any_ongoing_order')], 403);
         }
 
-        if (!$this->checkAdminCommissionAmountClearance(sellerId: $request->seller->id)) {
+        if (! $this->checkAdminCommissionAmountClearance(sellerId: $request->seller->id)) {
             return response()->json(['status' => 'error', 'key' => 'admin_commission_not_paid', 'message' => translate('please_clear_all_the_transaction_with_admin')], 403);
         }
 
@@ -526,8 +529,9 @@ class SellerController extends Controller
         }
         if ($seller->id) {
             Coupon::where(['coupon_bearer' => 'seller', 'seller_id' => $seller->id])->delete();
-            ImageManager::delete('/seller/' . $seller['image']);
+            ImageManager::delete('/seller/'.$seller['image']);
             $seller->delete();
+
             return response()->json(['message' => translate('Your_account_deleted_successfully!!')], 200);
         } else {
             return response()->json(['message' => 'access_denied!!'], 403);
@@ -538,6 +542,7 @@ class SellerController extends Controller
     {
         $adminCommission = OrderTransaction::where(['seller_is' => 'seller', 'seller_id' => $sellerId])->sum('admin_commission') ?? 0;
         $sellerGivenToAdmin = SellerWallet::where('seller_id', $sellerId)->first()->admin_commission ?? 0;
+
         return $adminCommission >= $sellerGivenToAdmin;
     }
 
@@ -566,6 +571,7 @@ class SellerController extends Controller
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
+
         return $this->dashboardService->getDateWiseAmountInUSD(range: $range, type: $type, amountArray: $vendorEarnings);
     }
 
@@ -582,7 +588,8 @@ class SellerController extends Controller
             groupBy: $type,
             whereBetweenFilters: [$from, $to],
         );
-        return $this->dashboardService->getDateWiseAmountInUSD(range: $range, type: $type, amountArray: $commissionGiven);;
+
+        return $this->dashboardService->getDateWiseAmountInUSD(range: $range, type: $type, amountArray: $commissionGiven);
     }
 
     public function getEarningStatics(Request $request): JsonResponse
@@ -600,7 +607,7 @@ class SellerController extends Controller
 
         return response()->json([
             'seller_earn' => $vendorEarning,
-            'commission_earn' => $commissionEarn
+            'commission_earn' => $commissionEarn,
         ], 200);
     }
 
@@ -659,8 +666,9 @@ class SellerController extends Controller
     {
         $seller = $request->seller;
         Seller::where('id', $seller['id'])->update([
-           'app_language' => $request['current_language'],
+            'app_language' => $request['current_language'],
         ]);
+
         return response()->json(['message' => 'Successfully change'], 200);
     }
 }

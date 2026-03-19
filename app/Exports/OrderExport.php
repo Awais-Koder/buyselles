@@ -5,17 +5,17 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class OrderExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -46,7 +46,6 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
         $hasOrderStatusColumn = ($this->data['order_status'] == 'all');
         $hasStoreColumn = (isset($this->data['data-from']) && $this->data['data-from'] == 'admin');
 
-
         if ($hasStoreColumn && $hasOrderStatusColumn) {
             $lastColumn = 'R';
         } elseif ($hasStoreColumn || $hasOrderStatusColumn) {
@@ -56,10 +55,10 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
         }
 
         $sheet->getStyle('A1')->getFont()->setBold(true);
-        $sheet->getStyle('A4:' . $lastColumn . '4')->getFont()->setBold(true)->getColor()
+        $sheet->getStyle('A4:'.$lastColumn.'4')->getFont()->setBold(true)->getColor()
             ->setARGB('FFFFFF');
 
-        $sheet->getStyle('A4:' . $lastColumn . '4')->getFill()->applyFromArray([
+        $sheet->getStyle('A4:'.$lastColumn.'4')->getFill()->applyFromArray([
             'fillType' => 'solid',
             'rotation' => 0,
             'color' => ['rgb' => '063C93'],
@@ -69,40 +68,40 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
         // Adjust these column references based on your actual layout
         if ($hasStoreColumn && $hasOrderStatusColumn) {
             // Order Status column
-            $sheet->getStyle('Q5:Q' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('Q5:Q'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'D6BC00'],
             ]);
             // Total Amount column
-            $sheet->getStyle('O5:O' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('O5:O'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'FFF9D1'],
             ]);
         } elseif ($hasOrderStatusColumn) {
             // Order Status column
-            $sheet->getStyle('P5:P' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('P5:P'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'D6BC00'],
             ]);
             // Total Amount column
-            $sheet->getStyle('N5:N' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('N5:N'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'FFF9D1'],
             ]);
         } elseif ($hasStoreColumn) {
             // Total Amount column
-            $sheet->getStyle('O5:O' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('O5:O'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'FFF9D1'],
             ]);
         } else {
             // Total Amount column
-            $sheet->getStyle('N5:N' . ($this->data['orders']->count() + 4))->getFill()->applyFromArray([
+            $sheet->getStyle('N5:N'.($this->data['orders']->count() + 4))->getFill()->applyFromArray([
                 'fillType' => 'solid',
                 'rotation' => 0,
                 'color' => ['rgb' => 'FFF9D1'],
@@ -113,7 +112,7 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
 
         return [
             // Define the style for cells with data
-            'A1:' . $lastColumn . ($this->data['orders']->count() + 4) => [
+            'A1:'.$lastColumn.($this->data['orders']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -144,31 +143,31 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
                 }
 
                 // Center alignment for title row
-                $event->sheet->getStyle('A1:' . $lastColumn . '1')
+                $event->sheet->getStyle('A1:'.$lastColumn.'1')
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
                 // Center alignment for data rows (from row 4 onwards)
-                $event->sheet->getStyle('A4:' . $lastColumn . ($this->data['orders']->count() + 4))
+                $event->sheet->getStyle('A4:'.$lastColumn.($this->data['orders']->count() + 4))
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
                 // Left alignment for filter criteria
-                $event->sheet->getStyle('A2:' . $filterColumn . '3')
+                $event->sheet->getStyle('A2:'.$filterColumn.'3')
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
                 // Merge title row
-                $event->sheet->mergeCells('A1:' . $lastColumn . '1');
+                $event->sheet->mergeCells('A1:'.$lastColumn.'1');
 
                 // Merge filter criteria rows
                 $event->sheet->mergeCells('A2:B2');
-                $event->sheet->mergeCells('C2:' . $filterColumn . '2');
+                $event->sheet->mergeCells('C2:'.$filterColumn.'2');
                 $event->sheet->mergeCells('A3:B3');
-                $event->sheet->mergeCells('C3:' . $filterColumn . '3');
+                $event->sheet->mergeCells('C3:'.$filterColumn.'3');
 
                 // Set row heights
                 $event->sheet->getRowDimension(2)->setRowHeight(110);
@@ -180,7 +179,7 @@ class OrderExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWid
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

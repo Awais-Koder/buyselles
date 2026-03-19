@@ -13,10 +13,6 @@ class ShopService
 {
     use FileManagerTrait;
 
-    /**
-     * @param object $vendor
-     * @return array
-     */
     public function getShopDataForAdd(object $vendor): array
     {
         return [
@@ -26,7 +22,7 @@ class ShopService
             'contact' => $vendor['phone'],
             'image' => 'def.png',
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ];
     }
 
@@ -40,6 +36,7 @@ class ShopService
         $banner = $request['banner'] ? $this->update(dir: 'shop/banner/', oldImage: $shop['banner'], format: 'webp', image: $request->file('banner')) : $shop['banner'];
         $bottomBanner = $request['bottom_banner'] ? $this->update(dir: 'shop/banner/', oldImage: $shop['bottom_banner'], format: 'webp', image: $request->file('bottom_banner')) : $shop['bottom_banner'];
         $offerBanner = $request['offer_banner'] ? $this->update(dir: 'shop/banner/', oldImage: $shop['offer_banner'], format: 'webp', image: $request->file('offer_banner')) : $shop['offer_banner'];
+
         return [
             'name' => $request['name'],
             'address' => $request['address'],
@@ -72,10 +69,11 @@ class ShopService
     public function getAddShopDataForRegistration(object $request, int $vendorId): array
     {
         $storage = config('filesystems.disks.default') ?? 'public';
+
         return [
             'seller_id' => $vendorId,
             'name' => $request['shop_name'],
-            'slug' => Str::slug($request['shop_name'], '-') . '-' . Str::random(6),
+            'slug' => Str::slug($request['shop_name'], '-').'-'.Str::random(6),
             'address' => $request['shop_address'],
             'contact' => $request['phone'],
             'image' => $this->upload(dir: 'shop/', format: 'webp', image: $request->file('logo')),
@@ -90,7 +88,6 @@ class ShopService
             'tin_certificate_storage_type' => $request->has('tin_certificate') ? $storage : null,
         ];
     }
-
 
     public function updateInHouseShopData(object|array $request, object|array $shop): array
     {
@@ -115,7 +112,7 @@ class ShopService
         ];
     }
 
-    public function getInhouseShopData($request): object|null
+    public function getInhouseShopData($request): ?object
     {
         $inhouseProductsQuery = Product::active()
             ->with(['reviews', 'rating'])
@@ -129,20 +126,20 @@ class ShopService
             return null;
         }
 
-        if ($request->shop_name && !str_contains(strtolower(getInHouseShopConfig('name')), strtolower($request->shop_name))) {
+        if ($request->shop_name && ! str_contains(strtolower(getInHouseShopConfig('name')), strtolower($request->shop_name))) {
             return null;
         }
 
         $reviewData = Review::active()->whereIn('product_id', $inhouseProducts->pluck('id'));
         $reviewCount = $reviewData->count();
-        $positive = $reviewData->pluck('rating')->filter(fn($r) => $r >= 4)->count();
+        $positive = $reviewData->pluck('rating')->filter(fn ($r) => $r >= 4)->count();
 
         $shop = getInHouseShopConfig();
-        $shop->products_count  = $inhouseProducts->count();
-        $shop->review_count    = $reviewCount;
-        $shop->average_rating  = $reviewData->avg('rating') ?? 0;
+        $shop->products_count = $inhouseProducts->count();
+        $shop->review_count = $reviewCount;
+        $shop->average_rating = $reviewData->avg('rating') ?? 0;
         $shop->positive_review = $reviewCount ? ($positive * 100) / $reviewCount : 0;
-        $shop->orders_count    = Order::where('seller_is', 'admin')->count();
+        $shop->orders_count = Order::where('seller_is', 'admin')->count();
         $shop->is_vacation_mode_now = checkVendorAbility('inhouse', 'vacation_status');
 
         return $shop;
@@ -151,13 +148,13 @@ class ShopService
     public function applyOrdering($vendors, $request)
     {
         return match ($request->order_by) {
-            'asc'               => $vendors->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
-            'desc'              => $vendors->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE),
-            'highest-products'  => $vendors->sortByDesc('products_count'),
-            'lowest-products'   => $vendors->sortBy('products_count'),
-            'rating-high-to-low'=> $vendors->sortByDesc('average_rating'),
-            'rating-low-to-high'=> $vendors->sortBy('average_rating'),
-            default             => $vendors,
+            'asc' => $vendors->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE),
+            'desc' => $vendors->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE),
+            'highest-products' => $vendors->sortByDesc('products_count'),
+            'lowest-products' => $vendors->sortBy('products_count'),
+            'rating-high-to-low' => $vendors->sortByDesc('average_rating'),
+            'rating-low-to-high' => $vendors->sortBy('average_rating'),
+            default => $vendors,
         };
     }
 
@@ -180,6 +177,4 @@ class ShopService
 
         return $shop;
     }
-
-
 }

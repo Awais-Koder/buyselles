@@ -34,24 +34,22 @@ class UpdatePackage extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
         Artisan::call('debugbar:clear');
 
         $folder = base_path('resources/themes');
-        $directories = glob($folder . '/*', GLOB_ONLYDIR);
+        $directories = glob($folder.'/*', GLOB_ONLYDIR);
         foreach ($directories as $directory) {
             $array = explode('/', $directory);
-            if (File::isDirectory($directory) && !in_array(end($array), ["default", "theme_aster"])) {
+            if (File::isDirectory($directory) && ! in_array(end($array), ['default', 'theme_aster'])) {
                 File::deleteDirectory($directory);
             }
         }
 
         $addOnFolder = base_path('Modules');
-        $addOnDirectories = glob($addOnFolder . '/*', GLOB_ONLYDIR);
+        $addOnDirectories = glob($addOnFolder.'/*', GLOB_ONLYDIR);
         foreach ($addOnDirectories as $directory) {
             $array = explode('/', $directory);
             $directoryName = end($array);
@@ -63,7 +61,7 @@ class UpdatePackage extends Command
         $routes = base_path('app/Providers/RouteServiceProvider.php');
         $new_routes = base_path('installation/activate_update_routes.txt');
         copy($new_routes, $routes);
+
         return 0;
     }
-
 }

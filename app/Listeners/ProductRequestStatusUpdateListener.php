@@ -8,6 +8,7 @@ use App\Traits\PushNotificationTrait;
 class ProductRequestStatusUpdateListener
 {
     use PushNotificationTrait;
+
     /**
      * Create the event listener.
      */
@@ -24,11 +25,12 @@ class ProductRequestStatusUpdateListener
         $this->sendNotification($event);
     }
 
-    private function sendNotification(ProductRequestStatusUpdateEvent $event):void{
+    private function sendNotification(ProductRequestStatusUpdateEvent $event): void
+    {
         $key = $event->key;
         $type = $event->type;
         $lang = $event->lang;
         $fcmToken = $event->fcmToken;
-        $this->productRequestStatusUpdateNotification(key: $key, type: $type, lang: $lang,fcmToken: $fcmToken);
+        $this->productRequestStatusUpdateNotification(key: $key, type: $type, lang: $lang, fcmToken: $fcmToken);
     }
 }

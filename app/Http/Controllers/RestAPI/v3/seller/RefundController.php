@@ -20,22 +20,22 @@ use Illuminate\Support\Facades\Validator;
 
 class RefundController extends Controller
 {
-    public function list(Request $request):JsonResponse
+    public function list(Request $request): JsonResponse
     {
         $seller = $request->seller;
 
         $startDate = null;
         $endDate = null;
         if (isset($request['date_type']) && $request['date_type'] == 'custom_date') {
-            if (isset($request['start_date']) && !is_null($request['start_date']) && isset($request['end_date']) && !is_null($request['end_date'])) {
+            if (isset($request['start_date']) && ! is_null($request['start_date']) && isset($request['end_date']) && ! is_null($request['end_date'])) {
                 $startFormatted = \Carbon\Carbon::parse($request['start_date'])->format('m/d/Y');
                 $endFormatted = \Carbon\Carbon::parse($request['end_date'])->format('m/d/Y');
-                $dateRange = $startFormatted . ' - ' . $endFormatted;
+                $dateRange = $startFormatted.' - '.$endFormatted;
             } else {
-                $dateRange = now()->subDays(6)->format('m/d/Y') . ' - ' . now()->format('m/d/Y');
+                $dateRange = now()->subDays(6)->format('m/d/Y').' - '.now()->format('m/d/Y');
             }
 
-            list($startDate, $endDate) = explode(' - ', $dateRange);
+            [$startDate, $endDate] = explode(' - ', $dateRange);
             $startDate = Carbon::createFromFormat('m/d/Y', trim($startDate));
             $endDate = Carbon::createFromFormat('m/d/Y', trim($endDate));
             $startDate = $startDate->startOfDay();
@@ -68,10 +68,11 @@ class RefundController extends Controller
             ->when(isset($request['date_type']) && $request['date_type'] == 'today', function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(isset($request['date_type']) && $request['date_type'] == 'custom_date' && !empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+            ->when(isset($request['date_type']) && $request['date_type'] == 'custom_date' && ! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                 return $query->whereBetween('created_at', [$startDate, $endDate]);
             })
             ->latest()->get();
+
         return response()->json($refund_list);
     }
 
@@ -91,14 +92,13 @@ class RefundController extends Controller
         return response()->json($refundList);
     }
 
-    public function refund_details(Request $request):JsonResponse
+    public function refund_details(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $order_details = OrderDetail::find($request->order_details_id);
         $refund_request = RefundRequest::with('refundStatus')->where('order_details_id', $request->order_details_id)->get();
 
         $order = Order::find($order_details->order_id);
-
 
         $data = [];
         $subtotal = ($order_details->price * $order_details->qty) - $order_details->discount + $order_details->tax;
@@ -118,10 +118,9 @@ class RefundController extends Controller
 
         return response()->json($data, 200);
 
-
     }
 
-    public function refund_status_update(Request $request):JsonResponse
+    public function refund_status_update(Request $request): JsonResponse
     {
         $seller = $request->seller;
         $validator = Validator::make($request->all(), [
@@ -152,7 +151,7 @@ class RefundController extends Controller
 
         if ($refund->change_by == 'admin') {
 
-            return response()->json(['message' => 'refunded status can not be changed!! Admin already changed the status : ' . $refund->status . '!!'], 403);
+            return response()->json(['message' => 'refunded status can not be changed!! Admin already changed the status : '.$refund->status.'!!'], 403);
         }
         if ($refund->status != 'refunded') {
             $orderDetails = OrderDetail::find($refund->order_details_id);
@@ -185,6 +184,7 @@ class RefundController extends Controller
 
             $order = Order::find($refund->order_id);
             event(new RefundEvent(status: $request['refund_status'], order: $order, refund: $refund, orderDetails: $orderDetails));
+
             return response()->json(['message' => 'refund status updated successfully!'], 200);
         } else {
             return response()->json(['message' => 'refunded status can not be changed!!'], 403);

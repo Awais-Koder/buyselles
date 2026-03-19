@@ -2,8 +2,8 @@
 
 namespace Modules\Blog\app\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class BlogTranslation extends Model
@@ -11,6 +11,7 @@ class BlogTranslation extends Model
     use HasFactory;
 
     public $timestamps = false;
+
     protected $table = 'blog_translations';
 
     protected $fillable = [
@@ -19,7 +20,7 @@ class BlogTranslation extends Model
         'locale',
         'key',
         'value',
-        'is_draft'
+        'is_draft',
     ];
 
     protected $casts = [
@@ -29,7 +30,7 @@ class BlogTranslation extends Model
         'key' => 'string',
         'value' => 'string',
         'id' => 'integer',
-        'is_draft' => 'integer'
+        'is_draft' => 'integer',
     ];
 
     public function translation(): MorphTo

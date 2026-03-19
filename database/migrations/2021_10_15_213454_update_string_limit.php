@@ -14,8 +14,8 @@ class UpdateStringLimit extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->string('order_status',50)->change();
-            $table->string('payment_method',100)->change();
+            $table->string('order_status', 50)->change();
+            $table->string('payment_method', 100)->change();
             $table->float('order_amount')->change();
         });
     }

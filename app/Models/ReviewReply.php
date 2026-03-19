@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class ReviewReply
- * @package App\Models
  *
  * @property int $id
  * @property int $review_id
@@ -39,5 +38,4 @@ class ReviewReply extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
 }

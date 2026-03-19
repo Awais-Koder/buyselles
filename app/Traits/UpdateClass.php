@@ -63,17 +63,13 @@ trait UpdateClass
         $this->getInsertDataOfVersion('16.1');
     }
 
-    /**
-     * @param string $type
-     * @param mixed $value
-     * @return mixed
-     */
     public function businessSettingGetOrInsert(string $type, mixed $value): mixed
     {
         $result = BusinessSetting::where(['type' => $type])->first();
-        if (!$result) {
+        if (! $result) {
             $result = BusinessSetting::create(['type' => $type, 'value' => $value, 'updated_at' => now()]);
         }
+
         return $result;
     }
 
@@ -82,7 +78,7 @@ trait UpdateClass
         $policy = BusinessSetting::where(['type' => $type])->first();
         if ($policy) {
             $policyValue = json_decode($policy['value'], true);
-            if (!isset($policyValue['status'])) {
+            if (! isset($policyValue['status'])) {
                 BusinessSetting::where(['type' => $type])->update([
                     'value' => json_encode([
                         'status' => 1,
@@ -93,6 +89,7 @@ trait UpdateClass
         } else {
             $policy = $this->businessSettingGetOrInsert(type: $type, value: json_encode(['status' => 0, 'content' => '']));
         }
+
         return $policy;
     }
 
@@ -135,7 +132,7 @@ trait UpdateClass
 
         foreach ($analyticScripts as $script) {
             $result = AnalyticScript::where(['type' => $script['type']])->first();
-            if (!$result) {
+            if (! $result) {
                 AnalyticScript::updateOrInsert(['type' => $script['type']], [
                     'name' => $script['name'],
                     'type' => $script['type'],
@@ -163,11 +160,11 @@ trait UpdateClass
                 'status' => 0,
                 'vacation_start_date' => null,
                 'vacation_end_date' => null,
-                'vacation_note' => null
+                'vacation_note' => null,
             ]));
             $this->businessSettingGetOrInsert(type: 'cookie_setting', value: json_encode([
                 'status' => 0,
-                'cookie_text' => null
+                'cookie_text' => null,
             ]));
             DB::table('colors')->whereIn('id', [16, 38, 93])->delete();
         }
@@ -209,27 +206,27 @@ trait UpdateClass
                     $i++;
                 }
             }
-            //product category id update end
+            // product category id update end
         }
 
         if ($versionNumber == '14.1') {
             // default theme folder delete from resources/views folder start
             $folder = base_path('resources/views');
-            $directories = glob($folder . '/*', GLOB_ONLYDIR);
+            $directories = glob($folder.'/*', GLOB_ONLYDIR);
             foreach ($directories as $directory) {
                 $array = explode('/', $directory);
                 if (File::isDirectory($directory) && in_array(end($array), ['web-views', 'customer-view'])) {
                     File::deleteDirectory($directory);
                 }
             }
-            $front_end_dir = $folder . "/layouts/front-end";
+            $front_end_dir = $folder.'/layouts/front-end';
             if (File::isDirectory($front_end_dir)) {
                 File::deleteDirectory($front_end_dir);
             }
 
             foreach (['home.blade.php', 'welcome.blade.php'] as $file) {
-                if (File::exists($folder . '/' . $file)) {
-                    unlink($folder . '/' . $file);
+                if (File::exists($folder.'/'.$file)) {
+                    unlink($folder.'/'.$file);
                 }
             }
             // default theme folder delete from resources/views folder end
@@ -246,7 +243,7 @@ trait UpdateClass
                 'redirect_url' => '',
             ]]));
 
-            //referral code update for existing user
+            // referral code update for existing user
             $customers = User::whereNull('referral_code')->where('id', '!=', 0)->get();
             foreach ($customers as $customer) {
                 $customer->referral_code = Helpers::generate_referer_code();
@@ -258,12 +255,12 @@ trait UpdateClass
 
             // New payment module necessary table insert
             try {
-                if (!Schema::hasTable('addon_settings')) {
+                if (! Schema::hasTable('addon_settings')) {
                     $sql = File::get(base_path('database/migrations/addon_settings.sql'));
                     DB::unprepared($sql);
                 }
 
-                if (!Schema::hasTable('payment_requests')) {
+                if (! Schema::hasTable('payment_requests')) {
                     $sql = File::get(base_path('database/migrations/payment_requests.sql'));
                     DB::unprepared($sql);
                 }
@@ -287,40 +284,40 @@ trait UpdateClass
             $this->businessSettingGetOrInsert(type: 'add_funds_to_wallet', value: 0);
             $this->businessSettingGetOrInsert(type: 'minimum_add_fund_amount', value: 0);
             $this->businessSettingGetOrInsert(type: 'user_app_version_control', value: json_encode([
-                "for_android" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
+                'for_android' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
                 ],
-                "for_ios" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
-                ]
+                'for_ios' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
+                ],
             ]));
             $this->businessSettingGetOrInsert(type: 'seller_app_version_control', value: json_encode([
-                "for_android" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
+                'for_android' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
                 ],
-                "for_ios" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
-                ]
+                'for_ios' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
+                ],
             ]));
             $this->businessSettingGetOrInsert(type: 'delivery_man_app_version_control', value: json_encode([
-                "for_android" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
+                'for_android' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
                 ],
-                "for_ios" => [
-                    "status" => 1,
-                    "version" => "14.1",
-                    "link" => ""
-                ]
+                'for_ios' => [
+                    'status' => 1,
+                    'version' => '14.1',
+                    'link' => '',
+                ],
             ]));
 
             // Script for theme setup for existing banner
@@ -360,43 +357,43 @@ trait UpdateClass
             $shops = Shop::where('slug', 'en')->get();
             if ($shops) {
                 foreach ($shops as $shop) {
-                    $shop->slug = Str::slug($shop->name, '-') . '-' . Str::random(6);
+                    $shop->slug = Str::slug($shop->name, '-').'-'.Str::random(6);
                     $shop->save();
                 }
             }
 
             // Translation table data update
-            DB::table('translations')->where('translationable_type', 'LIKE', "%Product%")->update(['translationable_type' => 'App\Models\Product']);
-            DB::table('translations')->where('translationable_type', 'LIKE', "%Brand%")->update(['translationable_type' => 'App\Models\Brand']);
-            DB::table('translations')->where('translationable_type', 'LIKE', "%Category%")->update(['translationable_type' => 'App\Models\Category']);
-            DB::table('translations')->where('translationable_type', 'LIKE', "%NotificationMessage%")->update(['translationable_type' => 'App\Models\NotificationMessage']);
+            DB::table('translations')->where('translationable_type', 'LIKE', '%Product%')->update(['translationable_type' => 'App\Models\Product']);
+            DB::table('translations')->where('translationable_type', 'LIKE', '%Brand%')->update(['translationable_type' => 'App\Models\Brand']);
+            DB::table('translations')->where('translationable_type', 'LIKE', '%Category%')->update(['translationable_type' => 'App\Models\Category']);
+            DB::table('translations')->where('translationable_type', 'LIKE', '%NotificationMessage%')->update(['translationable_type' => 'App\Models\NotificationMessage']);
         }
 
         if ($versionNumber == '14.4') {
-            if (!NotificationMessage::where(['key' => 'product_request_approved_message'])->first()) {
+            if (! NotificationMessage::where(['key' => 'product_request_approved_message'])->first()) {
                 DB::table('notification_messages')->updateOrInsert([
-                    'key' => 'product_request_approved_message'
+                    'key' => 'product_request_approved_message',
                 ],
                     [
                         'user_type' => 'seller',
                         'key' => 'product_request_approved_message',
                         'message' => 'customize your product request approved message message',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
 
-            if (!NotificationMessage::where(['key' => 'product_request_rejected_message'])->first()) {
+            if (! NotificationMessage::where(['key' => 'product_request_rejected_message'])->first()) {
                 DB::table('notification_messages')->updateOrInsert([
-                    'key' => 'product_request_rejected_message'
+                    'key' => 'product_request_rejected_message',
                 ],
                     [
                         'user_type' => 'seller',
                         'key' => 'product_request_rejected_message',
                         'message' => 'customize your product request rejected message message',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
@@ -409,7 +406,7 @@ trait UpdateClass
         if ($versionNumber == '14.6') {
             Product::where(['product_type' => 'digital'])->update(['current_stock' => 999999999]);
 
-            //priority setup and vendor registration data process
+            // priority setup and vendor registration data process
             $this->getPrioritySetupAndVendorRegistrationData();
 
             if (Admin::count() > 0 && EmailTemplate::count() < 1) {
@@ -436,14 +433,14 @@ trait UpdateClass
 
         if ($versionNumber == '14.8') {
             $this->businessSettingGetOrInsert(type: 'firebase_otp_verification', value: json_encode(['status' => 0, 'web_api_key' => '']));
-            if (!LoginSetup::where(['key' => 'login_options'])->first()) {
+            if (! LoginSetup::where(['key' => 'login_options'])->first()) {
                 DB::table('login_setups')->updateOrInsert(['key' => 'login_options'], ['value' => json_encode([
                     'manual_login' => 1,
                     'otp_login' => 0,
                     'social_login' => 1,
                 ])]);
             }
-            if (!LoginSetup::where(['key' => 'social_media_for_login'])->first() || true) {
+            if (! LoginSetup::where(['key' => 'social_media_for_login'])->first() || true) {
                 $socialMediaForLogin = [
                     'google' => 0,
                     'facebook' => 0,
@@ -454,7 +451,7 @@ trait UpdateClass
                 if ($socialLogin) {
                     $socialLoginUpdate = [];
                     foreach (json_decode($socialLogin?->value, true) as $socialLoginService) {
-                        $socialMediaForLogin[$socialLoginService['login_medium']] = (int)$socialLoginService['status'];
+                        $socialMediaForLogin[$socialLoginService['login_medium']] = (int) $socialLoginService['status'];
                         $socialLoginService['status'] = 1;
                         $socialLoginUpdate[] = $socialLoginService;
                     }
@@ -464,7 +461,7 @@ trait UpdateClass
                 if ($appleLogin) {
                     $appleLoginUpdate = [];
                     foreach (json_decode($appleLogin?->value, true) as $appleLoginService) {
-                        $socialMediaForLogin[$appleLoginService['login_medium']] = (int)$appleLoginService['status'];
+                        $socialMediaForLogin[$appleLoginService['login_medium']] = (int) $appleLoginService['status'];
                         $appleLoginService['status'] = 1;
                         $appleLoginUpdate[] = $appleLoginService;
                     }
@@ -479,16 +476,16 @@ trait UpdateClass
                 DB::table('login_setups')->updateOrInsert(['key' => 'social_media_for_login'], ['value' => json_encode($socialMediaForLogin)]);
             }
 
-            if (!LoginSetup::where(['key' => 'email_verification'])->first()) {
+            if (! LoginSetup::where(['key' => 'email_verification'])->first()) {
                 $emailVerification = BusinessSetting::where(['type' => 'email_verification'])->first()?->value ?? 0;
                 DB::table('login_setups')->updateOrInsert(['key' => 'email_verification'], [
-                    'value' => $emailVerification ? 1 : 0
+                    'value' => $emailVerification ? 1 : 0,
                 ]);
             }
-            if (!LoginSetup::where(['key' => 'phone_verification'])->first()) {
+            if (! LoginSetup::where(['key' => 'phone_verification'])->first()) {
                 $otpVerification = BusinessSetting::where(['type' => 'otp_verification'])->first()?->value ?? 0;
                 DB::table('login_setups')->updateOrInsert(['key' => 'phone_verification'], [
-                    'value' => $otpVerification ? 1 : 0
+                    'value' => $otpVerification ? 1 : 0,
                 ]);
             }
 
@@ -501,7 +498,7 @@ trait UpdateClass
             ]));
 
             $this->businessSettingGetOrInsert(type: 'maintenance_duration_setup', value: json_encode([
-                'maintenance_duration' => "until_change",
+                'maintenance_duration' => 'until_change',
                 'start_date' => null,
                 'end_date' => null,
             ]));
@@ -509,8 +506,8 @@ trait UpdateClass
             $this->businessSettingGetOrInsert(type: 'maintenance_message_setup', value: json_encode([
                 'business_number' => 1,
                 'business_email' => 1,
-                'maintenance_message' => "We are Working On Something Special",
-                'message_body' => "We apologize for any inconvenience. For immediate assistance, please contact with our support team",
+                'maintenance_message' => 'We are Working On Something Special',
+                'message_body' => 'We apologize for any inconvenience. For immediate assistance, please contact with our support team',
             ]));
 
             $this->updateOrInsertPolicy(type: 'shipping-policy');
@@ -582,30 +579,30 @@ trait UpdateClass
                 $this->businessSettingGetOrInsert(type: 'loyalty_point_for_each_order', value: $loyaltyPointStatus['value']);
             }
 
-            if (!NotificationMessage::where(['key' => 'your_referred_customer_has_been_place_order'])->first()) {
+            if (! NotificationMessage::where(['key' => 'your_referred_customer_has_been_place_order'])->first()) {
                 DB::table('notification_messages')->updateOrInsert([
-                    'key' => 'your_referred_customer_has_been_place_order'
+                    'key' => 'your_referred_customer_has_been_place_order',
                 ],
                     [
                         'user_type' => 'customer',
                         'key' => 'your_referred_customer_has_been_place_order',
                         'message' => 'your referred customer has been place order',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
 
-            if (!NotificationMessage::where(['key' => 'your_referred_customer_order_has_been_delivered'])->first()) {
+            if (! NotificationMessage::where(['key' => 'your_referred_customer_order_has_been_delivered'])->first()) {
                 DB::table('notification_messages')->updateOrInsert([
-                    'key' => 'your_referred_customer_order_has_been_delivered'
+                    'key' => 'your_referred_customer_order_has_been_delivered',
                 ],
                     [
                         'user_type' => 'customer',
                         'key' => 'your_referred_customer_order_has_been_delivered',
                         'message' => 'your referred customer order has been delivered',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
@@ -613,7 +610,7 @@ trait UpdateClass
             User::where('email', 'walking@customer.com')->update([
                 'name' => 'Walk-In Customer',
                 'f_name' => 'Walk-In',
-                'l_name' => 'Customer'
+                'l_name' => 'Customer',
             ]);
         }
 
@@ -627,7 +624,7 @@ trait UpdateClass
                         ->havingRaw('COUNT(*) > 1');
                 })->get();
             foreach ($shops as $shop) {
-                $shop->slug = Str::slug($shop->name, '-') . '-' . time() . '-' . $shop->id;
+                $shop->slug = Str::slug($shop->name, '-').'-'.time().'-'.$shop->id;
                 $shop->save();
             }
             $inHouseShop = getInHouseShopConfig();
@@ -635,9 +632,9 @@ trait UpdateClass
             Banner::where('resource_type', '!=', 'custom')
                 ->update(['resource_type' => 'custom']);
 
-            if (is_file(base_path('resources/themes/' . theme_root_path() . '/public/addon/theme_routes.php'))) {
+            if (is_file(base_path('resources/themes/'.theme_root_path().'/public/addon/theme_routes.php'))) {
                 try {
-                    $themeRoutes = include(base_path('resources/themes/' . theme_root_path() . '/public/addon/theme_routes.php'));
+                    $themeRoutes = include base_path('resources/themes/'.theme_root_path().'/public/addon/theme_routes.php');
                     if ($themeRoutes['comfortable_panel_version'] != SOFTWARE_VERSION) {
                         $this->setEnvironmentValue(envKey: 'WEB_THEME', envValue: 'default');
                     }
@@ -709,17 +706,17 @@ trait UpdateClass
         if ($versionNumber == '16.1') {
             $this->businessSettingGetOrInsert(type: 'vendor_can_edit_order', value: 0);
 
-            if (!NotificationMessage::where(['key' => 'order_edit_message', 'user_type' => 'customer'])->first()) {
+            if (! NotificationMessage::where(['key' => 'order_edit_message', 'user_type' => 'customer'])->first()) {
                 DB::table('notification_messages')->updateOrInsert([
                     'key' => 'order_edit_message',
-                    'user_type' => 'customer'
+                    'user_type' => 'customer',
                 ],
                     [
                         'user_type' => 'customer',
                         'key' => 'order_edit_message',
                         'message' => 'Order {orderId} edited',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ]
                 );
             }
@@ -732,7 +729,8 @@ trait UpdateClass
 
         try {
             Artisan::call('file:permission');
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         if (DOMAIN_POINTED_DIRECTORY == 'public' && function_exists('shell_exec')) {
             shell_exec('ln -s ../resources/themes themes');
@@ -806,7 +804,7 @@ trait UpdateClass
         foreach ($defaultPages as $key => $value) {
             $getPage = BusinessSetting::where('type', $key)->first();
             $checkPage = BusinessPage::where('slug', Str::slug($value))->first();
-            if (!$checkPage) {
+            if (! $checkPage) {
                 if (in_array($value, ['terms-and-conditions', 'about-us', 'privacy-policy'])) {
                     $description = $getPage?->value ?? '';
                     $status = 1;
@@ -815,7 +813,7 @@ trait UpdateClass
                     $description = $decodeData['content'] ?? '';
                     $status = $decodeData['status'] ?? 0;
                 }
-                if (!$getPage) {
+                if (! $getPage) {
                     $businessPage = BusinessPage::create([
                         'title' => ucwords(str_replace('-', ' ', $value)),
                         'slug' => Str::slug($value),
@@ -837,7 +835,7 @@ trait UpdateClass
                     foreach ($idsToDelete as $id) {
                         BusinessPage::where(['id' => $id])->delete();
                     }
-                    if (!empty($idsToDelete)) {
+                    if (! empty($idsToDelete)) {
                         BusinessPage::destroy($idsToDelete);
                     }
                 }
@@ -863,12 +861,12 @@ trait UpdateClass
     public static function getUpdateBusinessPageBanner($key, $businessPage): void
     {
         try {
-            $getBanner = json_decode(BusinessSetting::where('type', ('banner_' . str_replace('-', '_', $key)))->first()?->value ?? '', true)['image'] ?? '';
+            $getBanner = json_decode(BusinessSetting::where('type', ('banner_'.str_replace('-', '_', $key)))->first()?->value ?? '', true)['image'] ?? '';
             if (isset($getBanner['storage']) && isset($getBanner['image_name'])) {
-                $oldPath = $getBanner['storage'] . '/banner/' . $getBanner['image_name'];
-                $newPath = 'public/business-pages/' . $getBanner['image_name'];
+                $oldPath = $getBanner['storage'].'/banner/'.$getBanner['image_name'];
+                $newPath = 'public/business-pages/'.$getBanner['image_name'];
 
-                if (!Storage::exists('public/business-pages')) {
+                if (! Storage::exists('public/business-pages')) {
                     Storage::makeDirectory('public/business-pages', 0775, true);
                 }
 
@@ -883,7 +881,7 @@ trait UpdateClass
                     ]);
                 }
             }
-            BusinessSetting::where('type', ('banner_' . str_replace('-', '_', $key)))->delete();
+            BusinessSetting::where('type', ('banner_'.str_replace('-', '_', $key)))->delete();
         } catch (Exception $e) {
 
         }
@@ -1005,14 +1003,14 @@ trait UpdateClass
                     $default_data = [
                         'gateway' => $gateway,
                         'mode' => 'live',
-                        'status' => $decoded_value['status'] ?? 0
+                        'status' => $decoded_value['status'] ?? 0,
                     ];
 
                     $credentials = json_encode(array_merge($default_data, $additional_data));
 
                     $payment_additional_data = [
                         'gateway_title' => ucfirst(str_replace('_', ' ', $gateway)),
-                        'gateway_image' => null
+                        'gateway_image' => null,
                     ];
 
                     DB::table('addon_settings')->updateOrInsert(['key_name' => $gateway, 'settings_type' => 'sms_config'], [
@@ -1029,9 +1027,9 @@ trait UpdateClass
             }
         } catch (Exception $exception) {
         }
+
         return true;
     }
-
 
     private function paymentGatewayDataUpdate(): void
     {
@@ -1050,7 +1048,7 @@ trait UpdateClass
                     $decoded_value = json_decode($value, true);
                     $data = [
                         'gateway' => $gateway,
-                        'mode' => isset($decoded_value['status']) == 1 ? 'live' : 'test'
+                        'mode' => isset($decoded_value['status']) == 1 ? 'live' : 'test',
                     ];
 
                     $additional_data = [];
@@ -1150,7 +1148,6 @@ trait UpdateClass
                     $payment_additional_data = ['gateway_title' => ucfirst(str_replace('_', ' ', $gateway)),
                         'gateway_image' => null];
 
-
                     DB::table('addon_settings')->updateOrInsert(['key_name' => $gateway, 'settings_type' => 'payment_config'], [
                         'key_name' => $gateway,
                         'live_values' => $credentials,
@@ -1176,7 +1173,7 @@ trait UpdateClass
                     'mode' => 'test',
                     'status' => '0',
                     'client_id' => '',
-                    'client_secret' => ''
+                    'client_secret' => '',
                 ]),
             ],
             [
@@ -1188,7 +1185,7 @@ trait UpdateClass
                     'status' => 0,
                     'merchant_id' => '',
                     'salt_Key' => '',
-                    'salt_index' => ''
+                    'salt_index' => '',
                 ]),
             ],
             [
@@ -1199,13 +1196,13 @@ trait UpdateClass
                     'mode' => 'test',
                     'status' => 0,
                     'client_id' => '',
-                    'client_secret' => ''
+                    'client_secret' => '',
                 ]),
             ],
         ];
 
         foreach ($addonSettings as $addonSetting) {
-            if (!Setting::where(['key_name' => $addonSetting['key_name'], 'settings_type' => 'payment_config'])->first()) {
+            if (! Setting::where(['key_name' => $addonSetting['key_name'], 'settings_type' => 'payment_config'])->first()) {
                 Setting::create([
                     'id' => $addonSetting['id'],
                     'key_name' => $addonSetting['key_name'],
@@ -1225,92 +1222,92 @@ trait UpdateClass
     public function getPrioritySetupAndVendorRegistrationData(): void
     {
         $this->businessSettingGetOrInsert(type: 'vendor_registration_header', value: json_encode([
-            "title" => "Vendor Registration",
-            "sub_title" => "Create your own store.Already have store?",
-            "image" => ""
+            'title' => 'Vendor Registration',
+            'sub_title' => 'Create your own store.Already have store?',
+            'image' => '',
         ]));
 
         $this->businessSettingGetOrInsert(type: 'vendor_registration_sell_with_us', value: json_encode([
-            "title" => "Why Sell With Us",
-            "sub_title" => "Boost your sales! Join us for a seamless, profitable experience with vast buyer reach and top-notch support. Sell smarter today!",
-            "image" => ""
+            'title' => 'Why Sell With Us',
+            'sub_title' => 'Boost your sales! Join us for a seamless, profitable experience with vast buyer reach and top-notch support. Sell smarter today!',
+            'image' => '',
         ]));
 
         $this->businessSettingGetOrInsert(type: 'download_vendor_app', value: json_encode([
-            "title" => "Download Free Vendor App",
-            "sub_title" => "Download our free seller app and start reaching millions of buyers on the go! Easy setup, manage listings, and boost sales anywhere.",
-            "image" => null,
-            "download_google_app" => null,
-            "download_google_app_status" => 0,
-            "download_apple_app" => null,
-            "download_apple_app_status" => 0,
+            'title' => 'Download Free Vendor App',
+            'sub_title' => 'Download our free seller app and start reaching millions of buyers on the go! Easy setup, manage listings, and boost sales anywhere.',
+            'image' => null,
+            'download_google_app' => null,
+            'download_google_app_status' => 0,
+            'download_apple_app' => null,
+            'download_apple_app_status' => 0,
         ]));
 
         $this->businessSettingGetOrInsert(type: 'business_process_main_section', value: json_encode([
-            "title" => "3 Easy Steps To Start Selling",
-            "sub_title" => "Start selling quickly! Register, upload your products with detailed info and images, and reach millions of buyers instantly.",
-            "image" => ""
+            'title' => '3 Easy Steps To Start Selling',
+            'sub_title' => 'Start selling quickly! Register, upload your products with detailed info and images, and reach millions of buyers instantly.',
+            'image' => '',
         ]));
 
         $this->businessSettingGetOrInsert(type: 'business_process_step', value: json_encode([
-                [
-                    "title" => "Get Registered",
-                    "description" => "Sign up easily and create your seller account in just a few minutes. It fast and simple to get started.",
-                    "image" => "",
-                ],
-                [
-                    "title" => "Upload Products",
-                    "description" => "List your products with detailed descriptions and high-quality images to attract more buyers effortlessly.",
-                    "image" => "",
-                ],
-                [
-                    "title" => "Start Selling",
-                    "description" => "Go live and start reaching millions of potential buyers immediately. Watch your sales grow with our vast audience.",
-                    "image" => "",
-                ]
-            ]
+            [
+                'title' => 'Get Registered',
+                'description' => 'Sign up easily and create your seller account in just a few minutes. It fast and simple to get started.',
+                'image' => '',
+            ],
+            [
+                'title' => 'Upload Products',
+                'description' => 'List your products with detailed descriptions and high-quality images to attract more buyers effortlessly.',
+                'image' => '',
+            ],
+            [
+                'title' => 'Start Selling',
+                'description' => 'Go live and start reaching millions of potential buyers immediately. Watch your sales grow with our vast audience.',
+                'image' => '',
+            ],
+        ]
         ));
 
         // Registration data insert start
         $vendorRegistrationReason = [
             [
-                "title" => "Millions of Users",
-                "description" => "Access a vast audience with millions of active users ready to buy your products.",
-                "priority" => 1,
-                "status" => 1,
+                'title' => 'Millions of Users',
+                'description' => 'Access a vast audience with millions of active users ready to buy your products.',
+                'priority' => 1,
+                'status' => 1,
             ],
             [
-                "title" => "Free Marketing",
-                "description" => "Benefit from our extensive, no-cost marketing efforts to boost your visibility and sales.",
-                "priority" => 2,
-                "status" => 1,
+                'title' => 'Free Marketing',
+                'description' => 'Benefit from our extensive, no-cost marketing efforts to boost your visibility and sales.',
+                'priority' => 2,
+                'status' => 1,
             ],
             [
-                "title" => "SEO Friendly",
-                "description" => "Enjoy enhanced search visibility with our SEO-friendly platform, driving more traffic to your listings.",
-                "priority" => 3,
-                "status" => 1,
+                'title' => 'SEO Friendly',
+                'description' => 'Enjoy enhanced search visibility with our SEO-friendly platform, driving more traffic to your listings.',
+                'priority' => 3,
+                'status' => 1,
             ],
             [
-                "title" => "24/7 Support",
-                "description" => "Get round-the-clock support from our dedicated team to resolve any issues and assist you anytime.",
-                "priority" => 4,
-                "status" => 1,
+                'title' => '24/7 Support',
+                'description' => 'Get round-the-clock support from our dedicated team to resolve any issues and assist you anytime.',
+                'priority' => 4,
+                'status' => 1,
             ],
             [
-                "title" => "Easy Onboarding",
-                "description" => "Start selling quickly with our user-friendly onboarding process designed to get you up and running fast.",
-                "priority" => 5,
-                "status" => 1,
+                'title' => 'Easy Onboarding',
+                'description' => 'Start selling quickly with our user-friendly onboarding process designed to get you up and running fast.',
+                'priority' => 5,
+                'status' => 1,
             ],
         ];
 
         if (VendorRegistrationReason::count() < 1) {
             foreach ($vendorRegistrationReason as $reason) {
-                DB::table('vendor_registration_reasons')->updateOrInsert(["title" => $reason['title']], [
-                    "description" => $reason['description'],
-                    "priority" => $reason['priority'],
-                    "status" => $reason['status'],
+                DB::table('vendor_registration_reasons')->updateOrInsert(['title' => $reason['title']], [
+                    'description' => $reason['description'],
+                    'priority' => $reason['priority'],
+                    'status' => $reason['status'],
                 ]);
             }
         }
@@ -1319,9 +1316,9 @@ trait UpdateClass
         // faq for vendor registration start
         $faqVendorRegistration = [
             [
-                "type" => "vendor_registration",
-                "question" => "How do I register as a seller?",
-                "answer" => 'To register, click on the "Sign Up" button, fill in your details, and verify your account via email.',
+                'type' => 'vendor_registration',
+                'question' => 'How do I register as a seller?',
+                'answer' => 'To register, click on the "Sign Up" button, fill in your details, and verify your account via email.',
                 'ranking' => 1,
                 'status' => 1,
             ],
@@ -1350,19 +1347,18 @@ trait UpdateClass
 
         if (HelpTopic::where('type', 'vendor_registration')->count() < 5) {
             foreach ($faqVendorRegistration as $faq) {
-                if (!DB::table('help_topics')->where('question', $faq['question'])->first()) {
+                if (! DB::table('help_topics')->where('question', $faq['question'])->first()) {
                     DB::table('help_topics')->insert([
-                        "type" => $faq['type'],
-                        "question" => $faq['question'],
-                        "answer" => $faq['answer'],
-                        "ranking" => $faq['ranking'],
-                        "status" => $faq['status'],
+                        'type' => $faq['type'],
+                        'question' => $faq['question'],
+                        'answer' => $faq['answer'],
+                        'ranking' => $faq['ranking'],
+                        'status' => $faq['status'],
                     ]);
                 }
             }
         }
         // faq for vendor registration start
-
 
         Product::where(['product_type' => 'digital'])->update(['current_stock' => 999999999]);
         $prioritySetupKeyArray = [
@@ -1378,7 +1374,7 @@ trait UpdateClass
             'top_rated_product_list_priority',
             'best_selling_product_list_priority',
             'searched_product_list_priority',
-            'vendor_product_list_priority'
+            'vendor_product_list_priority',
         ];
         foreach ($prioritySetupKeyArray as $key => $value) {
             $this->businessSettingGetOrInsert(type: $value, value: '');

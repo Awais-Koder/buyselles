@@ -27,5 +27,4 @@ class SystemTaxSetupService
         }
         Cache::forget('cache_tax_system_types_and_config');
     }
-
 }

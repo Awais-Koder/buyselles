@@ -34,8 +34,6 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param Throwable $e
-     * @return void
      *
      * @throws Throwable
      */
@@ -47,9 +45,7 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param Request $request
-     * @param Throwable $e
-     * @return Response
+     * @param  Request  $request
      *
      * @throws Throwable
      */
@@ -61,6 +57,7 @@ class Handler extends ExceptionHandler
                 return redirect(to: $redirectUrl['redirect_url'], status: ($redirectUrl['redirect_status'] ?? '301'));
             }
         }
+
         return parent::render($request, $e);
     }
 }

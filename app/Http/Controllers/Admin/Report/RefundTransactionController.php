@@ -25,18 +25,16 @@ class RefundTransactionController extends BaseController
 
     public function __construct(
         private readonly RefundTransactionRepositoryInterface $refundTransactionRepo,
-        private readonly RefundTransactionService             $refundTransactionService,
-        private readonly BusinessSettingRepositoryInterface   $businessSettingRepo,
-    )
-    {
-
-    }
+        private readonly RefundTransactionService $refundTransactionService,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $searchValue = $request['searchValue'];
         $paymentMethod = $request['payment_method'];
         $refundTransactions = $this->getRefundTransactionData($request);
+
         return view('admin-views.refund-transaction.list', compact('searchValue', 'paymentMethod', 'refundTransactions'));
     }
 
@@ -48,6 +46,7 @@ class RefundTransactionController extends BaseController
             'paymentMethod' => $request['payment_method'],
             'transactions' => $transactions,
         ];
+
         return Excel::download(new RefundTransactionReportExport($data), Report::REFUND_TRANSACTION_REPORT_LIST);
     }
 
@@ -80,6 +79,4 @@ class RefundTransactionController extends BaseController
             dataLimit: getWebConfig(WebConfigKey::PAGINATION_LIMIT),
         );
     }
-
-
 }

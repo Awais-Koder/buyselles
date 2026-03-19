@@ -5,13 +5,13 @@ namespace Modules\AI\app\PromptTemplates;
 use Modules\AI\app\Contracts\PromptTemplateInterface;
 use Modules\AI\app\Services\ProductResourceService;
 
-class ProductVariationSetup implements  PromptTemplateInterface
+class ProductVariationSetup implements PromptTemplateInterface
 {
     protected ProductResourceService $productResource;
 
     public function __construct()
     {
-        $this->productResource = new ProductResourceService();
+        $this->productResource = new ProductResourceService;
     }
 
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
@@ -22,9 +22,9 @@ class ProductVariationSetup implements  PromptTemplateInterface
         $selectedValues = [];
         foreach ($resource['attributes'] as $attrName => $attrId) {
             $selectedValues[] = [
-                'id' => (string)$attrId,
+                'id' => (string) $attrId,
                 'name' => $attrName,
-                'variation' => ''
+                'variation' => '',
             ];
         }
 
@@ -33,7 +33,7 @@ class ProductVariationSetup implements  PromptTemplateInterface
             $myColors[] = [
                 'color' => $color['code'],
                 'text' => $color['name'],
-                'name' => $color['name']
+                'name' => $color['name'],
             ];
         }
 
@@ -48,6 +48,7 @@ class ProductVariationSetup implements  PromptTemplateInterface
             $colorOptions[] = "{$color['name']} ({$color['color']})";
         }
         $colorsString = implode(', ', $colorOptions);
+
         return <<<PROMPT
             You are an expert e-commerce product specialist with deep knowledge of product variations and attributes.
             Given the following product:
@@ -100,9 +101,9 @@ class ProductVariationSetup implements  PromptTemplateInterface
             PROMPT;
 
     }
+
     public function getType(): string
     {
         return 'variation_setup';
     }
-
 }

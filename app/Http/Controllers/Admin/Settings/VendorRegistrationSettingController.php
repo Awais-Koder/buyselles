@@ -22,17 +22,16 @@ class VendorRegistrationSettingController extends BaseController
 {
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly VendorRegistrationSettingService   $vendorRegistrationSettingService,
+        private readonly VendorRegistrationSettingService $vendorRegistrationSettingService,
         private readonly VendorRegistrationReasonRepository $vendorRegistrationReasonRepo,
-        private readonly HelpTopicRepositoryInterface       $helpTopicRepo
+        private readonly HelpTopicRepositoryInterface $helpTopicRepo
 
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $vendorRegistrationHeader = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'vendor_registration_header'])['value']);
+
         return view('admin-views.business-settings.vendor-registration-setting.header', compact('vendorRegistrationHeader'));
     }
 
@@ -40,6 +39,7 @@ class VendorRegistrationSettingController extends BaseController
     {
         $vendorRegistrationReasons = $this->vendorRegistrationReasonRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $request->searchValue, dataLimit: 10);
         $sellWithUs = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'vendor_registration_sell_with_us'])['value']);
+
         return view('admin-views.business-settings.vendor-registration-setting.with-us', compact('sellWithUs', 'vendorRegistrationReasons'));
     }
 
@@ -47,12 +47,14 @@ class VendorRegistrationSettingController extends BaseController
     {
         $businessProcess = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'business_process_main_section'])['value']);
         $businessProcessStep = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'business_process_step'])['value']);
+
         return view('admin-views.business-settings.vendor-registration-setting.business-process', compact('businessProcess', 'businessProcessStep'));
     }
 
     public function getDownloadAppView(): View
     {
-        $downloadVendorApp = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'download_vendor_app'])?->value ?? "");
+        $downloadVendorApp = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'download_vendor_app'])?->value ?? '');
+
         return view('admin-views.business-settings.vendor-registration-setting.download-app', compact('downloadVendorApp'));
     }
 
@@ -63,6 +65,7 @@ class VendorRegistrationSettingController extends BaseController
             searchValue: $request['searchValue'],
             filters: ['type' => 'vendor_registration'],
             dataLimit: 10);
+
         return view('admin-views.business-settings.vendor-registration-setting.faq', compact('helps'));
     }
 
@@ -72,6 +75,7 @@ class VendorRegistrationSettingController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'vendor_registration_header',
             value: $this->vendorRegistrationSettingService->getHeaderAndSellWithUsUpdateData(request: $request, image: $vendorRegistrationHeader->image ?? null));
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -81,6 +85,7 @@ class VendorRegistrationSettingController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'vendor_registration_sell_with_us',
             value: $this->vendorRegistrationSettingService->getHeaderAndSellWithUsUpdateData(request: $request, image: $sellWithUs->image ?? null));
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -93,6 +98,7 @@ class VendorRegistrationSettingController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'business_process_step',
             value: $this->vendorRegistrationSettingService->getBusinessProcessStepUpdateData(request: $request, businessProcessStep: $businessProcessStep));
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -103,7 +109,7 @@ class VendorRegistrationSettingController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'download_vendor_app',
             value: json_encode($this->vendorRegistrationSettingService->getDownloadVendorAppUpdateData(request: $request, data: $downloadVendorApp ?? null)));
         ToastMagic::success(translate('updated_successfully'));
+
         return redirect()->back();
     }
-
 }

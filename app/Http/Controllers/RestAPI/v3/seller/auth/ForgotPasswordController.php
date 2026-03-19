@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Modules\Gateways\Traits\SmsGateway;
 
 class ForgotPasswordController extends Controller
 {
@@ -24,10 +23,8 @@ class ForgotPasswordController extends Controller
 
     public function __construct(
         private readonly PhoneOrEmailVerificationRepositoryInterface $phoneOrEmailVerificationRepo,
-        private readonly VendorRepositoryInterface                   $vendorRepo,
-    )
-    {
-    }
+        private readonly VendorRepositoryInterface $vendorRepo,
+    ) {}
 
     public function reset_password_request(Request $request): JsonResponse
     {
@@ -72,6 +69,7 @@ class ForgotPasswordController extends Controller
                 } else {
                     $response = translate('email_failed');
                 }
+
                 return response()->json(['message' => $response], 200);
             }
         } elseif ($verification_by == 'phone') {
@@ -93,11 +91,13 @@ class ForgotPasswordController extends Controller
                 if ($response == 'success') {
                     return response()->json(['message' => 'otp sent successfully.'], 200);
                 }
+
                 return response()->json(['message' => 'otp sent failed.'], 200);
             }
         }
+
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => 'user not found!']
+            ['code' => 'not-found', 'message' => 'user not found!'],
         ]], 404);
     }
 
@@ -105,7 +105,7 @@ class ForgotPasswordController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'identity' => 'required',
-            'otp' => 'required'
+            'otp' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -125,7 +125,7 @@ class ForgotPasswordController extends Controller
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => 'invalid OTP']
+            ['code' => 'not-found', 'message' => 'invalid OTP'],
         ]], 404);
     }
 
@@ -158,7 +158,7 @@ class ForgotPasswordController extends Controller
 
             DB::table('sellers')->where('phone', 'like', "%{$request['identity']}%")
                 ->update([
-                    'password' => bcrypt(str_replace(' ', '', $request['password']))
+                    'password' => bcrypt(str_replace(' ', '', $request['password'])),
                 ]);
 
             DB::table('password_resets')
@@ -173,8 +173,9 @@ class ForgotPasswordController extends Controller
 
             return response()->json(['message' => 'Password changed successfully.'], 200);
         }
+
         return response()->json(['errors' => [
-            ['code' => 'invalid', 'message' => 'Invalid token.']
+            ['code' => 'invalid', 'message' => 'Invalid token.'],
         ]], 400);
     }
 
@@ -184,6 +185,7 @@ class ForgotPasswordController extends Controller
             'phone_or_email' => $request['identity'],
             'token' => $request['token'],
         ]);
+
         return response()->json(['message' => translate('Token_is_successfully_Saved')], 200);
     }
 
@@ -204,15 +206,15 @@ class ForgotPasswordController extends Controller
         if ($verifyStatus['status'] == 1) {
             return response()->json([
                 'errors' => [
-                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']]
-                ]
+                    ['code' => $verifyStatus['code'], 'message' => $verifyStatus['message']],
+                ],
             ], 403);
         }
 
         $firebaseOTPVerification = getWebConfig(name: 'firebase_otp_verification');
         $webApiKey = $firebaseOTPVerification ? $firebaseOTPVerification['web_api_key'] : '';
 
-        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key=' . $webApiKey, [
+        $response = Http::post('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key='.$webApiKey, [
             'sessionInfo' => $request['sessionInfo'],
             'phoneNumber' => $request['phoneNumber'],
             'code' => $request['code'],
@@ -222,7 +224,8 @@ class ForgotPasswordController extends Controller
 
         if (isset($responseData['error'])) {
             $errors = [];
-            $errors[] = ['code' => "403", 'message' => translate(strtolower($responseData['error']['message']))];
+            $errors[] = ['code' => '403', 'message' => translate(strtolower($responseData['error']['message']))];
+
             return response()->json(['errors' => $errors], 403);
         }
 
@@ -238,7 +241,7 @@ class ForgotPasswordController extends Controller
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => 'invalid OTP']
+            ['code' => 'not-found', 'message' => 'invalid OTP'],
         ]], 404);
     }
 
@@ -258,7 +261,7 @@ class ForgotPasswordController extends Controller
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => translate('Vendor not found')]
+            ['code' => 'not-found', 'message' => translate('Vendor not found')],
         ]], 404);
     }
 }

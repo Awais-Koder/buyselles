@@ -12,11 +12,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Modules\Gateways\Traits\SmsGateway;
 
 class ForgotPasswordController extends Controller
 {
-    public function reset_password_request(Request $request):JsonResponse
+    public function reset_password_request(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'identity' => 'required|min:6',
@@ -27,7 +26,7 @@ class ForgotPasswordController extends Controller
         }
 
         $verification_by = getWebConfig(name: 'vendor_forgot_password_method');
-        DB::table('password_resets')->where('user_type','seller')->where('identity', 'like', "%{$request['identity']}%")->delete();
+        DB::table('password_resets')->where('user_type', 'seller')->where('identity', 'like', "%{$request['identity']}%")->delete();
 
         if ($verification_by == 'email') {
             $seller = Seller::Where(['email' => $request['identity']])->first();
@@ -36,7 +35,7 @@ class ForgotPasswordController extends Controller
                 DB::table('password_resets')->insert([
                     'identity' => $seller['email'],
                     'token' => $token,
-                    'user_type'=>'seller',
+                    'user_type' => 'seller',
                     'created_at' => now(),
                 ]);
                 $reset_url = route('vendor.auth.forgot-password.reset-password', ['token' => $token]);
@@ -54,11 +53,12 @@ class ForgotPasswordController extends Controller
                         'title' => translate('password_reset'),
                         'passwordResetURL' => $reset_url,
                     ];
-                    event(new PasswordResetEvent(email: $seller['email'],data: $data));
+                    event(new PasswordResetEvent(email: $seller['email'], data: $data));
                     $response = translate('check_your_email');
-                }else{
-                    $response= translate('email_failed');
+                } else {
+                    $response = translate('email_failed');
                 }
+
                 return response()->json(['message' => $response], 200);
             }
         } elseif ($verification_by == 'phone') {
@@ -68,24 +68,26 @@ class ForgotPasswordController extends Controller
                 DB::table('password_resets')->insert([
                     'identity' => $seller['phone'],
                     'token' => $token,
-                    'user_type'=>'seller',
+                    'user_type' => 'seller',
                     'created_at' => now(),
                 ]);
 
                 SMSModule::sendCentralizedSMS($seller->phone, $token);
+
                 return response()->json(['message' => 'otp sent successfully.'], 200);
             }
         }
+
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => 'user not found!']
+            ['code' => 'not-found', 'message' => 'user not found!'],
         ]], 404);
     }
 
-    public function otp_verification_submit(Request $request):JsonResponse
+    public function otp_verification_submit(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'identity' => 'required',
-            'otp' => 'required'
+            'otp' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -94,7 +96,7 @@ class ForgotPasswordController extends Controller
 
         $id = $request['identity'];
         $data = DB::table('password_resets')
-            ->where('user_type','seller')
+            ->where('user_type', 'seller')
             ->where(['token' => $request['otp']])
             ->where('identity', 'like', "%{$id}%")
             ->first();
@@ -104,11 +106,11 @@ class ForgotPasswordController extends Controller
         }
 
         return response()->json(['errors' => [
-            ['code' => 'not-found', 'message' => 'invalid OTP']
+            ['code' => 'not-found', 'message' => 'invalid OTP'],
         ]], 404);
     }
 
-    public function reset_password_submit(Request $request):JsonResponse
+    public function reset_password_submit(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'identity' => 'required',
@@ -121,25 +123,26 @@ class ForgotPasswordController extends Controller
         }
 
         $data = DB::table('password_resets')
-            ->where('user_type','seller')
+            ->where('user_type', 'seller')
             ->where('identity', 'like', "%{$request['identity']}%")
             ->where(['token' => $request['otp']])->first();
 
         if (isset($data)) {
             DB::table('sellers')->where('phone', 'like', "%{$data->identity}%")
                 ->update([
-                    'password' => bcrypt(str_replace(' ', '', $request['password']))
+                    'password' => bcrypt(str_replace(' ', '', $request['password'])),
                 ]);
 
             DB::table('password_resets')
-                ->where('user_type','seller')
+                ->where('user_type', 'seller')
                 ->where('identity', 'like', "%{$request['identity']}%")
                 ->where(['token' => $request['otp']])->delete();
 
             return response()->json(['message' => 'Password changed successfully.'], 200);
         }
+
         return response()->json(['errors' => [
-            ['code' => 'invalid', 'message' => 'Invalid token.']
+            ['code' => 'invalid', 'message' => 'Invalid token.'],
         ]], 400);
     }
 }

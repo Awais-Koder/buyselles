@@ -25,11 +25,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  *
- * @package App\Models
  * */
 class Review extends Model
 {
     use StorageTrait;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -65,12 +65,12 @@ class Review extends Model
         return $query->where('status', 1);
     }
 
-    public function user():HasOne
+    public function user(): HasOne
     {
         return $this->hasOne('App\User', 'id', 'customer_id');
     }
 
-    public function product():BelongsTo
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
     }
@@ -95,7 +95,7 @@ class Review extends Model
         return $this->belongsTo(ReviewReply::class, 'id', 'review_id');
     }
 
-    public function getAttachmentFullUrlAttribute(): array|null
+    public function getAttachmentFullUrlAttribute(): ?array
     {
         $images = [];
         $value = $this->attachment;
@@ -105,15 +105,17 @@ class Review extends Model
                 $images[] = $this->storageLink('review', $item['file_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
+
     protected $appends = ['attachment_full_url'];
 
     protected static function boot()
     {
         parent::boot();
         static::addGlobalScope('active', function (Builder $builder) {
-            if (str_contains(url()->current(), url('/') . '/admin') || str_contains(url()->current(), url('/') . '/seller') || str_contains(url()->current(), url('/') . '/vendor') || str_contains(url()->current(), url('/') . '/api/v2') || str_contains(url()->current(), url('/') . '/api/v3')) {
+            if (str_contains(url()->current(), url('/').'/admin') || str_contains(url()->current(), url('/').'/seller') || str_contains(url()->current(), url('/').'/vendor') || str_contains(url()->current(), url('/').'/api/v2') || str_contains(url()->current(), url('/').'/api/v3')) {
                 return $builder;
             } else {
                 return $builder->where('status', 1);

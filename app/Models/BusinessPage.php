@@ -22,8 +22,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class BusinessPage extends Model
 {
-    use StorageTrait;
     use HasFactory;
+    use StorageTrait;
 
     protected $fillable = [
         'title',
@@ -32,7 +32,7 @@ class BusinessPage extends Model
         'status',
         'default_status',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $casts = [
@@ -56,13 +56,14 @@ class BusinessPage extends Model
     public function getBannerFullUrlAttribute(): string|null|array
     {
         $banner = $this->banner;
-        if (strpos(url()->current(), '/api') && !$banner) {
+        if (strpos(url()->current(), '/api') && ! $banner) {
             return [
                 'key' => $banner?->file_name ?? 'business-pages',
                 'path' => getStorageImages(path: $banner?->file_name, type: 'business-page'),
                 'status' => 200,
             ];
         }
+
         return $this->storageLink('business-pages', $banner?->file_name, $banner?->storage_disk ?? 'public');
     }
 
@@ -78,5 +79,4 @@ class BusinessPage extends Model
             cacheRemoveByType(type: 'business_pages');
         });
     }
-
 }

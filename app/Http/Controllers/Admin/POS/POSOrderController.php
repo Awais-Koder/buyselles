@@ -34,43 +34,25 @@ use Throwable;
 
 class POSOrderController extends BaseController
 {
-    use CustomerTrait;
     use CalculatorTrait;
+    use CustomerTrait;
     use VatTaxManagement;
 
-    /**
-     * @param ProductRepositoryInterface $productRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param OrderRepositoryInterface $orderRepo
-     * @param OrderDetailRepositoryInterface $orderDetailRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     * @param DigitalProductVariationRepositoryInterface $digitalProductVariationRepo
-     * @param StorageRepositoryInterface $storageRepo
-     * @param POSService $POSService
-     * @param CartService $cartService
-     * @param OrderDetailsService $orderDetailsService
-     * @param OrderService $orderService
-     */
     public function __construct(
-        private readonly ProductRepositoryInterface                 $productRepo,
-        private readonly CustomerRepositoryInterface                $customerRepo,
-        private readonly OrderRepositoryInterface                   $orderRepo,
-        private readonly OrderDetailRepositoryInterface             $orderDetailRepo,
-        private readonly VendorRepositoryInterface                  $vendorRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly DigitalProductVariationRepositoryInterface $digitalProductVariationRepo,
-        private readonly StorageRepositoryInterface                 $storageRepo,
-        private readonly POSService                                 $POSService,
-        private readonly CartService                                $cartService,
-        private readonly OrderDetailsService                        $orderDetailsService,
-        private readonly OrderService                               $orderService,
-    )
-    {
-    }
+        private readonly StorageRepositoryInterface $storageRepo,
+        private readonly POSService $POSService,
+        private readonly CartService $cartService,
+        private readonly OrderDetailsService $orderDetailsService,
+        private readonly OrderService $orderService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
      * @throws Exception
      */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
@@ -80,15 +62,15 @@ class POSOrderController extends BaseController
         $getPOSStatus = getWebConfig('seller_pos');
         if ($vendor['pos_status'] == 0 || $getPOSStatus == 0) {
             ToastMagic::warning(translate('access_denied!!'));
+
             return redirect()->back();
         }
         $order = $this->orderRepo->getFirstWhere(params: ['id' => $type], relations: ['details', 'shipping', 'seller']);
+
         return view('admin-views.pos.order.order-details', compact('order'));
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
     public function placeOrder(Request $request): JsonResponse
@@ -103,7 +85,7 @@ class POSOrderController extends BaseController
         $userId = $this->cartService->getUserId();
         $checkProductTypeDigital = $this->cartService->checkProductTypeDigital(cartId: $cartId);
         if ($userId == 0 && $checkProductTypeDigital) {
-            return response()->json(['checkProductTypeForWalkingCustomer' => true, 'message' => translate('To_order_digital_product') . ',' . translate('_kindly_fill_up_the_“Add_New_Customer”_form') . '.']);
+            return response()->json(['checkProductTypeForWalkingCustomer' => true, 'message' => translate('To_order_digital_product').','.translate('_kindly_fill_up_the_“Add_New_Customer”_form').'.']);
         }
         if ($request['type'] == 'wallet' && $userId != 0) {
             $customerBalance = $this->customerRepo->getFirstWhere(params: ['id' => $userId]) ?? 0;
@@ -111,6 +93,7 @@ class POSOrderController extends BaseController
                 $this->createWalletTransaction(user_id: $userId, amount: floatval($amount), transaction_type: 'order_place', reference: 'order_place_in_pos');
             } else {
                 ToastMagic::error(translate('need_Sufficient_Amount_Balance'));
+
                 return response()->json();
             }
         }
@@ -145,12 +128,12 @@ class POSOrderController extends BaseController
                             if ($product['digital_product_type'] == 'ready_product') {
                                 $getStoragePath = $this->storageRepo->getFirstWhere(params: [
                                     'data_id' => $digitalProductVariation['id'],
-                                    "data_type" => "App\Models\DigitalProductVariation",
+                                    'data_type' => "App\Models\DigitalProductVariation",
                                 ]);
                                 $product['digital_file_ready'] = $digitalProductVariation['file'];
                                 $product['storage_path'] = $getStoragePath ? $getStoragePath['value'] : 'public';
                             }
-                        } elseif ($product['digital_product_type'] == 'ready_product' && !empty($product['digital_file_ready'])) {
+                        } elseif ($product['digital_product_type'] == 'ready_product' && ! empty($product['digital_file_ready'])) {
                             $product['storage_path'] = $product['digital_file_ready_storage_type'] ?? 'public';
                         }
 
@@ -222,12 +205,12 @@ class POSOrderController extends BaseController
             if ($checkProductTypeDigital) {
                 $order = $this->orderRepo->getFirstWhere(params: ['id' => $orderId], relations: ['details.productAllStatus']);
                 $data = [
-                    'userName' => $order?->customer?->f_name ?? "",
+                    'userName' => $order?->customer?->f_name ?? '',
                     'userType' => 'customer',
                     'templateName' => 'digital-product-download',
                     'order' => $order,
                     'subject' => translate('download_Digital_Product'),
-                    'title' => translate('Congratulations') . '!',
+                    'title' => translate('Congratulations').'!',
                     'emailId' => $order->customer['email'],
                 ];
                 event(new DigitalProductDownloadEvent(email: $order->customer['email'], data: $data));
@@ -250,16 +233,15 @@ class POSOrderController extends BaseController
         $totalHoldOrders = $this->POSService->getTotalHoldOrders();
         $cartNames = $this->POSService->getCartNames();
         $cartItems = $this->getHoldOrderCalculationData(cartNames: $cartNames);
+
         return response()->json([
-            'message' => $request['cart_id'] . ' ' . translate('order_is_cancel'),
+            'message' => $request['cart_id'].' '.translate('order_is_cancel'),
             'status' => 'success',
             'view' => view('admin-views.pos.partials._view-hold-orders', compact('totalHoldOrders', 'cartItems'))->render(),
         ]);
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getAllHoldOrdersView(Request $request): JsonResponse
@@ -267,13 +249,14 @@ class POSOrderController extends BaseController
         $totalHoldOrders = $this->POSService->getTotalHoldOrders();
         $cartNames = $this->POSService->getCartNames();
         $cartItems = $this->getHoldOrderCalculationData(cartNames: $cartNames);
-        if (!empty($request['customer'])) {
+        if (! empty($request['customer'])) {
             $searchValue = strtolower($request['customer']);
             $filteredItems = collect($cartItems)->filter(function ($item) use ($searchValue) {
                 return str_contains(strtolower($item['customerName']), $searchValue) !== false;
             });
             $cartItems = $filteredItems->all();
         }
+
         return response()->json([
             'flag' => 'inactive',
             'totalHoldOrders' => $totalHoldOrders,
@@ -281,9 +264,6 @@ class POSOrderController extends BaseController
         ]);
     }
 
-    /**
-     * @return array
-     */
     protected function getCustomerDataFromSessionForPOS(): array
     {
         if (Str::contains(session(SessionKey::CURRENT_USER), 'walk-in-customer')) {
@@ -292,19 +272,15 @@ class POSOrderController extends BaseController
         } else {
             $userId = explode('-', session(SessionKey::CURRENT_USER))[2];
             $currentCustomerData = $this->customerRepo->getFirstWhere(params: ['id' => $userId]);
-            $currentCustomer = $currentCustomerData['f_name'] . ' ' . $currentCustomerData['l_name'] . ' (' . $currentCustomerData['phone'] . ')';
+            $currentCustomer = $currentCustomerData['f_name'].' '.$currentCustomerData['l_name'].' ('.$currentCustomerData['phone'].')';
         }
+
         return [
             'currentCustomer' => $currentCustomer,
-            'currentCustomerData' => $currentCustomerData
+            'currentCustomerData' => $currentCustomerData,
         ];
     }
 
-
-    /**
-     * @param array $cartNames
-     * @return array
-     */
     protected function getHoldOrderCalculationData(array $cartNames): array
     {
         $cartData = [];
@@ -313,20 +289,17 @@ class POSOrderController extends BaseController
             $CartItemData = $this->calculateCartItemsData(cartName: $cartName, customerCartData: $customerCartData);
             $cartData[$cartName] = array_merge($customerCartData[$cartName], $CartItemData);
         }
+
         return $cartData;
     }
 
-    /**
-     * @param string $cartName
-     * @return array
-     */
     protected function getCustomerCartData(string $cartName): array
     {
         $customerCartData = [];
         if (Str::contains($cartName, 'walk-in-customer')) {
             $currentCustomerInfo = [
                 'customerName' => 'Walk-In Customer',
-                'customerPhone' => "",
+                'customerPhone' => '',
             ];
             $customerId = 0;
         } else {
@@ -340,6 +313,7 @@ class POSOrderController extends BaseController
             'customerPhone' => $currentCustomerInfo['customerPhone'],
             'customerId' => $customerId,
         ];
+
         return $customerCartData;
     }
 
@@ -392,6 +366,7 @@ class POSOrderController extends BaseController
         $totalCalculation = $this->cartService->getTotalCalculation(
             subTotalCalculation: $subTotalCalculation, cartName: $cartName
         );
+
         return [
             'countItem' => $subTotalCalculation['countItem'],
             'total' => $totalCalculation['total'],
@@ -410,6 +385,7 @@ class POSOrderController extends BaseController
     {
         $customerCartData = $this->getCustomerCartData(cartName: $cartName);
         $cartItemData = $this->calculateCartItemsData(cartName: $cartName, customerCartData: $customerCartData);
+
         return array_merge($customerCartData[$cartName], $cartItemData);
     }
 }

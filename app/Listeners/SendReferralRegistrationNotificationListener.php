@@ -2,8 +2,8 @@
 
 namespace App\Listeners;
 
-use App\Traits\PushNotificationTrait;
 use App\Events\CustomerRegisteredViaReferralEvent;
+use App\Traits\PushNotificationTrait;
 
 class SendReferralRegistrationNotificationListener
 {
@@ -33,7 +33,7 @@ class SendReferralRegistrationNotificationListener
             'deliveryman_charge' => '',
             'expected_delivery_date' => '',
             'image' => '',
-            'type' => 'referral_code_used'
+            'type' => 'referral_code_used',
         ];
 
         $this->sendPushNotificationToDevice(fcmToken: $fcmToken, data: $postData);

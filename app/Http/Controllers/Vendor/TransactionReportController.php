@@ -15,27 +15,23 @@ use App\Models\Product;
 use App\Models\Shop;
 use App\Models\User;
 use App\Services\Admin\Reports\TransactionReportService;
-use App\Utils\BackEndHelper;
 use App\Utils\Helpers;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View as ViewFacade;
 use Maatwebsite\Excel\Facades\Excel;
-use Rap2hpoutre\FastExcel\FastExcel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TransactionReportController extends Controller
 {
     public function __construct(
-        private readonly VendorRepositoryInterface   $vendorRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-        private readonly TransactionReportService    $transactionReportService,
-    )
-    {
-    }
+        private readonly TransactionReportService $transactionReportService,
+    ) {}
 
     private function getOrderTransactionListData($transactions)
     {
@@ -43,8 +39,8 @@ class TransactionReportController extends Controller
         foreach ($transactions as $key => $transaction) {
             if ($transaction?->order) {
                 $shopName = $transaction['seller_is'] == 'admin' ? getInHouseShopConfig(key: 'name') : ($transaction?->seller?->shop?->name ?? translate('not_found'));
-                $customer = !$transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
-                $customerId = !$transaction?->order?->is_guest && $customer ? $customer->id : null;
+                $customer = ! $transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
+                $customerId = ! $transaction?->order?->is_guest && $customer ? $customer->id : null;
 
                 $orderDetailsSumPrice = $transaction?->orderDetails[0]?->order_details_sum_price ?? 0;
                 $orderDetailsSumDiscount = $transaction?->orderDetails[0]?->order_details_sum_discount ?? 0;
@@ -67,7 +63,7 @@ class TransactionReportController extends Controller
                 }
                 if (isset($transaction->order->deliveryMan) && $transaction->order->deliveryMan->seller_id == 0) {
                     $adminNetIncome += $transaction['delivery_charge'];
-                } elseif (!isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
+                } elseif (! isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
                     $adminNetIncome += $transaction->order->is_shipping_free && $transaction->order->free_delivery_bearer == 'admin' ? 0 : $transaction->order->shipping_cost;
                 }
 
@@ -83,12 +79,12 @@ class TransactionReportController extends Controller
                 }
 
                 if ($transaction->order->shipping_responsibility == 'inhouse_shipping') {
-                    if (!$transaction->order->is_shipping_free) {
+                    if (! $transaction->order->is_shipping_free) {
                         $adminNetIncome += $transaction['seller_is'] == 'admin' ? $transaction->order->shipping_cost : 0;
                     }
                     if ($transaction->order->is_shipping_free) {
                         $adminNetIncome += 0;
-                    } else if (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
+                    } elseif (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
                         $adminNetIncome += $sellerCouponDiscount;
                     }
                 } elseif ($transaction->order->shipping_responsibility == 'sellerwise_shipping' && $transaction['seller_is'] == 'seller') {
@@ -134,7 +130,7 @@ class TransactionReportController extends Controller
                     'shop_name' => $shopName,
                     'is_guest' => $transaction?->order?->is_guest ?? 0,
                     'customer_id' => $customerId,
-                    'customer_name' => $customer ? $customer?->f_name . ' ' . $customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found')),
+                    'customer_name' => $customer ? $customer?->f_name.' '.$customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found')),
                     'total_product_amount' => $orderDetailsSumPrice,
                     'product_discount' => $orderDetailsSumDiscount,
                     'coupon_discount' => $transaction?->order?->discount_amount ?? 0,
@@ -160,6 +156,7 @@ class TransactionReportController extends Controller
                 ];
             }
         }
+
         return $transactionsTableData;
     }
 
@@ -184,21 +181,21 @@ class TransactionReportController extends Controller
             'user_id' => auth('seller')->id(),
             'added_by' => 'seller',
             'status' => 1,
-            'request_status' => 1
+            'request_status' => 1,
         ])->count();
 
         $inactive_products = Product::where([
             'user_id' => auth('seller')->id(),
             'added_by' => 'seller',
             'status' => 0,
-            'request_status' => 1
+            'request_status' => 1,
         ])->count();
 
         $pending_products = Product::where([
             'user_id' => auth('seller')->id(),
             'added_by' => 'seller',
             'status' => 0,
-            'request_status' => 0
+            'request_status' => 0,
         ])->count();
 
         $product_data = [
@@ -212,8 +209,9 @@ class TransactionReportController extends Controller
         $transactionsTableData = $this->transactionReportService->getOrderTransactionListFormatedData($transactions);
         $chartTransactionOrderLabel = array_values(collect(array_keys($order_transaction_chart['order_amount']))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' ' . date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -244,38 +242,43 @@ class TransactionReportController extends Controller
 
         foreach ($orderEditHistory as $editHistory) {
 
-            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
-                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && !in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
+            $orderEditDigitalPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
+                if ($item?->order_due_payment_method != null && $item?->order_due_payment_status == 'paid' && ! in_array($item->order_due_payment_method, ['cash_on_delivery', 'wallet', 'offline_payment'])) {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditCashPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'cash_on_delivery' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditWalletPayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'wallet' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditOfflinePayment += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_due_payment_method == 'offline_payment' && $item?->order_due_payment_status == 'paid') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_due_amount');
 
-            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) use ($request) {
+            $orderEditReturnAmount += $editHistory?->orderEditHistory?->filter(function ($item) {
                 if ($item?->order_return_payment_status == 'returned') {
                     return $item;
                 }
+
                 return null;
             })->sum('order_return_amount');
         }
@@ -337,10 +340,10 @@ class TransactionReportController extends Controller
             $transaction['vendor_net_income'] = $vendorNetIncome;
             $transaction['payment_status'] = $transaction?->status ?? '';
             $transaction['payment_method'] = $transaction?->payment_method ?? '';
-            $transaction['is_guest'] =  $transaction?->order?->is_guest ?? 0;
-            $transaction['delivered_by'] =  $transaction?->delivered_by ?? '';
-            $transaction['customer'] = !$transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
-            $transaction['customer_name'] = $customer ? $customer?->f_name . ' ' . $customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found'));
+            $transaction['is_guest'] = $transaction?->order?->is_guest ?? 0;
+            $transaction['delivered_by'] = $transaction?->delivered_by ?? '';
+            $transaction['customer'] = ! $transaction?->order?->is_guest && $transaction?->customer ? $transaction->customer : null;
+            $transaction['customer_name'] = $customer ? $customer?->f_name.' '.$customer?->l_name : ($transaction?->order?->is_guest ? translate('guest_customer') : translate('not_found'));
         });
 
         $data = [
@@ -353,6 +356,7 @@ class TransactionReportController extends Controller
             'customer' => $customer,
             'transactions' => $transactions,
         ];
+
         return Excel::download(new OrderTransactionReportExport($data), Report::ORDER_TRANSACTION_REPORT_LIST);
     }
 
@@ -371,14 +375,14 @@ class TransactionReportController extends Controller
 
         $duration = str_replace('_', ' ', $date_type);
         if ($date_type == 'custom_date') {
-            $duration = 'From ' . $from . ' To ' . $to;
+            $duration = 'From '.$from.' To '.$to;
         }
 
         $seller_info = Shop::where('seller_id', auth('seller')->id())->first()->name;
         $customer_info = 'all';
         if ($customer_id != 'all') {
             $customer = User::select()->find($customer_id);
-            $customer_info = $customer->f_name . ' ' . $customer->l_name;
+            $customer_info = $customer->f_name.' '.$customer->l_name;
         }
 
         $transactions = self::order_transaction_table_data_filter($request)->latest('created_at')->get();
@@ -441,7 +445,7 @@ class TransactionReportController extends Controller
                 }
                 if (isset($transaction->order->deliveryMan) && $transaction->order->deliveryMan->seller_id == 0) {
                     $adminNetIncome += $transaction['delivery_charge'];
-                } elseif (!isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
+                } elseif (! isset($transaction->order->deliveryMan) && ($transaction['seller_is'] == 'seller') && ($transaction->order->shipping_responsibility == 'inhouse_shipping' || $transaction['seller_is'] == 'admin')) {
                     $adminNetIncome += $transaction->order->is_shipping_free && $transaction->order->free_delivery_bearer == 'admin' ? 0 : $transaction->order->shipping_cost;
                 }
 
@@ -457,12 +461,12 @@ class TransactionReportController extends Controller
                 }
 
                 if ($transaction->order->shipping_responsibility == 'inhouse_shipping') {
-                    if (!$transaction->order->is_shipping_free) {
+                    if (! $transaction->order->is_shipping_free) {
                         $adminNetIncome += $transaction['seller_is'] == 'admin' ? $transaction->order->shipping_cost : 0;
                     }
                     if ($transaction->order->is_shipping_free) {
                         $adminNetIncome += 0;
-                    } else if (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
+                    } elseif (($transaction->order->coupon_discount_bearer == 'seller' && isset($transaction->order->coupon) && $transaction->order->coupon->coupon_type == 'free_delivery')) {
                         $adminNetIncome += $sellerCouponDiscount;
                     }
                 } elseif ($transaction->order->shipping_responsibility == 'sellerwise_shipping' && $transaction['seller_is'] == 'seller') {
@@ -601,7 +605,7 @@ class TransactionReportController extends Controller
 
         $transaction_query = OrderTransaction::with(['seller.shop', 'customer', 'order.deliveryMan'])
             ->with(['orderDetails' => function ($query) {
-                $query->selectRaw("*, sum(qty*price) as order_details_sum_price, sum(discount) as order_details_sum_discount")
+                $query->selectRaw('*, sum(qty*price) as order_details_sum_price, sum(discount) as order_details_sum_discount')
                     ->groupBy('order_id');
             }])
             ->when($search, function ($q) use ($search) {
@@ -615,6 +619,7 @@ class TransactionReportController extends Controller
                 $query->where('customer_id', $customer_id);
             })
             ->where(['seller_is' => 'seller', 'seller_id' => auth('seller')->id()]);
+
         return self::date_wise_common_filter($transaction_query, $date_type, $from, $to);
     }
 
@@ -630,6 +635,7 @@ class TransactionReportController extends Controller
             $current_start_year = date('Y-01-01');
             $current_end_year = date('Y-12-31');
             $from_year = Carbon::parse($from)->format('Y');
+
             return self::order_transaction_same_year($request, $current_start_year, $current_end_year, $from_year, $number, $default_inc);
         } elseif ($date_type == 'this_month') {
             $current_month_start = date('Y-m-01');
@@ -637,12 +643,13 @@ class TransactionReportController extends Controller
             $inc = 1;
             $month = date('m');
             $number = date('d', strtotime($current_month_end));
+
             return self::order_transaction_same_month($request, $current_month_start, $current_month_end, $month, $number, $inc);
         } elseif ($date_type == 'this_week') {
             return self::order_transaction_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getOrderTransactionForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -671,7 +678,7 @@ class TransactionReportController extends Controller
             ->latest('created_at')->get();
 
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+            $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
             $order_amount[$month] = 0;
             foreach ($orders as $match) {
                 if ($match['month'] == $inc) {
@@ -680,15 +687,15 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function order_transaction_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc)
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = substr(date("F", strtotime("$year_month")), 0, 3);
+        $month = substr(date('F', strtotime("$year_month")), 0, 3);
         $orders = self::order_transaction_date_common_query($request, $start_date, $end_date)
             ->selectRaw('sum(CASE WHEN delivery_type="self_delivery" AND shipping_responsibility="sellerwise_shipping" AND seller_is="seller" THEN (order_amount - deliveryman_charge) ELSE order_amount END) as order_amount, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
             ->groupBy(DB::raw("DATE_FORMAT(created_at, '%D')"))
@@ -703,9 +710,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function order_transaction_this_week($request)
@@ -715,7 +722,7 @@ class TransactionReportController extends Controller
 
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             array_push($day_name, $date->format('l'));
         }
@@ -737,9 +744,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
     }
 
     public function getOrderTransactionForToday($request): array
@@ -785,9 +792,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'order_amount' => $order_amount,
-        );
+        ];
 
     }
 
@@ -843,7 +850,7 @@ class TransactionReportController extends Controller
             ->when(($date_type == 'this_week'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });
@@ -865,7 +872,7 @@ class TransactionReportController extends Controller
                 // 'coupon_discount_bearer' => 'seller',
                 'order_status' => 'delivered',
                 'seller_is' => 'seller',
-                'seller_id' => auth('seller')->id()
+                'seller_id' => auth('seller')->id(),
             ])
             ->where(function ($query) {
                 $query->whereNotIn('free_delivery_bearer', ['admin'])
@@ -876,12 +883,12 @@ class TransactionReportController extends Controller
                     ->orWhere(function ($query) {
                         $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'seller'
+                            'free_delivery_bearer' => 'seller',
                         ]);
                     })
                     ->orWhere('coupon_discount_bearer', 'seller');
             })
-            ->whereHas('orderTransaction', function ($query) use ($search) {
+            ->whereHas('orderTransaction', function ($query) {
                 $query->where(['status' => 'disburse']);
             });
 
@@ -911,7 +918,7 @@ class TransactionReportController extends Controller
                 // 'coupon_discount_bearer' => 'seller',
                 'order_status' => 'delivered',
                 'seller_is' => 'seller',
-                'seller_id' => auth('seller')->id()
+                'seller_id' => auth('seller')->id(),
             ])
             ->where(function ($query) {
                 $query->whereNotIn('free_delivery_bearer', ['admin'])
@@ -922,7 +929,7 @@ class TransactionReportController extends Controller
                     ->orWhere(function ($query) {
                         $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'seller'
+                            'free_delivery_bearer' => 'seller',
                         ]);
                     })
                     ->orWhere('coupon_discount_bearer', 'seller');
@@ -940,8 +947,9 @@ class TransactionReportController extends Controller
 
         $chartDataExpenseTransactionLabel = array_values(collect(array_keys($expense_transaction_chart['discount_amount']))->map(function ($item) use ($request) {
             if ($request['date_type'] == 'this_month') {
-                return $item . ' ' . date('M');
+                return $item.' '.date('M');
             }
+
             return $item;
         })->toArray());
 
@@ -961,6 +969,7 @@ class TransactionReportController extends Controller
             $current_start_year = date('Y-01-01');
             $current_end_year = date('Y-12-31');
             $from_year = Carbon::parse($from)->format('Y');
+
             return self::expense_transaction_same_year($request, $current_start_year, $current_end_year, $from_year, $number, $default_inc);
         } elseif ($date_type == 'this_month') {
             $current_month_start = date('Y-m-01');
@@ -968,12 +977,13 @@ class TransactionReportController extends Controller
             $inc = 1;
             $month = date('m');
             $number = date('d', strtotime($current_month_end));
+
             return self::expense_transaction_same_month($request, $current_month_start, $current_month_end, $month, $number, $inc);
         } elseif ($date_type == 'this_week') {
             return self::expense_transaction_this_week($request);
         } elseif ($date_type == 'today') {
             return self::getExpenseTransactionForToday($request);
-        } elseif ($date_type == 'custom_date' && !empty($from) && !empty($to)) {
+        } elseif ($date_type == 'custom_date' && ! empty($from) && ! empty($to)) {
             $start_date = Carbon::parse($from)->format('Y-m-d 00:00:00');
             $end_date = Carbon::parse($to)->format('Y-m-d 23:59:59');
             $from_year = Carbon::parse($from)->format('Y');
@@ -1001,7 +1011,7 @@ class TransactionReportController extends Controller
             ->latest('created_at')->get();
 
         for ($inc = $default_inc; $inc <= $number; $inc++) {
-            $month = substr(date("F", strtotime("2023-$inc-01")), 0, 3);
+            $month = substr(date('F', strtotime("2023-$inc-01")), 0, 3);
             $discount_amount[$month] = 0;
             foreach ($orders as $match) {
                 if ($match['month'] == $inc) {
@@ -1010,15 +1020,15 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discount_amount ?? [],
-        );
+        ];
     }
 
     public function expense_transaction_same_month($request, $start_date, $end_date, $month_date, $number, $default_inc)
     {
         $year_month = date('Y-m', strtotime($start_date));
-        $month = substr(date("F", strtotime("$year_month")), 0, 3);
+        $month = substr(date('F', strtotime("$year_month")), 0, 3);
         $orders = self::expense_chart_common_query($request)
             ->selectRaw('sum((CASE WHEN coupon_discount_bearer="seller" THEN discount_amount ELSE 0 END) + (CASE WHEN free_delivery_bearer="seller" THEN extra_discount ELSE 0 END)) as discount_amount, YEAR(created_at) year, MONTH(created_at) month, DAY(created_at) day')
             ->groupBy(DB::raw("DATE_FORMAT(created_at, '%D')"))
@@ -1033,9 +1043,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discount_amount,
-        );
+        ];
     }
 
     public function expense_transaction_this_week($request)
@@ -1045,7 +1055,7 @@ class TransactionReportController extends Controller
 
         $number = 6;
         $period = CarbonPeriod::create(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
-        $day_name = array();
+        $day_name = [];
         foreach ($period as $date) {
             array_push($day_name, $date->format('l'));
         }
@@ -1067,9 +1077,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discount_amount,
-        );
+        ];
     }
 
     public function getExpenseTransactionForToday($request): array
@@ -1115,9 +1125,9 @@ class TransactionReportController extends Controller
             }
         }
 
-        return array(
+        return [
             'discount_amount' => $discount_amount,
-        );
+        ];
 
     }
 
@@ -1132,14 +1142,14 @@ class TransactionReportController extends Controller
             // 'coupon_discount_bearer' => 'seller',
             'seller_is' => 'seller',
             'seller_id' => auth('seller')->id(),
-            'order_status' => 'delivered'
+            'order_status' => 'delivered',
         ])
             ->where(function ($query) {
                 $query->whereNotIn('coupon_code', ['0', 'NULL'])
                     ->orWhere(function ($query) {
                         $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'seller'
+                            'free_delivery_bearer' => 'seller',
                         ]);
                     });
             })
@@ -1165,7 +1175,7 @@ class TransactionReportController extends Controller
             ->when(($date_type == 'today'), function ($query) {
                 return $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when(($date_type == 'custom_date' && !is_null($from) && !is_null($to)), function ($query) use ($from, $to) {
+            ->when(($date_type == 'custom_date' && ! is_null($from) && ! is_null($to)), function ($query) use ($from, $to) {
                 return $query->whereDate('created_at', '>=', $from)
                     ->whereDate('created_at', '<=', $to);
             });
@@ -1199,7 +1209,7 @@ class TransactionReportController extends Controller
         $from = $request['from'];
         $to = $request['to'];
         $date_type = $request['date_type'] ?? 'this_year';
-        $duration = $date_type == 'custom_date' ? 'From ' . $from . ' To ' . $to : str_replace('_', ' ', $date_type);
+        $duration = $date_type == 'custom_date' ? 'From '.$from.' To '.$to : str_replace('_', ' ', $date_type);
 
         $expenseTransactionQuery = Order::with(['orderTransaction', 'coupon'])
             ->where([
@@ -1207,7 +1217,7 @@ class TransactionReportController extends Controller
                 // 'coupon_discount_bearer' => 'seller',
                 'order_status' => 'delivered',
                 'seller_is' => 'seller',
-                'seller_id' => auth('seller')->id()
+                'seller_id' => auth('seller')->id(),
             ])
             ->where(function ($query) {
                 $query->whereNotIn('free_delivery_bearer', ['admin'])
@@ -1218,7 +1228,7 @@ class TransactionReportController extends Controller
                     ->orWhere(function ($query) {
                         $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'seller'
+                            'free_delivery_bearer' => 'seller',
                         ]);
                     });
             })
@@ -1247,7 +1257,7 @@ class TransactionReportController extends Controller
             }
         }
 
-        $data = array(
+        $data = [
             'total_expense' => $total_expense,
             'free_delivery' => $free_delivery,
             'coupon_discount' => $coupon_discount,
@@ -1258,7 +1268,7 @@ class TransactionReportController extends Controller
             'company_web_logo' => $company_web_logo,
             'duration' => $duration,
             'shop_name' => $shop_name,
-        );
+        ];
 
         $mpdf_view = ViewFacade::make('vendor-views.transaction.expense_transaction_summary_report_pdf', compact('data'));
         Helpers::gen_mpdf($mpdf_view, 'order_transaction_summary_report_', $date_type);
@@ -1279,7 +1289,7 @@ class TransactionReportController extends Controller
                 'order_status' => 'delivered',
                 'order_type' => 'default_type',
                 'seller_is' => 'seller',
-                'seller_id' => $vendorId
+                'seller_id' => $vendorId,
             ])
             ->where(function ($query) {
                 $query->whereNotIn('free_delivery_bearer', ['admin'])
@@ -1290,7 +1300,7 @@ class TransactionReportController extends Controller
                     ->orWhere(function ($query) {
                         $query->where([
                             'extra_discount_type' => 'free_shipping_over_order_amount',
-                            'free_delivery_bearer' => 'seller'
+                            'free_delivery_bearer' => 'seller',
                         ]);
                     });
             })
@@ -1311,6 +1321,7 @@ class TransactionReportController extends Controller
             'dateType' => $dateType,
             'transactions' => $transactions,
         ];
+
         return Excel::download(new ExpenseTransactionReportExport($data), Report::EXPENSE_TRANSACTION_REPORT_LIST);
     }
 }

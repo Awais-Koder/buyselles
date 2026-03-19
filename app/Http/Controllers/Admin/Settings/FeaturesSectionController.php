@@ -14,24 +14,20 @@ use Illuminate\Http\Request;
 
 class FeaturesSectionController extends BaseController
 {
-
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $featuresSectionTop = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'features_section_top']);
         $featuresSectionMiddle = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'features_section_middle']);
         $featuresSectionBottom = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'features_section_bottom']);
+
         return view('admin-views.pages-and-media.features-section.view', compact('featuresSectionTop', 'featuresSectionMiddle', 'featuresSectionBottom'));
     }
 
@@ -54,6 +50,7 @@ class FeaturesSectionController extends BaseController
             $this->businessSettingRepo->updateOrInsert(type: 'features_section_bottom', value: json_encode($section_bottom));
         }
         clearWebConfigCacheKeys();
+
         return back();
     }
 
@@ -65,12 +62,14 @@ class FeaturesSectionController extends BaseController
             $this->businessSettingRepo->updateOrInsert(type: 'features_section_bottom', value: json_encode($newArray));
         }
         clearWebConfigCacheKeys();
+
         return response()->json(['status' => 'success']);
     }
 
     public function getCompanyReliabilityView(): View
     {
         $companyReliabilityData = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'company_reliability']);
+
         return view('admin-views.pages-and-media.company-reliability.index', compact('companyReliabilityData'));
     }
 
@@ -81,7 +80,7 @@ class FeaturesSectionController extends BaseController
         $this->businessSettingRepo->updateOrInsert(type: 'company_reliability', value: json_encode($item));
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('Updated_successfully'));
+
         return redirect()->back();
     }
-
 }

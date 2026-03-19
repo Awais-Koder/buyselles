@@ -8,7 +8,7 @@ use App\Traits\PushNotificationTrait;
 
 class RequestProductRestockListener
 {
-    use PushNotificationTrait, EmailTemplateTrait;
+    use EmailTemplateTrait, PushNotificationTrait;
 
     /**
      * Create the event listener.
@@ -35,15 +35,15 @@ class RequestProductRestockListener
                 'message' => [
                     'token' => $data['firebase_token'],
                     'data' => [
-                        'title' => (string)$data['title'],
-                        'body' => (string)$data['body'],
-                        'image' => (string)($data['image'] ?? ''),
+                        'title' => (string) $data['title'],
+                        'body' => (string) $data['body'],
+                        'image' => (string) ($data['image'] ?? ''),
                     ],
                     'notification' => [
-                        'title' => (string)$data['title'],
-                        'body' => (string)$data['body'],
-                    ]
-                ]
+                        'title' => (string) $data['title'],
+                        'body' => (string) $data['body'],
+                    ],
+                ],
             ];
             $this->sendNotificationToHttp($postData);
         }

@@ -26,8 +26,8 @@ class NotificationRequest extends FormRequest
             'title' => 'required',
             'description' => 'required',
             'image' => getRulesStringForImageValidation(
-                rules: ['nullable','image'],
-                skipMimes: ['.svg','.gif'],
+                rules: ['nullable', 'image'],
+                skipMimes: ['.svg', '.gif'],
                 maxSize: getFileUploadMaxSize(unit: 'kb'),
                 isDisallowed: false
             ),
@@ -43,7 +43,7 @@ class NotificationRequest extends FormRequest
             'title.required' => translate('title_is_required'),
             'description.required' => translate('description_is_required'),
             'image.mimes' => translate('only_allowed_').getFileUploadFormats(skip: '.svg,.gif', asMessage: true),
-            'image.max' => translate('The_image_may_not_be_greater_than_'). getFileUploadMaxSize() . "MB",
+            'image.max' => translate('The_image_may_not_be_greater_than_').getFileUploadMaxSize().'MB',
         ];
     }
 }

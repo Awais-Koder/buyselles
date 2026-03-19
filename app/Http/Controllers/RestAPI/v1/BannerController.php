@@ -25,20 +25,20 @@ class BannerController extends Controller
         $categoryIds = [];
         $bannerData = [];
         foreach ($banners as $banner) {
-            if ($banner['resource_type'] == 'product' && !in_array($banner['resource_id'], $productIds)) {
+            if ($banner['resource_type'] == 'product' && ! in_array($banner['resource_id'], $productIds)) {
                 $productIds[] = $banner['resource_id'];
                 $product = Product::find($banner['resource_id']);
                 $banner['product'] = Helpers::product_data_formatting($product);
             }
-            if ($banner['resource_type'] == 'shop' && !in_array($banner['resource_id'], $shopIds)) {
+            if ($banner['resource_type'] == 'shop' && ! in_array($banner['resource_id'], $shopIds)) {
                 $shopIds[] = $banner['resource_id'];
                 $banner['shop'] = Shop::where('id', $banner['resource_id'])->first();
             }
-            if ($banner['resource_type'] == 'brand' && !in_array($banner['resource_id'], $brandIds)) {
+            if ($banner['resource_type'] == 'brand' && ! in_array($banner['resource_id'], $brandIds)) {
                 $brandIds[] = $banner['resource_id'];
                 $banner['brand'] = Brand::where('id', $banner['resource_id'])->first();
             }
-            if ($banner['resource_type'] == 'category' && !in_array($banner['resource_id'], $categoryIds)) {
+            if ($banner['resource_type'] == 'category' && ! in_array($banner['resource_id'], $categoryIds)) {
                 $categoryIds[] = $banner['resource_id'];
                 $banner['category'] = Category::where('id', $banner['resource_id'])->first();
             }

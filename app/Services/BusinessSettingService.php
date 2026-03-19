@@ -6,7 +6,6 @@ use App\Events\MaintenanceModeNotificationEvent;
 
 class BusinessSettingService
 {
-
     public function getLanguageData(object $request, object $language): array
     {
         $languageArray = [];
@@ -32,10 +31,11 @@ class BusinessSettingService
             }
             $languageArray[] = $lang;
         }
+
         return $languageArray;
     }
 
-    public function getInvoiceSettingsData(object|null $request, array|null $imageArray): array
+    public function getInvoiceSettingsData(?object $request, ?array $imageArray): array
     {
         return [
             'business_identity_status' => $request['business_identity_status'] ?? 0,

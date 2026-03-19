@@ -2,11 +2,10 @@
 
 namespace Modules\TaxModule\app\Traits;
 
-
+use Illuminate\Support\Facades\Cache;
 use Modules\TaxModule\app\Models\SystemTaxSetup;
 use Modules\TaxModule\app\Models\Tax;
 use Modules\TaxModule\app\Models\Taxable;
-use Illuminate\Support\Facades\Cache;
 
 trait VatTaxManagement
 {
@@ -14,10 +13,10 @@ trait VatTaxManagement
 
     public static function getTaxSystemType($getTaxVatList = true, $tax_payer = 'vendor'): array
     {
-        $cacheKey = "tax_system_type_{$tax_payer}_" . ($getTaxVatList ? 'with_vat' : 'no_vat');
+        $cacheKey = "tax_system_type_{$tax_payer}_".($getTaxVatList ? 'with_vat' : 'no_vat');
 
         $cacheKeys = Cache::get('cache_tax_system_types_and_config', []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put('cache_tax_system_types_and_config', $cacheKeys, 60 * 60 * 24 * 7);
         }
@@ -32,15 +31,16 @@ trait VatTaxManagement
                     ->where('is_default', 1)
                     ->first();
 
-                if (!$systemTaxVat) {
+                if (! $systemTaxVat) {
                     $systemTaxVat = self::getAddInitSystemVatTax();
+
                     return [
                         'SystemTaxVat' => $systemTaxVat ?? null,
                         'SystemTaxVatType' => $systemTaxVat?->tax_type ?? 'order_wise',
                         'is_included' => $systemTaxVat?->is_included ?? 0,
                         'productWiseTax' => false,
                         'categoryWiseTax' => false,
-                        'taxVats' => []
+                        'taxVats' => [],
                     ];
                 }
 
@@ -61,11 +61,10 @@ trait VatTaxManagement
                 'is_included' => $systemTaxVat?->is_included ?? 0,
                 'productWiseTax' => $productWiseTax ?? false,
                 'categoryWiseTax' => $categoryWiseTax ?? false,
-                'taxVats' => $taxVats ?? collect([])
+                'taxVats' => $taxVats ?? collect([]),
             ];
         });
     }
-
 
     public static function getAddTaxData($taxableType, $taxableId, $taxIds = []): void
     {
@@ -76,12 +75,11 @@ trait VatTaxManagement
                     'taxable_type' => $taxableType,
                     'taxable_id' => $taxableId,
                     'system_tax_setup_id' => $SystemTaxVat->id,
-                    'tax_id' => $tax_id
+                    'tax_id' => $tax_id,
                 ]);
             }
         }
     }
-
 
     public static function getUpdateTaxData($taxableType, $taxableId, $taxIds = [], $oldTaxIds = []): void
     {
@@ -98,11 +96,10 @@ trait VatTaxManagement
                         'taxable_type' => $taxableType,
                         'taxable_id' => $taxableId,
                         'system_tax_setup_id' => $SystemTaxVat->id,
-                        'tax_id' => $tax_id
+                        'tax_id' => $tax_id,
                     ]);
                 }
             }
         }
     }
-
 }

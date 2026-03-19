@@ -26,6 +26,7 @@ trait BlogCategoryTrait
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator($results, $totalSize, $dataLimit, $currentPage, [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -57,6 +58,7 @@ trait BlogCategoryTrait
                 ]);
             }
         }
+
         return true;
     }
 
@@ -82,6 +84,7 @@ trait BlogCategoryTrait
                 );
             }
         }
+
         return true;
     }
 }

@@ -12,9 +12,7 @@ class RestockProductCustomerRepository implements RestockProductCustomerReposito
 {
     public function __construct(
         private readonly RestockProductCustomer $restockProductCustomer,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,8 +27,8 @@ class RestockProductCustomerRepository implements RestockProductCustomerReposito
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->restockProductCustomer->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -47,11 +45,12 @@ class RestockProductCustomerRepository implements RestockProductCustomerReposito
                 return $query->where(['restock_product_id' => $filters['restock_product_id']]);
             })->when(isset($filters['customer_id']), function ($query) use ($filters) {
                 return $query->where(['customer_id' => $filters['customer_id']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -74,5 +73,4 @@ class RestockProductCustomerRepository implements RestockProductCustomerReposito
     {
         return $this->restockProductCustomer->where($params)->delete();
     }
-
 }

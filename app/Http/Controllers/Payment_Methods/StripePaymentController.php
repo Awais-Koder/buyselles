@@ -19,14 +19,15 @@ class StripePaymentController extends Controller
     use Processor;
 
     private $config_values;
+
     private PaymentRequest $payment;
 
     public function __construct(PaymentRequest $payment)
     {
         $config = $this->payment_config('stripe', 'payment_config');
-        if (!is_null($config) && $config->mode == 'live') {
+        if (! is_null($config) && $config->mode == 'live') {
             $this->config_values = json_decode($config->live_values);
-        } elseif (!is_null($config) && $config->mode == 'test') {
+        } elseif (! is_null($config) && $config->mode == 'test') {
             $this->config_values = json_decode($config->test_values);
         }
         $this->payment = $payment;
@@ -35,7 +36,7 @@ class StripePaymentController extends Controller
     public function index(Request $request): View|Factory|JsonResponse|Application
     {
         $validator = Validator::make($request->all(), [
-            'payment_id' => 'required|uuid'
+            'payment_id' => 'required|uuid',
         ]);
 
         if ($validator->fails()) {
@@ -43,7 +44,7 @@ class StripePaymentController extends Controller
         }
 
         $data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($data)) {
+        if (! isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
         $config = $this->config_values;
@@ -54,7 +55,7 @@ class StripePaymentController extends Controller
     public function payment_process_3d(Request $request): JsonResponse
     {
         $data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($data)) {
+        if (! isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
         $payment_amount = $data['payment_amount'];
@@ -65,10 +66,10 @@ class StripePaymentController extends Controller
 
         if ($data['additional_data'] != null) {
             $business = json_decode($data['additional_data']);
-            $business_name = $business->business_name ?? "my_business";
-            $business_logo = $business->business_logo ??  url('/');
+            $business_name = $business->business_name ?? 'my_business';
+            $business_logo = $business->business_logo ?? url('/');
         } else {
-            $business_name = "my_business";
+            $business_name = 'my_business';
             $business_logo = url('/');
         }
 
@@ -86,7 +87,7 @@ class StripePaymentController extends Controller
                 'quantity' => 1,
             ]],
             'mode' => 'payment',
-            'success_url' => url('/') . '/payment/stripe/success?payment_session_id={CHECKOUT_SESSION_ID}&payment_id=' . $data->id,
+            'success_url' => url('/').'/payment/stripe/success?payment_session_id={CHECKOUT_SESSION_ID}&payment_id='.$data->id,
             'cancel_url' => url()->previous(),
         ]);
 
@@ -112,12 +113,13 @@ class StripePaymentController extends Controller
                 call_user_func($data->success_hook, $data);
             }
 
-            return $this->payment_response($data,'success');
+            return $this->payment_response($data, 'success');
         }
         $payment_data = $this->payment::where(['id' => $request['payment_id']])->first();
         if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
             call_user_func($payment_data->failure_hook, $payment_data);
         }
-        return $this->payment_response($payment_data,'fail');
+
+        return $this->payment_response($payment_data, 'fail');
     }
 }

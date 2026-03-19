@@ -19,14 +19,14 @@ class EmailVerificationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'temporary_token' => 'required',
-            'email' => 'required'
+            'email' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
         $user = User::where('email', $request->email)->first();
-        if($user->temporary_token != $request->temporary_token) {
+        if ($user->temporary_token != $request->temporary_token) {
             return response()->json([
                 'message' => translate('temporary_token_mismatch'),
             ], 200);
@@ -46,27 +46,27 @@ class EmailVerificationController extends Controller
             $emailServices_smtp = getWebConfig(name: 'mail_config_sendgrid');
         }
         if ($emailServices_smtp['status'] == 1) {
-            try{
+            try {
 
                 $data = [
                     'userName' => $user['f_name'],
                     'subject' => translate('registration_Verification_Code'),
                     'title' => translate('registration_Verification_Code'),
                     'verificationCode' => $token,
-                    'userType'=>'customer' ,
-                    'templateName'=> 'registration-verification',
+                    'userType' => 'customer',
+                    'templateName' => 'registration-verification',
                 ];
 
-                event(new EmailVerificationEvent(email: $user['email'],data: $data));
+                event(new EmailVerificationEvent(email: $user['email'], data: $data));
                 $response = translate('check_your_email');
                 $otp_resend_time = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
             } catch (\Exception $exception) {
                 return response()->json([
-                    'message' => translate('email_is_not_configured'). translate('contact_with_the_administrator')
+                    'message' => translate('email_is_not_configured').translate('contact_with_the_administrator'),
                 ], 403);
             }
-        }else{
-            $response= translate('email_failed');
+        } else {
+            $response = translate('email_failed');
         }
 
         return response()->json([
@@ -76,10 +76,11 @@ class EmailVerificationController extends Controller
         ], 200);
     }
 
-    public function resend_otp_check_email(Request $request){
+    public function resend_otp_check_email(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'temporary_token' => 'required',
-            'email' => 'required'
+            'email' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -88,27 +89,27 @@ class EmailVerificationController extends Controller
 
         $otp_resend_time = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
         $user = User::where(['temporary_token' => $request->temporary_token])->first();
-        $token = PhoneOrEmailVerification::where('phone_or_email',$request['email'])->latest()->first();
+        $token = PhoneOrEmailVerification::where('phone_or_email', $request['email'])->latest()->first();
 
         // Time Difference in Minutes
         $time_differance = 0;
-        if($token){
+        if ($token) {
             $token_time = Carbon::parse($token->created_at);
-            $add_time = $token_time->addSeconds((int)$otp_resend_time);
+            $add_time = $token_time->addSeconds((int) $otp_resend_time);
             $time_differance = $add_time > Carbon::now() ? Carbon::now()->diffInSeconds($add_time) : 0;
         }
 
-        if($user && $time_differance==0){
+        if ($user && $time_differance == 0) {
             $generate_new_token = rand(1000, 9999);
-            if($token){
+            if ($token) {
                 $token->token = $generate_new_token;
                 $token->otp_hit_count = 0;
                 $token->is_temp_blocked = 0;
                 $token->temp_block_time = null;
                 $token->created_at = now();
                 $token->save();
-            }else{
-                $new_token = new PhoneOrEmailVerification();
+            } else {
+                $new_token = new PhoneOrEmailVerification;
                 $new_token->phone_or_email = $user->email;
                 $new_token->token = $generate_new_token;
                 $new_token->created_at = now();
@@ -122,26 +123,26 @@ class EmailVerificationController extends Controller
                 $emailServices_smtp = getWebConfig(name: 'mail_config_sendgrid');
             }
             if ($emailServices_smtp['status'] == 1) {
-                try{
+                try {
                     $data = [
                         'userName' => $user['f_name'],
                         'subject' => translate('registration_Verification_Code'),
                         'title' => translate('registration_Verification_Code'),
                         'verificationCode' => $token,
-                        'userType'=>'customer' ,
-                        'templateName'=> 'registration-verification',
+                        'userType' => 'customer',
+                        'templateName' => 'registration-verification',
                     ];
 
-                    event(new EmailVerificationEvent(email: $user['email'],data: $data));
+                    event(new EmailVerificationEvent(email: $user['email'], data: $data));
                     $response = translate('check_your_email');
                     $otp_resend_time = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
                 } catch (\Exception $exception) {
                     return response()->json([
-                        'message' => translate('email_is_not_configured'). translate('contact_with_the_administrator')
+                        'message' => translate('email_is_not_configured').translate('contact_with_the_administrator'),
                     ], 403);
                 }
-            }else{
-                $response= translate('email_failed');
+            } else {
+                $response = translate('email_failed');
             }
 
             return response()->json([
@@ -171,17 +172,17 @@ class EmailVerificationController extends Controller
         }
 
         $max_otp_hit = getWebConfig(name: 'maximum_otp_hit') ?? 5;
-        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; //minute
+        $temp_block_time = getWebConfig(name: 'temporary_block_time') ?? 5; // minute
         $verify = PhoneOrEmailVerification::where(['phone_or_email' => $request['email'], 'token' => $request['token']])->first();
 
         if (isset($verify)) {
             $user = User::where(['temporary_token' => $request['temporary_token']])->first();
 
-            if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->diffInSeconds() <= $temp_block_time){
+            if (isset($verify->temp_block_time) && Carbon::parse($verify->temp_block_time)->diffInSeconds() <= $temp_block_time) {
                 $time = $temp_block_time - Carbon::parse($verify->temp_block_time)->diffInSeconds();
 
                 return response()->json(['errors' => [
-                    ['message' => translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans()]
+                    ['message' => translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans()],
                 ]], 403);
             }
 
@@ -191,20 +192,21 @@ class EmailVerificationController extends Controller
             $verify->delete();
 
             $token = $user->createToken('LaravelAuthApp')->accessToken;
+
             return response()->json([
                 'message' => translate('otp_verified'),
-                'token' => $token
+                'token' => $token,
             ], 200);
-        }else{
+        } else {
             $verification = PhoneOrEmailVerification::where(['phone_or_email' => $request['email']])->first();
 
-            if($verification){
-                if(isset($verification->temp_block_time) && Carbon::parse($verification->temp_block_time)->diffInSeconds() <= $temp_block_time){
-                    $time= $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
+            if ($verification) {
+                if (isset($verification->temp_block_time) && Carbon::parse($verification->temp_block_time)->diffInSeconds() <= $temp_block_time) {
+                    $time = $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
 
                     $message = translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans();
 
-                }elseif($verification->is_temp_blocked == 1 && isset($verification->created_at) && Carbon::parse($verification->created_at)->diffInSeconds() >= $temp_block_time){
+                } elseif ($verification->is_temp_blocked == 1 && isset($verification->created_at) && Carbon::parse($verification->created_at)->diffInSeconds() >= $temp_block_time) {
                     $verification->otp_hit_count = 1;
                     $verification->is_temp_blocked = 0;
                     $verification->temp_block_time = null;
@@ -213,28 +215,28 @@ class EmailVerificationController extends Controller
 
                     $message = translate('otp_not_found');
 
-                }elseif($verification->otp_hit_count >= $max_otp_hit && $verification->is_temp_blocked == 0){
+                } elseif ($verification->otp_hit_count >= $max_otp_hit && $verification->is_temp_blocked == 0) {
                     $verification->is_temp_blocked = 1;
                     $verification->temp_block_time = now();
                     $verification->updated_at = now();
                     $verification->save();
 
-                    $time= $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
-                    $message = translate('too_many_attempts'). translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans();
+                    $time = $temp_block_time - Carbon::parse($verification->temp_block_time)->diffInSeconds();
+                    $message = translate('too_many_attempts').translate('please_try_again_after').' '.CarbonInterval::seconds($time)->cascade()->forHumans();
 
-                }else{
+                } else {
                     $verification->otp_hit_count += 1;
                     $verification->save();
 
                     $message = translate('otp_not_found');
                 }
-            }else{
+            } else {
                 $message = translate('otp_not_found');
             }
         }
 
         return response()->json(['errors' => [
-            ['message' => $message]
+            ['message' => $message],
         ]], 403);
     }
 }

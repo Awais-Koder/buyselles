@@ -36,11 +36,11 @@ class ShopController extends Controller
         $shop->save();
 
         Cache::clear();
+
         return response()->json(['status' => true], 200);
     }
 
-
-    public function notification_index(Request $request):array
+    public function notification_index(Request $request): array
     {
 
         $seller = $request->seller;
@@ -56,14 +56,14 @@ class ShopController extends Controller
 
         return [
             'total_size' => $notification->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
             'new_notification' => $notificationData->whereDoesntHave('notificationSeenBy')->count(),
-            'notification' => $notification->items()
+            'notification' => $notification->items(),
         ];
     }
 
-    public function seller_notification_view(Request $request):array
+    public function seller_notification_view(Request $request): array
     {
 
         $seller = $request->seller;
@@ -78,6 +78,4 @@ class ShopController extends Controller
             'notification_count' => $notificationCount,
         ];
     }
-
-
 }

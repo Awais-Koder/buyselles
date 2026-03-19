@@ -8,21 +8,20 @@ class SocialMediaService
     {
         if ($request['name'] == 'google-plus') {
             $icon = 'fa fa-google-plus-square';
-        }else if ($request['name'] == 'facebook') {
+        } elseif ($request['name'] == 'facebook') {
             $icon = 'fa fa-facebook';
-        }else if ($request['name'] == 'twitter') {
+        } elseif ($request['name'] == 'twitter') {
             $icon = 'fa fa-twitter';
-        }else if ($request['name'] == 'pinterest') {
+        } elseif ($request['name'] == 'pinterest') {
             $icon = 'fa fa-pinterest';
-        }else if ($request['name'] == 'instagram') {
+        } elseif ($request['name'] == 'instagram') {
             $icon = 'fa fa-instagram';
-        }else if ($request['name'] == 'linkedin') {
+        } elseif ($request['name'] == 'linkedin') {
             $icon = 'fa fa-linkedin';
-        }else{
+        } else {
             $icon = '';
         }
 
         return $icon;
     }
-
 }

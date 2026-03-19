@@ -38,5 +38,4 @@ class BannerUpdateRequest extends FormRequest
             'image.mimes' => translate('only_webp_jpg_jpeg_png_allowed'),
         ];
     }
-
 }

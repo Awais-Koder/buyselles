@@ -9,8 +9,5 @@ class ClaudeProvider
         return 'Claude';
     }
 
-    public function generate(string $prompt, ?string $imageUrl = null, array $options = []): string
-    {
-
-    }
+    public function generate(string $prompt, ?string $imageUrl = null, array $options = []): string {}
 }

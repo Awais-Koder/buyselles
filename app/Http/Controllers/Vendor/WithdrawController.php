@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Vendor;
 
-use App\Contracts\Repositories\VendorWithdrawMethodInfoRepositoryInterface;
 use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Contracts\Repositories\VendorWalletRepositoryInterface;
+use App\Contracts\Repositories\VendorWithdrawMethodInfoRepositoryInterface;
 use App\Contracts\Repositories\WithdrawalMethodRepositoryInterface;
 use App\Contracts\Repositories\WithdrawRequestRepositoryInterface;
 use App\Exports\VendorWithdrawRequest;
 use App\Http\Controllers\BaseController;
 use App\Services\VendorWalletService;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,31 +24,15 @@ use Throwable;
 
 class WithdrawController extends BaseController
 {
-    /**
-     * @param WithdrawRequestRepositoryInterface $withdrawRequestRepo
-     * @param VendorWalletRepositoryInterface $vendorWalletRepo
-     * @param VendorWalletService $vendorWalletService
-     * @param VendorRepositoryInterface $vendorRepo
-     * @param VendorWithdrawMethodInfoRepositoryInterface $vendorWithdrawMethodInfoRepo
-     * @param WithdrawalMethodRepositoryInterface $withdrawalMethodRepo
-     */
     public function __construct(
-        private readonly WithdrawRequestRepositoryInterface          $withdrawRequestRepo,
-        private readonly VendorWalletRepositoryInterface             $vendorWalletRepo,
-        private readonly VendorWalletService                         $vendorWalletService,
-        private readonly VendorRepositoryInterface                   $vendorRepo,
+        private readonly WithdrawRequestRepositoryInterface $withdrawRequestRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly VendorWalletService $vendorWalletService,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly VendorWithdrawMethodInfoRepositoryInterface $vendorWithdrawMethodInfoRepo,
-        private readonly WithdrawalMethodRepositoryInterface         $withdrawalMethodRepo,
-    )
-    {
+        private readonly WithdrawalMethodRepositoryInterface $withdrawalMethodRepo,
+    ) {}
 
-    }
-
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable
     {
         if ($request->has('status')) {
@@ -65,7 +49,6 @@ class WithdrawController extends BaseController
             dataLimit: getWebConfig('pagination_limit')
         );
 
-
         $withdrawalMethods = $this->withdrawalMethodRepo->getListWhere(filters: ['is_active' => 1], dataLimit: 'all');
         $vendorWithdrawMethods = $this->vendorWithdrawMethodInfoRepo->getListWhere(
             orderBy: ['method_name' => 'asc'],
@@ -75,6 +58,7 @@ class WithdrawController extends BaseController
         );
 
         updateSetupGuideCacheKey(key: 'withdraw_setup', panel: 'vendor');
+
         return view('vendor-views.withdraw.index', [
             'vendorWallet' => $vendorWallet,
             'withdrawRequests' => $withdrawRequests,
@@ -94,6 +78,7 @@ class WithdrawController extends BaseController
                 relations: ['withdraw_method'],
             );
             $withdrawalMethod = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $vendorWithdrawMethod['withdraw_method_id']]);
+
             return response()->json([
                 'htmlView' => view('vendor-views.withdraw._withdraw-request-method-filed', [
                     'method_type' => $request['method_type'],
@@ -104,6 +89,7 @@ class WithdrawController extends BaseController
             ]);
         } else {
             $withdrawalMethod = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['method_id']]);
+
             return response()->json([
                 'htmlView' => view('vendor-views.withdraw._withdraw-request-method-filed', [
                     'method_type' => $request['method_type'],
@@ -115,8 +101,6 @@ class WithdrawController extends BaseController
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Throwable
      */
     public function getListByStatus(Request $request): JsonResponse
@@ -125,11 +109,12 @@ class WithdrawController extends BaseController
         $withdrawRequests = $this->withdrawRequestRepo->getListWhere(
             filters: [
                 'vendorId' => $vendorId,
-                'status' => $request['status']
+                'status' => $request['status'],
             ],
             relations: ['seller'],
             dataLimit: getWebConfig('pagination_limit')
         );
+
         return response()->json([
             'view' => view('vendor-views.withdraw._table', compact('withdrawRequests'))->render(),
             'count' => $withdrawRequests->count(),
@@ -137,8 +122,6 @@ class WithdrawController extends BaseController
     }
 
     /**
-     * @param string|int $id
-     * @return RedirectResponse
      * @throws Exception
      */
     public function closeWithdrawRequest(string|int $id): RedirectResponse
@@ -156,10 +139,11 @@ class WithdrawController extends BaseController
                 )
             );
             $this->withdrawRequestRepo->delete(['id' => $withdrawRequest['id']]);
-            ToastMagic::success(message: translate('withdraw_request_closed') . '!');
+            ToastMagic::success(message: translate('withdraw_request_closed').'!');
         } else {
             ToastMagic::error(message: translate('invalid_withdraw_request'));
         }
+
         return redirect()->back();
     }
 
@@ -172,7 +156,7 @@ class WithdrawController extends BaseController
             searchValue: $request['searchValue'],
             filters: [
                 'vendorId' => $vendorId,
-                'status' => $request['status']
+                'status' => $request['status'],
             ],
             relations: ['seller'],
             dataLimit: 'all'
@@ -190,8 +174,7 @@ class WithdrawController extends BaseController
             'approved' => $approvedRequest,
             'denied' => $deniedRequest,
         ];
+
         return Excel::download(export: new VendorWithdrawRequest($data), fileName: 'Vendor-Withdraw-Request.xlsx');
     }
-
-
 }

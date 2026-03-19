@@ -6,11 +6,10 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class BlogSeoSectionTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $blogInfo = $description
-            ? "Blog Title: \"{$context}\". Description: \"" . addslashes($description) . "\"."
+            ? "Blog Title: \"{$context}\". Description: \"".addslashes($description).'".'
             : "Blog Title: \"{$context}\".";
 
         return <<<PROMPT
@@ -52,6 +51,6 @@ class BlogSeoSectionTemplate implements PromptTemplateInterface
 
     public function getType(): string
     {
-        return "blog_seo_section";
+        return 'blog_seo_section';
     }
 }

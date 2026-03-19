@@ -15,7 +15,6 @@ class DeliverymanPasswordResetMail extends Mailable
      *
      * @return void
      */
-
     protected $otp;
 
     public function __construct($otp)
@@ -31,6 +30,7 @@ class DeliverymanPasswordResetMail extends Mailable
     public function build()
     {
         $otp = $this->otp;
+
         return $this->subject(translate('Deliveryman_Password_Reset_Mail'))->view('email-templates.delivery-man-password-reset', ['otp' => $otp]);
     }
 }

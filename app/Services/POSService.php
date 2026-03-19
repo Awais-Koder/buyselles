@@ -23,6 +23,7 @@ class POSService
                 }
             }
         }
+
         return $totalHoldOrders;
     }
 
@@ -36,12 +37,13 @@ class POSService
                 }
             }
         }
+
         return $cartNames;
     }
 
     public function UpdateSessionWhenCustomerChange(string $cartId): void
     {
-        if (!in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
+        if (! in_array($cartId, session(SessionKey::CART_NAME) ?? [])) {
             session()->push(SessionKey::CART_NAME, $cartId);
         }
 
@@ -91,10 +93,11 @@ class POSService
             ToastMagic::error(translate('You cannot place an order with an amount of zero. Please enter a valid amount.'));
             $condition = true;
         }
-        if (!is_null($paidAmount) && $paidAmount < $amount) {
+        if (! is_null($paidAmount) && $paidAmount < $amount) {
             ToastMagic::error(translate('paid_amount_is_less_than_total_amount'));
             $condition = true;
         }
+
         return $condition;
     }
 
@@ -106,6 +109,7 @@ class POSService
             $discount = $coupon['discount'];
         }
         $total = $totalProductPrice - $productDiscount - $discount;
+
         return [
             'total' => $total,
             'discount' => $discount,
@@ -131,6 +135,7 @@ class POSService
             }
             $variationData[] = $variant;
         }
+
         return $variationData;
     }
 

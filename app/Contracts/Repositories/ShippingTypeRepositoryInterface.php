@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface ShippingTypeRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface ShippingTypeRepositoryInterface extends RepositoryInterface {}

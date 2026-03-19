@@ -12,10 +12,7 @@ class SupportTicketConvRepository implements SupportTicketConvRepositoryInterfac
 {
     public function __construct(
         private readonly SupportTicketConv $supportTicketConv,
-    )
-    {
-    }
-
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,9 +27,10 @@ class SupportTicketConvRepository implements SupportTicketConvRepositoryInterfac
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->supportTicketConv->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
@@ -45,14 +43,14 @@ class SupportTicketConvRepository implements SupportTicketConvRepositoryInterfac
             ->when(isset($filters['id']), function ($query) use ($filters) {
                 $query->where('id', $filters['id']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
 
     public function update(string $id, array $data): bool
     {
@@ -62,7 +60,7 @@ class SupportTicketConvRepository implements SupportTicketConvRepositoryInterfac
     public function delete(array $params): bool
     {
         $this->supportTicketConv->where($params)->delete();
+
         return true;
     }
-
 }

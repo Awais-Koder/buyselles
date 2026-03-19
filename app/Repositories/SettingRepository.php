@@ -12,9 +12,7 @@ class SettingRepository implements SettingRepositoryInterface
 {
     public function __construct(
         private readonly Setting $setting,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,7 +28,7 @@ class SettingRepository implements SettingRepositoryInterface
     {
         $query = $this->setting
             ->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -38,11 +36,11 @@ class SettingRepository implements SettingRepositoryInterface
     }
 
     public function getListWhere(
-        array       $orderBy = [],
-        string|null $searchValue = null,
-        array       $filters = [], array $relations = [],
-        int|string  $dataLimit = DEFAULT_DATA_LIMIT,
-        int|null    $offset = null): Collection|LengthAwarePaginator
+        array $orderBy = [],
+        ?string $searchValue = null,
+        array $filters = [], array $relations = [],
+        int|string $dataLimit = DEFAULT_DATA_LIMIT,
+        ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->setting
             ->when($searchValue, function ($query) use ($searchValue) {
@@ -54,11 +52,12 @@ class SettingRepository implements SettingRepositoryInterface
             ->when(isset($filters['is_active']), function ($query) use ($filters) {
                 $query->where('is_active', $filters['is_active']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -81,19 +80,20 @@ class SettingRepository implements SettingRepositoryInterface
             ->when(isset($filters['is_active']), function ($query) use ($filters) {
                 $query->where('is_active', $filters['is_active']);
             })
-            ->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
+            ->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
                 foreach ($whereInFilters as $key => $filterIndex) {
                     $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -110,12 +110,14 @@ class SettingRepository implements SettingRepositoryInterface
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->setting->updateOrInsert($params, $data);
+
         return true;
     }
 
     public function delete(array $params): bool
     {
         $this->setting->where($params)->delete();
+
         return true;
     }
 }

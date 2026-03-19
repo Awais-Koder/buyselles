@@ -1,17 +1,17 @@
 <?php
+
 namespace App\Http\Requests\API\v3;
 
 use App\Traits\ResponseHandler;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Rules\DisallowedExtension;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\UploadedFile;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class ProductUpdateRequest extends FormRequest
 {
     use ResponseHandler;
     use VatTaxManagement;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,6 +26,7 @@ class ProductUpdateRequest extends FormRequest
     public function rules(): array
     {
         $productId = $this->route('id');
+
         return [
             'name' => 'required',
             'category_id' => 'required',
@@ -43,7 +44,7 @@ class ProductUpdateRequest extends FormRequest
             'discount' => 'required|gt:-1',
             'shipping_cost' => 'required_if:product_type,==,physical|gt:-1',
             'minimum_order_qty' => 'required|numeric|min:1',
-            'code' => 'required|min:6|max:20|regex:/^[a-zA-Z0-9]+$/|unique:products,code,' . $productId,
+            'code' => 'required|min:6|max:20|regex:/^[a-zA-Z0-9]+$/|unique:products,code,'.$productId,
         ];
     }
 
@@ -71,9 +72,9 @@ class ProductUpdateRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $taxData = $this->getTaxSystemType();
-            $productWiseTax = $taxData['productWiseTax'] && !$taxData['is_included'];
-            if ($productWiseTax && (!isset($this->tax_ids) || empty(json_decode($this->tax_ids, true)))) {
-                $validator->errors()->add('tax', translate('Please_add_your_product_tax') . '!');
+            $productWiseTax = $taxData['productWiseTax'] && ! $taxData['is_included'];
+            if ($productWiseTax && (! isset($this->tax_ids) || empty(json_decode($this->tax_ids, true)))) {
+                $validator->errors()->add('tax', translate('Please_add_your_product_tax').'!');
             }
             // Preview file validation
             if ($this->preview_file) {
@@ -83,9 +84,9 @@ class ProductUpdateRequest extends FormRequest
                 $fileSize = $this->preview_file->getSize();
 
                 if ($fileSize > $maxFileSize) {
-                    $validator->errors()->add('files', translate('File_size_exceeds_the_maximum_limit_of_10MB') . '!');
+                    $validator->errors()->add('files', translate('File_size_exceeds_the_maximum_limit_of_10MB').'!');
                 } elseif (in_array($extension, $disallowedExtensions)) {
-                    $validator->errors()->add('files', translate('Files_with_extensions_like') . (' .php,.java,.js,.html,.exe,.sh ') . translate('are_not_supported') . '!');
+                    $validator->errors()->add('files', translate('Files_with_extensions_like').(' .php,.java,.js,.html,.exe,.sh ').translate('are_not_supported').'!');
                 }
             }
             // Discount validation
@@ -95,6 +96,7 @@ class ProductUpdateRequest extends FormRequest
             }
         });
     }
+
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         throw new HttpResponseException(

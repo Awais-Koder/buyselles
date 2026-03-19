@@ -8,7 +8,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Carbon;
 
-
 /**
  * Class YourModel
  *
@@ -24,8 +23,6 @@ use Illuminate\Support\Carbon;
  * @property bool $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class BonusSetupRequest extends FormRequest
 {
@@ -71,6 +68,4 @@ class BonusSetupRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));
     }
-
-
 }

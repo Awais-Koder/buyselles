@@ -23,5 +23,4 @@ enum Mail
         URI => 'update-sendgrid',
         VIEW => '',
     ];
-
 }

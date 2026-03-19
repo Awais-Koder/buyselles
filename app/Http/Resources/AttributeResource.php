@@ -11,9 +11,6 @@ class AttributeResource extends ResourceCollection
 {
     /**
      * Transform the resource collection into an array.
-     *
-     * @param Request $request
-     * @return array|Arrayable|JsonSerializable
      */
     public function toArray(Request $request): array|JsonSerializable|Arrayable
     {
@@ -21,7 +18,7 @@ class AttributeResource extends ResourceCollection
             'data' => $this->collection->map(function ($model) {
                 return [
                     'id' => $model->id,
-                    'first_name' => $model->name
+                    'first_name' => $model->name,
                 ];
             }),
             'meta' => [
@@ -34,5 +31,4 @@ class AttributeResource extends ResourceCollection
     {
         $response->setStatusCode(200);
     }
-
 }

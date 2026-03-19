@@ -11,7 +11,6 @@ class S3CredentialAddOrUpdateRequest extends FormRequest
 {
     use ResponseHandler;
 
-
     public function authorize(): bool
     {
         return true;
@@ -43,5 +42,4 @@ class S3CredentialAddOrUpdateRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));
     }
-
 }

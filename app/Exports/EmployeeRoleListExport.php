@@ -1,26 +1,28 @@
 <?php
 
 namespace App\Exports;
+
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithStyles,WithColumnWidths ,WithHeadings, WithEvents
+class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
+
     protected $data;
 
-    public function __construct($data) {
+    public function __construct($data)
+    {
         $this->data = $data;
     }
 
@@ -38,7 +40,8 @@ class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithStyles,Wit
         ];
     }
 
-    public function styles(Worksheet $sheet) {
+    public function styles(Worksheet $sheet)
+    {
         $sheet->getStyle('A1:A3')->getFont()->setBold(true);
         $sheet->getStyle('A3:E3')->getFont()->setBold(true)->getColor()
             ->setARGB('FFFFFF');
@@ -49,9 +52,10 @@ class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithStyles,Wit
             'color' => ['rgb' => '063C93'],
         ]);
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:E'. ($this->data['roles']->count() + 3) => [
+            'A1:E'.($this->data['roles']->count() + 3) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -65,17 +69,17 @@ class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithStyles,Wit
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:E1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A3:E'. ($this->data['roles']->count() + 3)) // Adjust the range as per your needs
-                ->getAlignment()
+                $event->sheet->getStyle('A3:E'.($this->data['roles']->count() + 3)) // Adjust the range as per your needs
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:E2') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -84,13 +88,14 @@ class EmployeeRoleListExport implements FromView, ShouldAutoSize, WithStyles,Wit
                 $event->sheet->mergeCells('C2:E2');
                 $event->sheet->getDefaultRowDimension()->setRowHeight(30);
                 $event->sheet->getRowDimension(2)->setRowHeight(60);
-            }
+            },
         ];
     }
+
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

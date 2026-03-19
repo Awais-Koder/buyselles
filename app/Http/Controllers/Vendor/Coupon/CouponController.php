@@ -23,34 +23,17 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CouponController extends BaseController
 {
-    /**
-     * @param CouponRepositoryInterface $couponRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     */
     public function __construct(
-        private readonly CouponRepositoryInterface   $couponRepo,
+        private readonly CouponRepositoryInterface $couponRepo,
         private readonly CustomerRepositoryInterface $customerRepo,
-        private readonly VendorRepositoryInterface   $vendorRepo,
-    )
-    {
-    }
+        private readonly VendorRepositoryInterface $vendorRepo,
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return $this->getAddListView(request: $request);
     }
 
-
-    /**
-     * @param object $request
-     * @return View
-     */
     public function getAddListView(object $request): View
     {
         $vendorId = auth('seller')->id();
@@ -62,74 +45,64 @@ class CouponController extends BaseController
             dataLimit: getWebConfig(name: 'pagination_limit')
         );
         $customers = $this->customerRepo->getListWhereNotIn([0]);
+
         return view(Coupon::INDEX[VIEW], compact('coupons', 'customers', 'searchValue'));
     }
 
     /**
-     * @param CouponRequest $request
-     * @param CouponService $couponService
-     * @return RedirectResponse
      * @function add  is the adding request data to coupon table
      */
     public function add(CouponRequest $request, CouponService $couponService): RedirectResponse
     {
-        if (!$couponService->checkConditions(request: $request)) {
+        if (! $couponService->checkConditions(request: $request)) {
             return redirect()->back();
         }
         $this->couponRepo->add($couponService->getCouponData(request: $request, addedBy: 'seller'));
         ToastMagic::success(translate('coupon_added_successfully'));
+
         return redirect()->back();
     }
 
     /**
-     * @param string|int $id
-     * @return View
      * @function getUpdateView is the update view
      */
     public function getUpdateView(string|int $id): View
     {
         $coupon = $this->couponRepo->getFirstWhere(['id' => $id]);
         $customers = $this->customerRepo->getListWhereNotIn([0]);
+
         return view(Coupon::UPDATE[VIEW], compact('coupon', 'customers'));
     }
 
     /**
-     * @param CouponUpdateRequest $request
-     * @param CouponService $couponService
-     * @param string|int $id
-     * @return RedirectResponse
      * @function update is the update the coupon table
      */
     public function update(CouponUpdateRequest $request, string|int $id, CouponService $couponService): RedirectResponse
     {
-        if (!$couponService->checkConditions(request: $request)) {
+        if (! $couponService->checkConditions(request: $request)) {
             return redirect()->back();
         }
         $this->couponRepo->update(id: $id, data: $couponService->getCouponData(request: $request, addedBy: 'seller'));
         ToastMagic::success(translate('coupon_update_successfully'));
+
         return redirect()->route(Coupon::INDEX[ROUTE]);
     }
 
     /**
-     * @param string|int $id
-     * @param string|int $status
-     * @return JsonResponse
      * @function updateStatus ,update the coupon status
-     *
      */
     public function updateStatus(string|int $id, string|int $status): JsonResponse
     {
         $coupon = $this->couponRepo->getFirstWhere(['added_by' => 'seller', 'coupon_bearer' => 'seller', 'id' => $id]);
         $this->couponRepo->update(id: $coupon['id'], data: ['status' => $status]);
+
         return response()->json([
             'status' => 1,
-            'message' => translate('coupon_status_updated_successfully')
+            'message' => translate('coupon_status_updated_successfully'),
         ]);
     }
 
     /**
-     * @param string|int $id
-     * @return RedirectResponse
      * @function delete,delete coupon from coupon table
      */
     public function delete(string|int $id): RedirectResponse
@@ -141,18 +114,17 @@ class CouponController extends BaseController
         } else {
             ToastMagic::warning(translate('coupon_not_found'));
         }
+
         return redirect()->back();
     }
 
-
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @function getQuickView showing quick view of coupon details
      */
     public function getQuickView(Request $request): JsonResponse
     {
         $coupon = $this->couponRepo->getFirstWhere(['id' => $request['id']]);
+
         return response()->json([
             'view' => view(Coupon::QUICK_VIEW[VIEW], compact('coupon'))->render(),
         ]);
@@ -163,6 +135,7 @@ class CouponController extends BaseController
         $vendorId = auth('seller')->id();
         $vendor = $this->vendorRepo->getFirstWhere(params: ['id' => $vendorId]);
         $coupons = $this->couponRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $request['searchValue'], filters: ['added_by' => 'seller', 'vendorId' => $vendorId], dataLimit: 'all');
+
         return Excel::download(new CouponListExport([
             'data-from' => 'vendor',
             'vendor' => $vendor,

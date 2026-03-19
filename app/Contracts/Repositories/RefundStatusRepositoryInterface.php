@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface RefundStatusRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface RefundStatusRepositoryInterface extends RepositoryInterface {}

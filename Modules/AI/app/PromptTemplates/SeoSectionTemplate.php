@@ -6,11 +6,10 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class SeoSectionTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $productInfo = $description
-            ? "Product name: \"{$context}\". Description: \"" . addslashes($description) . "\"."
+            ? "Product name: \"{$context}\". Description: \"".addslashes($description).'".'
             : "Product name: \"{$context}\".";
 
         return <<<PROMPT
@@ -56,6 +55,6 @@ class SeoSectionTemplate implements PromptTemplateInterface
 
     public function getType(): string
     {
-        return  "seo_section";
+        return 'seo_section';
     }
 }

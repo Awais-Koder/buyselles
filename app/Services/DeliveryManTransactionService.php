@@ -6,14 +6,6 @@ use Ramsey\Uuid\Uuid;
 
 class DeliveryManTransactionService
 {
-
-    /**
-     * @param float $amount
-     * @param string $addedBy
-     * @param string|int $id
-     * @param string $transactionType
-     * @return array
-     */
     public function getDeliveryManTransactionData(float $amount, string $addedBy, string|int $id, string $transactionType): array
     {
         return [

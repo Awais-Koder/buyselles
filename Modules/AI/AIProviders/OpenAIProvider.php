@@ -8,6 +8,7 @@ use OpenAI;
 class OpenAIProvider implements AIProviderInterface
 {
     protected string $apiKey;
+
     protected ?string $organization;
 
     public function getName(): string
@@ -29,7 +30,7 @@ class OpenAIProvider implements AIProviderInterface
     {
         $client = OpenAI::client($this->apiKey, $this->organization);
         $content = [['type' => 'text', 'text' => $prompt]];
-        if (!empty($imageUrl)) {
+        if (! empty($imageUrl)) {
             $content[] = [
                 'type' => 'image_url',
                 'image_url' => ['url' => $imageUrl],
@@ -45,6 +46,7 @@ class OpenAIProvider implements AIProviderInterface
             ],
             'temperature' => 0.3,
         ]);
+
         return $response->choices[0]->message->content;
     }
 }

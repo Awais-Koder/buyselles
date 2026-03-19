@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface StockClearanceSetupRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface StockClearanceSetupRepositoryInterface extends RepositoryInterface {}

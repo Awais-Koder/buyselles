@@ -14,7 +14,7 @@ class AddCodeToProductsTable extends Migration
     public function up()
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->string('code',191)->nullable();
+            $table->string('code', 191)->nullable();
         });
     }
 

@@ -17,12 +17,11 @@ class UploadDigitalFileAfterSellRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
      */
     public function rules(): array
     {
         return [
-            'digital_file_after_sell' => 'required'
+            'digital_file_after_sell' => 'required',
         ];
     }
 
@@ -46,12 +45,11 @@ class UploadDigitalFileAfterSellRequest extends FormRequest
                     if (in_array($extension, $disallowedExtensions)) {
                         $validator->errors()->add(
                             'digital_file_after_sell',
-                            translate('The_uploaded_file_type_is_not_supported'). '!'
+                            translate('The_uploaded_file_type_is_not_supported').'!'
                         );
                     }
                 }
-            }
+            },
         ];
     }
-
 }

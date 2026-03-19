@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface ReferByEarnCustomerRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface ReferByEarnCustomerRepositoryInterface extends RepositoryInterface {}

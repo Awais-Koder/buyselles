@@ -29,7 +29,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  * @property Carbon|null $duration_end_date
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
  */
 class StockClearanceSetup extends Model
 {
@@ -88,6 +87,6 @@ class StockClearanceSetup extends Model
 
     public function seller(): HasMany
     {
-        return $this->hasMany(Product::class, 'user_id','user_id')->where(['added_by' => 'seller']);
+        return $this->hasMany(Product::class, 'user_id', 'user_id')->where(['added_by' => 'seller']);
     }
 }

@@ -18,10 +18,10 @@ class NotificationController extends Controller
 
         return [
             'total_size' => $notification->total(),
-            'limit' => (int)$request['limit'],
-            'offset' => (int)$request['offset'],
+            'limit' => (int) $request['limit'],
+            'offset' => (int) $request['offset'],
             'new_notification' => $notification_data->whereDoesntHave('notificationSeenBy')->count(),
-            'notification' => $notification->items()
+            'notification' => $notification->items(),
         ];
     }
 

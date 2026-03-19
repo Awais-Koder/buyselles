@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface SocialMediaRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface SocialMediaRepositoryInterface extends RepositoryInterface {}

@@ -3,10 +3,10 @@
 namespace Modules\TaxModule\app\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Modules\TaxModule\app\Http\Requests\SystemTaxSetupUpdateRequest;
 use Modules\TaxModule\app\Models\SystemTaxSetup;
 use Modules\TaxModule\app\Models\Tax;
@@ -20,15 +20,14 @@ class SystemTaxVatSetupController extends Controller
     use VatTaxConfiguration;
 
     private Tax $taxVat;
+
     private SystemTaxSetup $systemTaxVat;
 
     public function __construct(
         private readonly TaxService $taxService,
         private readonly SystemTaxSetupService $systemTaxSetupService,
         private readonly TaxAdditionalSetup $taxAdditionalSetup
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): Renderable
     {
@@ -37,7 +36,7 @@ class SystemTaxVatSetupController extends Controller
             ->where('tax_payer', $tax_payer)
             ->first();
 
-        if (!$systemTaxVat) {
+        if (! $systemTaxVat) {
             $systemTaxVat = self::getAddInitSystemVatTax();
         }
 
@@ -58,10 +57,9 @@ class SystemTaxVatSetupController extends Controller
             'systemTaxVat' => $systemTaxVat,
             'country_code' => $country_code,
             'systemData' => $systemData,
-            'tax_payer' => $tax_payer
+            'tax_payer' => $tax_payer,
         ]);
     }
-
 
     public function systemTaxVatStore(SystemTaxSetupUpdateRequest $request): RedirectResponse
     {
@@ -69,20 +67,20 @@ class SystemTaxVatSetupController extends Controller
         SystemTaxSetup::where('id', $request['id'])->update($data);
         $systemTaxVat = SystemTaxSetup::where('id', $request['id'])->first();
 
-        foreach ($this->getProjectWiseSystemData($systemTaxVat->tax_payer == 'vendor' ? 'additional_tax' : 'additional_tax_' . $systemTaxVat->tax_payer) ?? [] as $item) {
+        foreach ($this->getProjectWiseSystemData($systemTaxVat->tax_payer == 'vendor' ? 'additional_tax' : 'additional_tax_'.$systemTaxVat->tax_payer) ?? [] as $item) {
             $taxOnAdditionalData = $this->taxAdditionalSetup->where('system_tax_setup_id', $systemTaxVat->id)->where('name', $item)->firstOrNew();
             $taxOnAdditionalData->name = $item;
             $taxOnAdditionalData->system_tax_setup_id = $systemTaxVat->id;
-            $taxOnAdditionalData->is_active = isset($request->additional_status[$item]) && array_key_exists($item, $request->additional_status) && !empty($request->additional[$item]) ? 1 : 0;
+            $taxOnAdditionalData->is_active = isset($request->additional_status[$item]) && array_key_exists($item, $request->additional_status) && ! empty($request->additional[$item]) ? 1 : 0;
             $taxOnAdditionalData->tax_ids = $request->additional[$item] ?? [];
             $taxOnAdditionalData->save();
         }
 
         \Modules\TaxModule\app\Services\SystemTaxSetupService::clearTaxSystemTypeCache();
         $this->showNotification('successMessage', translate('Tax_Settings_Updated_Successfully'));
+
         return back();
     }
-
 
     public function vendorStatus(Request $request): JsonResponse|RedirectResponse
     {
@@ -93,13 +91,13 @@ class SystemTaxVatSetupController extends Controller
             }, function ($query) use ($request) {
                 $query->where('country_code', $request['country_code']);
             })
-            ->where('tax_payer', $taxPayer)
-            ->first();
+                ->where('tax_payer', $taxPayer)
+                ->first();
         } else {
             $systemTaxVat = SystemTaxSetup::find($request['id']);
         }
 
-        if (!$systemTaxVat) {
+        if (! $systemTaxVat) {
             $systemTaxVat = new $this->systemTaxVat;
             $systemTaxVat->is_default = true;
             $systemTaxVat->is_included = true;
@@ -110,19 +108,20 @@ class SystemTaxVatSetupController extends Controller
             $systemTaxVat->tax_payer = $taxPayer;
             $systemTaxVat->tax_type = $request['tax_type'] ?? 'order_wise';
         }
-        $systemTaxVat->is_active = !$systemTaxVat->is_active;
+        $systemTaxVat->is_active = ! $systemTaxVat->is_active;
         $systemTaxVat->save();
 
         if ($request->ajax()) {
             return response()->json([
                 'id' => $systemTaxVat->id,
                 'status' => $systemTaxVat->is_active,
-                'message' => translate('vendor_tax_status_updated')
+                'message' => translate('vendor_tax_status_updated'),
             ]);
         }
 
         \Modules\TaxModule\app\Services\SystemTaxSetupService::clearTaxSystemTypeCache();
         $this->showNotification('successMessage', translate('vendor_tax_status_updated'));
+
         return back();
     }
 }

@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests\API\v2\DeliveryMan;
 
-use App\Enums\GlobalConstant;
-use App\Rules\DisallowedExtension;
 use App\Traits\ResponseHandler;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -20,8 +18,8 @@ class DeliveryManUpdateInfoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'f_name'   => 'required',
-            'l_name'   => 'required',
+            'f_name' => 'required',
+            'l_name' => 'required',
             'image' => getRulesStringForImageValidation(
                 rules: ['nullable'],
                 skipMimes: ['.svg', '.gif'],
@@ -37,7 +35,7 @@ class DeliveryManUpdateInfoRequest extends FormRequest
         return [
             'f_name.required' => 'The first name field is required.',
             'l_name.required' => 'The last name field is required.',
-            'image.mimes' => translate('The_image_type_must_be') . getFileUploadFormats(skip: '.svg,.gif,.webp',asMessage: 'true'),
+            'image.mimes' => translate('The_image_type_must_be').getFileUploadFormats(skip: '.svg,.gif,.webp', asMessage: 'true'),
         ];
     }
 
@@ -45,7 +43,7 @@ class DeliveryManUpdateInfoRequest extends FormRequest
     {
         throw new HttpResponseException(
             response()->json([
-                'errors' => $this->errorProcessor($validator)
+                'errors' => $this->errorProcessor($validator),
             ], 403)
         );
     }

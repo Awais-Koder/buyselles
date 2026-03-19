@@ -24,6 +24,7 @@ class SocialLoginService
                 $credentialArray[] = $data;
             }
         }
+
         return $credentialArray;
     }
 
@@ -53,5 +54,4 @@ class SocialLoginService
 
         return $credentialArray;
     }
-
 }

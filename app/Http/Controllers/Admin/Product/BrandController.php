@@ -13,8 +13,6 @@ use App\Http\Requests\Admin\BrandUpdateRequest;
 use App\Services\BrandService;
 use App\Services\SeoMetaInfoService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,39 +23,36 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class BrandController extends BaseController
 {
     public function __construct(
-        private readonly BrandRepositoryInterface       $brandRepo,
-        private readonly ProductRepositoryInterface     $productRepo,
+        private readonly BrandRepositoryInterface $brandRepo,
+        private readonly ProductRepositoryInterface $productRepo,
         private readonly TranslationRepositoryInterface $translationRepo,
-        private readonly SeoMetaInfoService             $seoMetaInfoService,
+        private readonly SeoMetaInfoService $seoMetaInfoService,
         private readonly SeoMetaInfoRepositoryInterface $seoMetaInfoRepo
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $brands = $this->brandRepo->getListWhere(
             orderBy: ['id' => 'desc'],
             searchValue: $request->get('searchValue'),
-            relations: ['storage','seo'],
+            relations: ['storage', 'seo'],
             dataLimit: getWebConfig(name: 'pagination_limit')
         );
         $language = getWebConfig(name: 'pnc_language') ?? [];
         $defaultLanguage = $language[0];
+
         return view('admin-views.brand.list', compact('brands', 'language', 'defaultLanguage'));
     }
-
 
     public function getAddView(): View
     {
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.brand.add-new', compact('language', 'defaultLanguage'));
     }
 
@@ -66,6 +61,7 @@ class BrandController extends BaseController
         $brand = $this->brandRepo->getFirstWhere(params: ['id' => $id], relations: ['translations', 'storage', 'seo']);
         $language = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $language[0];
+
         return view('admin-views.brand.edit', compact('brand', 'language', 'defaultLanguage'));
     }
 
@@ -75,6 +71,7 @@ class BrandController extends BaseController
             'status' => $request->get('status', 0),
         ];
         $this->brandRepo->update(id: $request['id'], data: $data);
+
         return response()->json(['success' => 1, 'message' => translate('status_updated_successfully')], 200);
     }
 
@@ -89,9 +86,9 @@ class BrandController extends BaseController
         $this->translationRepo->delete(model: 'App\Models\Brand', id: $request['id']);
         $this->brandRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('brand_deleted_successfully'));
+
         return redirect()->back();
     }
-
 
     public function add(BrandAddRequest $request, BrandService $brandService): RedirectResponse
     {
@@ -104,6 +101,7 @@ class BrandController extends BaseController
 
         updateSetupGuideCacheKey(key: 'brand_setup', panel: 'admin');
         ToastMagic::success(translate('brand_added_successfully'));
+
         return redirect()->route('admin.brand.list');
     }
 
@@ -119,6 +117,7 @@ class BrandController extends BaseController
 
         updateSetupGuideCacheKey(key: 'brand_setup', panel: 'admin');
         ToastMagic::success(translate('brand_updated_successfully'));
+
         return redirect()->route('admin.brand.list');
     }
 
@@ -127,6 +126,7 @@ class BrandController extends BaseController
         $brands = $this->brandRepo->getListWhere(searchValue: $request->get('searchValue'), dataLimit: 'all');
         $active = $this->brandRepo->getListWhere(filters: ['status' => 1], dataLimit: 'all')->count();
         $inactive = $this->brandRepo->getListWhere(filters: ['status' => 0], dataLimit: 'all')->count();
+
         return Excel::download(new BrandListExport(
             [
                 'brands' => $brands,
@@ -149,7 +149,6 @@ class BrandController extends BaseController
         $visibleLimit = $filterBrands->perPage();
         $totalBrands = $filterBrands->total();
         $hiddenCount = $totalBrands - ($page * $visibleLimit);
-
 
         return response()->json([
             'html' => view('admin-views.partials.product-filters._filter-brands', [

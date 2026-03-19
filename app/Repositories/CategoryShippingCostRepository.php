@@ -11,10 +11,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class CategoryShippingCostRepository implements CategoryShippingCostRepositoryInterface
 {
     public function __construct(
-        private readonly CategoryShippingCost    $categoryShippingCost
-    )
-    {
-    }
+        private readonly CategoryShippingCost $categoryShippingCost
+    ) {}
+
     public function add(array $data): string|object
     {
         return $this->categoryShippingCost->newInstance()->create($data);
@@ -32,13 +31,13 @@ class CategoryShippingCostRepository implements CategoryShippingCostRepositoryIn
 
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
-       return $this->categoryShippingCost->with($relations)
-           ->when(isset($searchValue), function ($query) use ($searchValue) {
-               return $query->whereHas('category', function ($query) use ($searchValue){
-                   $query->where('name', 'like', "%$searchValue%");
-               });
-           })
-           ->where($filters)->get();
+        return $this->categoryShippingCost->with($relations)
+            ->when(isset($searchValue), function ($query) use ($searchValue) {
+                return $query->whereHas('category', function ($query) use ($searchValue) {
+                    $query->where('name', 'like', "%$searchValue%");
+                });
+            })
+            ->where($filters)->get();
     }
 
     public function update(string $id, array $data): bool
@@ -49,6 +48,7 @@ class CategoryShippingCostRepository implements CategoryShippingCostRepositoryIn
     public function updateOrInsert(array $params, array $data): bool
     {
         $this->categoryShippingCost->updateOrInsert($params, $data);
+
         return true;
     }
 

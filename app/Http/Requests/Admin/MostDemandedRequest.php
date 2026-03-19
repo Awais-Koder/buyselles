@@ -21,7 +21,7 @@ class MostDemandedRequest extends FormRequest
     {
         return [
             'product_id' => 'required',
-            'image'      => 'required',
+            'image' => 'required',
         ];
     }
 
@@ -32,5 +32,4 @@ class MostDemandedRequest extends FormRequest
             'image.required' => translate('the_image_is_required'),
         ];
     }
-
 }

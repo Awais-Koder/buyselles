@@ -2,14 +2,11 @@
 
 namespace App\Traits;
 
-use App\Events\OrderEditDuePaymentEvent;
 use App\Events\OrderEditEvent;
 use App\Library\Payer;
 use App\Library\Payment as PaymentInfo;
 use App\Library\Receiver;
 use App\Models\AdminWallet;
-use App\Models\Cart;
-use App\Models\CartShipping;
 use App\Models\Coupon;
 use App\Models\Currency;
 use App\Models\Order;
@@ -32,7 +29,7 @@ use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 trait OrderEditManager
 {
-    use VatTaxManagement, Payment, PaymentGatewayTrait;
+    use Payment, PaymentGatewayTrait, VatTaxManagement;
 
     public static function calculateTotalCouponAmount(object|array $order = [], object|array $editedOrder = [], object|array|null $coupon = null): array
     {
@@ -41,7 +38,7 @@ trait OrderEditManager
             $onlyProductTotalAmount += ($editedItem['price'] - $editedItem['discount']) * $editedItem['qty'];
         }
 
-        if (!$coupon || $order['is_guest']) {
+        if (! $coupon || $order['is_guest']) {
             return [
                 'status' => false,
                 'discount' => 0,
@@ -56,7 +53,7 @@ trait OrderEditManager
         $couponDiscount = $coupon?->discount ?? 0;
 
         if ($coupon?->coupon_type == 'first_order' || $coupon?->coupon_type == 'discount_on_purchase') {
-            if (!($onlyProductTotalAmount <= 0 || $couponDiscount > $onlyProductTotalAmount || $coupon['min_purchase'] > $onlyProductTotalAmount)) {
+            if (! ($onlyProductTotalAmount <= 0 || $couponDiscount > $onlyProductTotalAmount || $coupon['min_purchase'] > $onlyProductTotalAmount)) {
                 if ($coupon->discount_type == 'percentage') {
                     $discountAmount = ($onlyProductTotalAmount * $couponDiscount) / 100;
                     $discount = min($discountAmount, $coupon['max_discount']);
@@ -98,12 +95,12 @@ trait OrderEditManager
             'shipping_cost_saved' => 0,
         ];
 
-        $freeDeliveryData['status'] = (int)(getWebConfig(name: 'free_delivery_status') ?? 0);
-        $freeDeliveryData['responsibility'] = (string)getWebConfig(name: 'free_delivery_responsibility');
-        $freeDeliveryOverAmount = (float)getWebConfig(name: 'free_delivery_over_amount');
-        $freeDeliveryOverAmountSeller = (float)getWebConfig(name: 'free_delivery_over_amount_seller');
+        $freeDeliveryData['status'] = (int) (getWebConfig(name: 'free_delivery_status') ?? 0);
+        $freeDeliveryData['responsibility'] = (string) getWebConfig(name: 'free_delivery_responsibility');
+        $freeDeliveryOverAmount = (float) getWebConfig(name: 'free_delivery_over_amount');
+        $freeDeliveryOverAmountSeller = (float) getWebConfig(name: 'free_delivery_over_amount_seller');
 
-        if ($freeDeliveryData['status'] && !empty($editedOrder)) {
+        if ($freeDeliveryData['status'] && ! empty($editedOrder)) {
             if ($order['seller_is'] == 'admin') {
                 $freeDeliveryData['amount'] = $freeDeliveryOverAmount;
                 $freeDeliveryData['status'] = $freeDeliveryOverAmount > 0 ? 1 : 0;
@@ -136,11 +133,12 @@ trait OrderEditManager
     public static function calculateGrandTotalWithoutShippingCharge($editedOrder): float|int
     {
         $total = 0;
-        if (!empty($editedOrder)) {
+        if (! empty($editedOrder)) {
             foreach ($editedOrder as $item) {
                 $total += ($item['price'] - $item['discount']) * $item['qty'];
             }
         }
+
         return $total;
     }
 
@@ -152,7 +150,7 @@ trait OrderEditManager
         $shippingType = '';
         if ($shippingMethod == 'inhouse_shipping') {
             $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
-        } else if ($shippingMethod == 'sellerwise_shipping') {
+        } elseif ($shippingMethod == 'sellerwise_shipping') {
             if ($order['seller_is'] == 'admin') {
                 $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
             } else {
@@ -169,9 +167,9 @@ trait OrderEditManager
                 $shippingCost += $item['product_type'] == 'physical' ? CartManager::get_shipping_cost_for_product_category_wise((is_array($item['active_product']) ? collect($item['active_product']) : $item['active_product']), $item['qty']) : 0;
             }
         }
+
         return $shippingCost;
     }
-
 
     public function addAndUpdateProductsInOrderDetails(object|array $order = [], object|array $editedOrder = [], object|array $taxSummary = []): void
     {
@@ -179,7 +177,7 @@ trait OrderEditManager
             return;
         }
         foreach (collect($order->details ?? []) as $detail) {
-            $this->adjustProductStock($detail['product_id'] ?? null, $detail['variant'] ?? null, (int)($detail['qty'] ?? 0), 'increment');
+            $this->adjustProductStock($detail['product_id'] ?? null, $detail['variant'] ?? null, (int) ($detail['qty'] ?? 0), 'increment');
         }
         $keepIds = [];
         $totalPrice = 0;
@@ -191,7 +189,9 @@ trait OrderEditManager
             $productId = $item['product_id'] ?? null;
             $variant = $item['variant'] ?? null;
 
-            if (!$productId) {continue;}
+            if (! $productId) {
+                continue;
+            }
 
             $appliedTaxAmount = $taxList
                 ->where('product_id', $productId)
@@ -239,20 +239,20 @@ trait OrderEditManager
             ];
         }
 
-        if (!empty($keepIds)) {
+        if (! empty($keepIds)) {
             OrderDetailsRewards::where('order_id', $order->id)->whereNotIn('order_details_id', $keepIds)->delete();
             OrderDetail::where('order_id', $order->id)->whereNotIn('id', $keepIds)->delete();
         }
 
         foreach (OrderDetail::where('order_id', $order->id)->get() as $detail) {
-            $this->adjustProductStock($detail['product_id'] ?? null, $detail['variant'] ?? null, (int)($detail['qty'] ?? 0), 'decrement');
+            $this->adjustProductStock($detail['product_id'] ?? null, $detail['variant'] ?? null, (int) ($detail['qty'] ?? 0), 'decrement');
         }
         $this->syncOrderDetailsRewards(rewardsData: $rewardsData, totalPrice: $totalPrice);
     }
 
     private function syncOrderDetailsRewards(array $rewardsData, float $totalPrice): void
     {
-        if (!empty($rewardsData)) {
+        if (! empty($rewardsData)) {
             foreach ($rewardsData as $reward) {
                 OrderManager::addOrderDetailsRewardData(
                     orderId: $reward['order_id'],
@@ -269,10 +269,14 @@ trait OrderEditManager
 
     private function adjustProductStock(?int $productId, ?string $variant, int $qty, string $mode): void
     {
-        if (!$productId || !$qty) {return;}
+        if (! $productId || ! $qty) {
+            return;
+        }
 
         $product = Product::find($productId);
-        if (!$product) {return;}
+        if (! $product) {
+            return;
+        }
 
         $variationData = [];
         foreach (json_decode($product['variation'], true) as $var) {
@@ -320,7 +324,7 @@ trait OrderEditManager
             ->whereIn('customer_id', [$order?->customer_id, '0'])
             ->whereDate('start_date', '<=', date('Y-m-d'))
             ->whereDate('expire_date', '>=', date('Y-m-d'))
-            ->when($order?->seller_is == 'admin', function ($query) use ($order) {
+            ->when($order?->seller_is == 'admin', function ($query) {
                 return $query->whereNull('seller_id');
             })
             ->when($order?->seller_is == 'seller', function ($query) use ($order) {
@@ -366,7 +370,7 @@ trait OrderEditManager
 
         $taxConfig = self::getTaxSystemType();
 
-        $adminCommission = (float)str_replace(",", "", Helpers::seller_sales_commission($order['seller_is'], $order['seller_id'], $couponSummary['total_cart_amount']));
+        $adminCommission = (float) str_replace(',', '', Helpers::seller_sales_commission($order['seller_is'], $order['seller_id'], $couponSummary['total_cart_amount']));
 
         $orderArray = [
             'discount_amount' => $couponSummary['discount'] ?? 0,
@@ -440,9 +444,9 @@ trait OrderEditManager
             if ($minimumOrderAmount > $totalCartAmount) {
                 $status = 'error';
                 if (isset($data['order_request_from']) && $data['order_request_from'] == 'app') {
-                    $message = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
+                    $message = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
                 } elseif (isset($data['order_request_from']) && $data['order_request_from'] == 'panel') {
-                    $message = translate('Minimum_Order_Amount') . ' ' . setCurrencySymbol(amount: usdToDefaultCurrency(amount: $minimumOrderAmount)) . ' ' . translate('for') . ' ' . $shopIdentity;
+                    $message = translate('Minimum_Order_Amount').' '.setCurrencySymbol(amount: usdToDefaultCurrency(amount: $minimumOrderAmount)).' '.translate('for').' '.$shopIdentity;
                 } else {
                     $message = translate('Please_Complete_Minimum_Order_Amount_Requirement');
                 }
@@ -479,7 +483,7 @@ trait OrderEditManager
             ];
         }
 
-        if (!$order['is_guest']) {
+        if (! $order['is_guest']) {
             $customer = User::where('id', $order['customer_id'])->first();
             $detailsRewards = OrderDetailsRewards::where(['order_id' => $order->id, 'reward_delivered' => 1])->get();
             $loyaltyPointReward = $detailsRewards->where('reward_type', 'loyalty_point')?->sum('reward_amount') ?? 0;
@@ -487,8 +491,8 @@ trait OrderEditManager
                 return [
                     'status' => 'error',
                     'message' => translate('This order cannot be modified because ')
-                        . number_format($loyaltyPointReward, 2) .
-                        translate(' loyalty points have already been redeemed.') . ' ' . translate('Need the redeemed points before making any changes to the order.'),
+                        .number_format($loyaltyPointReward, 2).
+                        translate(' loyalty points have already been redeemed.').' '.translate('Need the redeemed points before making any changes to the order.'),
                 ];
             }
         }
@@ -516,7 +520,7 @@ trait OrderEditManager
         OrderTransaction::where([
             'order_id' => $order['id'],
             'seller_is' => $order['seller_is'],
-            'seller_id' => $order['seller_id']
+            'seller_id' => $order['seller_id'],
         ])->update([
             'order_amount' => $editOrderSummary['order_amount'],
             'seller_amount' => $editOrderSummary['order_amount'] - $orderData['admin_commission'],
@@ -534,7 +538,7 @@ trait OrderEditManager
         );
 
         foreach ($orderEditNotificationEvent as $orderEditEvent) {
-            if (!empty($orderEditEvent)) {
+            if (! empty($orderEditEvent)) {
                 event(new OrderEditEvent(notification: $orderEditEvent['notificationData']));
             }
         }
@@ -685,6 +689,7 @@ trait OrderEditManager
         }
         $data['total_tax_amount'] = $vendorWiseCartAppliedTax;
         $data['order_amount_with_tax'] = $data['order_amount'] + $vendorWiseCartAppliedTax;
+
         return $data;
     }
 
@@ -693,7 +698,7 @@ trait OrderEditManager
         if (($customer['wallet_balance'] ?? 0) < $order['edit_due_amount']) {
             return [
                 'status' => false,
-                'message' => translate('Insufficient_Wallet_Balance')
+                'message' => translate('Insufficient_Wallet_Balance'),
             ];
         }
         CustomerManager::create_wallet_transaction($customer['id'], $order['edit_due_amount'], 'due_payment_for_order', 'reduce_wallet_amount', ['payment_method' => 'wallet']);
@@ -706,13 +711,12 @@ trait OrderEditManager
         Order::where('id', $order['id'])->update([
             'edit_due_amount' => 0,
             'order_amount' => $order['order_amount'] + $order['edit_due_amount'],
-            'payment_status' => 'paid'
+            'payment_status' => 'paid',
         ]);
-
 
         return [
             'status' => true,
-            'message' => translate('Payment_Successful')
+            'message' => translate('Payment_Successful'),
         ];
     }
 
@@ -741,7 +745,7 @@ trait OrderEditManager
         }
 
         if ($customer == 'offline') {
-            $shippingAddress = (array)$order?->shipping_address_data;
+            $shippingAddress = (array) $order?->shipping_address_data;
             $payer = new Payer(
                 ($shippingAddress['contact_person_name'] ?? 'Guest User'),
                 ($shippingAddress['email'] ?? 'customer@example.com'),
@@ -777,7 +781,7 @@ trait OrderEditManager
         } catch (\Exception $e) {
             return [
                 'status' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ];
         }
 
@@ -793,10 +797,11 @@ trait OrderEditManager
             $currentCurrency = $request->current_currency_code ?? session('currency_code');
             $currency_code = $this->getPaymentGatewayCurrencyCode($paymentMethod, $currentCurrency);
             $convertedAmount = usdToAnotherCurrencyConverter(currencyCode: $currency_code, amount: $amount);
+
             return [$convertedAmount, $currency_code];
         }
         $defaultCurrency = Currency::find(getWebConfig('system_default_currency'))->code;
+
         return [$amount, $defaultCurrency];
     }
-
 }

@@ -6,16 +6,16 @@ enum Review
 {
     const STATUS = [
         URI => 'status/{id}/{status}',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const SEARCH = [
         URI => 'customer-list-search',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const EXPORT = [
         URI => 'export',
-        VIEW => ''
+        VIEW => '',
     ];
 }

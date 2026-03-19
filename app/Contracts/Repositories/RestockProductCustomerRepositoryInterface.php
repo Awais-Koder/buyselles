@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface RestockProductCustomerRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface RestockProductCustomerRepositoryInterface extends RepositoryInterface {}

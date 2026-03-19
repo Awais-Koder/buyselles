@@ -10,12 +10,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class VendorRegistrationReasonRepository implements VendorRegistrationReasonInterface
 {
-
     public function __construct(
         private readonly VendorRegistrationReason $vendorRegistrationReason,
-    )
-    {
-    }
+    ) {}
+
     public function add(array $data): string|object
     {
         return $this->vendorRegistrationReason->newInstance()->create($data);
@@ -30,9 +28,10 @@ class VendorRegistrationReasonRepository implements VendorRegistrationReasonInte
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->vendorRegistrationReason
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(key($orderBy),current($orderBy));
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(key($orderBy), current($orderBy));
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
@@ -40,12 +39,13 @@ class VendorRegistrationReasonRepository implements VendorRegistrationReasonInte
     {
 
         $query = $this->vendorRegistrationReason->where($filters)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(key($orderBy),current($orderBy));
-            })->when($searchValue, function ($query) use($searchValue){
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(key($orderBy), current($orderBy));
+            })->when($searchValue, function ($query) use ($searchValue) {
                 $query->Where('title', 'like', "%$searchValue%")->orWhere('id', $searchValue);
             });
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 

@@ -9,6 +9,7 @@ class ProductDescriptionTemplate implements PromptTemplateInterface
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode = strtoupper($langCode);
+
         return <<<PROMPT
         You are a creative and professional e-commerce copywriter.
 

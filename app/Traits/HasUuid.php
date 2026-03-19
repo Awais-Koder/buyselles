@@ -25,7 +25,7 @@ trait HasUuid
     {
         static::creating(function ($model) {
             $model->id = Uuid::uuid4();
-            if (!isset($model->attributes[$model->getKeyName()])) {
+            if (! isset($model->attributes[$model->getKeyName()])) {
                 $model->incrementing = false;
                 $uuid = Uuid::uuid4();
                 $model->attributes[$model->getKeyName()] = $uuid->toString();

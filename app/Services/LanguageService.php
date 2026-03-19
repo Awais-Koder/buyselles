@@ -3,22 +3,21 @@
 namespace App\Services;
 
 use Exception;
-use stdClass;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
 use Illuminate\Support\Facades\File;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use stdClass;
 
 class LanguageService
 {
-
     public function getAddData(object $request, object $language): array
     {
         $languageArray = [];
         $codes = [];
         foreach (json_decode($language['value'], true) as $key => $data) {
             if ($data['code'] != $request['code']) {
-                if (!array_key_exists('default', $data)) {
-                    $default = array('default' => $data['code'] == 'en');
+                if (! array_key_exists('default', $data)) {
+                    $default = ['default' => $data['code'] == 'en'];
                     $data = array_merge($data, $default);
                 }
                 $languageArray[] = $data;
@@ -27,42 +26,41 @@ class LanguageService
         }
         $codes[] = $request['code'];
 
-        if (!file_exists(base_path('resources/lang/' . $request['code']))) {
-            mkdir(base_path('resources/lang/' . $request['code']), 0777, true);
+        if (! file_exists(base_path('resources/lang/'.$request['code']))) {
+            mkdir(base_path('resources/lang/'.$request['code']), 0777, true);
         }
 
-        $messagesNewFile = fopen(base_path('resources/lang/' . $request['code'] . '/' . 'new-messages.php'), "w") or die("Unable to open file!");
-        $messagesFile = fopen(base_path('resources/lang/' . $request['code'] . '/' . 'messages.php'), "w") or die("Unable to open file!");
+        $messagesNewFile = fopen(base_path('resources/lang/'.$request['code'].'/'.'new-messages.php'), 'w') or exit('Unable to open file!');
+        $messagesFile = fopen(base_path('resources/lang/'.$request['code'].'/'.'messages.php'), 'w') or exit('Unable to open file!');
         $messagesFromDefaultLanguage = file_get_contents(base_path('resources/lang/en/messages.php'));
 
         fwrite($messagesNewFile, $messagesFromDefaultLanguage);
         $messagesFileContents = "<?php\n\nreturn [];\n";
-        file_put_contents(base_path('resources/lang/' . $request['code'] . '/messages.php'), $messagesFileContents);
+        file_put_contents(base_path('resources/lang/'.$request['code'].'/messages.php'), $messagesFileContents);
 
-        $translatedMessagesArray = include(base_path('resources/lang/en/messages.php'));
-        $newMessagesArray = include(base_path('resources/lang/en/new-messages.php'));
+        $translatedMessagesArray = include base_path('resources/lang/en/messages.php');
+        $newMessagesArray = include base_path('resources/lang/en/new-messages.php');
         $allMessages = array_merge($translatedMessagesArray, $newMessagesArray);
         $dataFiltered = [];
         foreach ($allMessages as $key => $data) {
             $dataFiltered[removeSpecialCharacters(text: $key)] = $data;
         }
-        $string = "<?php return " . var_export($dataFiltered, true) . ";";
-        file_put_contents(base_path('resources/lang/' . $request['code'] . '/new-messages.php'), $string);
-
+        $string = '<?php return '.var_export($dataFiltered, true).';';
+        file_put_contents(base_path('resources/lang/'.$request['code'].'/new-messages.php'), $string);
 
         try {
             // For advance search
             $eng = public_path('json/admin/lang/en.json');
-            $filename = public_path('json/admin/lang/' . $request['code'] . '.json');
-            if (!file_exists($filename)) {
-                if (!file_exists(dirname($filename))) {
+            $filename = public_path('json/admin/lang/'.$request['code'].'.json');
+            if (! file_exists($filename)) {
+                if (! file_exists(dirname($filename))) {
                     File::makeDirectory(public_path('json/admin/lang'), 0777, true, true);
                 }
                 if (file_exists($eng)) {
                     $content = file_get_contents($eng);
                     file_put_contents($filename, $content);
                 } else {
-                    file_put_contents($filename, json_encode(new stdClass(), JSON_PRETTY_PRINT));
+                    file_put_contents($filename, json_encode(new stdClass, JSON_PRETTY_PRINT));
                 }
             }
         } catch (Exception $e) {
@@ -81,6 +79,7 @@ class LanguageService
             'default' => false,
         ];
         session()->put('language', $languageArray);
+
         return [
             'languages' => $languageArray,
             'codes' => $codes,
@@ -141,9 +140,9 @@ class LanguageService
             }
             $languageArray[] = $lang;
         }
+
         return $languageArray;
     }
-
 
     public function getUpdateData(object $request, object $language): array
     {
@@ -171,6 +170,7 @@ class LanguageService
             $languageArray[] = $lang;
         }
         session()->put('language', $languageArray);
+
         return $languageArray;
     }
 
@@ -198,7 +198,7 @@ class LanguageService
             }
         }
 
-        $dir = base_path('resources/lang/' . $code);
+        $dir = base_path('resources/lang/'.$code);
         if (File::isDirectory($dir)) {
             $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
@@ -219,10 +219,10 @@ class LanguageService
     public function getTranslateList(string $language): array
     {
         $data = [];
-        $path = base_path('resources/lang/' . $language . '/messages.php');
+        $path = base_path('resources/lang/'.$language.'/messages.php');
         if (File::exists($path)) {
-            $newMessagesData = include(base_path('resources/lang/' . $language . '/new-messages.php'));
-            $oldMessagesData = include(base_path('resources/lang/' . $language . '/messages.php'));
+            $newMessagesData = include base_path('resources/lang/'.$language.'/new-messages.php');
+            $oldMessagesData = include base_path('resources/lang/'.$language.'/messages.php');
             ksort($newMessagesData);
             ksort($oldMessagesData);
 
@@ -232,7 +232,7 @@ class LanguageService
                     'index' => $index++,
                     'key' => $key,
                     'value' => $value,
-                    'encode' => !empty($key) ? base64_encode($key) : '',
+                    'encode' => ! empty($key) ? base64_encode($key) : '',
                 ];
             }
 
@@ -241,23 +241,25 @@ class LanguageService
                     'index' => $index++,
                     'key' => $key,
                     'value' => $value,
-                    'encode' => !empty($key) ? base64_encode($key) : '',
+                    'encode' => ! empty($key) ? base64_encode($key) : '',
                 ];
             }
         }
+
         return $data;
     }
 
     private function normalizeKeyForTranslation(string $key): string
     {
         $text = preg_replace('/[\s_]+/', ' ', $key);
+
         return trim($text);
     }
 
     public function getAllMessagesTranslateProcess(string $language, int $count = 999999999): array
     {
-        $getNewMessagesArray = include(base_path('resources/lang/' . $language . '/new-messages.php'));
-        $translatedMessagesArray = include(base_path('resources/lang/' . $language . '/messages.php'));
+        $getNewMessagesArray = include base_path('resources/lang/'.$language.'/new-messages.php');
+        $translatedMessagesArray = include base_path('resources/lang/'.$language.'/messages.php');
 
         $newMessagesArray = [];
         foreach ($getNewMessagesArray as $key => $value) {
@@ -268,16 +270,16 @@ class LanguageService
 
         $remainingMessagesFileContents = "<?php\n\nreturn [\n";
         foreach ($newMessagesArray as $newMsgKey => $newMsgValue) {
-            $remainingMessagesFileContents .= "\t\"" . $newMsgKey . "\" => \"" . $newMsgValue . "\",\n";
+            $remainingMessagesFileContents .= "\t\"".$newMsgKey.'" => "'.$newMsgValue."\",\n";
         }
         $remainingMessagesFileContents .= "];\n";
-        file_put_contents(base_path('resources/lang/' . $language . '/new-messages.php'), $remainingMessagesFileContents);
+        file_put_contents(base_path('resources/lang/'.$language.'/new-messages.php'), $remainingMessagesFileContents);
 
-        $getNewMessagesArray = include(base_path('resources/lang/' . $language . '/new-messages.php'));
+        $getNewMessagesArray = include base_path('resources/lang/'.$language.'/new-messages.php');
 
         $response = [
             'status' => 0,
-            'message' => translate("Cannot_translate_now"),
+            'message' => translate('Cannot_translate_now'),
             'due_message' => count($newMessagesArray),
         ];
 
@@ -285,7 +287,7 @@ class LanguageService
         $translateCount = 0;
         if ($newMessagesArray) {
             if (count($newMessagesArray) <= 0) {
-                $response = ['status' => 1, 'message' => translate("All_Messages_are_translated"), 'translateCountSuccess' => $translateCountSuccess];
+                $response = ['status' => 1, 'message' => translate('All_Messages_are_translated'), 'translateCountSuccess' => $translateCountSuccess];
             }
 
             $messagesGroup = collect($newMessagesArray)->take($count)->toArray();
@@ -325,37 +327,37 @@ class LanguageService
 
             $messagesFileContents = "<?php\n\nreturn [\n";
             foreach ($translatedMessagesArray as $k => $tmaValue) {
-                $messagesFileContents .= "\t\"" . $k . "\" => \"" . $tmaValue . "\",\n";
+                $messagesFileContents .= "\t\"".$k.'" => "'.$tmaValue."\",\n";
             }
             $messagesFileContents .= "];\n";
-            file_put_contents(base_path('resources/lang/' . $language . '/messages.php'), $messagesFileContents);
+            file_put_contents(base_path('resources/lang/'.$language.'/messages.php'), $messagesFileContents);
 
             $response = [
                 'status' => 1,
-                'message' => translate("Translate_Successful"),
-                'due_message' => count(include(base_path('resources/lang/' . $language . '/new-messages.php'))),
-                'translateCountSuccess' => $translateCountSuccess
+                'message' => translate('Translate_Successful'),
+                'due_message' => count(include base_path('resources/lang/'.$language.'/new-messages.php')),
+                'translateCountSuccess' => $translateCountSuccess,
             ];
         } else {
             $response = [
                 'status' => 1,
-                'message' => translate("All_Messages_are_translated"),
-                'due_message' => count(include(base_path('resources/lang/' . $language . '/new-messages.php'))),
-                'translateCountSuccess' => $translateCountSuccess
+                'message' => translate('All_Messages_are_translated'),
+                'due_message' => count(include base_path('resources/lang/'.$language.'/new-messages.php')),
+                'translateCountSuccess' => $translateCountSuccess,
             ];
         }
 
         return $response;
     }
 
-    function getAddTranslateNewKey($sourcePath, $targetPath, $cleanKeys): void
+    public function getAddTranslateNewKey($sourcePath, $targetPath, $cleanKeys): void
     {
-        $getNewMessagesArray = include($sourcePath);
+        $getNewMessagesArray = include $sourcePath;
         ksort($getNewMessagesArray);
         $remainingMessagesFileContents = "<?php\n\nreturn [\n";
         foreach ($getNewMessagesArray as $newMsgKey => $newMsgValue) {
-            if (!in_array(base64_encode($newMsgKey), $cleanKeys)) {
-                $remainingMessagesFileContents .= "\t\"" . $newMsgKey . "\" => \"" . $newMsgValue . "\",\n";
+            if (! in_array(base64_encode($newMsgKey), $cleanKeys)) {
+                $remainingMessagesFileContents .= "\t\"".$newMsgKey.'" => "'.$newMsgValue."\",\n";
             }
         }
         $remainingMessagesFileContents .= "];\n";
@@ -369,11 +371,10 @@ class LanguageService
                 $normalizedKey = strtolower(preg_replace('/\s+/', ' ', str_replace(['_', '-', '.', ' '], ' ', $key)));
 
                 $eng = public_path('json/admin/lang/en.json');
-                $filename = public_path('json/admin/lang/' . $lang . '.json');
+                $filename = public_path('json/admin/lang/'.$lang.'.json');
 
-
-                if (!file_exists($filename)) {
-                    if (!file_exists(dirname($filename))) {
+                if (! file_exists($filename)) {
+                    if (! file_exists(dirname($filename))) {
                         File::makeDirectory(dirname($filename), 0777, true, true);
                     }
 
@@ -396,8 +397,8 @@ class LanguageService
 
                         if ($normalizedPageTitle === $normalizedKey) {
                             return str_replace(
-                                '"page_title_value": "' . $pageTitleValue . '"',
-                                '"page_title_value": "' . $result . '"',
+                                '"page_title_value": "'.$pageTitleValue.'"',
+                                '"page_title_value": "'.$result.'"',
                                 $matches[0]
                             );
                         }
@@ -416,7 +417,7 @@ class LanguageService
                         $normalizedValue = strtolower(preg_replace('/\s+/', ' ', str_replace(['_', '-', '.', ' '], ' ', $value)));
 
                         if ($normalizedValue === $normalizedKey && $field !== 'page_title' && $field !== 'page_title_value') {
-                            return '"' . $field . '": "' . $result . '"';
+                            return '"'.$field.'": "'.$result.'"';
                         }
 
                         return $matches[0];
@@ -427,7 +428,7 @@ class LanguageService
                 if (json_last_error() === JSON_ERROR_NONE) {
                     file_put_contents($filename, json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
                 } else {
-                    throw new Exception("Failed to update JSON. Malformed after replacement.");
+                    throw new Exception('Failed to update JSON. Malformed after replacement.');
                 }
             }
         } catch (Exception $e) {

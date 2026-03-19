@@ -16,22 +16,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class OfflinePaymentMethodController extends BaseController
 {
-    /**
-     * @param OfflinePaymentMethodRepositoryInterface $offlinePaymentMethodRepo
-     * @param OfflinePaymentMethodService $offlinePaymentMethodService
-     */
     public function __construct(
         private readonly OfflinePaymentMethodRepositoryInterface $offlinePaymentMethodRepo,
-        private readonly OfflinePaymentMethodService             $offlinePaymentMethodService,
-    )
-    {
-    }
+        private readonly OfflinePaymentMethodService $offlinePaymentMethodService,
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $methods = $this->offlinePaymentMethodRepo->getListWhere(
@@ -40,31 +29,22 @@ class OfflinePaymentMethodController extends BaseController
             filters: ['status' => $request['status']],
             dataLimit: 10,
         );
+
         return view('admin-views.third-party.offline-payment-method.index', compact('methods'));
     }
 
     /**
-     * @param $request
-     * @return View
-     */
-
-
-    /**
-     * @return View
+     * @param  $request
      */
     public function getAddView(): View
     {
         return view('admin-views.third-party.offline-payment-method.add-view');
     }
 
-    /**
-     * @param OfflinePaymentMethodRequest $request
-     * @return JsonResponse
-     */
     public function add(OfflinePaymentMethodRequest $request): JsonResponse
     {
         $methodInformation = $this->offlinePaymentMethodService->getMethodInformationData(request: $request);
-        if (!is_array($methodInformation) && $methodInformation === false) {
+        if (! is_array($methodInformation) && $methodInformation === false) {
             return response()->json([
                 'status' => 0,
                 'message' => translate('information_Input_Field_Name_must_be_unique'),
@@ -79,6 +59,7 @@ class OfflinePaymentMethodController extends BaseController
         ));
 
         updateSetupGuideCacheKey(key: 'offline_payment_setup', panel: 'admin');
+
         return response()->json([
             'status' => 1,
             'message' => translate('offline_payment_method_added_successfully'),
@@ -86,10 +67,6 @@ class OfflinePaymentMethodController extends BaseController
         ]);
     }
 
-    /**
-     * @param string|int $id
-     * @return View|RedirectResponse
-     */
     public function getUpdateView(string|int $id): View|RedirectResponse
     {
         $method = $this->offlinePaymentMethodRepo->getFirstWhere(params: ['id' => $id]);
@@ -97,20 +74,16 @@ class OfflinePaymentMethodController extends BaseController
             return view('admin-views.third-party.offline-payment-method.update-view', compact('method'));
         } else {
             ToastMagic::error(translate('offline_payment_method_not_found'));
+
             return redirect()->route('admin.third-party.offline-payment-method.index');
         }
     }
 
-    /**
-     * @param OfflinePaymentMethodRequest $request
-     * @param string|int $id
-     * @return JsonResponse
-     */
     public function update(OfflinePaymentMethodRequest $request, string|int $id): JsonResponse
     {
         $method = $this->offlinePaymentMethodRepo->getFirstWhere(params: ['id' => $id]);
         $methodInformation = $this->offlinePaymentMethodService->getMethodInformationData(request: $request);
-        if (!$methodInformation) {
+        if (! $methodInformation) {
             return response()->json([
                 'status' => 0,
                 'message' => translate('information_Input_Field_Name_must_be_unique'),
@@ -125,6 +98,7 @@ class OfflinePaymentMethodController extends BaseController
         ));
 
         updateSetupGuideCacheKey(key: 'offline_payment_setup', panel: 'admin');
+
         return response()->json([
             'status' => 1,
             'message' => translate('offline_payment_method_update_successfully'),
@@ -132,16 +106,13 @@ class OfflinePaymentMethodController extends BaseController
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function updateStatus(Request $request): JsonResponse
     {
         $method = $this->offlinePaymentMethodRepo->getFirstWhere(params: ['id' => $request['id']]);
         if ($method) {
             $this->offlinePaymentMethodRepo->update(id: $method['id'], data: ['status' => $method['status'] == 1 ? 0 : 1]);
             updateSetupGuideCacheKey(key: 'offline_payment_setup', panel: 'admin');
+
             return response()->json([
                 'success_status' => 1,
                 'message' => translate('status_updated_successfully'),
@@ -154,15 +125,12 @@ class OfflinePaymentMethodController extends BaseController
         }
     }
 
-    /**
-     * @param Request $request
-     * @return RedirectResponse
-     */
     public function delete(Request $request): RedirectResponse
     {
         $method = $this->offlinePaymentMethodRepo->getFirstWhere(params: ['id' => $request['id']]);
         $this->offlinePaymentMethodRepo->delete(params: ['id' => $method['id']]);
         ToastMagic::success(translate('offline_payment_method_delete_successfully'));
+
         return redirect()->route('admin.third-party.offline-payment-method.index');
     }
 }

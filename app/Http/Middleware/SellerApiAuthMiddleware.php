@@ -13,9 +13,7 @@ class SellerApiAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure(Request): (Response|RedirectResponse) $next
-     * @return mixed
+     * @param  Closure(Request): (Response|RedirectResponse)  $next
      */
     public function handle(Request $request, Closure $next): mixed
     {
@@ -24,12 +22,13 @@ class SellerApiAuthMiddleware
             $seller = Seller::where(['auth_token' => $token['1']])->first();
             if (isset($seller)) {
                 $request['seller'] = $seller;
+
                 return $next($request);
             }
         }
 
         return response()->json([
-            'auth-001' => translate('Your existing session token does not authorize you any more')
+            'auth-001' => translate('Your existing session token does not authorize you any more'),
         ], 401);
     }
 }

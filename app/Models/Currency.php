@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+
 /**
  * Class Currency
  *
@@ -15,12 +16,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class Currency extends Model
 {
-
     protected $casts = [
         'id' => 'integer',
         'status' => 'boolean',

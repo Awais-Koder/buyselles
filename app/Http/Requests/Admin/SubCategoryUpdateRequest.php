@@ -4,7 +4,6 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
@@ -35,8 +34,8 @@ class SubCategoryUpdateRequest extends FormRequest
             'name' => [
                 'required',
             ],
-            'image' => 'mimes:jpg,jpeg,png|max:'. getFileUploadMaxSize(unit: 'kb'),
-            'priority' => 'required'
+            'image' => 'mimes:jpg,jpeg,png|max:'.getFileUploadMaxSize(unit: 'kb'),
+            'priority' => 'required',
         ];
     }
 
@@ -56,20 +55,19 @@ class SubCategoryUpdateRequest extends FormRequest
             function (Validator $validator) {
                 if (isset($this['name'][0]) && Category::where(['name' => $this['name'][0], 'position' => $this['position']])->where('id', '!=', $this['id'])->first()) {
                     $validator->errors()->add(
-                        'name.unique', translate('The_category_has_already_been_taken') . '!'
+                        'name.unique', translate('The_category_has_already_been_taken').'!'
                     );
                 }
 
                 $taxData = $this->getTaxSystemType();
                 $categoryWiseTax = $taxData['categoryWiseTax'];
 
-                if ($categoryWiseTax && (!isset($this['tax_ids']) || empty($this['tax_ids']))) {
+                if ($categoryWiseTax && (! isset($this['tax_ids']) || empty($this['tax_ids']))) {
                     $validator->errors()->add(
-                        'tax', translate('Please_add_your_category_tax') . '!'
+                        'tax', translate('Please_add_your_category_tax').'!'
                     );
                 }
-            }
+            },
         ];
     }
-
 }

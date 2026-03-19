@@ -1,4 +1,6 @@
-<?php return array(
+<?php
+
+return [
     'software_id' => '0001',
     'name' => 'theme_aster',
     'is_active' => 1,
@@ -6,4 +8,4 @@
     'username' => 'electronics0001',
     'image' => 'electronics-theme.png',
     'version' => SOFTWARE_VERSION,
-);
+];

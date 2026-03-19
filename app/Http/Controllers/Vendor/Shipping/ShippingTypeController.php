@@ -15,36 +15,21 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ShippingTypeController extends BaseController
 {
-    /**
-     * @param ShippingTypeRepositoryInterface $shippingTypeRepo
-     * @param ShippingTypeService $shippingTypeService
-     */
     public function __construct(
         private readonly ShippingTypeRepositoryInterface $shippingTypeRepo,
         private readonly ShippingTypeService $shippingTypeService
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
-        return null ;
+        return null;
     }
 
-    /**
-     * @param ShippingTypeRequest $request
-     * @return JsonResponse
-     */
-    public function addOrUpdate(ShippingTypeRequest $request) :JsonResponse
+    public function addOrUpdate(ShippingTypeRequest $request): JsonResponse
     {
         $vendorId = auth('seller')->id();
         $shippingType = $this->shippingTypeRepo->getFirstWhere(['seller_id' => $vendorId]);
-        if (!empty($shippingType)) {
+        if (! empty($shippingType)) {
             $this->shippingTypeRepo->update(
                 id: $shippingType['id'],
                 data: $this->shippingTypeService->getShippingTypeDataForUpdate(request: $request)
@@ -57,8 +42,7 @@ class ShippingTypeController extends BaseController
                     id: $vendorId)
             );
         }
+
         return response()->json();
     }
-
-
 }

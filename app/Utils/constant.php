@@ -1,5 +1,6 @@
 <?php
-/*write all text constants in alphabetic order*/
+
+/* write all text constants in alphabetic order */
 const CODE = 'code';
 const COLOR = 'color';
 const DISCOUNT = 'discount';

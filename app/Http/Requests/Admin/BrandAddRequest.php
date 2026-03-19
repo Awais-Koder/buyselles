@@ -4,7 +4,6 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
 /**
  * @property int $id
  * @property string $name
@@ -43,5 +42,4 @@ class BrandAddRequest extends FormRequest
             'image.max' => translate('brand_image_must_not_exceed_2mb'),
         ];
     }
-
 }

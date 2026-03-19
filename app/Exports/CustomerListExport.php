@@ -5,20 +5,20 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class CustomerListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class CustomerListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -54,15 +54,16 @@ class CustomerListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
             'rotation' => 0,
             'color' => ['rgb' => '063C93'],
         ]);
-        $sheet->getStyle('G5:H' . ($this->data['customers']->count() + 4))->getFill()->applyFromArray([
+        $sheet->getStyle('G5:H'.($this->data['customers']->count() + 4))->getFill()->applyFromArray([
             'fillType' => 'solid',
             'rotation' => 0,
             'color' => ['rgb' => 'FFF9D1'],
         ]);
 
         $sheet->setShowGridlines(false);
+
         return [
-            'A1:H' . ($this->data['customers']->count() + 4) => [
+            'A1:H'.($this->data['customers']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -79,16 +80,16 @@ class CustomerListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
          * @throws Exception
          */ function ($item, $index) use ($workSheet) {
             $tempImagePath = null;
-            $filePath = 'profile/' . $item->image_full_url['key'];
+            $filePath = 'profile/'.$item->image_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item->image_full_url['path'] && !$fileCheck) {
+            if ($item->image_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item->image_full_url['path']);
                 $imagePath = getImageForExport($item->image_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/total-customer.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/total-customer.png'));
             }
             $drawing->setName($item?->f_name ?? '');
             $drawing->setDescription($item?->f_name ?? '');
@@ -113,7 +114,7 @@ class CustomerListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:H' . ($this->data['customers']->count() + 4))
+                $event->sheet->getStyle('A4:H'.($this->data['customers']->count() + 4))
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
@@ -143,7 +144,7 @@ class CustomerListExport implements FromView, ShouldAutoSize, WithStyles, WithCo
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

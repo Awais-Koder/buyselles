@@ -12,10 +12,8 @@ class ErrorLogsRepository implements ErrorLogsRepositoryInterface
 {
     public function __construct(
         private readonly ErrorLogs $errorLog
-    )
-    {
+    ) {}
 
-    }
     public function add(array $data): string|object
     {
         return $this->errorLog->newInstance()->create($data);
@@ -29,8 +27,8 @@ class ErrorLogsRepository implements ErrorLogsRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->errorLog->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -39,9 +37,10 @@ class ErrorLogsRepository implements ErrorLogsRepositoryInterface
     public function getListWhere(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->errorLog
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    $query->orderBy(key($orderBy), current($orderBy));
-                });
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(key($orderBy), current($orderBy));
+            });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 

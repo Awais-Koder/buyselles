@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Payment_Methods;
 
-
 use App\Models\PaymentRequest;
 use App\Models\User;
 use App\Traits\Processor;
@@ -17,14 +16,15 @@ class FlutterwaveV3Controller extends Controller
     private $config_values;
 
     private PaymentRequest $payment;
+
     private $user;
 
     public function __construct(PaymentRequest $payment, User $user)
     {
         $config = $this->payment_config('flutterwave', 'payment_config');
-        if (!is_null($config) && $config->mode == 'live') {
+        if (! is_null($config) && $config->mode == 'live') {
             $this->config_values = json_decode($config->live_values);
-        } elseif (!is_null($config) && $config->mode == 'test') {
+        } elseif (! is_null($config) && $config->mode == 'test') {
             $this->config_values = json_decode($config->test_values);
         }
         $this->payment = $payment;
@@ -34,7 +34,7 @@ class FlutterwaveV3Controller extends Controller
     public function initialize(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'payment_id' => 'required|uuid'
+            'payment_id' => 'required|uuid',
         ]);
 
         if ($validator->fails()) {
@@ -42,49 +42,49 @@ class FlutterwaveV3Controller extends Controller
         }
 
         $data = $this->payment::where(['id' => $request['payment_id']])->where(['is_paid' => 0])->first();
-        if (!isset($data)) {
+        if (! isset($data)) {
             return response()->json($this->response_formatter(GATEWAYS_DEFAULT_204), 200);
         }
 
         if ($data['additional_data'] != null) {
             $business = json_decode($data['additional_data']);
-            $business_name = $business->business_name ?? "my_business";
+            $business_name = $business->business_name ?? 'my_business';
         } else {
-            $business_name = "my_business";
+            $business_name = 'my_business';
         }
         $payer = json_decode($data['payer_information']);
 
         $supportedCurrencies = [
-            "NGN", "GHS", "KES", "ZAR", "USD", "EUR", "GBP", "CAD",
-            "XAF", "CLP", "COP", "EGP", "GNF", "MWK", "MAD", "RWF",
-            "SLL", "STD", "TZS", "UGX", "XOF", "ZMW"
+            'NGN', 'GHS', 'KES', 'ZAR', 'USD', 'EUR', 'GBP', 'CAD',
+            'XAF', 'CLP', 'COP', 'EGP', 'GNF', 'MWK', 'MAD', 'RWF',
+            'SLL', 'STD', 'TZS', 'UGX', 'XOF', 'ZMW',
         ];
 
         $currencyCode = in_array($data->currency_code, $supportedCurrencies) ? $data->currency_code : 'NGN';
 
-        //* Prepare our rave request
+        // * Prepare our rave request
         $request = [
-            'tx_ref' => (string)time(),
+            'tx_ref' => (string) time(),
             'amount' => $data->payment_amount,
             'currency' => $currencyCode,
             'payment_options' => 'card',
             'redirect_url' => route('flutterwave-v3.callback', ['payment_id' => $data->id]),
             'customer' => [
                 'email' => $payer?->email ?? 'customer@example.com',
-                'name' => $payer?->name ?? 'Jhon Doe'
+                'name' => $payer?->name ?? 'Jhon Doe',
             ],
             'meta' => [
-                'price' => $data->payment_amount
+                'price' => $data->payment_amount,
             ],
             'customizations' => [
                 'title' => $business_name,
-                'description' => $data->id
-            ]
+                'description' => $data->id,
+            ],
         ];
 
-        //http request
+        // http request
         $curl = curl_init();
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://api.flutterwave.com/v3/payments',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
@@ -94,11 +94,11 @@ class FlutterwaveV3Controller extends Controller
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => json_encode($request),
-            CURLOPT_HTTPHEADER => array(
-                'Authorization: Bearer ' . $this->config_values->secret_key,
-                'Content-Type: application/json'
-            ),
-        ));
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer '.$this->config_values->secret_key,
+                'Content-Type: application/json',
+            ],
+        ]);
 
         $response = curl_exec($curl);
 
@@ -114,23 +114,23 @@ class FlutterwaveV3Controller extends Controller
 
     public function callback(Request $request)
     {
-        if ($request['status'] == 'successful' || $request['status'] =='completed') {
+        if ($request['status'] == 'successful' || $request['status'] == 'completed') {
             $txid = $request['transaction_id'];
             $curl = curl_init();
-            curl_setopt_array($curl, array(
+            curl_setopt_array($curl, [
                 CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/{$txid}/verify",
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => "",
+                CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
                 CURLOPT_TIMEOUT => 0,
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_HTTPHEADER => array(
-                    "Content-Type: application/json",
-                    "Authorization: Bearer " . $this->config_values->secret_key,
-                ),
-            ));
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer '.$this->config_values->secret_key,
+                ],
+            ]);
             $response = curl_exec($curl);
             curl_close($curl);
 
@@ -151,7 +151,8 @@ class FlutterwaveV3Controller extends Controller
                     if (isset($data) && function_exists($data->success_hook)) {
                         call_user_func($data->success_hook, $data);
                     }
-                    return $this->payment_response($data,'success');
+
+                    return $this->payment_response($data, 'success');
                 }
             }
         }
@@ -159,6 +160,7 @@ class FlutterwaveV3Controller extends Controller
         if (isset($payment_data) && function_exists($payment_data->failure_hook)) {
             call_user_func($payment_data->failure_hook, $payment_data);
         }
-        return $this->payment_response($payment_data,'fail');
+
+        return $this->payment_response($payment_data, 'fail');
     }
 }

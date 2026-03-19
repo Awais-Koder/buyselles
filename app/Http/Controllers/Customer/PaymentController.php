@@ -2,43 +2,37 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Events\OrderEditDuePaymentEvent;
-use App\Models\AdminWallet;
+use App\Http\Controllers\Controller;
+use App\Library\Payer;
+use App\Library\Payment as PaymentInfo;
+use App\Library\Receiver;
+use App\Models\BusinessSetting;
 use App\Models\Cart;
-use App\Models\CustomerWallet;
+use App\Models\CartShipping;
+use App\Models\Currency;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderEditHistory;
-use App\Models\Seller;
-use App\Models\User;
-use App\Library\Payer;
-use App\Traits\OrderEditManager;
-use App\Utils\Convert;
-use App\Utils\CustomerManager;
-use App\Utils\Helpers;
-use App\Traits\Payment;
-use App\Models\Currency;
-use App\Library\Receiver;
-use App\Utils\CartManager;
-use App\Utils\OrderManager;
-use App\Models\CartShipping;
-use App\Models\ShippingType;
-use FontLib\Table\Type\name;
-use Illuminate\Http\Request;
-use App\Models\BusinessSetting;
 use App\Models\ShippingAddress;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Redirector;
+use App\Models\ShippingType;
+use App\Models\User;
+use App\Traits\OrderEditManager;
+use App\Traits\Payment;
 use App\Traits\PaymentGatewayTrait;
-use App\Http\Controllers\Controller;
+use App\Utils\CartManager;
+use App\Utils\Convert;
+use App\Utils\Helpers;
+use App\Utils\OrderManager;
 use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use App\Library\Payment as PaymentInfo;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Validator;
 
 class PaymentController extends Controller
 {
-    use Payment, PaymentGatewayTrait, OrderEditManager;
+    use OrderEditManager, Payment, PaymentGatewayTrait;
 
     public function payment(Request $request): JsonResponse|Redirector|RedirectResponse
     {
@@ -56,11 +50,13 @@ class PaymentController extends Controller
                 foreach ($response['message'] as $index => $message) {
                     $errorKeeper[] = ['code' => $index, 'message' => $message];
                 }
+
                 return response()->json(['errors' => $errorKeeper], 403);
             } else {
                 foreach ($response['message'] as $message) {
                     Toastr::error($message);
                 }
+
                 return $response['redirect'] ? redirect($response['redirect']) : redirect('/');
             }
         }
@@ -72,7 +68,7 @@ class PaymentController extends Controller
             return in_array($input->payment_request_from, ['app']);
         });
 
-        if ($validator->fails()) { //api
+        if ($validator->fails()) { // api
             $errors = Helpers::validationErrorProcessor($validator);
             if (in_array($request['payment_request_from'], ['app'])) {
                 return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
@@ -80,6 +76,7 @@ class PaymentController extends Controller
                 foreach ($errors as $value) {
                     Toastr::error(translate($value['message']));
                 }
+
                 return back();
             }
         }
@@ -89,10 +86,11 @@ class PaymentController extends Controller
             return $query->active();
         })->whereIn('cart_group_id', $cartGroupIds)->where(['is_checked' => 1])->get();
         $productStockCheck = CartManager::product_stock_check($carts);
-        if (!$productStockCheck && in_array($request['payment_request_from'], ['app'])) {
+        if (! $productStockCheck && in_array($request['payment_request_from'], ['app'])) {
             return response()->json(['errors' => ['code' => 'product-stock', 'message' => 'The following items in your cart are currently out of stock']], 403);
-        } elseif (!$productStockCheck) {
+        } elseif (! $productStockCheck) {
             Toastr::error(translate('the_following_items_in_your_cart_are_currently_out_of_stock'));
+
             return redirect()->route('shop-cart');
         }
 
@@ -101,6 +99,7 @@ class PaymentController extends Controller
             return response()->json(['errors' => ['code' => 'Check the minimum order amount requirement']], 403);
         } elseif ($verifyStatus['status'] == 0) {
             Toastr::info('Check the minimum order amount requirement');
+
             return redirect()->route('shop-cart');
         }
 
@@ -127,7 +126,7 @@ class PaymentController extends Controller
 
                 if ($getShippingType == 'order_wise') {
                     $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
-                    if (!isset($cartShipping) && $physicalProductExist) {
+                    if (! isset($cartShipping) && $physicalProductExist) {
                         return response()->json(['errors' => ['code' => 'shipping-method', 'message' => 'Data not found']], 403);
                     }
                 }
@@ -156,7 +155,7 @@ class PaymentController extends Controller
         }
     }
 
-    function getRegisterNewCustomerAPIProcess($request)
+    public function getRegisterNewCustomerAPIProcess($request)
     {
         $newCustomerRegister = [];
         $shippingAddress = ShippingAddress::where(['customer_id' => $request['guest_id'], 'is_guest' => 1, 'id' => $request->input('address_id')])->first();
@@ -171,7 +170,7 @@ class PaymentController extends Controller
                         address: $shippingAddress,
                         shippingId: $request['address_id'],
                         billingId: $request->has('billing_address_id') && $request['billing_address_id'] ? $request['billing_address_id'] : null
-                    )
+                    ),
                 ];
             }
         }
@@ -188,7 +187,7 @@ class PaymentController extends Controller
                         address: $billingAddress,
                         shippingId: null,
                         billingId: $request['billing_address_id'],
-                    )
+                    ),
                 ];
             }
         }
@@ -196,8 +195,7 @@ class PaymentController extends Controller
         return $newCustomerRegister;
     }
 
-
-    function getRegisterNewCustomer($request, $address, $shippingId = null, $billingId = null): array
+    public function getRegisterNewCustomer($request, $address, $shippingId = null, $billingId = null): array
     {
         return [
             'name' => $address['contact_person_name'],
@@ -230,7 +228,7 @@ class PaymentController extends Controller
                 return response()->json(['message' => 'Payment succeeded'], 200);
             } else {
                 $data = [];
-                if (!empty($request?->token)) {
+                if (! empty($request?->token)) {
                     $decoded = $request->token ? base64_decode($request->token) : '';
                     $parts = explode('&&', $decoded);
                     foreach ($parts as $part) {
@@ -256,7 +254,8 @@ class PaymentController extends Controller
             if (session()->has('payment_mode') && session('payment_mode') == 'app') {
                 return response()->json(['message' => 'Payment failed'], 403);
             } else {
-                Toastr::error(translate('Payment_failed') . '!');
+                Toastr::error(translate('Payment_failed').'!');
+
                 return redirect(url('/'));
             }
         }
@@ -284,7 +283,7 @@ class PaymentController extends Controller
             $additionalData['billing_address_id'] = session('newCustomerRegister')['billing_address_id'] ?? null;
             $getCustomerID = $getGuestId;
             $isGuestUserInOrder = 0;
-        } elseif ($user == 'offline' && !session('newCustomerRegister') && isset($orderAdditionalData['new_customer_info'])) {
+        } elseif ($user == 'offline' && ! session('newCustomerRegister') && isset($orderAdditionalData['new_customer_info'])) {
             $additionalData['new_customer_info'] = $orderAdditionalData['new_customer_info'];
             $getCustomerID = $getGuestId;
             $isGuestUserInOrder = $isGuestUser;
@@ -349,13 +348,14 @@ class PaymentController extends Controller
             }
         } else {
             $payer = new Payer(
-                $customer['f_name'] . ' ' . $customer['l_name'],
+                $customer['f_name'].' '.$customer['l_name'],
                 $customer['email'],
                 $customer['phone'],
                 ''
             );
             if (empty($customer['phone'])) {
                 Toastr::error(translate('please_update_your_phone_number'));
+
                 return route('checkout-payment');
             }
         }
@@ -382,10 +382,11 @@ class PaymentController extends Controller
             payment_amount: $paymentAmount,
             external_redirect_link: $request['payment_platform'] == 'web' ? $request['external_redirect_link'] : null,
             attribute: 'order',
-            attribute_id: idate("U")
+            attribute_id: idate('U')
         );
 
         $receiverInfo = new Receiver('receiver_name', 'example.png');
+
         return $this->generate_link($payer, $paymentInfo, $receiverInfo);
     }
 
@@ -396,6 +397,7 @@ class PaymentController extends Controller
                 return response()->json(['message' => 'Add funds to wallet is deactivated'], 403);
             }
             Toastr::error(translate('add_funds_to_wallet_is_deactivated'));
+
             return back();
         }
 
@@ -413,6 +415,7 @@ class PaymentController extends Controller
                 foreach ($errors as $value) {
                     Toastr::error(translate($value['message']));
                 }
+
                 return back();
             }
         }
@@ -432,7 +435,7 @@ class PaymentController extends Controller
         $minimumAddFundAmount = getWebConfig(name: 'minimum_add_fund_amount') ?? 0;
         $maximumAddFundAmount = getWebConfig(name: 'maximum_add_fund_amount') ?? 0;
 
-        if (!(Convert::usdPaymentModule($request['amount'], $currentCurrency) >= Convert::usdPaymentModule($minimumAddFundAmount, 'USD')) || !(Convert::usdPaymentModule($request['amount'], $currentCurrency) <= Convert::usdPaymentModule($maximumAddFundAmount, 'USD'))) {
+        if (! (Convert::usdPaymentModule($request['amount'], $currentCurrency) >= Convert::usdPaymentModule($minimumAddFundAmount, 'USD')) || ! (Convert::usdPaymentModule($request['amount'], $currentCurrency) <= Convert::usdPaymentModule($maximumAddFundAmount, 'USD'))) {
             $errors = [
                 'minimum_amount' => $minimumAddFundAmount ?? 0,
                 'maximum_amount' => $maximumAddFundAmount ?? 1000,
@@ -440,7 +443,8 @@ class PaymentController extends Controller
             if (in_array($request->payment_request_from, ['app'])) {
                 return response()->json($errors, 202);
             } else {
-                Toastr::error(translate('the_amount_needs_to_be_between') . ' ' . webCurrencyConverter($minimumAddFundAmount) . ' - ' . webCurrencyConverter($maximumAddFundAmount));
+                Toastr::error(translate('the_amount_needs_to_be_between').' '.webCurrencyConverter($minimumAddFundAmount).' - '.webCurrencyConverter($maximumAddFundAmount));
+
                 return back();
             }
         }
@@ -459,7 +463,7 @@ class PaymentController extends Controller
         }
 
         $payer = new Payer(
-            $customer->f_name . ' ' . $customer->l_name,
+            $customer->f_name.' '.$customer->l_name,
             $customer['email'],
             $customer->phone,
             ''
@@ -477,7 +481,7 @@ class PaymentController extends Controller
             payment_amount: $paymentAmount,
             external_redirect_link: $request->payment_platform == 'web' ? $request->external_redirect_link : null,
             attribute: 'add_funds_to_wallet',
-            attribute_id: idate("U")
+            attribute_id: idate('U')
         );
 
         $receiver_info = new Receiver('receiver_name', 'example.png');
@@ -509,13 +513,15 @@ class PaymentController extends Controller
             foreach ($errors as $error) {
                 Toastr::error(translate($error['message']));
             }
+
             return back();
         }
 
         $validated = $validator->validated();
         $order = Order::find($validated['order_id']);
-        if (!$order) {
+        if (! $order) {
             Toastr::error(translate('Order_not_found'));
+
             return back();
         }
 
@@ -525,6 +531,7 @@ class PaymentController extends Controller
         if ($validated['payment_method'] === 'wallet' && $customer != 'offline') {
             if (getWebConfig('wallet_status') != 1 && $request['payment_method'] == 'wallet') {
                 Toastr::error(translate('wallet_is_deactivated'));
+
                 return back();
             }
 
@@ -535,6 +542,7 @@ class PaymentController extends Controller
             } else {
                 Toastr::error($response['message']);
             }
+
             return back();
         }
 
@@ -550,7 +558,7 @@ class PaymentController extends Controller
                 $offlinePaymentInfo['method_name'] = $method->method_name;
                 $offlinePaymentInfo['payment_note'] = $validated['payment_note'] ?? '';
                 foreach ($fields as $field) {
-                    if (key_exists($field, $values)) {
+                    if (array_key_exists($field, $values)) {
                         $offlinePaymentInfo[$field] = $values[$field];
                     }
                 }
@@ -561,6 +569,7 @@ class PaymentController extends Controller
             ]);
             OrderManager::sendPushNotificationAfterDuePayment(order: $order);
             Toastr::success(translate('payment_successful'));
+
             return back();
         }
 
@@ -579,21 +588,21 @@ class PaymentController extends Controller
             $orderEditHistory->update(['order_due_payment_method' => 'cash_on_delivery']);
             OrderManager::sendPushNotificationAfterDuePayment(order: $order);
             Toastr::success(translate('payment_method_updated'));
+
             return back();
         }
 
         $response = $this->payEditOrderDueByDigitalPayment(request: $request, order: $order, customer: $customer);
         if ($response['status'] && isset($response['message'])) {
             Toastr::success($response['message']);
-        } elseif (!$response['status'] && isset($response['message'])) {
+        } elseif (! $response['status'] && isset($response['message'])) {
             Toastr::error($response['message']);
         }
 
         if ($response['redirect_link']) {
             return $request->payment_request_from === 'app' ? response()->json(['redirect_link' => $response['redirect_link']]) : redirect($response['redirect_link']);
         }
+
         return back();
     }
-
-
 }

@@ -19,27 +19,15 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class NotificationController extends BaseController
 {
-    use PushNotificationTrait, FileManagerTrait {
+    use FileManagerTrait, PushNotificationTrait {
         delete as deleteFile;
     }
 
-    /**
-     * @param NotificationRepositoryInterface $notificationRepo
-     * @param NotificationService $notificationService
-     */
     public function __construct(
         private readonly NotificationRepositoryInterface $notificationRepo,
-        private readonly NotificationService             $notificationService,
-    )
-    {
+        private readonly NotificationService $notificationService,
+    ) {}
 
-    }
-
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $searchValue = $request['searchValue'];
@@ -49,17 +37,15 @@ class NotificationController extends BaseController
             filters: ['sent_to' => 'customer'],
             dataLimit: getWebConfig(WebConfigKey::PAGINATION_LIMIT),
         );
+
         return view('admin-views.notification.index', compact('searchValue', 'notifications'));
     }
 
-    /**
-     * @param NotificationRequest $request
-     * @return RedirectResponse
-     */
     public function add(NotificationRequest $request): RedirectResponse
     {
         if (env('APP_MODE') === 'demo') {
             ToastMagic::info(translate('push_notification_is_disable_for_demo'));
+
             return back();
         }
 
@@ -72,24 +58,17 @@ class NotificationController extends BaseController
         }
 
         ToastMagic::success(translate('notification_sent_successfully'));
+
         return redirect()->back();
     }
 
-    /**
-     * @param string|int $id
-     * @return View
-     */
     public function getUpdateView(string|int $id): View
     {
         $notification = $this->notificationRepo->getFirstWhere(params: ['id' => $id]);
+
         return view('admin-views.notification.update-view', compact('notification'));
     }
 
-    /**
-     * @param NotificationRequest $request
-     * @param string|int $id
-     * @return RedirectResponse
-     */
     public function update(NotificationRequest $request, string|int $id): RedirectResponse
     {
         $notification = $this->notificationRepo->getFirstWhere(params: ['id' => $id]);
@@ -99,43 +78,35 @@ class NotificationController extends BaseController
             )
         );
         ToastMagic::success(translate('notification_updated_successfully'));
+
         return redirect()->route('admin.notification.index');
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function updateStatus(Request $request): JsonResponse
     {
         $notification = $this->notificationRepo->getFirstWhere(params: ['id' => $request['id']]);
         $this->notificationRepo->update(id: $notification['id'], data: ['status' => $request['status']]);
+
         return response()->json([
-            'message' => translate('Status_updated_successfully')
+            'message' => translate('Status_updated_successfully'),
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function delete(Request $request): JsonResponse
     {
         $notification = $this->notificationRepo->getFirstWhere(params: ['id' => $request['id']]);
-        $this->deleteFile('/notification/' . $notification['image']);
+        $this->deleteFile('/notification/'.$notification['image']);
         $this->notificationRepo->delete(params: ['id' => $notification['id']]);
+
         return response()->json();
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function resendNotification(Request $request): JsonResponse
     {
         if (env('APP_MODE') === 'demo') {
             $data['success'] = false;
-            $data['message'] = translate("push_notification_is_disabled_for_demo");
+            $data['message'] = translate('push_notification_is_disabled_for_demo');
+
             return response()->json($data);
         }
         $data = [];
@@ -146,11 +117,12 @@ class NotificationController extends BaseController
             $count = $notification['notification_count'] += 1;
             $this->notificationRepo->update(id: $notification['id'], data: ['notification_count' => $count]);
             $data['success'] = true;
-            $data['message'] = translate("push_notification_sent_successfully");
+            $data['message'] = translate('push_notification_sent_successfully');
         } catch (\Exception $e) {
             $data['success'] = false;
-            $data['message'] = translate("push_notification_failed");
+            $data['message'] = translate('push_notification_failed');
         }
+
         return response()->json($data);
     }
 }

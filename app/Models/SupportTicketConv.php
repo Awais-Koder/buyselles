@@ -19,12 +19,11 @@ use Illuminate\Support\Carbon;
  * @property array|null $attachment
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class SupportTicketConv extends Model
 {
-    Use StorageTrait;
+    use StorageTrait;
+
     protected $fillable = [
         'support_ticket_id',
         'admin_id',
@@ -48,20 +47,22 @@ class SupportTicketConv extends Model
 
     public function adminInfo(): BelongsTo
     {
-        return $this->belongsTo(Admin::class, 'admin_id','id');
+        return $this->belongsTo(Admin::class, 'admin_id', 'id');
     }
-    public function getAttachmentFullUrlAttribute():array|null
+
+    public function getAttachmentFullUrlAttribute(): ?array
     {
         $images = [];
         $value = $this->attachment;
-        if ($value){
-            foreach ($value as $item){
-                $item = isset($item['file_name']) ? (array)$item : ['file_name' => $item, 'storage' => 'public'];
-                $images[] =  $this->storageLink('support-ticket',$item['file_name'],$item['storage'] ?? 'public');
+        if ($value) {
+            foreach ($value as $item) {
+                $item = isset($item['file_name']) ? (array) $item : ['file_name' => $item, 'storage' => 'public'];
+                $images[] = $this->storageLink('support-ticket', $item['file_name'], $item['storage'] ?? 'public');
             }
         }
+
         return $images;
     }
-    protected $appends = ['attachment_full_url'];
 
+    protected $appends = ['attachment_full_url'];
 }

@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface SubscriptionRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface SubscriptionRepositoryInterface extends RepositoryInterface {}

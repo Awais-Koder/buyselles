@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
 use App\Contracts\Repositories\DeliveryCountryCodeRepositoryInterface;
 use App\Contracts\Repositories\DeliveryZipCodeRepositoryInterface;
-use App\Enums\ViewPaths\Admin\DeliveryRestriction;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\DeliveryCountryCodeAddRequest;
 use App\Http\Requests\Admin\DeliveryZipCodeAddRequest;
@@ -19,22 +18,17 @@ use Illuminate\Pagination\Paginator;
 
 class DeliveryRestrictionController extends BaseController
 {
-
     public function __construct(
-        private readonly BusinessSettingRepositoryInterface     $businessSettingRepo,
+        private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
         private readonly DeliveryCountryCodeRepositoryInterface $deliveryCountryCodeRepo,
-        private readonly DeliveryZipCodeRepositoryInterface     $deliveryZipCodeRepo,
-    )
-    {
-    }
+        private readonly DeliveryZipCodeRepositoryInterface $deliveryZipCodeRepo,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $countries = COUNTRIES;
         $storedCountries = $this->deliveryCountryCodeRepo->getListWhere(orderBy: ['id' => 'desc'], dataLimit: 'all');
@@ -47,6 +41,7 @@ class DeliveryRestrictionController extends BaseController
                         return true;
                     }
                 }
+
                 return false;
             })->sortByDesc('id')->values();
         }
@@ -54,7 +49,7 @@ class DeliveryRestrictionController extends BaseController
         $offset = $request['offset'];
         $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
         $totalSize = $storedCountries->count();
-        $paginationLimit = (int)(getWebConfig(name: 'pagination_limit') ? getWebConfig(name: 'pagination_limit') : 20);
+        $paginationLimit = (int) (getWebConfig(name: 'pagination_limit') ? getWebConfig(name: 'pagination_limit') : 20);
         $results = $storedCountries->forPage($currentPage, $paginationLimit);
         $storedCountries = new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $paginationLimit, currentPage: $currentPage, options: [
             'path' => Paginator::resolveCurrentPath(),
@@ -65,6 +60,7 @@ class DeliveryRestrictionController extends BaseController
         $zipCodeAreaRestrictionStatus = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'delivery_zip_code_area_restriction']);
         $storedCountryCode = $storedCountries->pluck('country_code')->toArray();
         $storedZip = $this->deliveryZipCodeRepo->getListWhere(orderBy: ['id' => 'desc'], searchValue: $request->search_zip_code, dataLimit: getWebConfig(name: 'pagination_limit'));
+
         return view('admin-views.business-settings.delivery-restriction', compact('countries', 'storedCountries', 'storedCountryCode', 'storedZip', 'countryRestrictionStatus', 'zipCodeAreaRestrictionStatus'));
     }
 
@@ -74,6 +70,7 @@ class DeliveryRestrictionController extends BaseController
             $this->deliveryCountryCodeRepo->add(data: ['country_code' => $code, 'created_at' => now()]);
         }
         ToastMagic::success(translate('delivery_country_added_successfully'));
+
         return back();
     }
 
@@ -81,6 +78,7 @@ class DeliveryRestrictionController extends BaseController
     {
         $this->deliveryCountryCodeRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('delivery_country_deleted_successfully'));
+
         return back();
     }
 
@@ -89,14 +87,16 @@ class DeliveryRestrictionController extends BaseController
         $zipCodes = explode(',', $request['zipcode']);
         $existingZipCodes = $this->deliveryZipCodeRepo->getListWhere(dataLimit: 'all')->pluck('zipcode')->toArray();
         $zipCodes = array_diff($zipCodes, $existingZipCodes);
-        if (!$zipCodes) {
+        if (! $zipCodes) {
             ToastMagic::warning(translate('delivery_zip_code_already_exists'));
+
             return back();
         }
         foreach ($zipCodes as $code) {
             $this->deliveryZipCodeRepo->add(data: ['zipcode' => $code]);
         }
         ToastMagic::success(translate('delivery_zip_code_added_successfully'));
+
         return back();
     }
 
@@ -104,6 +104,7 @@ class DeliveryRestrictionController extends BaseController
     {
         $this->deliveryZipCodeRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('delivery_zip_code_deleted_successfully'));
+
         return back();
     }
 
@@ -113,9 +114,10 @@ class DeliveryRestrictionController extends BaseController
         if ($request->ajax()) {
             return response()->json([
                 'message' => translate('delivery_country_restriction_status_changed_successfully'),
-                'status' => true
+                'status' => true,
             ]);
         }
+
         return back();
     }
 
@@ -129,7 +131,7 @@ class DeliveryRestrictionController extends BaseController
             ]);
         }
         clearWebConfigCacheKeys();
+
         return back();
     }
-
 }

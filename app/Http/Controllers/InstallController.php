@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdatePurchaseCodeRequest;
+use App\Traits\ActivationClass;
 use App\Traits\EmailTemplateTrait;
 use App\Traits\InstallationTrail;
 use App\Traits\SettingsTrait;
 use App\Traits\UpdateClass;
-use App\Traits\ActivationClass;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Exception;
 use Illuminate\Contracts\View\View;
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Schema;
 
 class InstallController extends Controller
 {
-    use ActivationClass, EmailTemplateTrait, SettingsTrait, UpdateClass, InstallationTrail;
+    use ActivationClass, EmailTemplateTrait, InstallationTrail, SettingsTrait, UpdateClass;
 
     public function step0(): View
     {
@@ -32,6 +32,7 @@ class InstallController extends Controller
         $permission['curl_enabled'] = function_exists('curl_version');
         $permission['db_file_write_perm'] = is_writable(base_path('.env'));
         $permission['routes_file_write_perm'] = is_writable(base_path('app/Providers/RouteServiceProvider.php'));
+
         return view('installation.step1', compact('permission'));
     }
 
@@ -66,6 +67,7 @@ class InstallController extends Controller
         Artisan::call('file:permission');
         Artisan::call('config:cache');
         Artisan::call('config:clear');
+
         return view('installation.step5');
     }
 
@@ -96,11 +98,11 @@ class InstallController extends Controller
         $this->updateActivationConfig(app: 'admin_panel', response: $response);
         $status = $response['active'] ?? 0;
 
-        if ((int)$status) {
-            return redirect(base64_decode('c3RlcDM=') . '?token=' . bcrypt('step_3'));
+        if ((int) $status) {
+            return redirect(base64_decode('c3RlcDM=').'?token='.bcrypt('step_3'));
         }
 
-        if (!empty($response['errors'])) {
+        if (! empty($response['errors'])) {
             foreach ($response['errors'] as $error) {
                 $message = is_array($error) ? ($error[0] ?? 'Unknown error') : $error;
                 ToastMagic::error($message);
@@ -117,11 +119,11 @@ class InstallController extends Controller
         $this->addSystemPrimaryData(request: $request);
 
         try {
-            if (!Schema::hasTable('addon_settings')) {
+            if (! Schema::hasTable('addon_settings')) {
                 DB::unprepared(File::get(base_path('database/migrations/addon_settings.sql')));
             }
 
-            if (!Schema::hasTable('payment_requests')) {
+            if (! Schema::hasTable('payment_requests')) {
                 DB::unprepared(File::get(base_path('database/migrations/payment_requests.sql')));
             }
         } catch (\Exception $exception) {
@@ -130,13 +132,14 @@ class InstallController extends Controller
         $previousRouteServiceProvider = base_path('app/Providers/RouteServiceProvider.php');
         $newRouteServiceProvider = base_path('app/Providers/RouteServiceProvider.txt');
         copy($newRouteServiceProvider, $previousRouteServiceProvider);
+
         return view('installation.step6');
     }
 
-    function checkDatabaseConnection($db_host = "", $db_name = "", $db_user = "", $db_pass = ""): bool
+    public function checkDatabaseConnection($db_host = '', $db_name = '', $db_user = '', $db_pass = ''): bool
     {
         try {
-            return (bool)(@mysqli_connect($db_host, $db_user, $db_pass, $db_name));
+            return (bool) (@mysqli_connect($db_host, $db_user, $db_pass, $db_name));
         } catch (Exception $exception) {
             return false;
         }
@@ -151,10 +154,12 @@ class InstallController extends Controller
                 return redirect('step4');
             } else {
                 session()->flash('error', 'Database error!');
+
                 return redirect('step3');
             }
         } else {
             session()->flash('error', 'Database error!');
+
             return redirect('step3');
         }
     }
@@ -164,9 +169,11 @@ class InstallController extends Controller
         try {
             $sql_path = base_path('installation/backup/database.sql');
             DB::unprepared(file_get_contents($sql_path));
+
             return redirect('step5');
         } catch (\Exception $exception) {
             session()->flash('error', 'Your database is not clean, do you want to clean database then import?');
+
             return back();
         }
     }
@@ -177,9 +184,11 @@ class InstallController extends Controller
             Artisan::call('db:wipe');
             $sql_path = base_path('installation/backup/database.sql');
             DB::unprepared(file_get_contents($sql_path));
+
             return redirect('step5');
         } catch (\Exception $exception) {
             session()->flash('error', 'Check your database permission!');
+
             return back();
         }
     }

@@ -3,8 +3,8 @@
 namespace Modules\Blog\app\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\App;
@@ -34,7 +34,7 @@ class BlogCategory extends Model
         return $this->morphMany('Modules\Blog\app\Models\BlogTranslation', 'translation');
     }
 
-    public function getNameAttribute($name): string|null
+    public function getNameAttribute($name): ?string
     {
         if (strpos(url()->current(), '/admin') || strpos(url()->current(), '/vendor') || strpos(url()->current(), '/seller')) {
             return $name;
@@ -43,7 +43,7 @@ class BlogCategory extends Model
             ->when(strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', App::getLocale());
             })
-            ->when(!strpos(url()->current(), '/api'), function ($query) {
+            ->when(! strpos(url()->current(), '/api'), function ($query) {
                 return $query->where('locale', getDefaultLanguage());
             })
             ->first();

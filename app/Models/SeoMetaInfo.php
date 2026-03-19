@@ -30,11 +30,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $image
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
  */
 class SeoMetaInfo extends Model
 {
-    use StorageTrait, CacheManagerTrait;
+    use CacheManagerTrait, StorageTrait;
 
     protected $table = 'seo_meta_info';
 
@@ -85,9 +84,10 @@ class SeoMetaInfo extends Model
     public function getImageFullUrlAttribute(): array
     {
         $value = $this->image;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','image')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'image')->first();
         }
+
         return $this->storageLink('seo-meta-info', $value, $storage['value'] ?? 'public');
     }
 

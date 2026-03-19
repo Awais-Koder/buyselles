@@ -3,36 +3,36 @@
 namespace App\Utils;
 
 use App\Http\Requests\Request;
-use App\Models\Cart;
-use App\Models\Color;
-use App\Models\DigitalProductVariation;
-use App\Models\ProductTag;
-use App\Models\RestockProduct;
-use App\Models\Shop;
-use App\Models\Tag;
-use Exception;
-use Illuminate\Support\Facades\Request as FacadesRequest;
 use App\Models\Author;
+use App\Models\Cart;
 use App\Models\Category;
+use App\Models\CategoryShippingCost;
+use App\Models\Color;
 use App\Models\DigitalProductAuthor;
 use App\Models\DigitalProductPublishingHouse;
+use App\Models\DigitalProductVariation;
 use App\Models\FlashDeal;
-use App\Models\CategoryShippingCost;
 use App\Models\FlashDealProduct;
 use App\Models\OrderDetail;
 use App\Models\Product;
+use App\Models\ProductTag;
 use App\Models\PublishingHouse;
+use App\Models\RestockProduct;
 use App\Models\Review;
 use App\Models\ShippingMethod;
 use App\Models\ShippingType;
+use App\Models\Shop;
 use App\Models\StockClearanceProduct;
+use App\Models\Tag;
 use App\Models\Translation;
 use App\Models\Wishlist;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Request as FacadesRequest;
 
 class ProductManager
 {
@@ -78,14 +78,15 @@ class ProductManager
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
         return [
             'total_size' => $paginator->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $paginator->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $paginator->items(),
         ];
     }
 
@@ -122,6 +123,7 @@ class ProductManager
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
@@ -163,14 +165,15 @@ class ProductManager
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
         return [
             'total_size' => $products->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $products->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $products->items(),
         ];
     }
 
@@ -225,6 +228,7 @@ class ProductManager
             $product['flash_deal_end_date'] = $flashDealEndDate;
             $product['reviews_count'] = $product->reviews->count();
             unset($product->reviews);
+
             return $product;
         });
 
@@ -285,6 +289,7 @@ class ProductManager
             $product['flash_deal_end_date'] = $flashDealEndDate;
             $product['reviews_count'] = $product->reviews->count();
             unset($product->reviews);
+
             return $product;
         });
 
@@ -301,7 +306,7 @@ class ProductManager
             }]);
         }])
             ->whereHas('product', function ($query) use ($shop) {
-                return $query->when($shop['author_type'] == 'admin', function ($query) use ($shop) {
+                return $query->when($shop['author_type'] == 'admin', function ($query) {
                     return $query->where(['added_by' => 'admin'])->active();
                 })
                     ->when($shop['author_type'] != 'admin', function ($query) use ($shop) {
@@ -310,7 +315,7 @@ class ProductManager
             })
             ->select('product_id', DB::raw('COUNT(product_id) as count'))
             ->groupBy('product_id')
-            ->orderBy("count", 'desc')
+            ->orderBy('count', 'desc')
             ->paginate($limit, ['*'], 'page', $offset);
 
         $data = [];
@@ -320,9 +325,9 @@ class ProductManager
 
         return [
             'total_size' => $paginator->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $data
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $data,
         ];
     }
 
@@ -361,6 +366,7 @@ class ProductManager
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
@@ -369,7 +375,7 @@ class ProductManager
 
     public static function search_products($request, $name, $category = 'all', $limit = 10, $offset = 1): array
     {
-        $key = explode(' ', $name);;
+        $key = explode(' ', $name);
         $user = Helpers::getCustomerInformation($request);
 
         $authorIds = Author::where('name', 'like', "%{$name}%")->pluck('id')->toArray();
@@ -395,9 +401,9 @@ class ProductManager
             })
             ->withCount(['wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
-            }])->when(!empty($authorProductIds), function ($query) use ($authorProductIds) {
+            }])->when(! empty($authorProductIds), function ($query) use ($authorProductIds) {
                 $query->whereIn('id', $authorProductIds);
-            })->when(!empty($publishingHouseProductIds), function ($query) use ($publishingHouseProductIds) {
+            })->when(! empty($publishingHouseProductIds), function ($query) use ($publishingHouseProductIds) {
                 $query->whereIn('id', $publishingHouseProductIds);
             });
 
@@ -412,9 +418,9 @@ class ProductManager
 
         return [
             'total_size' => $productListData->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $productListData->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $productListData->items(),
         ];
     }
 
@@ -437,9 +443,8 @@ class ProductManager
                 }
             })->paginate($limit, ['*'], 'page', $offset);
 
-
         return [
-            'products' => $product->items()
+            'products' => $product->items(),
         ];
     }
 
@@ -456,9 +461,9 @@ class ProductManager
                 ->orWhereHas('tags', function ($query) use ($name) {
                     $query->where('tag', 'like', "%{$name}%");
                 });
-        })->when(!empty($authorProductIds), function ($query) use ($authorProductIds) {
+        })->when(! empty($authorProductIds), function ($query) use ($authorProductIds) {
             $query->whereIn('id', $authorProductIds);
-        })->when(!empty($publishingHouseProductIds), function ($query) use ($publishingHouseProductIds) {
+        })->when(! empty($publishingHouseProductIds), function ($query) use ($publishingHouseProductIds) {
             $query->whereIn('id', $publishingHouseProductIds);
         });
 
@@ -473,9 +478,9 @@ class ProductManager
 
         return [
             'total_size' => $productListData->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $productListData->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $productListData->items(),
         ];
     }
 
@@ -505,9 +510,9 @@ class ProductManager
 
         return [
             'total_size' => $productListData->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $productListData->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $productListData->items(),
         ];
     }
 
@@ -529,8 +534,8 @@ class ProductManager
 
         return [
             'total_size' => $productListData->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
             'products' => $productListData->items(),
         ];
     }
@@ -543,6 +548,7 @@ class ProductManager
         } elseif ($image_type == 'product') {
             $path = asset('storage/app/public/product');
         }
+
         return $path;
     }
 
@@ -575,6 +581,7 @@ class ProductManager
                 $rating1 += 1;
             }
         }
+
         return [$rating5, $rating4, $rating3, $rating2, $rating1];
     }
 
@@ -622,6 +629,7 @@ class ProductManager
                 }
             }
         }
+
         return [
             'ids' => $productAuthorIds,
             'names' => $productAuthorNames,
@@ -643,6 +651,7 @@ class ProductManager
                 }
             }
         }
+
         return [
             'ids' => $productPublishingHouseIds,
             'names' => $productPublishingHouseNames,
@@ -656,7 +665,7 @@ class ProductManager
         $offset = $request['offset'];
         $user = Helpers::getCustomerInformation($request);
         $shop = Shop::where('slug', $slug)->first();
-        if (!$shop) {
+        if (! $shop) {
             return new LengthAwarePaginator([], 0, $limit);
         }
         $categories = $request->filled('category') ? (json_decode($request->category, true) ?? []) : [];
@@ -692,7 +701,7 @@ class ProductManager
 
         $productIdsForAuthor = [];
         foreach ($authorList as $authorGroup) {
-            if (!empty($authorGroup->digitalProductAuthor)) {
+            if (! empty($authorGroup->digitalProductAuthor)) {
                 foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                     $productIdsForAuthor[] = $authorItem->product_id;
                 }
@@ -704,7 +713,6 @@ class ProductManager
         $categoryList = Category::where(['position' => 0])->whereIn('id', $categories)->pluck('id')->toArray();
         $subCategoryIds = Category::where(['position' => 1])->whereIn('id', $categories)->pluck('id')->toArray();
         $subSubCategoryIds = Category::where(['position' => 2])->whereIn('id', $categories)->pluck('id')->toArray();
-
 
         $products = Product::active()
             ->with(['rating', 'flashDealProducts.flashDeal', 'tags', 'digitalProductAuthors.author', 'digitalProductPublishingHouse.publishingHouse', 'clearanceSale' => function ($query) {
@@ -740,7 +748,7 @@ class ProductManager
                         return $query->whereIn('sub_sub_category_id', $subSubCategoryIds);
                     });
             })
-            ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($request, $publishingHouses, $productIdsForPublisher) {
+            ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($publishingHouses, $productIdsForPublisher) {
                 $publishingHouseList = PublishingHouse::whereIn('id', $publishingHouses)->with(['publishingHouseProducts'])->withCount(['publishingHouseProducts' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -761,7 +769,7 @@ class ProductManager
 
                 return $query->where(['product_type' => 'digital'])->whereIn('id', $publishingHouseProductIds);
             })
-            ->when($request->has('product_authors') && $productAuthors, function ($query) use ($request, $productAuthors, $productIdsForUnknownAuthor) {
+            ->when($request->has('product_authors') && $productAuthors, function ($query) use ($productAuthors, $productIdsForUnknownAuthor) {
                 $authorList = Author::whereIn('id', $productAuthors)->withCount(['digitalProductAuthor' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -780,10 +788,12 @@ class ProductManager
                 if (in_array(0, $productAuthors)) {
                     $authorProductIds = array_merge($authorProductIds, $productIdsForUnknownAuthor);
                 }
+
                 return $query->where(['product_type' => 'digital'])->whereIn('id', $authorProductIds);
             })
             ->when($request['offer_type'] == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
             ->when($request->has('product_id') && $request['product_id'], function ($query) use ($request) {
@@ -819,12 +829,14 @@ class ProductManager
             }
             $product['flash_deal_status'] = $flashDealStatus;
             $product['flash_deal_end_date'] = $flashDealEndDate;
+
             return $product;
         });
 
         $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
         $totalSize = $products->count();
         $results = $products->forPage($currentPage, $limit);
+
         return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $limit, currentPage: $currentPage, options: [
             'path' => Paginator::resolveCurrentPath(),
             'appends' => $request->all(),
@@ -840,9 +852,9 @@ class ProductManager
 
         return [
             'total_size' => $paginator->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $paginator->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $paginator->items(),
         ];
     }
 
@@ -852,7 +864,7 @@ class ProductManager
 
         $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
 
-        //change review to ratting
+        // change review to ratting
         $paginator = Product::with(['rating', 'reviews', 'tags', 'clearanceSale' => function ($query) {
             return $query->active();
         }])->active()
@@ -871,9 +883,9 @@ class ProductManager
 
         return [
             'total_size' => $paginator->total(),
-            'limit' => (int)$limit,
-            'offset' => (int)$offset,
-            'products' => $paginator->items()
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => $paginator->items(),
         ];
     }
 
@@ -883,17 +895,19 @@ class ProductManager
         foreach ($data as $item) {
             $storage[] = [
                 'product' => $item->product['name'] ?? '',
-                'customer' => isset($item->customer) ? $item->customer->f_name . ' ' . $item->customer->l_name : '',
+                'customer' => isset($item->customer) ? $item->customer->f_name.' '.$item->customer->l_name : '',
                 'comment' => $item->comment,
-                'rating' => $item->rating
+                'rating' => $item->rating,
             ];
         }
+
         return $storage;
     }
 
     public static function get_user_total_product($added_by, $user_id)
     {
         $total_product = Product::active()->where(['added_by' => $added_by, 'user_id' => $user_id])->count();
+
         return $total_product;
     }
 
@@ -909,13 +923,13 @@ class ProductManager
             $review = Review::where(['product_id' => $product])->avg('rating');
             if ($review == 5) {
                 $rating5 += 1;
-            } else if ($review >= 4 && $review < 5) {
+            } elseif ($review >= 4 && $review < 5) {
                 $rating4 += 1;
-            } else if ($review >= 3 && $review < 4) {
+            } elseif ($review >= 3 && $review < 4) {
                 $rating3 += 1;
-            } else if ($review >= 2 && $review < 3) {
+            } elseif ($review >= 2 && $review < 3) {
                 $rating2 += 1;
-            } else if ($review >= 1 && $review < 2) {
+            } elseif ($review >= 1 && $review < 2) {
                 $rating1 += 1;
             }
         }
@@ -927,26 +941,26 @@ class ProductManager
     {
         $delivery_cost = 0;
         $shipping_model = getWebConfig(name: 'shipping_method');
-        $shipping_type = "";
+        $shipping_type = '';
 
-        if ($shipping_model == "inhouse_shipping") {
+        if ($shipping_model == 'inhouse_shipping') {
             $shipping_type = ShippingType::where(['seller_id' => 0])->first();
-            if ($shipping_type->shipping_type == "category_wise") {
+            if ($shipping_type->shipping_type == 'category_wise') {
                 $cat_id = $product->category_id;
                 $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => 0, 'category_id' => $cat_id])->first();
                 $delivery_cost = $CategoryShippingCost ?
                     ($CategoryShippingCost->multiply_qty != 0 ? ($CategoryShippingCost->cost * $quantity) : $CategoryShippingCost->cost)
                     : 0;
 
-            } elseif ($shipping_type->shipping_type == "product_wise") {
+            } elseif ($shipping_type->shipping_type == 'product_wise') {
                 $delivery_cost = $product->multiply_qty != 0 ? ($product->shipping_cost * $quantity) : $product->shipping_cost;
             } elseif ($shipping_type->shipping_type == 'order_wise') {
                 $max_order_wise_shipping_cost = ShippingMethod::where(['creator_id' => 1, 'creator_type' => 'admin', 'status' => 1])->max('cost');
                 $min_order_wise_shipping_cost = ShippingMethod::where(['creator_id' => 1, 'creator_type' => 'admin', 'status' => 1])->min('cost');
             }
-        } elseif ($shipping_model == "sellerwise_shipping") {
+        } elseif ($shipping_model == 'sellerwise_shipping') {
 
-            if ($product->added_by == "admin") {
+            if ($product->added_by == 'admin') {
                 $shipping_type = ShippingType::where('seller_id', '=', 0)->first();
             } else {
                 $shipping_type = ShippingType::where('seller_id', '!=', 0)->where(['seller_id' => $product->user_id])->first();
@@ -954,9 +968,9 @@ class ProductManager
 
             if ($shipping_type) {
                 $shipping_type = $shipping_type ?? ShippingType::where('seller_id', '=', 0)->first();
-                if ($shipping_type->shipping_type == "category_wise") {
+                if ($shipping_type->shipping_type == 'category_wise') {
                     $cat_id = $product->category_id;
-                    if ($product->added_by == "admin") {
+                    if ($product->added_by == 'admin') {
                         $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => 0, 'category_id' => $cat_id])->first();
                     } else {
                         $CategoryShippingCost = CategoryShippingCost::where(['seller_id' => $product->user_id, 'category_id' => $cat_id])->first();
@@ -965,7 +979,7 @@ class ProductManager
                     $delivery_cost = $CategoryShippingCost ?
                         ($CategoryShippingCost->multiply_qty != 0 ? ($CategoryShippingCost->cost * $quantity) : $CategoryShippingCost->cost)
                         : 0;
-                } elseif ($shipping_type->shipping_type == "product_wise") {
+                } elseif ($shipping_type->shipping_type == 'product_wise') {
                     $delivery_cost = $product->multiply_qty != 0 ? ($product->shipping_cost * $quantity) : $product->shipping_cost;
                 } elseif ($shipping_type->shipping_type == 'order_wise') {
                     $max_order_wise_shipping_cost = ShippingMethod::where(['creator_id' => $product->user_id, 'creator_type' => $product->added_by, 'status' => 1])->max('cost');
@@ -979,6 +993,7 @@ class ProductManager
             'delivery_cost_min' => isset($min_order_wise_shipping_cost) ? $min_order_wise_shipping_cost : 0,
             'shipping_type' => $shipping_type->shipping_type ?? '',
         ];
+
         return $data;
     }
 
@@ -986,7 +1001,7 @@ class ProductManager
     {
         $colorsMerge = [];
         $colorsCollection = Product::active()->where('colors', '!=', '[]')
-            ->when(!empty($productIds), function ($query) use ($productIds) {
+            ->when(! empty($productIds), function ($query) use ($productIds) {
                 return $query->whereIn('id', $productIds);
             })
             ->pluck('colors')->unique()->toArray();
@@ -996,6 +1011,7 @@ class ProductManager
                 $colorsMerge = array_merge($colorsMerge, $colorArray);
             }
         }
+
         return array_unique($colorsMerge);
     }
 
@@ -1047,6 +1063,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator($results, $totalSize, $dataLimit, $currentPage, [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1064,7 +1081,6 @@ class ProductManager
 
         return $query->orderBy('id', 'desc')->get();
     }
-
 
     public static function getPriorityWiseTopRatedProductsQuery($query, $dataLimit = 'all', $offset = 1, $appends = null)
     {
@@ -1110,15 +1126,15 @@ class ProductManager
                 $query = $query->filter(function ($shop) {
                     return $shop->reviews_avg_rating >= 4;
                 });
-            } else if ($topRatedProductSortBy['minimum_rating_point'] == '3.5') {
+            } elseif ($topRatedProductSortBy['minimum_rating_point'] == '3.5') {
                 $query = $query->filter(function ($shop) {
                     return $shop->reviews_avg_rating >= 3.5;
                 });
-            } else if ($topRatedProductSortBy['minimum_rating_point'] == '3') {
+            } elseif ($topRatedProductSortBy['minimum_rating_point'] == '3') {
                 $query = $query->filter(function ($shop) {
                     return $shop->reviews_avg_rating >= 3;
                 });
-            } else if ($topRatedProductSortBy['minimum_rating_point'] == '2') {
+            } elseif ($topRatedProductSortBy['minimum_rating_point'] == '2') {
                 $query = $query->filter(function ($shop) {
                     return $shop->reviews_avg_rating >= 2;
                 });
@@ -1132,6 +1148,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator($results, $totalSize, $dataLimit, $currentPage, [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1198,6 +1215,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $dataLimit, currentPage: $currentPage, options: [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1238,9 +1256,11 @@ class ProductManager
                 $currentDate = Carbon::now();
                 $query = $query->when($newArrivalProductSortBy['duration_type'] == 'days', function ($query) use ($currentDate, $newArrivalProductSortBy) {
                     $getDate = $currentDate->subDays($newArrivalProductSortBy['duration'] ?? 60);
+
                     return $query->whereDate('created_at', '>=', $getDate);
                 })->when($newArrivalProductSortBy['duration_type'] == 'month', function ($query) use ($currentDate, $newArrivalProductSortBy) {
                     $getMonth = $currentDate->subMonths($newArrivalProductSortBy['duration'] ?? 1);
+
                     return $query->whereDate('created_at', '>=', $getMonth);
                 });
             }
@@ -1275,6 +1295,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $dataLimit, currentPage: $currentPage, options: [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1356,6 +1377,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $dataLimit, currentPage: $currentPage, options: [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1384,7 +1406,7 @@ class ProductManager
             'flashDealProducts.featureDeal' => function ($query) {
                 return $query->whereDate('start_date', '<=', date('Y-m-d'))
                     ->whereDate('end_date', '>=', date('Y-m-d'));
-            }
+            },
         ])
             ->whereHas('flashDealProducts.featureDeal', function ($query) {
                 $query->whereDate('start_date', '<=', date('Y-m-d'))
@@ -1401,7 +1423,7 @@ class ProductManager
                     });
                 })->orWhere(function ($query) use ($featureDealSortBy) {
                     $inHouseShopInTemporaryClose = Cache::get(IN_HOUSE_SHOP_TEMPORARY_CLOSE_STATUS);
-                    if (!$inHouseShopInTemporaryClose && $featureDealSortBy['temporary_close_sorting'] == 'hide') {
+                    if (! $inHouseShopInTemporaryClose && $featureDealSortBy['temporary_close_sorting'] == 'hide') {
                         return $query->where(['added_by' => 'admin']);
                     } else {
                         return $query;
@@ -1453,6 +1475,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator($results, $totalSize, $dataLimit, $currentPage, [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -1506,6 +1529,7 @@ class ProductManager
         if ($type == 'translated') {
             $query = $query->sortBy(function ($product) use ($keyword) {
                 $translationValue = $product->translations->first()?->value ?? $product->name;
+
                 return strpos($translationValue, $keyword);
             });
         }
@@ -1518,6 +1542,7 @@ class ProductManager
             $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
             $totalSize = $query->count();
             $results = $query->forPage($currentPage, $dataLimit);
+
             return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $dataLimit, currentPage: $currentPage, options: [
                 'path' => Paginator::resolveCurrentPath(),
                 'appends' => $appends,
@@ -1529,10 +1554,10 @@ class ProductManager
 
     public static function getPriorityWiseFlashDealsProductsQuery($id = null, $userId = null): array
     {
-        $cacheKey = 'cache_flash_deal_' . ($id ?? 'default');
+        $cacheKey = 'cache_flash_deal_'.($id ?? 'default');
         $cacheKeys = Cache::get(CACHE_FLASH_DEAL_KEYS, []);
 
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_FLASH_DEAL_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -1558,6 +1583,7 @@ class ProductManager
                 userId: $userId,
             );
         }
+
         return [
             'flashDeal' => $flashDeal ?? null,
             'flashDealProducts' => isset($flashDealProducts) ? ($flashDealProducts?->take(10) ?? null) : null,
@@ -1610,6 +1636,7 @@ class ProductManager
             if (isset($flashDealSortBy['temporary_close_sorting']) && $flashDealSortBy['temporary_close_sorting'] == 'desc') {
                 $query = $query->sortBy('is_shop_temporary_close');
             }
+
             return $query;
         }
 
@@ -1626,15 +1653,15 @@ class ProductManager
                 $query = $query->filter(function ($shop) {
                     return $shop->average_rating >= 4;
                 });
-            } else if ($topVendorsSortBy['minimum_rating_point'] == '3.5') {
+            } elseif ($topVendorsSortBy['minimum_rating_point'] == '3.5') {
                 $query = $query->filter(function ($shop) {
                     return $shop->average_rating >= 3.5;
                 });
-            } else if ($topVendorsSortBy['minimum_rating_point'] == '3') {
+            } elseif ($topVendorsSortBy['minimum_rating_point'] == '3') {
                 $query = $query->filter(function ($shop) {
                     return $shop->average_rating >= 3;
                 });
-            } else if ($topVendorsSortBy['minimum_rating_point'] == '2') {
+            } elseif ($topVendorsSortBy['minimum_rating_point'] == '2') {
                 $query = $query->filter(function ($shop) {
                     return $shop->average_rating >= 2;
                 });
@@ -1669,8 +1696,10 @@ class ProductManager
             if ($topVendorsSortBy['temporary_close_sorting'] == 'desc') {
                 $query = $query->sortBy('temporary_close');
             }
+
             return $query;
         }
+
         return $query;
     }
 
@@ -1718,6 +1747,7 @@ class ProductManager
 
             return $query;
         }
+
         return $query;
     }
 
@@ -1756,6 +1786,7 @@ class ProductManager
             if ($vendorProductListSortBy['out_of_stock_product'] == 'desc') {
                 $query = self::mergeStockAndOutOfStockProduct(query: $query);
             }
+
             return $query;
         }
 
@@ -1765,17 +1796,17 @@ class ProductManager
     public static function applySellerFilters($query, $request)
     {
         return $query
-            ->when($request->brand_id, fn($query) => $query->where('brand_id', $request->brand_id))
-            ->when($request->category_id, fn($query) => $query->where('category_id', $request->category_id))
-            ->when($request->sub_category_id, fn($query) => $query->where('sub_category_id', $request->sub_category_id))
-            ->when($request->sub_sub_category_id, fn($query) => $query->where('sub_sub_category_id', $request->sub_sub_category_id))
-            ->when($request->product_type, fn($query) => $query->where('product_type', $request->product_type))
+            ->when($request->brand_id, fn ($query) => $query->where('brand_id', $request->brand_id))
+            ->when($request->category_id, fn ($query) => $query->where('category_id', $request->category_id))
+            ->when($request->sub_category_id, fn ($query) => $query->where('sub_category_id', $request->sub_category_id))
+            ->when($request->sub_sub_category_id, fn ($query) => $query->where('sub_sub_category_id', $request->sub_sub_category_id))
+            ->when($request->product_type, fn ($query) => $query->where('product_type', $request->product_type))
             ->when($request->publishing_house_id, function ($query) use ($request) {
-                $query->whereHas('digitalProductPublishingHouse', fn($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
+                $query->whereHas('digitalProductPublishingHouse', fn ($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
                 );
             })
             ->when($request->author_id, function ($query) use ($request) {
-                $query->whereHas('digitalProductAuthors', fn($subQuery) => $subQuery->where('author_id', $request->author_id)
+                $query->whereHas('digitalProductAuthors', fn ($subQuery) => $subQuery->where('author_id', $request->author_id)
                 );
             });
     }
@@ -1788,7 +1819,7 @@ class ProductManager
                     return $query->where(['temporary_close' => 0]);
                 })->orWhere(function ($query) use ($temporaryCloseStatus) {
                     $inHouseShopInTemporaryClose = Cache::get(IN_HOUSE_SHOP_TEMPORARY_CLOSE_STATUS);
-                    if (!$inHouseShopInTemporaryClose && $temporaryCloseStatus == 'hide') {
+                    if (! $inHouseShopInTemporaryClose && $temporaryCloseStatus == 'hide') {
                         return $query->where(['added_by' => 'admin']);
                     } else {
                         return $query;
@@ -1806,6 +1837,7 @@ class ProductManager
         $outOfStock = $query->filter(function ($product) {
             return $product->current_stock <= 0 && $product->product_type != 'digital';
         });
+
         return $stockProduct->merge($outOfStock);
     }
 
@@ -1814,14 +1846,15 @@ class ProductManager
         $publishingHouseList = PublishingHouse::with(['publishingHouseProducts.product'])
             ->withCount(['publishingHouseProducts' => function ($query) use ($productIds, $vendorId, $type) {
                 return $query->whereHas('product', function ($query) use ($productIds, $vendorId, $type) {
-                    return $query->active()->where('product_type', 'digital')->when(!empty($productIds), function ($query) use ($productIds) {
+                    return $query->active()->where('product_type', 'digital')->when(! empty($productIds), function ($query) use ($productIds) {
                         return $query->whereIn('id', $productIds);
-                    })->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+                    })->when($vendorId && $vendorId == 0, function ($query) {
                         return $query->where(['added_by' => 'admin']);
                     })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                         return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
                     })->when(request('offer_type') == 'clearance_sale', function ($query) {
                         $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                         return $query->whereIn('id', $stockClearanceProductIds);
                     })->when(request('offer_type') == 'flash-deals' || FacadesRequest::is('flash-deals/*'), function ($query) use ($type) {
                         return $query->when($type != 'count', function ($query) {
@@ -1829,11 +1862,11 @@ class ProductManager
                         });
                     });
                 });
-            }])->when(!empty($productIds), function ($query) use ($productIds, $vendorId) {
+            }])->when(! empty($productIds), function ($query) use ($productIds, $vendorId) {
                 return $query->whereHas('publishingHouseProducts.product', function ($query) use ($productIds, $vendorId) {
-                    return $query->active()->where('product_type', 'digital')->when(!empty($productIds), function ($query) use ($productIds, $vendorId) {
+                    return $query->active()->where('product_type', 'digital')->when(! empty($productIds), function ($query) use ($productIds) {
                         return $query->whereIn('id', $productIds);
-                    })->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+                    })->when($vendorId && $vendorId == 0, function ($query) {
                         return $query->where(['added_by' => 'admin']);
                     })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                         return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
@@ -1857,16 +1890,17 @@ class ProductManager
         $productCount = Product::active()
             ->where(['product_type' => 'digital'])
             ->whereNotIn('id', $productIdsArray)
-            ->when(!empty($productIds), function ($query) use ($productIds) {
+            ->when(! empty($productIds), function ($query) use ($productIds) {
                 return $query->whereIn('id', $productIds);
             })
-            ->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+            ->when($vendorId && $vendorId == 0, function ($query) {
                 return $query->where(['added_by' => 'admin']);
             })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                 return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
             })
-            ->when(request('offer_type') == 'clearance_sale', function ($query) use ($vendorId) {
+            ->when(request('offer_type') == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
             ->when(request('offer_type') == 'flash-deals' || FacadesRequest::is('flash-deals/*'), function ($query) use ($type) {
@@ -1877,14 +1911,16 @@ class ProductManager
             ->count();
         if ($productCount > 0) {
             $unknownItem = new PublishingHouse([
-                "name" => "Unknown",
-                "created_at" => now(),
-                "updated_at" => now(),
+                'name' => 'Unknown',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
             $unknownItem['id'] = 0;
             $unknownItem['publishing_house_products_count'] = $productCount;
+
             return $publishingHouseList->push($unknownItem);
         }
+
         return $publishingHouseList;
     }
 
@@ -1892,28 +1928,29 @@ class ProductManager
     {
         $authorList = Author::withCount(['digitalProductAuthor' => function ($query) use ($productIds, $vendorId) {
             return $query->whereHas('product', function ($query) use ($productIds, $vendorId) {
-                return $query->active()->where('product_type', 'digital')->when(!empty($productIds), function ($query) use ($productIds, $vendorId) {
+                return $query->active()->where('product_type', 'digital')->when(! empty($productIds), function ($query) use ($productIds) {
                     return $query->whereIn('id', $productIds);
                 })
-                    ->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+                    ->when($vendorId && $vendorId == 0, function ($query) {
                         return $query->where(['added_by' => 'admin']);
                     })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                         return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
                     })
                     ->when(request('offer_type') == 'clearance_sale', function ($query) {
                         $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                         return $query->whereIn('id', $stockClearanceProductIds);
                     })
                     ->when(request('offer_type') == 'flash-deals' || FacadesRequest::is('flash-deals/*'), function ($query) {
                         return $query->whereHas('flashDealProducts.flashDeal');
                     });
             });
-        }])->when(!empty($productIds), function ($query) use ($productIds, $vendorId) {
+        }])->when(! empty($productIds), function ($query) use ($productIds, $vendorId) {
             return $query->whereHas('digitalProductAuthor.product', function ($query) use ($productIds, $vendorId) {
-                return $query->active()->where('product_type', 'digital')->when(!empty($productIds), function ($query) use ($productIds) {
+                return $query->active()->where('product_type', 'digital')->when(! empty($productIds), function ($query) use ($productIds) {
                     return $query->whereIn('id', $productIds);
                 })
-                    ->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+                    ->when($vendorId && $vendorId == 0, function ($query) {
                         return $query->where(['added_by' => 'admin']);
                     })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                         return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
@@ -1937,15 +1974,16 @@ class ProductManager
         $productCount = Product::active()
             ->where(['product_type' => 'digital'])
             ->whereNotIn('id', $productIdsArray)
-            ->when(!empty($productIds), function ($query) use ($productIds) {
+            ->when(! empty($productIds), function ($query) use ($productIds) {
                 return $query->whereIn('id', $productIds);
             })
-            ->when($vendorId && $vendorId == 0, function ($query) use ($vendorId) {
+            ->when($vendorId && $vendorId == 0, function ($query) {
                 return $query->where(['added_by' => 'admin']);
             })->when($vendorId && $vendorId != 0, function ($query) use ($vendorId) {
                 return $query->where(['user_id' => $vendorId, 'added_by' => 'seller']);
-            })->when(request('offer_type') == 'clearance_sale', function ($query) use ($vendorId) {
+            })->when(request('offer_type') == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
             ->when(request('offer_type') == 'flash-deals' || FacadesRequest::is('flash-deals/*'), function ($query) {
@@ -1954,14 +1992,16 @@ class ProductManager
             ->count();
         if ($productCount > 0) {
             $unknownItem = new Author([
-                "name" => "Unknown",
-                "created_at" => now(),
-                "updated_at" => now(),
+                'name' => 'Unknown',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
             $unknownItem['id'] = 0;
             $unknownItem['digital_product_author_count'] = $productCount;
+
             return $authorList->push($unknownItem);
         }
+
         return $authorList;
     }
 
@@ -1984,6 +2024,7 @@ class ProductManager
 
             $productIdsArray = $flashDealProducts?->whereNotNull('id')?->pluck('id')->toArray() ?? [];
         }
+
         return $productIdsArray;
     }
 
@@ -1991,7 +2032,7 @@ class ProductManager
     {
         if ($request->has('category_ids')) {
             $filteredData = array_filter($request['category_ids'], function ($value) {
-                return !is_null($value) && $value != 'all';
+                return ! is_null($value) && $value != 'all';
             });
 
             $request->merge(['category_ids' => $filteredData]);
@@ -2009,13 +2050,12 @@ class ProductManager
 
         $productIdsForPublisher = [];
         foreach ($publishingHouseList as $publishingHouseGroup) {
-            if (!empty($publishingHouseGroup->publishingHouseProducts)) {
+            if (! empty($publishingHouseGroup->publishingHouseProducts)) {
                 foreach ($publishingHouseGroup->publishingHouseProducts as $publishingHouse) {
                     $productIdsForPublisher[] = $publishingHouse->product_id;
                 }
             }
         }
-
 
         $productIdsForUnknownPublisher = Product::active()->where(['product_type' => 'digital'])->whereNotIn('id', $productIdsForPublisher)->pluck('id')->toArray();
 
@@ -2025,10 +2065,9 @@ class ProductManager
             });
         }])->get();
 
-
         $productIdsForAuthor = [];
         foreach ($authorList as $authorGroup) {
-            if (!empty($authorGroup->digitalProductAuthor)) {
+            if (! empty($authorGroup->digitalProductAuthor)) {
                 foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                     $productIdsForAuthor[] = $authorItem->product_id;
                 }
@@ -2043,7 +2082,7 @@ class ProductManager
             $type = 'flash-deals';
         }
 
-        if ($request->has('search_category_value') && !$request->has('category_ids')) {
+        if ($request->has('search_category_value') && ! $request->has('category_ids')) {
             unset($request['search_category_value']);
         }
 
@@ -2069,17 +2108,18 @@ class ProductManager
             ->withSum('orderDetails', 'qty', function ($query) {
                 $query->where('delivery_status', 'delivered');
             })
-            ->when($type == 'flash-deals' && $request->has('flash_deals_id') && !empty($request['flash_deals_id']), function ($query) use ($request) {
+            ->when($type == 'flash-deals' && $request->has('flash_deals_id') && ! empty($request['flash_deals_id']), function ($query) use ($request) {
                 $flashDealProducts = FlashDealProduct::where(['flash_deal_id' => $request['flash_deals_id']])?->pluck('product_id')?->toArray() ?? [];
+
                 return $query->whereIn('id', $flashDealProducts);
             })
             ->when($request['data_from'] == 'brand' && $request['brand_id'], function ($query) use ($request) {
                 return $query->where('brand_id', $request['brand_id']);
             })
-            ->when($request->has('brand_ids') && !empty($request['brand_ids']) && is_array($request['brand_ids']), function ($query) use ($request) {
+            ->when($request->has('brand_ids') && ! empty($request['brand_ids']) && is_array($request['brand_ids']), function ($query) use ($request) {
                 return $query->whereIn('brand_id', $request['brand_ids']);
             })
-            ->when($request->has('search_category_value') && !empty($request['search_category_value']) && $request['search_category_value'] != 'all', function ($query) use ($request) {
+            ->when($request->has('search_category_value') && ! empty($request['search_category_value']) && $request['search_category_value'] != 'all', function ($query) use ($request) {
                 return $query->where(['category_id' => $request['search_category_value']])
                     ->orWhere(function ($query) use ($request) {
                         $query->where('sub_category_id', $request['search_category_value']);
@@ -2090,15 +2130,17 @@ class ProductManager
             })
             ->when($request['offer_type'] == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
             ->when($request['offer_type'] == 'clearance_sale' && $productUserID && $productAddedBy == 'seller', function ($query) use ($productUserID, $productAddedBy) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->where(['added_by' => $productAddedBy, 'user_id' => $productUserID])->whereIn('id', $stockClearanceProductIds);
             })
             ->when(
                 ($request['data_from'] == 'category' && ($request['category_id'] || $request['sub_category_id'] || $request['sub_sub_category_id'])) ||
-                ($request->has('category_ids') && !empty($request['category_ids']) && is_array($request['category_ids'])),
+                ($request->has('category_ids') && ! empty($request['category_ids']) && is_array($request['category_ids'])),
                 function ($query) use ($request, $productAddedBy, $productUserID) {
                     return self::addAdditionalQueryForCategoryWithSubCategories(
                         request: $request,
@@ -2111,9 +2153,10 @@ class ProductManager
                 $digitalPublishingHouseIds = DigitalProductPublishingHouse::whereHas('product', function ($query) {
                     return $query->active();
                 })->where(['publishing_house_id' => $request['publishing_house_id']])->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $digitalPublishingHouseIds ?? []);
             })
-            ->when($request->has('publishing_house_id') && $request['publishing_house_id'] != '' && $request['publishing_house_id'] == 0, function ($query) use ($request) {
+            ->when($request->has('publishing_house_id') && $request['publishing_house_id'] != '' && $request['publishing_house_id'] == 0, function ($query) {
                 $publishingHouseList = PublishingHouse::with(['publishingHouseProducts'])
                     ->whereHas('publishingHouseProducts.product', function ($query) {
                         return $query->active();
@@ -2126,15 +2169,16 @@ class ProductManager
 
                 $productIds = [];
                 foreach ($publishingHouseList as $publishingHouseGroup) {
-                    if (!empty($publishingHouseGroup->publishingHouseProducts)) {
+                    if (! empty($publishingHouseGroup->publishingHouseProducts)) {
                         foreach ($publishingHouseGroup->publishingHouseProducts as $publishingHouse) {
                             $productIds[] = $publishingHouse->product_id;
                         }
                     }
                 }
+
                 return $query->where(['product_type' => 'digital'])->whereNotIn('id', $productIds);
             })
-            ->when($request->has('publishing_house_ids') && !empty($request['publishing_house_ids']), function ($query) use ($request, $productIdsForUnknownPublisher) {
+            ->when($request->has('publishing_house_ids') && ! empty($request['publishing_house_ids']), function ($query) use ($request, $productIdsForUnknownPublisher) {
                 $publishingHouseList = PublishingHouse::whereIn('id', $request['publishing_house_ids'])->with(['publishingHouseProducts'])->withCount(['publishingHouseProducts' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -2143,7 +2187,7 @@ class ProductManager
 
                 $publishingHouseProductIds = [];
                 foreach ($publishingHouseList as $publishingHouseGroup) {
-                    if (!empty($publishingHouseGroup->publishingHouseProducts)) {
+                    if (! empty($publishingHouseGroup->publishingHouseProducts)) {
                         foreach ($publishingHouseGroup->publishingHouseProducts as $publishingHouse) {
                             $publishingHouseProductIds[] = $publishingHouse->product_id;
                         }
@@ -2158,9 +2202,10 @@ class ProductManager
             })
             ->when($request->has('author_id') && $request['author_id'] != '' && $request['author_id'] != 0, function ($query) use ($request) {
                 $digitalAuthorIds = DigitalProductAuthor::where(['author_id' => $request['author_id']])->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $digitalAuthorIds);
             })
-            ->when($request->has('author_id') && $request['author_id'] != '' && $request['author_id'] == 0, function ($query) use ($request) {
+            ->when($request->has('author_id') && $request['author_id'] != '' && $request['author_id'] == 0, function ($query) {
                 $authorList = Author::withCount(['digitalProductAuthor' => function ($query) {
                     return $query->whereHas('product', function ($query) {
                         return $query->active();
@@ -2169,15 +2214,16 @@ class ProductManager
 
                 $productIds = [];
                 foreach ($authorList as $authorGroup) {
-                    if (!empty($authorGroup->digitalProductAuthor)) {
+                    if (! empty($authorGroup->digitalProductAuthor)) {
                         foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                             $productIds[] = $authorItem->product_id;
                         }
                     }
                 }
+
                 return $query->where(['product_type' => 'digital'])->whereNotIn('id', $productIds);
             })
-            ->when($request->has('author_ids') && !empty($request['author_ids']) && is_array($request['author_ids']), function ($query) use ($request, $productIdsForUnknownAuthor) {
+            ->when($request->has('author_ids') && ! empty($request['author_ids']) && is_array($request['author_ids']), function ($query) use ($request, $productIdsForUnknownAuthor) {
 
                 $authorList = Author::whereIn('id', $request['author_ids'])->withCount(['digitalProductAuthor' => function ($query) {
                     return $query->whereHas('product', function ($query) {
@@ -2187,7 +2233,7 @@ class ProductManager
 
                 $authorProductIds = [];
                 foreach ($authorList as $authorGroup) {
-                    if (!empty($authorGroup->digitalProductAuthor)) {
+                    if (! empty($authorGroup->digitalProductAuthor)) {
                         foreach ($authorGroup->digitalProductAuthor as $authorItem) {
                             $authorProductIds[] = $authorItem->product_id;
                         }
@@ -2197,10 +2243,12 @@ class ProductManager
                 if (in_array(0, $request['author_ids'])) {
                     $authorProductIds = array_merge($authorProductIds, $productIdsForUnknownAuthor);
                 }
+
                 return $query->where(['product_type' => 'digital'])->whereIn('id', $authorProductIds);
             })
             ->when($request['offer_type'] == 'discounted', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->where(function ($subQuery) use ($stockClearanceProductIds) {
                     return $subQuery->where(function ($query) {
                         return $query->where('discount', '!=', 0);
@@ -2213,33 +2261,35 @@ class ProductManager
                 $wishListItems = Wishlist::with('product')
                     ->select('product_id', DB::raw('COUNT(product_id) as count'))
                     ->groupBy('product_id')
-                    ->orderBy("count", 'desc')
+                    ->orderBy('count', 'desc')
                     ->get();
                 $getWishListedProductIds = [];
                 foreach ($wishListItems as $detail) {
                     $getWishListedProductIds[] = $detail['product_id'];
                 }
+
                 return $query->whereIn('id', $getWishListedProductIds);
             })
             ->when(($request['data_from'] == 'latest' || $request['data_from'] == ''), function ($query) {
                 return $query->orderBy('id', 'desc');
             })
-            ->when($request->has('color_ids') && !empty($request['color_ids']) && is_array($request['color_ids']), function ($query) use ($request) {
+            ->when($request->has('color_ids') && ! empty($request['color_ids']) && is_array($request['color_ids']), function ($query) use ($request) {
                 return $query->where(function ($query) use ($request) {
                     foreach ($request['color_ids'] as $color) {
-                        $query->orWhere('colors', 'like', '%' . $color . '%');
+                        $query->orWhere('colors', 'like', '%'.$color.'%');
                     }
                 });
             })
-            ->when($request['data_from'] == 'top-rated', function ($query) use ($request) {
+            ->when($request['data_from'] == 'top-rated', function ($query) {
                 $reviews = Review::select('product_id', DB::raw('AVG(rating) as count'))->groupBy('product_id')->get();
                 $getReviewProductIds = [];
                 foreach ($reviews as $review) {
                     $getReviewProductIds[] = $review['product_id'];
                 }
+
                 return $query->whereIn('id', $getReviewProductIds);
             })
-            ->when($request['data_from'] == 'best-selling', function ($query) use ($request) {
+            ->when($request['data_from'] == 'best-selling', function ($query) {
                 $orderDetails = OrderDetail::with('product')
                     ->select('product_id', DB::raw('COUNT(product_id) as count'))
                     ->groupBy('product_id')
@@ -2248,19 +2298,22 @@ class ProductManager
                 foreach ($orderDetails as $detail) {
                     $getOrderedProductIds[] = $detail['product_id'];
                 }
+
                 return $query->whereIn('id', $getOrderedProductIds);
             })
-            ->when($request['offer_type'] == 'featured_deal', function ($query) use ($request) {
+            ->when($request['offer_type'] == 'featured_deal', function ($query) {
                 $featuredDealID = FlashDeal::where(['deal_type' => 'feature_deal', 'status' => 1])->whereDate('start_date', '<=', date('Y-m-d'))
                     ->whereDate('end_date', '>=', date('Y-m-d'))->pluck('id')->first();
                 $featuredDealProductIDs = $featuredDealID ? FlashDealProduct::where('flash_deal_id', $featuredDealID)->pluck('product_id')->toArray() : [];
+
                 return $query->whereIn('id', $featuredDealProductIDs);
             })
-            ->when($request->has('name') && !empty($request['name']), function ($query) use ($request) {
+            ->when($request->has('name') && ! empty($request['name']), function ($query) use ($request) {
                 $searchName = str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', preg_replace('/\s\s+/', ' ', $request['name']));
+
                 return $query->orderByRaw("CASE WHEN name LIKE '%{$searchName}%' THEN 1 ELSE 2 END, LOCATE('{$searchName}', name), name");
             })
-            ->when(($request['data_from'] == 'search' && !empty($request['search'])) || !empty($request['name']) || !empty($request['product_name']), function ($query) use ($request) {
+            ->when(($request['data_from'] == 'search' && ! empty($request['search'])) || ! empty($request['name']) || ! empty($request['product_name']), function ($query) use ($request) {
                 $searchKey = $request->search ? $request->search : ($request['product_name'] ?? $request['name']);
                 $productsIDArray = [];
                 $searchProducts = ProductManager::search_products($request, $searchKey);
@@ -2274,22 +2327,25 @@ class ProductManager
                 }
 
                 $searchName = str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', preg_replace('/\s\s+/', ' ', $searchKey));
-                return $query->when(!empty($productsIDArray), function ($query) use ($productsIDArray) {
+
+                return $query->when(! empty($productsIDArray), function ($query) use ($productsIDArray) {
                     return $query->whereIn('id', $productsIDArray);
-                })->when(empty($productsIDArray), function ($query) use ($productsIDArray) {
+                })->when(empty($productsIDArray), function ($query) {
                     return $query->whereIn('id', [0]);
                 })->orderByRaw("CASE WHEN name LIKE '%{$searchName}%' THEN 1 ELSE 2 END, LOCATE('{$searchName}', name), name");
             })
             ->when(($request['min_price'] != null && $request['min_price'] > 0), function ($query) use ($request) {
                 $minPrice = Convert::usdPaymentModule($request['min_price'] ?? 0, session('currency_code'));
+
                 return $query->where('unit_price', '>=', $minPrice);
             })
             ->when(($request['max_price'] != null), function ($query) use ($request) {
                 $maxPrice = Convert::usdPaymentModule($request['max_price'] ?? 0, session('currency_code'));
+
                 return $query->where('unit_price', '<=', $maxPrice);
             })
-            ->when($request['ratings'] != null, function ($query) use ($request) {
-                return $query->whereHas('rating', function ($query) use ($request) {
+            ->when($request['ratings'] != null, function ($query) {
+                return $query->whereHas('rating', function ($query) {
                     return $query;
                 });
             });
@@ -2336,8 +2392,9 @@ class ProductManager
         }
 
         if ($request['rating'] != null) {
-            $productListData = $productListData->map(function ($product) use ($request) {
+            $productListData = $productListData->map(function ($product) {
                 $product->rating = $product?->rating?->pluck('average')[0] ?? 0;
+
                 return $product;
             });
 
@@ -2355,12 +2412,14 @@ class ProductManager
             ->when($productAddedBy == 'admin', function ($query) use ($productAddedBy) {
                 return $query->where(['added_by' => $productAddedBy]);
             })
-            ->when($request['offer_type'] == 'clearance_sale', function ($query) use ($productAddedBy) {
+            ->when($request['offer_type'] == 'clearance_sale', function ($query) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->where('added_by', 'admin')->pluck('product_id')->toArray();
+
                 return $query->whereIn('id', $stockClearanceProductIds);
             })
             ->when($request['offer_type'] == 'clearance_sale' && $productUserID && $productAddedBy == 'seller', function ($query) use ($productUserID, $productAddedBy) {
                 $stockClearanceProductIds = StockClearanceProduct::active()->pluck('product_id')->toArray();
+
                 return $query->where(['added_by' => $productAddedBy, 'user_id' => $productUserID])->whereIn('id', $stockClearanceProductIds);
             })
             ->when($productUserID && $productAddedBy == 'seller', function ($query) use ($productUserID, $productAddedBy) {
@@ -2414,7 +2473,7 @@ class ProductManager
                 });
             }
 
-            if (!empty($stockClearanceVendors)) {
+            if (! empty($stockClearanceVendors)) {
                 $query = $query->sortBy(function ($query) use ($stockClearanceVendors) {
                     return array_search($query?->clearanceSale?->shop_id, $stockClearanceVendors);
                 });
@@ -2432,6 +2491,7 @@ class ProductManager
                 $currentPage = $offset ?? Paginator::resolveCurrentPage('page');
                 $totalSize = $query->count();
                 $results = $query->forPage($currentPage, $dataLimit);
+
                 return new LengthAwarePaginator(items: $results, total: $totalSize, perPage: $dataLimit, currentPage: $currentPage, options: [
                     'path' => Paginator::resolveCurrentPath(),
                     'appends' => $appends,
@@ -2451,7 +2511,7 @@ class ProductManager
     public static function cacheCartListAllUserKeys(string $cacheKey): void
     {
         $cacheKeys = Cache::get(CACHE_CART_LIST_ALL_USER_CACHE_KEYS, []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_CART_LIST_ALL_USER_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -2461,7 +2521,7 @@ class ProductManager
     {
         $user = Helpers::getCustomerInformation($request);
 
-        $cacheKey = 'cache_cart_list_for_' . ($user == 'offline' ? 'guest_' . session('guest_id') ?? ($request->guest_id ?? 0) : 'customer_' . $user->id);
+        $cacheKey = 'cache_cart_list_for_'.($user == 'offline' ? 'guest_'.session('guest_id') ?? ($request->guest_id ?? 0) : 'customer_'.$user->id);
         self::cacheCartListAllUserKeys(cacheKey: $cacheKey);
 
         $cartItemsList = Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($request, $user) {
@@ -2482,9 +2542,9 @@ class ProductManager
                 if ($cartItem->tax != $productTax) {
                     Cart::where(['id' => $cartItem['id']])->update(['tax' => $productTax]);
                 }
-            } else if (!empty($cartItem->variant) && $cartItem->product_type == 'physical') {
+            } elseif (! empty($cartItem->variant) && $cartItem->product_type == 'physical') {
                 $productVariation = json_decode($cartItemProduct?->variation ?? '', true);
-                if (!empty($productVariation)) {
+                if (! empty($productVariation)) {
                     foreach ($productVariation as $variation) {
                         if (isset($variation['price'])) {
                             $productTax = Helpers::tax_calculation(product: $cartItemProduct, price: $variation['price'], tax: $cartItemProduct['tax'], tax_type: 'percent');
@@ -2494,8 +2554,8 @@ class ProductManager
                         }
                     }
                 }
-            } else if ($cartItem->product_type == 'digital') {
-                if (!empty($cartItem->variant) && $cartItemProduct?->digitalVariation && !empty($cartItemProduct?->digitalVariation)) {
+            } elseif ($cartItem->product_type == 'digital') {
+                if (! empty($cartItem->variant) && $cartItemProduct?->digitalVariation && ! empty($cartItemProduct?->digitalVariation)) {
                     foreach ($cartItemProduct->digitalVariation as $variation) {
                         $productTax = Helpers::tax_calculation(product: $cartItemProduct, price: $cartItemProduct->unit_price, tax: $cartItemProduct['tax'], tax_type: 'percent');
                         if ($cartItem->variant == $variation['variant_key'] && $variation['tax'] != $cartItem['tax']) {
@@ -2507,17 +2567,17 @@ class ProductManager
 
             if (empty($cartItem->variant) && $cartItem->price != $cartItemProduct->unit_price) {
                 Cart::where(['id' => $cartItem['id']])->update(['price' => $cartItemProduct->unit_price]);
-            } else if (!empty($cartItem->variant) && $cartItem->product_type == 'physical') {
+            } elseif (! empty($cartItem->variant) && $cartItem->product_type == 'physical') {
                 $productVariation = json_decode($cartItemProduct?->variation ?? '', true);
-                if (!empty($productVariation)) {
+                if (! empty($productVariation)) {
                     foreach ($productVariation as $variation) {
                         if (isset($variation['type']) && isset($variation['price']) && $variation['type'] == $cartItem->variant && $variation['price'] != $cartItem['price']) {
                             Cart::where(['id' => $cartItem['id']])->update(['price' => $variation['price']]);
                         }
                     }
                 }
-            } else if ($cartItem->product_type == 'digital') {
-                if (!empty($cartItem->variant) && $cartItemProduct?->digitalVariation && !empty($cartItemProduct?->digitalVariation)) {
+            } elseif ($cartItem->product_type == 'digital') {
+                if (! empty($cartItem->variant) && $cartItemProduct?->digitalVariation && ! empty($cartItemProduct?->digitalVariation)) {
                     foreach ($cartItemProduct->digitalVariation as $variation) {
                         if ($cartItem->variant == $variation['variant_key'] && $variation['price'] != $cartItem['price']) {
                             Cart::where(['id' => $cartItem['id']])->update(['price' => $variation['price']]);
@@ -2531,9 +2591,8 @@ class ProductManager
     public static function addAdditionalQueryForCategoryWithSubCategories(
         object|array $request,
         object|array $query, mixed $productAddedBy, mixed $productUserID
-    )
-    {
-        if ($request->has('category_ids') && !empty($request['category_ids']) && is_array($request['category_ids'])) {
+    ) {
+        if ($request->has('category_ids') && ! empty($request['category_ids']) && is_array($request['category_ids'])) {
             $getCategories = Category::whereIn('id', ($request['category_ids'] ?? [0]))->get();
             $getSubCategories = Category::whereIn('id', ($request['sub_category_ids'] ?? [0]))->get();
             $getSubSubCategories = Category::whereIn('id', ($request['sub_sub_category_ids'] ?? [0]))->get();
@@ -2544,11 +2603,11 @@ class ProductManager
         }
 
         $filteredSubCategories = $getSubCategories->filter(function ($subCategory) use ($getSubSubCategories) {
-            return !$getSubSubCategories->pluck('parent_id')->contains($subCategory->id);
+            return ! $getSubSubCategories->pluck('parent_id')->contains($subCategory->id);
         });
 
         $filteredCategories = $getCategories->filter(function ($category) use ($getSubCategories) {
-            return !$getSubCategories->pluck('parent_id')->contains($category->id);
+            return ! $getSubCategories->pluck('parent_id')->contains($category->id);
         });
 
         $filteredCategoryIds = $filteredCategories->pluck('id')->toArray();
@@ -2557,7 +2616,7 @@ class ProductManager
 
         $getCategoryWiseProductIds = [];
 
-        if (!empty($filteredCategoryIds)) {
+        if (! empty($filteredCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('category_id', $filteredCategoryIds),
@@ -2566,7 +2625,7 @@ class ProductManager
             ));
         }
 
-        if (!empty($filteredSubCategoryIds)) {
+        if (! empty($filteredSubCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('sub_category_id', $filteredSubCategoryIds),
@@ -2575,7 +2634,7 @@ class ProductManager
             ));
         }
 
-        if (!empty($filteredSubSubCategoryIds)) {
+        if (! empty($filteredSubSubCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('sub_sub_category_id', $filteredSubSubCategoryIds),
@@ -2590,10 +2649,10 @@ class ProductManager
     public static function addAdditionalQueryForCategoryProduct(object|array $request, object|array $query, mixed $productAddedBy = null, mixed $productUserID = null)
     {
         return $query->active()
-            ->when(!empty($productAddedBy) && $productAddedBy == 'admin', function ($query) use ($productAddedBy) {
+            ->when(! empty($productAddedBy) && $productAddedBy == 'admin', function ($query) use ($productAddedBy) {
                 return $query->where(['added_by' => $productAddedBy]);
             })
-            ->when(!empty($productUserID) && $productAddedBy == 'seller', function ($query) use ($productUserID, $productAddedBy) {
+            ->when(! empty($productUserID) && $productAddedBy == 'seller', function ($query) use ($productUserID, $productAddedBy) {
                 return $query->where(['added_by' => $productAddedBy, 'user_id' => $productUserID]);
             })
             ->when(isset($request['product_type']) && in_array($request['product_type'], ['physical', 'digital']), function ($query) use ($request) {
@@ -2612,6 +2671,7 @@ class ProductManager
                 $result = array_merge($result, self::getInitialProductCombineOptions($arrays, array_merge($prefix, [$item])));
             }
         }
+
         return $result;
     }
 
@@ -2627,7 +2687,7 @@ class ProductManager
         if ($product['product_type'] == 'digital') {
             $digitalVariation = DigitalProductVariation::where([
                 'product_id' => $product['id'],
-                'variant_key' => $product['digitalVariation']?->first()?->variant_key ?? ""
+                'variant_key' => $product['digitalVariation']?->first()?->variant_key ?? '',
             ])->first();
 
             if ($digitalVariation) {
@@ -2663,7 +2723,7 @@ class ProductManager
                     $colorName = $getColors->firstWhere('code', $color)->name;
 
                     foreach ($optionCombinations as $combination) {
-                        $possibleVariant[] = $colorName . '-' . implode('-', $combination);
+                        $possibleVariant[] = $colorName.'-'.implode('-', $combination);
                     }
                 }
             } catch (Exception $e) {
@@ -2685,38 +2745,37 @@ class ProductManager
 
         $restockRequestStatus = 0;
         if (auth('customer')->check()) {
-            $restockRequestStatus = (int)(RestockProduct::where([
-                    'product_id' => $product['id'],
-                    'variant' => $firstVariant,
-                ])
-                    ->whereHas('restockProductCustomers', function ($query) {
-                        return $query->where('customer_id', auth('customer')->id());
-                    })->whereHas('product', function ($query) {
-                        return $query->active();
-                    })
-                    ->count() > 0);
+            $restockRequestStatus = (int) (RestockProduct::where([
+                'product_id' => $product['id'],
+                'variant' => $firstVariant,
+            ])
+                ->whereHas('restockProductCustomers', function ($query) {
+                    return $query->where('customer_id', auth('customer')->id());
+                })->whereHas('product', function ($query) {
+                    return $query->active();
+                })
+                ->count() > 0);
         }
 
         $discountType = getProductPriceByType(product: $product, type: 'discount_type', result: 'string');
+
         return [
             'first_variant_in_cart' => $firstVariantInCart,
             'quantity' => $initialProductQuantity,
             'price' => $price,
-            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value') . '%',
+            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value').'%',
             'discount_type' => $discountType,
             'total_quantity_price' => $price * $initialProductQuantity,
             'variant' => $firstVariant,
-            'restock_request_status' => $restockRequestStatus
+            'restock_request_status' => $restockRequestStatus,
         ];
     }
-
 
     public static function filterQueryForCategoryWithSubCategories(
         object|array $request,
         object|array $query, mixed $productAddedBy = null, mixed $productUserID = null
-    )
-    {
-        if (isset($request['filter_category_ids']) && !empty($request['filter_category_ids']) && is_array($request['filter_category_ids'])) {
+    ) {
+        if (isset($request['filter_category_ids']) && ! empty($request['filter_category_ids']) && is_array($request['filter_category_ids'])) {
             $getCategories = Category::whereIn('id', ($request['filter_category_ids'] ?? [0]))->get();
             $getSubCategories = Category::whereIn('id', ($request['filter_sub_category_ids'] ?? [0]))->get();
             $getSubSubCategories = Category::whereIn('id', ($request['filter_sub_sub_category_ids'] ?? [0]))->get();
@@ -2727,11 +2786,11 @@ class ProductManager
         }
 
         $filteredSubCategories = $getSubCategories->filter(function ($subCategory) use ($getSubSubCategories) {
-            return !$getSubSubCategories->pluck('parent_id')->contains($subCategory->id);
+            return ! $getSubSubCategories->pluck('parent_id')->contains($subCategory->id);
         });
 
         $filteredCategories = $getCategories->filter(function ($category) use ($getSubCategories) {
-            return !$getSubCategories->pluck('parent_id')->contains($category->id);
+            return ! $getSubCategories->pluck('parent_id')->contains($category->id);
         });
 
         $filteredCategoryIds = $filteredCategories->pluck('id')->toArray();
@@ -2740,7 +2799,7 @@ class ProductManager
 
         $getCategoryWiseProductIds = [];
 
-        if (!empty($filteredCategoryIds)) {
+        if (! empty($filteredCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('category_id', $filteredCategoryIds),
@@ -2749,7 +2808,7 @@ class ProductManager
             ));
         }
 
-        if (!empty($filteredSubCategoryIds)) {
+        if (! empty($filteredSubCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('sub_category_id', $filteredSubCategoryIds),
@@ -2758,7 +2817,7 @@ class ProductManager
             ));
         }
 
-        if (!empty($filteredSubSubCategoryIds)) {
+        if (! empty($filteredSubSubCategoryIds)) {
             $getCategoryWiseProductIds = array_merge($getCategoryWiseProductIds, self::addAdditionalQueryForCategoryProduct(
                 request: $request,
                 query: Product::whereIn('sub_sub_category_id', $filteredSubSubCategoryIds),
@@ -2773,21 +2832,22 @@ class ProductManager
     public static function getSortFilterWhereInArrays(object|array $request): array
     {
         $filterWhereIn = [];
-        if (!empty($request['filter_brand_ids'])) {
+        if (! empty($request['filter_brand_ids'])) {
             $filterWhereIn['brand_id'] = array_values($request['filter_brand_ids']);
         }
 
-        if (!empty($request['filter_shop_ids'])) {
+        if (! empty($request['filter_shop_ids'])) {
             $filterWhereIn['shop_id'] = array_values($request['filter_shop_ids']);
         }
 
-        if (!empty($request['filter_product_types'])) {
+        if (! empty($request['filter_product_types'])) {
             $filterWhereIn['product_type'] = array_values($request['filter_product_types']);
         }
 
-        if (!empty($request['product_status'])) {
+        if (! empty($request['product_status'])) {
             $filterWhereIn['status'] = array_values($request['product_status']);
         }
+
         return $filterWhereIn;
     }
 
@@ -2808,17 +2868,18 @@ class ProductManager
         $finalImages = $images;
         if (
             $product->product_type === 'physical' &&
-            !empty($product->color_image) &&
-            !empty($product->color_images_full_url)
+            ! empty($product->color_image) &&
+            ! empty($product->color_images_full_url)
         ) {
             $keys = collect($product->color_images_full_url)
-                ->filter(fn($c) => ($c['color'] ?? null) === null)
+                ->filter(fn ($c) => ($c['color'] ?? null) === null)
                 ->pluck('image_name.key')
                 ->filter();
             if ($keys->isNotEmpty()) {
                 $finalImages = $images->whereIn('key', $keys)->values();
             }
         }
+
         return $finalImages->all();
     }
 }

@@ -4,41 +4,40 @@ namespace App\Services;
 
 use App\Traits\ProductTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class OrderEditService
 {
-
     use ProductTrait;
     use VatTaxManagement;
 
     public function getOrderEditSessionKey(string $orderId): string
     {
         $sessionKey = '';
-        $sessionSuffix = 'SESSION_FOR_EDIT_ORDER_' . $orderId;
+        $sessionSuffix = 'SESSION_FOR_EDIT_ORDER_'.$orderId;
         if (auth()->guard('admin')->check()) {
-            $sessionKey = 'ADMIN_' . $sessionSuffix;
-        } else if (auth()->guard('seller')->check()) {
-            $sessionKey = 'SELLER_' . $sessionSuffix;
+            $sessionKey = 'ADMIN_'.$sessionSuffix;
+        } elseif (auth()->guard('seller')->check()) {
+            $sessionKey = 'SELLER_'.$sessionSuffix;
         }
+
         return $sessionKey;
     }
 
     public function getOrderEditSession(object|array $order): array
     {
         $userType = auth()->guard('admin')->check() ? 'ADMIN' : (auth()->guard('seller')->check() ? 'SELLER' : 'DEFAULT');
-        $sessionKey = $userType . '_SESSION_FOR_EDIT_ORDER_' . $order['id'];
+        $sessionKey = $userType.'_SESSION_FOR_EDIT_ORDER_'.$order['id'];
         $session = Session::get($sessionKey, []);
-        if (!Session::has($sessionKey) || !isset($session['product_list'])) {
+        if (! Session::has($sessionKey) || ! isset($session['product_list'])) {
             Session::put($sessionKey, ['product_list' => $this->addOrderDetailsInSession(order: $order)]);
         }
+
         return Session::get($sessionKey, ['product_list' => $this->addOrderDetailsInSession(order: $order)]);
     }
 
-
-    public function getVariationFromRequest(object $request, string|null $colorName, array $choiceOptions): string
+    public function getVariationFromRequest(object $request, ?string $colorName, array $choiceOptions): string
     {
         $variation = '';
         if ($colorName) {
@@ -46,16 +45,16 @@ class OrderEditService
         }
         foreach ($choiceOptions as $choice) {
             if ($variation != null) {
-                $variation .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $variation .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $variation .= str_replace(' ', '', $request[$choice->name]);
             }
         }
+
         return $variation;
     }
 
-
-    public function getProductCurrentStockInfo(object|array $request, object|array $order, object|array $product, string|null $colorName = ''): array
+    public function getProductCurrentStockInfo(object|array $request, object|array $order, object|array $product, ?string $colorName = ''): array
     {
         $variations = json_decode($product->variation, true) ?? [];
         $hasVariations = is_array($variations) && count($variations) > 0;
@@ -74,11 +73,11 @@ class OrderEditService
                 return $variation['type'] == $generateVariation;
             }) ?? $variations[0];
 
-            $firstVariantType = $firstVariation['type'] ?? "";
+            $firstVariantType = $firstVariation['type'] ?? '';
             $currentStock = $firstVariation['qty'] ?? 0;
             $currentPrice = $firstVariation['price'] ?? 0;
             foreach ($variations as $v) {
-                if (!empty($v['qty']) && $v['qty'] > 0) {
+                if (! empty($v['qty']) && $v['qty'] > 0) {
                     $allVariationsOutOfStock = false;
                     break;
                 }
@@ -116,7 +115,7 @@ class OrderEditService
             'stock_out_status' => $allVariationsOutOfStock,
             'discount' => $discount,
             'discounted_price' => $discountedPrice,
-            'already_in_cart' => $alreadyInCart
+            'already_in_cart' => $alreadyInCart,
         ];
     }
 
@@ -149,9 +148,8 @@ class OrderEditService
             $discount = $activeProduct ? getProductPriceByType(product: $activeProduct, type: 'discounted_amount', result: 'value', price: $details['price']) : (getProductPriceByType(product: $product, type: 'discounted_amount', result: 'value', price: $details['price']) ?? 0);
             $discountedPrice = $activeProduct ? getProductPriceByType(product: $activeProduct, type: 'discounted_unit_price', result: 'value', price: $details['price']) : (getProductPriceByType(product: $product, type: 'discount', result: 'value', price: $details['price']) ?? 0);
 
-
             $checkActiveProduct = $productList?->firstWhere('id', $details['product_id']);
-            $isQuantityEditable = (bool)($checkActiveProduct);
+            $isQuantityEditable = (bool) ($checkActiveProduct);
 
             if ($checkActiveProduct) {
                 $detailsProductVariation = json_decode($product['variation'], true);
@@ -207,6 +205,7 @@ class OrderEditService
                 ];
             }
         }
+
         return $products;
     }
 
@@ -272,8 +271,8 @@ class OrderEditService
 
         $productData = [
             'current_stock' => $currentStock,
-            'existing_product' => (bool)$searchProductInDetails,
-            'existing_product_modified' => (bool)$searchProductInDetails,
+            'existing_product' => (bool) $searchProductInDetails,
+            'existing_product_modified' => (bool) $searchProductInDetails,
             'product_type' => $product['product_type'],
             'name' => $product['name'],
             'discounted_price' => $discountedPrice,
@@ -287,7 +286,7 @@ class OrderEditService
             'digital_file_after_sell' => $searchProductInDetails['digital_file_after_sell'] ?? null,
             'product_details' => $product,
             'active_product' => $product,
-            'qty' => (int)($request['quantity'] ?? 1),
+            'qty' => (int) ($request['quantity'] ?? 1),
             'price' => $unitPrice,
             'tax' => 0,
             'discount' => $discount,
@@ -304,7 +303,7 @@ class OrderEditService
         ];
 
         if ($existingItem !== null) {
-            $productData['existing_product'] = (bool)$searchProductInDetails;
+            $productData['existing_product'] = (bool) $searchProductInDetails;
             $productData['existing_product_modified'] = isset($existingItem['existing_product_modified']) ? $existingItem['existing_product_modified'] : false;
             $productList[$existingIndex] = $productData;
             $message = translate('product_update_successfully');
@@ -336,7 +335,7 @@ class OrderEditService
         }
 
         foreach ($productList as $key => $productListItem) {
-            if (!($productListItem['product_id'] == $request['product_id'] && $productListItem['variant'] == ($request['variant'] ?? ''))) {
+            if (! ($productListItem['product_id'] == $request['product_id'] && $productListItem['variant'] == ($request['variant'] ?? ''))) {
                 $filteredProducts[$key] = $productListItem;
             }
         }
@@ -349,7 +348,6 @@ class OrderEditService
             'message' => translate('product_remove_successfully'),
         ];
     }
-
 
     public function updateProductListInOrderSession(object|array $request, object|array $order = []): array
     {
@@ -378,12 +376,12 @@ class OrderEditService
 
     private function generateProductIndex(mixed $id, ?string $variant = null): string
     {
-        return $id . '-' . (!empty($variant) ? $variant : 'single-variant');
+        return $id.'-'.(! empty($variant) ? $variant : 'single-variant');
     }
 
-    public function checkIsOrderEditable(object|array $order, string|null $type = 'admin'): array
+    public function checkIsOrderEditable(object|array $order, ?string $type = 'admin'): array
     {
-        if (($order->order_type != 'default_type') || (!in_array($order->order_status, ['pending', 'confirmed']) && in_array($order->order_status, ['processing', 'out_for_delivery', 'delivered', 'returned', 'failed', 'canceled']))) {
+        if (($order->order_type != 'default_type') || (! in_array($order->order_status, ['pending', 'confirmed']) && in_array($order->order_status, ['processing', 'out_for_delivery', 'delivered', 'returned', 'failed', 'canceled']))) {
             return [
                 'status' => false,
                 'message' => translate('Order can only be edited when the order status is Pending or Confirmed.'),
@@ -393,12 +391,12 @@ class OrderEditService
         $physicalProductExist = false;
         foreach ($order?->details?->pluck('product_details') as $productDetail) {
             $product = json_decode($productDetail ?? '', true);
-            if ($product && (!isset($product['product_type']) || $product['product_type'] == 'physical')) {
+            if ($product && (! isset($product['product_type']) || $product['product_type'] == 'physical')) {
                 $physicalProductExist = true;
             }
         }
 
-        if (!$physicalProductExist) {
+        if (! $physicalProductExist) {
             return [
                 'status' => false,
                 'message' => translate('Orders containing only digital products cannot be edited.'),
@@ -418,7 +416,7 @@ class OrderEditService
                 'message' => translate('Please confirm the offline payment information before editing this order.'),
             ];
         }
-        if($order->edited_status == 1 && $order?->latestEditHistory?->order_due_payment_method == 'offline_payment' && $order?->latestEditHistory?->order_due_payment_status == 'unpaid'){
+        if ($order->edited_status == 1 && $order?->latestEditHistory?->order_due_payment_method == 'offline_payment' && $order?->latestEditHistory?->order_due_payment_status == 'unpaid') {
             return [
                 'status' => false,
                 'message' => translate('Please confirm the offline payment information of the due amount before editing this order.'),
@@ -430,7 +428,6 @@ class OrderEditService
             'message' => translate('Order is editable'),
         ];
     }
-
 
     public function getFormatAPIProductsForEditOrder(object|array $request, object|array $order = [], object|array|null $colors = []): array
     {
@@ -481,6 +478,7 @@ class OrderEditService
 
             if ($currentStock <= 0 || $currentStock < $product['minimum_order_qty']) {
                 $errors[] = [translate('Out of stock')];
+
                 return [
                     'status' => 'error',
                     'message' => translate('Order_Edit_Failed'),
@@ -502,8 +500,8 @@ class OrderEditService
 
             $productList[$this->generateProductIndex(id: $product['id'], variant: $productItem['variant'])] = [
                 'current_stock' => $currentStock,
-                'existing_product' => (bool)$searchProductInDetails,
-                'existing_product_modified' => (bool)$searchProductInDetails,
+                'existing_product' => (bool) $searchProductInDetails,
+                'existing_product_modified' => (bool) $searchProductInDetails,
                 'product_type' => $product['product_type'],
                 'name' => $product['name'],
                 'discounted_price' => $discountedPrice,

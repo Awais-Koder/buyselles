@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Class DigitalProductAuthor
  *
- * @package App\Models
  * @property int $id
  * @property int $author_id
  * @property int|null $product_id

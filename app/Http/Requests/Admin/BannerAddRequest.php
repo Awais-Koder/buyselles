@@ -38,8 +38,7 @@ class BannerAddRequest extends FormRequest
             'url.required_if' => translate('the_url_field_is_required'),
             'image.required' => translate('the_image_is_required'),
             'image.max' => translate('the_image_size_max_').getFileUploadMaxSize().' '.translate('MB'),
-            'image.mimes' => translate('only_'). getFileUploadFormats(skip: '.svg', asMessage: 'true'),
+            'image.mimes' => translate('only_').getFileUploadFormats(skip: '.svg', asMessage: 'true'),
         ];
     }
-
 }

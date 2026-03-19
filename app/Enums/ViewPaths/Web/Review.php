@@ -6,17 +6,16 @@ enum Review
 {
     const ADD = [
         URI => 'review',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const ADD_DELIVERYMAN_REVIEW = [
         URI => 'submit-deliveryman-review',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const DELETE_REVIEW_IMAGE = [
         URI => 'review-delete-image',
-        VIEW => ''
+        VIEW => '',
     ];
-
 }

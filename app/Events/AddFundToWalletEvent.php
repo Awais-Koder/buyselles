@@ -17,14 +17,10 @@ class AddFundToWalletEvent
      *
      * @return void
      */
-    public function __construct(public readonly string $email, public object|array $data)
-    {
-    }
+    public function __construct(public readonly string $email, public object|array $data) {}
 
     /**
      * Get the channels the event should broadcast on.
-     *
-     * @return Channel|PrivateChannel|array
      */
     public function broadcastOn(): Channel|PrivateChannel|array
     {

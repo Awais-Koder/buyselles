@@ -6,8 +6,8 @@ use App\Contracts\Repositories\DeliveryManRepositoryInterface;
 use App\Contracts\Repositories\OrderRepositoryInterface;
 use App\Contracts\Repositories\OrderStatusHistoryRepositoryInterface;
 use App\Contracts\Repositories\ReviewRepositoryInterface;
-use App\Enums\WebConfigKey;
 use App\Enums\ExportFileNames\Admin\DeliveryMan as DeliveryManExport;
+use App\Enums\WebConfigKey;
 use App\Exports\DeliveryManListExport;
 use App\Exports\DeliveryManOrderHistory;
 use App\Http\Controllers\Controller;
@@ -27,28 +27,18 @@ class DeliveryManController extends Controller
 {
     use CommonTrait;
 
-    /**
-     * @param DeliveryManRepositoryInterface $deliveryManRepo
-     * @param OrderRepositoryInterface $orderRepo
-     * @param ReviewRepositoryInterface $reviewRepo
-     * @param OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepo
-     */
     public function __construct(
-        private readonly DeliveryManRepositoryInterface        $deliveryManRepo,
-        private readonly OrderRepositoryInterface              $orderRepo,
-        private readonly ReviewRepositoryInterface             $reviewRepo,
+        private readonly DeliveryManRepositoryInterface $deliveryManRepo,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly ReviewRepositoryInterface $reviewRepo,
         private readonly OrderStatusHistoryRepositoryInterface $orderStatusHistoryRepo
-    )
-    {
-    }
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $relations = ['rating'];
         if ($request['sort_by'] == 'rating') {
@@ -60,19 +50,22 @@ class DeliveryManController extends Controller
             relations: $relations,
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
+
         return view('admin-views.delivery-man.list', compact('deliveryMens'));
     }
 
     public function getAddView(Request $request): View
     {
         $telephoneCodes = TELEPHONE_CODES;
+
         return view('admin-views.delivery-man.index', compact('telephoneCodes'));
     }
 
     public function updateStatus(Request $request): JsonResponse
     {
         $this->deliveryManRepo->update(id: $request['id'], data: ['is_active' => $request->get('status', 0)]);
-        return response()->json(['message' => translate("status_updated_successfully")], 200);
+
+        return response()->json(['message' => translate('status_updated_successfully')], 200);
     }
 
     public function exportList(Request $request): BinaryFileResponse
@@ -92,6 +85,7 @@ class DeliveryManController extends Controller
 
         $active = $deliveryMens->where('is_active', 1)->count();
         $inactive = $deliveryMens->where('is_active', 0)->count();
+
         return Excel::download(new DeliveryManListExport([
             'delivery_men' => $deliveryMens,
             'search' => $request['searchValue'],
@@ -105,17 +99,17 @@ class DeliveryManController extends Controller
     {
         $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id' => $id]);
         $telephoneCodes = TELEPHONE_CODES;
+
         return view('admin-views.delivery-man.edit', compact('deliveryMan', 'telephoneCodes'));
     }
-
 
     public function add(DeliveryManAddRequest $request, DeliveryManService $deliveryManService): JsonResponse|RedirectResponse
     {
         $dataArray = $deliveryManService->getDeliveryManAddData(request: $request, addedBy: 'admin');
         $this->deliveryManRepo->add(data: $dataArray);
+
         return response()->json(['message' => translate('delivery_man_added_successfully')]);
     }
-
 
     public function update(DeliveryManUpdateRequest $request, $id, DeliveryManService $deliveryManService): JsonResponse
     {
@@ -132,9 +126,9 @@ class DeliveryManController extends Controller
             deliveryManImage: $deliveryMan['image']
         );
         $this->deliveryManRepo->update(id: $id, data: $dataArray);
+
         return response()->json(['message' => translate('delivery_man_updated_successfully')]);
     }
-
 
     public function delete(Request $request, DeliveryManService $deliveryManService): RedirectResponse
     {
@@ -142,6 +136,7 @@ class DeliveryManController extends Controller
         $deliveryManService->deleteImages(deliveryMan: $deliveryMan);
         $deliveryMan->delete();
         ToastMagic::success(translate('Delivery_man_removed'));
+
         return back();
     }
 
@@ -149,6 +144,7 @@ class DeliveryManController extends Controller
     {
         $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id' => $id], relations: ['wallet']);
         $withdrawalableBalance = isset($deliveryMan->wallet) ? self::delivery_man_withdrawable_balance($id) : null;
+
         return view('admin-views.delivery-man.earning-statement.overview', compact('deliveryMan', 'withdrawalableBalance'));
     }
 
@@ -165,6 +161,7 @@ class DeliveryManController extends Controller
             filters: ['delivery_man_id' => $id, 'whereHas_deliveryMan' => 0],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
+
         return view('admin-views.delivery-man.earning-statement.active-log', compact('deliveryMan', 'orders'));
     }
 
@@ -186,7 +183,7 @@ class DeliveryManController extends Controller
             filters: ['delivery_man_id' => $id,
                 'whereHas_deliveryMan' => 0,
                 'whereIn_order_status' => $request['order_status'] ? explode(',', $request['order_status']) : 'all',
-                'whereIn_payment_status' => $request['payment_status'] ? explode(',', $request['payment_status']) : 'all'
+                'whereIn_payment_status' => $request['payment_status'] ? explode(',', $request['payment_status']) : 'all',
             ],
             dataLimit: 'all',
         );
@@ -194,6 +191,7 @@ class DeliveryManController extends Controller
         $data['totalOrders'] = count($totalOrders);
 
         $fileName = $request['type'] == 'earn' ? DeliveryManExport::EXPORT_EARNING_LIST_XLSX : DeliveryManExport::EXPORT_ORDER_LIST_XLSX;
+
         return Excel::download(new DeliveryManOrderHistory($data), $fileName);
     }
 
@@ -211,6 +209,7 @@ class DeliveryManController extends Controller
         );
         $totalEarn = self::delivery_man_total_earn($id);
         $withdrawalableBalance = self::delivery_man_withdrawable_balance($id);
+
         return view('admin-views.delivery-man.earning-statement.earning', compact('deliveryMan', 'totalEarn', 'withdrawalableBalance', 'orders'));
     }
 
@@ -222,13 +221,13 @@ class DeliveryManController extends Controller
             filters: ['delivery_man_id' => $id,
                 'whereHas_deliveryMan' => 0,
                 'whereIn_order_status' => $request['order_status'] ?? 'all',
-                'whereIn_payment_status' => $request['payment_status'] ?? 'all'
+                'whereIn_payment_status' => $request['payment_status'] ?? 'all',
             ],
             dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT),
         );
         $currentFilters = [
             'order_status' => $request['order_status'] ?? 'all',
-            'payment_status' => $request['payment_status'] ?? 'all'
+            'payment_status' => $request['payment_status'] ?? 'all',
         ];
 
         return response()->json([
@@ -240,14 +239,16 @@ class DeliveryManController extends Controller
     public function getOrderStatusHistory($order): View
     {
         $histories = $this->orderStatusHistoryRepo->getListWhere(filters: ['order_id' => $order], dataLimit: 'all');
+
         return view('admin-views.delivery-man.earning-statement._order-status-history', compact('histories'));
     }
 
     public function getRatingView(Request $request, $id): View|RedirectResponse
     {
         $deliveryMan = $this->deliveryManRepo->getFirstWhere(params: ['id' => $id, 'seller_id' => 0], relations: ['review']);
-        if (!$deliveryMan) {
+        if (! $deliveryMan) {
             ToastMagic::warning(translate('invaild_review'));
+
             return redirect(route('admin.delivery-man.list'));
         }
 
@@ -275,5 +276,4 @@ class DeliveryManController extends Controller
             'five' => $reviews_collection->where('rating', 5)->count(),
         ]);
     }
-
 }

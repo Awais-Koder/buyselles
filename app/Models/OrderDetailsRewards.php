@@ -26,7 +26,7 @@ class OrderDetailsRewards extends Model
 
     protected $table = 'order_details_rewards';
 
-    protected   $fillable = [
+    protected $fillable = [
         'order_id',
         'order_details_id',
         'reward_type',
@@ -34,13 +34,14 @@ class OrderDetailsRewards extends Model
         'reward_amount',
         'reward_delivered',
     ];
+
     protected $casts = [
         'reward_details' => 'array',
         'reward_amount' => 'float',
     ];
 
-    public function order() : BelongsTo
+    public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class,'order_id', 'id');
+        return $this->belongsTo(Order::class, 'order_id', 'id');
     }
 }

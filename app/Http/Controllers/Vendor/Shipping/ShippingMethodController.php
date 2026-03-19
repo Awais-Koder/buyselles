@@ -10,53 +10,34 @@ use App\Contracts\Repositories\ShippingTypeRepositoryInterface;
 use App\Enums\ViewPaths\Vendor\Dashboard;
 use App\Enums\ViewPaths\Vendor\ShippingMethod;
 use App\Http\Controllers\BaseController;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Request;
 use App\Http\Requests\Vendor\ShippingMethodRequest;
 use App\Services\CategoryShippingCostService;
 use App\Services\ShippingMethodService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ShippingMethodController extends BaseController
 {
-    /**
-     * @param ShippingMethodRepositoryInterface $shippingMethodRepo
-     * @param ShippingMethodService $shippingMethodService
-     * @param CategoryRepositoryInterface $categoryRepo
-     * @param CategoryShippingCostRepositoryInterface $categoryShippingCostRepo
-     * @param CartShippingRepositoryInterface $categoryShippingRepo
-     * @param CategoryShippingCostService $categoryShippingCostService
-     * @param ShippingTypeRepositoryInterface $shippingTypeRepo
-     */
     public function __construct(
-        private readonly ShippingMethodRepositoryInterface       $shippingMethodRepo,
-        private readonly ShippingMethodService                   $shippingMethodService,
-        private readonly CategoryRepositoryInterface             $categoryRepo,
+        private readonly ShippingMethodRepositoryInterface $shippingMethodRepo,
+        private readonly ShippingMethodService $shippingMethodService,
+        private readonly CategoryRepositoryInterface $categoryRepo,
         private readonly CategoryShippingCostRepositoryInterface $categoryShippingCostRepo,
-        private readonly CartShippingRepositoryInterface         $categoryShippingRepo,
-        private readonly CategoryShippingCostService             $categoryShippingCostService,
-        private readonly ShippingTypeRepositoryInterface         $shippingTypeRepo,
-    )
-    {
-    }
+        private readonly CartShippingRepositoryInterface $categoryShippingRepo,
+        private readonly CategoryShippingCostService $categoryShippingCostService,
+        private readonly ShippingTypeRepositoryInterface $shippingTypeRepo,
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return $this->getShippingMethodsView();
     }
 
-    /**
-     * @return View|RedirectResponse
-     */
     public function getShippingMethodsView(): View|RedirectResponse
     {
         $shippingMethod = getWebConfig(name: 'shipping_method');
@@ -68,7 +49,7 @@ class ShippingMethodController extends BaseController
                 filters: ['seller_id' => $vendorId],
             )->pluck('category_id')->toArray();
             foreach ($allCategoryIds as $id) {
-                if (!in_array($id, $allCategoryShippingCostArray)) {
+                if (! in_array($id, $allCategoryShippingCostArray)) {
                     $this->categoryShippingCostRepo->add(
                         data: $this->categoryShippingCostService->getAddCategoryWiseShippingCostData(
                             addedBy: 'seller',
@@ -91,68 +72,53 @@ class ShippingMethodController extends BaseController
                 filters: ['creator_id' => $vendorId, 'creator_type' => 'seller'],
                 dataLimit: getWebConfig(name: 'pagination_limit')
             );
+
             return view(ShippingMethod::INDEX[VIEW], compact('shippingMethods', 'allCategoryShippingCost', 'shippingType'));
         } else {
             return redirect()->route(Dashboard::INDEX[ROUTE]);
         }
     }
 
-    /**
-     * @param ShippingMethodRequest $request
-     * @return RedirectResponse
-     */
     public function add(ShippingMethodRequest $request): RedirectResponse
     {
         $this->shippingMethodRepo->add($this->shippingMethodService->addShippingMethodData(request: $request, addedBy: 'seller'));
         ToastMagic::success(translate('successfully_added'));
+
         return redirect()->back();
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function updateStatus(Request $request): JsonResponse
     {
         $this->shippingMethodRepo->update(id: $request['id'], data: ['status' => $request['status']]);
-        return response()->json(['success' => 1,], status: 200);
+
+        return response()->json(['success' => 1], status: 200);
     }
 
-    /**
-     * @param string|int $id
-     * @return View|RedirectResponse
-     */
     public function getUpdateView(string|int $id): View|RedirectResponse
     {
         $shippingMethod = getWebConfig(name: 'shipping_method');
         if ($shippingMethod === 'sellerwise_shipping') {
             $shippingMethod = $this->shippingMethodRepo->getFirstWhere(params: ['id' => $id]);
+
             return view(ShippingMethod::UPDATE[VIEW], compact('shippingMethod'));
         } else {
             return redirect()->route(Dashboard::INDEX[ROUTE]);
         }
     }
 
-    /**
-     * @param ShippingMethodRequest $request
-     * @param string|int $id
-     * @return RedirectResponse
-     */
     public function update(ShippingMethodRequest $request, string|int $id): RedirectResponse
     {
         $this->shippingMethodRepo->update(id: $id, data: $this->shippingMethodService->addShippingMethodData(request: $request, addedBy: 'seller'));
         $this->categoryShippingRepo->updateWhere(params: ['shipping_method_id' => $id], data: ['shipping_cost' => currencyConverter($request['cost'])]);
         ToastMagic::success(translate('successfully_updated'));
+
         return redirect()->route(ShippingMethod::INDEX[ROUTE]);
     }
 
-    /**
-     * @param Request $request
-     * @return RedirectResponse
-     */
     public function delete(Request $request): RedirectResponse
     {
         $this->shippingMethodRepo->delete(params: ['id' => $request['id']]);
+
         return redirect()->back();
     }
 }

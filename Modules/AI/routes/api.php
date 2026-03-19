@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\AI\app\Http\Controllers\API\V3\AIProductController;
 
@@ -30,4 +29,3 @@ Route::group(['prefix' => 'v3/seller', 'as' => 'v3/seller.', 'middleware' => ['a
         });
     });
 });
-

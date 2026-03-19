@@ -5,8 +5,11 @@ namespace App\Library;
 class Payer
 {
     private $name;
+
     private $email;
+
     private $phone;
+
     private $address;
 
     public function __construct($name, $email, $phone, $address)
@@ -17,19 +20,23 @@ class Payer
         $this->address = $address;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return $this->name;
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         return $this->email;
     }
 
-    public function getPhone() {
+    public function getPhone()
+    {
         return $this->phone;
     }
 
-    public function getAddress() {
+    public function getAddress()
+    {
         return $this->address;
     }
 
@@ -39,7 +46,7 @@ class Payer
             'name' => $this->getName(),
             'email' => $this->getEmail(),
             'phone' => $this->getPhone(),
-            'address' => $this->getAddress()
+            'address' => $this->getAddress(),
         ];
     }
 }

@@ -11,11 +11,6 @@ class DeliveryManService
     use CommonTrait;
     use FileManagerTrait;
 
-    /**
-     * @param object $request
-     * @param string $addedBy
-     * @return array
-     */
     protected function getCommonDeliveryManData(object $request, string $addedBy): array
     {
         return [
@@ -24,8 +19,8 @@ class DeliveryManService
             'l_name' => $request['l_name'],
             'address' => $request['address'],
             'email' => $request['email'],
-            'country_code' => '+' . $request['country_code'],
-            'phone' => str_replace(('+' . $request['country_code']), '', $request['phone']),
+            'country_code' => '+'.$request['country_code'],
+            'phone' => str_replace(('+'.$request['country_code']), '', $request['phone']),
             'identity_number' => $request['identity_number'],
             'identity_type' => $request['identity_type'],
             'password' => bcrypt($request['password']),
@@ -35,15 +30,13 @@ class DeliveryManService
     }
 
     /**
-     * @param object $request
-     * @param string $addedBy
      * @return array
-     * This array return column name and there value when add delivery man
+     *               This array return column name and there value when add delivery man
      */
     public function getDeliveryManAddData(object $request, string $addedBy): array
     {
         $identityImage = [];
-        if (!empty($request->file('identity_image'))) {
+        if (! empty($request->file('identity_image'))) {
             foreach ($request->identity_image as $image) {
                 $identityImage[] = [
                     'image_name' => $this->upload(dir: 'delivery-man/', format: 'webp', image: $image),
@@ -56,23 +49,20 @@ class DeliveryManService
             'identity_image' => $identityImage,
             'image' => $this->upload(dir: 'delivery-man/', format: 'webp', image: $request->file('image')),
         ];
+
         return array_merge($commonArray, $imageArray);
     }
 
     /**
-     * @param object $request
-     * @param string $addedBy
-     * @param array|null $identityImages
-     * @param string $deliveryManImage
      * @return array
-     * This array return column name and there value when update delivery man
+     *               This array return column name and there value when update delivery man
      */
-    public function getDeliveryManUpdateData(object $request, string $addedBy, array|null $identityImages = [], string $deliveryManImage = ''): array
+    public function getDeliveryManUpdateData(object $request, string $addedBy, ?array $identityImages = [], string $deliveryManImage = ''): array
     {
-        if (!empty($request->file('identity_image'))) {
+        if (! empty($request->file('identity_image'))) {
             if ($identityImages) {
                 foreach ($identityImages as $image) {
-                    $this->delete(filePath: 'delivery-man/' . ($image['image_name'] ?? $image));
+                    $this->delete(filePath: 'delivery-man/'.($image['image_name'] ?? $image));
                 }
             }
             $identityImage = [];
@@ -95,16 +85,17 @@ class DeliveryManService
             'identity_image' => $identityImage,
             'image' => $image,
         ];
+
         return array_merge($commonArray, $imageArray);
     }
 
-    function deleteImages(object $deliveryMan): bool
+    public function deleteImages(object $deliveryMan): bool
     {
-        $this->delete(filePath: 'delivery-man/' . $deliveryMan['image']);
+        $this->delete(filePath: 'delivery-man/'.$deliveryMan['image']);
         if (count($deliveryMan['identity_image']) > 0) {
             foreach ($deliveryMan['identity_image'] as $image) {
                 $imageName = is_string($image) ? $image : $image['image_name'];
-                $this->delete(filePath: 'delivery-man/' . $imageName);
+                $this->delete(filePath: 'delivery-man/'.$imageName);
             }
         }
 
@@ -133,8 +124,10 @@ class DeliveryManService
         $shippingMethod = getWebConfig(name: 'shipping_method');
         if ($shippingMethod == 'inhouse_shipping') {
             Toastr::warning(translate('access_denied!!'));
+
             return false;
         }
+
         return true;
     }
 }

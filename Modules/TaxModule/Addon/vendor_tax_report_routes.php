@@ -10,7 +10,7 @@ return [
                 'name' => 'Vat Report Details',
                 'url' => route('vendor.report.get-vat-report-export'),
                 'path' => 'vendor/report/get-vat-report-export',
-            ]
-        ]
-    ]
+            ],
+        ],
+    ],
 ];

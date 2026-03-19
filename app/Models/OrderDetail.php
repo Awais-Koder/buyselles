@@ -34,8 +34,6 @@ use Illuminate\Support\Facades\DB;
  * @property bool $is_stock_decreased
  * @property int|null $refund_request
  * @property Carbon|null $refund_started_at
- *
- * @package App\Models
  */
 class OrderDetail extends Model
 {
@@ -62,7 +60,7 @@ class OrderDetail extends Model
         'refund_started_at',
         'variant',
         'variation',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $casts = [
@@ -87,13 +85,13 @@ class OrderDetail extends Model
         return $this->belongsTo(Product::class)->where('status', 1);
     }
 
-    //active_product
+    // active_product
     public function activeProduct(): BelongsTo
     {
         return $this->belongsTo(Product::class)->where('status', 1);
     }
 
-    //product_all_status
+    // product_all_status
     public function productAllStatus(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id')->with(['clearanceSale' => function ($query) {
@@ -126,7 +124,7 @@ class OrderDetail extends Model
         return $this->belongsTo(ShippingAddress::class, 'shipping_address');
     }
 
-    //verification_images
+    // verification_images
     public function verificationImages(): HasMany
     {
         return $this->hasMany(OrderDeliveryVerification::class, 'order_id', 'order_id');
@@ -153,10 +151,12 @@ class OrderDetail extends Model
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'digital_file_after_sell')->first();
         }
+
         return $this->storageLink('product/digital-product', $value, $storage['value'] ?? 'public');
     }
 
     protected $with = ['storage'];
+
     protected $appends = ['digital_file_after_sell_full_url'];
 
     protected static function boot(): void

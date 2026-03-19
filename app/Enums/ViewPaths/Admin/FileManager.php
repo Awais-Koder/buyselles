@@ -18,5 +18,4 @@ enum FileManager
         URI => 'image-upload',
         VIEW => '',
     ];
-
 }

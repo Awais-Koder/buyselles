@@ -3,22 +3,21 @@
 namespace Modules\TaxModule\app\Exports;
 
 use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Modules\TaxModule\app\Traits\VatTaxConfiguration;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Modules\TaxModule\app\Traits\VatTaxConfiguration;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class TaxVatExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
-
     use Exportable, VatTaxConfiguration;
 
     protected $data;
@@ -42,7 +41,6 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
         ];
     }
 
-
     public function styles(Worksheet $sheet): array
     {
         $sheet->getStyle('A2:D2')->getFont()->setBold(true);
@@ -65,9 +63,10 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
             'rotation' => 0,
         ];
         $sheet->getStyle('A1:D1')->applyFromArray($styleArray);
+
         return [
             // Define the style for cells with data
-            'A1:D' . ($this->data['data']->count() + 3) => [
+            'A1:D'.($this->data['data']->count() + 3) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -84,7 +83,7 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:D1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:B2')
@@ -96,7 +95,7 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
-                $event->sheet->getStyle('A3:D' . ($this->data['data']->count() + 3))
+                $event->sheet->getStyle('A3:D'.($this->data['data']->count() + 3))
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
@@ -105,11 +104,9 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
-
                 $event->sheet->mergeCells('A1:D1');
                 $event->sheet->mergeCells('A2:B2');
                 $event->sheet->mergeCells('C2:D2');
-
 
                 $event->sheet->getDefaultRowDimension()->setRowHeight(30);
                 $event->sheet->getRowDimension(1)->setRowHeight(50);
@@ -121,8 +118,7 @@ class TaxVatExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWi
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }
-

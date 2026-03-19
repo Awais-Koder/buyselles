@@ -3,55 +3,54 @@
 namespace App\Http\Controllers\Vendor\Auth;
 
 use App\Contracts\Repositories\AdminRepositoryInterface;
-use Exception;
+use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use App\Contracts\Repositories\EmailTemplatesRepositoryInterface;
+use App\Contracts\Repositories\HelpTopicRepositoryInterface;
+use App\Contracts\Repositories\ShopRepositoryInterface;
+use App\Contracts\Repositories\VendorRepositoryInterface;
+use App\Contracts\Repositories\VendorWalletRepositoryInterface;
 use App\Enums\SessionKey;
-use Illuminate\Http\Request;
-use App\Services\ShopService;
-use App\Services\VendorService;
-use Illuminate\Http\JsonResponse;
-use App\Services\RecaptchaService;
-use App\Traits\EmailTemplateTrait;
-use Illuminate\Contracts\View\View;
-use Illuminate\Http\RedirectResponse;
 use App\Events\VendorRegistrationEvent;
 use App\Http\Controllers\BaseController;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
-use Illuminate\Database\Eloquent\Collection;
 use App\Http\Requests\Vendor\VendorAddRequest;
-use Illuminate\Pagination\LengthAwarePaginator;
-use App\Contracts\Repositories\ShopRepositoryInterface;
 use App\Repositories\VendorRegistrationReasonRepository;
-use App\Contracts\Repositories\VendorRepositoryInterface;
-use App\Contracts\Repositories\HelpTopicRepositoryInterface;
-use App\Contracts\Repositories\VendorWalletRepositoryInterface;
-use App\Contracts\Repositories\EmailTemplatesRepositoryInterface;
-use App\Contracts\Repositories\BusinessSettingRepositoryInterface;
+use App\Services\RecaptchaService;
+use App\Services\ShopService;
+use App\Services\VendorService;
+use App\Traits\EmailTemplateTrait;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Exception;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class RegisterController extends BaseController
 {
     use EmailTemplateTrait;
 
     public function __construct(
-        private readonly VendorRepositoryInterface          $vendorRepo,
-        private readonly AdminRepositoryInterface           $adminRepo,
-        private readonly VendorWalletRepositoryInterface    $vendorWalletRepo,
-        private readonly ShopRepositoryInterface            $shopRepo,
-        private readonly VendorService                      $vendorService,
-        private readonly ShopService                        $shopService,
-        private readonly EmailTemplatesRepositoryInterface  $emailTemplatesRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
+        private readonly AdminRepositoryInterface $adminRepo,
+        private readonly VendorWalletRepositoryInterface $vendorWalletRepo,
+        private readonly ShopRepositoryInterface $shopRepo,
+        private readonly VendorService $vendorService,
+        private readonly ShopService $shopService,
+        private readonly EmailTemplatesRepositoryInterface $emailTemplatesRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly HelpTopicRepositoryInterface       $helpTopicRepo,
+        private readonly HelpTopicRepositoryInterface $helpTopicRepo,
         private readonly VendorRegistrationReasonRepository $vendorRegistrationReasonRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $businessMode = getWebConfig(name: 'business_mode');
         $vendorRegistration = getWebConfig(name: 'seller_registration');
         if ((isset($businessMode) && $businessMode == 'single') || (isset($vendorRegistration) && $vendorRegistration == 0)) {
-            ToastMagic::warning(translate('access_denied') . '!!');
+            ToastMagic::warning(translate('access_denied').'!!');
+
             return redirect('/');
         }
         $vendorRegistrationHeader = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'vendor_registration_header'])['value']);
@@ -64,13 +63,14 @@ class RegisterController extends BaseController
             orderBy: ['id' => 'desc'],
             filters: ['type' => 'vendor_registration', 'status' => '1'],
             dataLimit: 'all');
+
         return view(VIEW_FILE_NAMES['seller_registration'], compact('vendorRegistrationHeader', 'vendorRegistrationReasons', 'sellWithUs', 'downloadVendorApp', 'helpTopics', 'businessProcess', 'businessProcessStep'));
     }
 
     public function add(VendorAddRequest $request): JsonResponse
     {
-        $result = RecaptchaService::verificationStatus(request: $request, session: SessionKey::VENDOR_RECAPTCHA_KEY, action: "register");
-        if ($result && !$result['status']) {
+        $result = RecaptchaService::verificationStatus(request: $request, session: SessionKey::VENDOR_RECAPTCHA_KEY, action: 'register');
+        if ($result && ! $result['status']) {
             if ($request->ajax()) {
                 return response()->json([
                     'error' => $result['message'],
@@ -102,6 +102,7 @@ class RegisterController extends BaseController
                 ['status' => 1, 'redirectRoute' => route('vendor.auth.login')]
             );
         }
+
         return response()->json(
             ['status' => 1, 'redirectRoute' => route('vendor.auth.login')]
         );

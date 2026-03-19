@@ -12,10 +12,7 @@ class SupportTicketRepository implements SupportTicketRepositoryInterface
 {
     public function __construct(
         private readonly SupportTicket $supportTicket,
-    )
-    {
-    }
-
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,9 +27,10 @@ class SupportTicketRepository implements SupportTicketRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->supportTicket->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
 
@@ -40,7 +38,7 @@ class SupportTicketRepository implements SupportTicketRepositoryInterface
     {
         $query = $this->supportTicket
             ->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 return $query->Where('subject', 'like', "%{$searchValue}%")
                     ->orWhere('type', 'like', "%{$searchValue}%")
                     ->orWhere('description', 'like', "%{$searchValue}%")
@@ -55,14 +53,14 @@ class SupportTicketRepository implements SupportTicketRepositoryInterface
             ->when(isset($filters['status']) && $filters['status'] != 'all', function ($query) use ($filters) {
                 $query->where('status', $filters['status']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
 
     public function update(string $id, array $data): bool
     {
@@ -72,7 +70,7 @@ class SupportTicketRepository implements SupportTicketRepositoryInterface
     public function delete(array $params): bool
     {
         $this->supportTicket->where($params)->delete();
+
         return true;
     }
-
 }

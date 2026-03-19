@@ -19,7 +19,7 @@ class Attribute extends Model
 
     protected $casts = [
         'id' => 'integer',
-        'name' => 'string'
+        'name' => 'string',
     ];
 
     public function translations(): MorphMany

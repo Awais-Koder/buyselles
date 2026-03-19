@@ -16,12 +16,10 @@ class OrderPlacedEvent
      * Create a new event instance.
      */
     public function __construct(
-        public ?object          $notification = null,
+        public ?object $notification = null,
         public readonly ?string $email = null,
-        public readonly ?array  $data = null
-    )
-    {
-    }
+        public readonly ?array $data = null
+    ) {}
 
     /**
      * Get the channels the event should broadcast on.

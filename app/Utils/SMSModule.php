@@ -4,14 +4,15 @@ namespace App\Utils;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Twilio\Rest\Client;
 use Modules\Gateways\Traits\SmsGateway;
+use Twilio\Rest\Client;
 
 class SMSModule
 {
     public static function sendCentralizedSMS($phone, $token)
     {
         $paymentPublishedStatus = config('get_payment_publish_status') ?? 0;
+
         return $paymentPublishedStatus == 1 ? SmsGateway::send($phone, $token) : SMSModule::send($phone, $token);
     }
 
@@ -55,22 +56,23 @@ class SMSModule
         $config = self::get_settings('twilio');
         $response = 'error';
         if (isset($config) && $config['status'] == 1) {
-            $message = str_replace("#OTP#", $otp, $config['otp_template']);
+            $message = str_replace('#OTP#', $otp, $config['otp_template']);
             $sid = $config['sid'];
             $token = $config['token'];
             try {
                 $twilio = new Client($sid, $token);
                 $twilio->messages
                     ->create($receiver, // to
-                        array(
-                            "messagingServiceSid" => $config['messaging_service_sid'],
-                            "body" => $message
-                        )
+                        [
+                            'messagingServiceSid' => $config['messaging_service_sid'],
+                            'body' => $message,
+                        ]
                     );
                 $response = 'success';
             } catch (Exception $exception) {
             }
         }
+
         return $response;
     }
 
@@ -79,22 +81,22 @@ class SMSModule
         $config = self::get_settings('nexmo');
         $response = 'error';
         if (isset($config) && $config['status'] == 1) {
-            $message = str_replace("#OTP#", $otp, $config['otp_template']);
+            $message = str_replace('#OTP#', $otp, $config['otp_template']);
             try {
                 $ch = curl_init();
 
                 curl_setopt($ch, CURLOPT_URL, 'https://rest.nexmo.com/sms/json');
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
                 curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, "from=" . $config['from'] . "&text=" . $message . "&to=" . $receiver . "&api_key=" . $config['api_key'] . "&api_secret=" . $config['api_secret']);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, 'from='.$config['from'].'&text='.$message.'&to='.$receiver.'&api_key='.$config['api_key'].'&api_secret='.$config['api_secret']);
 
-                $headers = array();
+                $headers = [];
                 $headers[] = 'Content-Type: application/x-www-form-urlencoded';
                 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
                 $result = curl_exec($ch);
                 if (curl_errno($ch)) {
-                    echo 'Error:' . curl_error($ch);
+                    echo 'Error:'.curl_error($ch);
                 }
                 curl_close($ch);
                 $response = 'success';
@@ -102,6 +104,7 @@ class SMSModule
                 $response = 'error';
             }
         }
+
         return $response;
     }
 
@@ -115,25 +118,26 @@ class SMSModule
             $apiUrl = "https://2factor.in/API/V1/$api_key/SMS/$receiver/$otp/$otp_template";
 
             $curl = curl_init();
-            curl_setopt_array($curl, array(
+            curl_setopt_array($curl, [
                 CURLOPT_URL => $apiUrl,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => "",
+                CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
                 CURLOPT_TIMEOUT => 30,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => "GET",
-            ));
+                CURLOPT_CUSTOMREQUEST => 'GET',
+            ]);
             $response = curl_exec($curl);
             $err = curl_error($curl);
             curl_close($curl);
 
-            if (!$err) {
+            if (! $err) {
                 $response = 'success';
             } else {
                 $response = 'error';
             }
         }
+
         return $response;
     }
 
@@ -142,30 +146,31 @@ class SMSModule
         $config = self::get_settings('msg91');
         $response = 'error';
         if (isset($config) && $config['status'] == 1) {
-            $receiver = str_replace("+", "", $receiver);
+            $receiver = str_replace('+', '', $receiver);
             $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => "https://api.msg91.com/api/v5/otp?template_id=" . $config['template_id'] . "&mobile=" . $receiver . "&authkey=" . $config['auth_key'],
+            curl_setopt_array($curl, [
+                CURLOPT_URL => 'https://api.msg91.com/api/v5/otp?template_id='.$config['template_id'].'&mobile='.$receiver.'&authkey='.$config['auth_key'],
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => "",
+                CURLOPT_ENCODING => '',
                 CURLOPT_MAXREDIRS => 10,
                 CURLOPT_TIMEOUT => 30,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => "GET",
+                CURLOPT_CUSTOMREQUEST => 'GET',
                 CURLOPT_POSTFIELDS => "{\"OTP\":\"$otp\"}",
-                CURLOPT_HTTPHEADER => array(
-                    "content-type: application/json"
-                ),
-            ));
+                CURLOPT_HTTPHEADER => [
+                    'content-type: application/json',
+                ],
+            ]);
             $response = curl_exec($curl);
             $err = curl_error($curl);
             curl_close($curl);
-            if (!$err) {
+            if (! $err) {
                 $response = 'success';
             } else {
                 $response = 'error';
             }
         }
+
         return $response;
     }
 
@@ -177,23 +182,23 @@ class SMSModule
             $curl = curl_init();
             $from = $config['from'];
             $to = $receiver;
-            $message = str_replace("#OTP#", $otp, $config['otp_template']);
+            $message = str_replace('#OTP#', $otp, $config['otp_template']);
 
             try {
-                curl_setopt_array($curl, array(
-                    CURLOPT_URL => "https://api.releans.com/v2/message",
+                curl_setopt_array($curl, [
+                    CURLOPT_URL => 'https://api.releans.com/v2/message',
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_ENCODING => "",
+                    CURLOPT_ENCODING => '',
                     CURLOPT_MAXREDIRS => 10,
                     CURLOPT_TIMEOUT => 0,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_CUSTOMREQUEST => "POST",
+                    CURLOPT_CUSTOMREQUEST => 'POST',
                     CURLOPT_POSTFIELDS => "sender=$from&mobile=$to&content=$message",
-                    CURLOPT_HTTPHEADER => array(
-                        "Authorization: Bearer " . $config['api_key']
-                    ),
-                ));
+                    CURLOPT_HTTPHEADER => [
+                        'Authorization: Bearer '.$config['api_key'],
+                    ],
+                ]);
                 $response = curl_exec($curl);
                 curl_close($curl);
                 $response = 'success';
@@ -202,6 +207,7 @@ class SMSModule
             }
 
         }
+
         return $response;
     }
 
@@ -210,29 +216,30 @@ class SMSModule
         $config = self::get_settings('alphanet_sms');
         $response = 'error';
         if (isset($config) && $config['status'] == 1) {
-            $receiver = str_replace("+", "", $receiver);
-            $message = str_replace("#OTP#", $otp, $config['otp_template']);
+            $receiver = str_replace('+', '', $receiver);
+            $message = str_replace('#OTP#', $otp, $config['otp_template']);
             $api_key = $config['api_key'];
 
             $curl = curl_init();
 
-            curl_setopt_array($curl, array(
+            curl_setopt_array($curl, [
                 CURLOPT_URL => 'https://api.sms.net.bd/sendsms',
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => array('api_key' => $api_key, 'msg' => $message, 'to' => $receiver),
-            ));
+                CURLOPT_POSTFIELDS => ['api_key' => $api_key, 'msg' => $message, 'to' => $receiver],
+            ]);
 
             $response = curl_exec($curl);
             $err = curl_error($curl);
             curl_close($curl);
 
-            if (!$err) {
+            if (! $err) {
                 $response = 'success';
             } else {
                 $response = 'error';
             }
         }
+
         return $response;
     }
 

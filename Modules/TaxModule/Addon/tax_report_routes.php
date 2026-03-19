@@ -10,8 +10,8 @@ return [
                 'name' => 'Tax Report Details',
                 'url' => route('admin.report.getTaxDetails'),
                 'path' => 'admin/report/get-tax-details',
-            ]
-        ]
+            ],
+        ],
     ],
     [
         'name' => 'Vendor_Vat_Report',
@@ -22,7 +22,7 @@ return [
                 'name' => 'Vendor Tax Details',
                 'url' => route('admin.report.vendorTax'),
                 'path' => 'admin/report/vendor-tax-report',
-            ]
-        ]
-    ]
+            ],
+        ],
+    ],
 ];

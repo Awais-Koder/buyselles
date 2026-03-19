@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 /**
  * Class DigitalProductVariation
  *
- * @package App\Models
  * @property int $id
  * @property int $product_id
  * @property string|null $variant_key
@@ -48,13 +47,15 @@ class DigitalProductVariation extends Model
     public function getFileFullUrlAttribute(): array
     {
         $value = $this->file;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','file')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'file')->first();
         }
+
         return $this->storageLink('product/digital-product', $value, $storage['value'] ?? 'public');
     }
 
     protected $with = ['storage'];
+
     protected $appends = ['file_full_url'];
 
     protected static function boot(): void

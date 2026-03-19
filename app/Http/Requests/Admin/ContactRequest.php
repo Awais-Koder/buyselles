@@ -30,5 +30,4 @@ class ContactRequest extends FormRequest
             'message.required' => translate('message_is_empty'),
         ];
     }
-
 }

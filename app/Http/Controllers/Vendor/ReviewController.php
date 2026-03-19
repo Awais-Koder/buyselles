@@ -21,28 +21,14 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReviewController extends BaseController
 {
-    /**
-     * @param ReviewRepositoryInterface $reviewRepo
-     * @param ProductRepositoryInterface $productRepo
-     * @param CustomerRepositoryInterface $customerRepo
-     * @param VendorRepositoryInterface $vendorRepo
-     * @param ReviewReplyRepositoryInterface $reviewReplyRepo
-     */
     public function __construct(
-        private readonly ReviewRepositoryInterface      $reviewRepo,
-        private readonly ProductRepositoryInterface     $productRepo,
-        private readonly CustomerRepositoryInterface    $customerRepo,
-        private readonly VendorRepositoryInterface      $vendorRepo,
+        private readonly ReviewRepositoryInterface $reviewRepo,
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly ReviewReplyRepositoryInterface $reviewReplyRepo,
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $vendorId = auth('seller')->id();
@@ -92,15 +78,16 @@ class ReviewController extends BaseController
         $products = $this->productRepo->getListWithScope(
             searchValue: $request['searchValue'],
             filters: ['seller_id' => $vendorId, 'added_by' => 'seller'],
-            whereNotIn:['request_status' => [1]],
+            whereNotIn: ['request_status' => [1]],
             dataLimit: getWebConfig('pagination_limit'),
         );
 
         $product = $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']]);
-        $customer = "all";
-        if ($request['customer_id'] != 'all' && !is_null($request['customer_id']) && $request->has('customer_id')) {
+        $customer = 'all';
+        if ($request['customer_id'] != 'all' && ! is_null($request['customer_id']) && $request->has('customer_id')) {
             $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]);
         }
+
         return view(Review::INDEX[VIEW], [
             'reviews' => $reviews,
             'products' => $products,
@@ -116,24 +103,16 @@ class ReviewController extends BaseController
         ]);
     }
 
-    /**
-     * @param string|int $id
-     * @param string|int $status
-     * @return JsonResponse
-     */
     public function updateStatus(string|int $id, string|int $status): JsonResponse
     {
         $this->reviewRepo->update(id: $id, data: ['status' => $status]);
+
         return response()->json([
             'status' => 1,
-            'message' => translate('review_status_updated_successfully.')
+            'message' => translate('review_status_updated_successfully.'),
         ]);
     }
 
-    /**
-     * @param Request $request
-     * @return BinaryFileResponse|RedirectResponse
-     */
     public function exportList(Request $request): BinaryFileResponse|RedirectResponse
     {
         $vendorId = auth('seller')->id();
@@ -183,13 +162,14 @@ class ReviewController extends BaseController
             'data-from' => 'vendor',
             'vendor' => $vendor,
             'reviews' => $reviews,
-            'product_name' => $request->has('product_id') ? $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']])['name'] : "all_products",
-            'customer_name' => $request->has('customer_id') ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : "all_customers",
+            'product_name' => $request->has('product_id') ? $this->productRepo->getFirstWhere(params: ['id' => $request['product_id']])['name'] : 'all_products',
+            'customer_name' => $request->has('customer_id') ? $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]) : 'all_customers',
             'from' => $request['from'],
             'to' => $request['to'],
             'status' => $request['status'],
             'key' => $request['search'],
         ];
+
         return Excel::download(new CustomerReviewListExport($data), 'Product-Review-List.xlsx');
     }
 
@@ -198,12 +178,13 @@ class ReviewController extends BaseController
         $this->reviewReplyRepo->updateOrInsert(params: [
             'review_id' => $request['review_id'],
             'added_by' => 'seller',
-            'added_by_id' => auth('seller')->id()
+            'added_by_id' => auth('seller')->id(),
         ], data: [
             'reply_text' => $request['reply_text'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         return back();
     }
 }

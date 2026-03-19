@@ -16,7 +16,7 @@ class DeliveryCountryCodeAddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'country_code' => 'required|unique:delivery_country_codes,country_code'
+            'country_code' => 'required|unique:delivery_country_codes,country_code',
         ];
     }
 
@@ -26,5 +26,4 @@ class DeliveryCountryCodeAddRequest extends FormRequest
             'country_code.required' => translate('the_country_code_field_is_required'),
         ];
     }
-
 }

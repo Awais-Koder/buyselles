@@ -14,7 +14,9 @@ class SendMail extends Mailable
     use Queueable, SerializesModels;
 
     protected $data;
+
     protected $template;
+
     protected $socialMedia;
 
     /**
@@ -58,9 +60,10 @@ class SendMail extends Mailable
             return [
                 Attachment::fromPath($this->data['attachmentPath'])
                     ->as('invoice.pdf')
-                    ->withMime('application/pdf')
+                    ->withMime('application/pdf'),
             ];
         }
+
         return [];
     }
 }

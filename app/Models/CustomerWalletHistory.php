@@ -16,8 +16,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $transaction_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class CustomerWalletHistory extends Model
 {

@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\RestAPI\v2\delivery_man\ChatController as DeliveryChatController;
-use App\Http\Controllers\RestAPI\v2\seller\auth\ForgotPasswordController;
-use App\Http\Controllers\RestAPI\v2\seller\auth\LoginController;
 use App\Http\Controllers\RestAPI\v2\delivery_man\auth\LoginController as DeliveryManLoginController;
-use App\Http\Controllers\RestAPI\v2\seller\auth\RegisterController;
-use App\Http\Controllers\RestAPI\v2\seller\ChatController as VendorChatController;
+use App\Http\Controllers\RestAPI\v2\delivery_man\ChatController as DeliveryChatController;
 use App\Http\Controllers\RestAPI\v2\delivery_man\DeliveryManController;
 use App\Http\Controllers\RestAPI\v2\delivery_man\WithdrawController;
+use App\Http\Controllers\RestAPI\v2\seller\auth\ForgotPasswordController;
+use App\Http\Controllers\RestAPI\v2\seller\auth\LoginController;
+use App\Http\Controllers\RestAPI\v2\seller\auth\RegisterController;
 use App\Http\Controllers\RestAPI\v2\seller\BrandController;
+use App\Http\Controllers\RestAPI\v2\seller\ChatController as VendorChatController;
 use App\Http\Controllers\RestAPI\v2\seller\OrderController;
 use App\Http\Controllers\RestAPI\v2\seller\ProductController;
 use App\Http\Controllers\RestAPI\v2\seller\RefundController;
@@ -115,7 +115,7 @@ Route::group(['namespace' => 'RestAPI\v2', 'prefix' => 'v2', 'middleware' => ['a
         });
 
         Route::group(['prefix' => 'auth', 'namespace' => 'auth'], function () {
-            Route::post('login', [LoginController::class,'login']);
+            Route::post('login', [LoginController::class, 'login']);
             Route::controller(ForgotPasswordController::class)->group(function () {
                 Route::post('forgot-password', 'reset_password_request');
                 Route::post('verify-otp', 'otp_verification_submit');
@@ -192,4 +192,3 @@ Route::group(['namespace' => 'RestAPI\v2', 'prefix' => 'v2', 'middleware' => ['a
 
     });
 });
-

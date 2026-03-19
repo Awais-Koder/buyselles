@@ -20,8 +20,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $balance
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- *
- * @package App\Models
  */
 class WalletTransaction extends Model
 {

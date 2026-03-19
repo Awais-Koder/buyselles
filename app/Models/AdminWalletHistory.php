@@ -16,8 +16,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $payment
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class AdminWalletHistory extends Model
 {
@@ -38,5 +36,4 @@ class AdminWalletHistory extends Model
         'product_id',
         'payment',
     ];
-
 }

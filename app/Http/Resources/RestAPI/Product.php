@@ -2,7 +2,4 @@
 
 namespace App\Http\Resources\RestAPI;
 
-class Product
-{
-
-}
+class Product {}

@@ -2,7 +2,4 @@
 
 namespace Modules\AI\app\PromptTemplates;
 
-class MetaTemplate
-{
-
-}
+class MetaTemplate {}

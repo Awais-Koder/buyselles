@@ -25,7 +25,7 @@ class BlogCategoryUpdateRequest extends FormRequest
     public function rules(): array
     {
         $this->merge([
-            'lang' => array_combine(array_keys($this['lang']), array_keys($this['lang']))
+            'lang' => array_combine(array_keys($this['lang']), array_keys($this['lang'])),
         ]);
 
         $rules = [];
@@ -36,6 +36,7 @@ class BlogCategoryUpdateRequest extends FormRequest
         $rules += [
             'name' => 'required|array',
         ];
+
         return $rules;
     }
 
@@ -67,6 +68,7 @@ class BlogCategoryUpdateRequest extends FormRequest
                 $name = $language['name'];
             }
         }
+
         return $name;
     }
 
@@ -79,7 +81,7 @@ class BlogCategoryUpdateRequest extends FormRequest
                         'name', translate('The_name_must_be_unique')
                     );
                 }
-            }
+            },
         ];
     }
 

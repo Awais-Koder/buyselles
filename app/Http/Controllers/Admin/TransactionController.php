@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Utils\Helpers;
 use App\Http\Controllers\Controller;
 use App\Models\OrderTransaction;
 use App\Models\User;
+use App\Utils\Helpers;
 use Illuminate\Http\Request;
 use Rap2hpoutre\FastExcel\FastExcel;
 
@@ -13,47 +13,43 @@ class TransactionController extends Controller
 {
     public function list(Request $request)
     {
-        $query_param  = [];
-        $search       = $request['search'];
-        $from         = $request['from'];
-        $to           = $request['to'];
-        $customer_id  = $request['customer_id'];
-        $status       = $request['status'];
+        $query_param = [];
+        $search = $request['search'];
+        $from = $request['from'];
+        $to = $request['to'];
+        $customer_id = $request['customer_id'];
+        $status = $request['status'];
 
-        $customers = User::whereNotIn('id',[0])->get();
+        $customers = User::whereNotIn('id', [0])->get();
 
-        $transactions = OrderTransaction::with(['seller','customer'])
-                        ->when($search, function($q) use($search){
-                            $q->orWhere('order_id', 'like', "%{$search}%")
-                                ->orWhere('transaction_id', 'like', "%{$search}%");
-                        })
-                        ->when($customer_id, function($q) use($customer_id){
-                            $q->where('customer_id', $customer_id);
-                        })
-                        ->when($status == 'all', function ($q) use($status){
-                            $q;
-                        })
-                        ->when(!empty($status) && ($status != 'all'), function ($q) use($status){
-                            $q->where('status', 'like', "%{$status}%");
-                        })
-                        ->when(!empty($from) && !empty($to),function($query) use($from,$to){
-                            $query->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
-                        })
-                        ->latest()->paginate(Helpers::pagination_limit())->appends([
-                                        'customer_id'=>$customer_id,
-                                        'status'=>$status,
-                                        'from'=>$from,
-                                        'to'=>$to,
-                                        'search'=>$search]);
+        $transactions = OrderTransaction::with(['seller', 'customer'])
+            ->when($search, function ($q) use ($search) {
+                $q->orWhere('order_id', 'like', "%{$search}%")
+                    ->orWhere('transaction_id', 'like', "%{$search}%");
+            })
+            ->when($customer_id, function ($q) use ($customer_id) {
+                $q->where('customer_id', $customer_id);
+            })
+            ->when($status == 'all', function ($q) {})
+            ->when(! empty($status) && ($status != 'all'), function ($q) use ($status) {
+                $q->where('status', 'like', "%{$status}%");
+            })
+            ->when(! empty($from) && ! empty($to), function ($query) use ($from, $to) {
+                $query->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59']);
+            })
+            ->latest()->paginate(Helpers::pagination_limit())->appends([
+                            'customer_id' => $customer_id,
+                            'status' => $status,
+                            'from' => $from,
+                            'to' => $to,
+                            'search' => $search]);
 
-
-        return view('admin-views.transaction.list', compact('customers', 'transactions','search','status', 'from', 'to', 'customer_id'));
+        return view('admin-views.transaction.list', compact('customers', 'transactions', 'search', 'status', 'from', 'to', 'customer_id'));
     }
 
     /**
      * Transaction report export by excel
-     * @param Request $request
-     * @return string|\Symfony\Component\HttpFoundation\StreamedResponse
+     *
      * @throws \Box\Spout\Common\Exception\IOException
      * @throws \Box\Spout\Common\Exception\InvalidArgumentException
      * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
@@ -61,35 +57,33 @@ class TransactionController extends Controller
      */
     public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse|string
     {
-        $from         = $request['from'];
-        $to           = $request['to'];
-        $customer_id  = $request['customer_id'];
-        $status       = $request['status'];
+        $from = $request['from'];
+        $to = $request['to'];
+        $customer_id = $request['customer_id'];
+        $status = $request['status'];
 
-        $transactions = OrderTransaction::with(['seller','customer'])
-            ->when($customer_id, function($q) use($customer_id){
+        $transactions = OrderTransaction::with(['seller', 'customer'])
+            ->when($customer_id, function ($q) use ($customer_id) {
                 $q->where('customer_id', $customer_id);
             })
-            ->when($status == 'all', function ($q) use($status){
-                $q;
-            })
-            ->when(!empty($status) && ($status != 'all'), function ($q) use($status){
+            ->when($status == 'all', function ($q) {})
+            ->when(! empty($status) && ($status != 'all'), function ($q) use ($status) {
                 $q->where('status', 'like', "%{$status}%");
             })
-            ->when(!empty($from) && !empty($to),function($query) use($from,$to){
-                $query->whereBetween('created_at', [$from . ' 00:00:00', $to . ' 23:59:59']);
+            ->when(! empty($from) && ! empty($to), function ($query) use ($from, $to) {
+                $query->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59']);
             })
             ->latest()->get();
 
-        $tranData = array();
-        foreach($transactions as $tran){
-            if($tran['seller_is'] == 'admin'){
+        $tranData = [];
+        foreach ($transactions as $tran) {
+            if ($tran['seller_is'] == 'admin') {
                 $seller_name = getInHouseShopConfig(key: 'name');
-            }else{
-                $seller_name = $tran->seller ? $tran->seller->f_name .' '. $tran->seller->l_name : translate('not_found');
+            } else {
+                $seller_name = $tran->seller ? $tran->seller->f_name.' '.$tran->seller->l_name : translate('not_found');
             }
 
-            $tranData[] = array(
+            $tranData[] = [
                 'Seller Name' => $seller_name,
                 'Customer Name' => $tran->customer ? $tran->customer->f_name.' '.$tran->customer->l_name : translate('not_found'),
                 'Order ID' => $tran->order_id,
@@ -102,9 +96,9 @@ class TransactionController extends Controller
                 'Delivery Charge' => $tran->delivery_charge,
                 'Payment Method' => $tran->payment_method,
                 'Tax' => $tran->tax,
-                'Date' => date('d M Y',strtotime($tran->created_at)),
+                'Date' => date('d M Y', strtotime($tran->created_at)),
                 'Status' => $tran->status,
-            );
+            ];
         }
 
         return (new FastExcel($tranData))->download('Transaction_All_details.xlsx');

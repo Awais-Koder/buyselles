@@ -4,12 +4,11 @@ namespace App\Listeners;
 
 use App\Events\RefundEvent;
 use App\Traits\PushNotificationTrait;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class RefundListener
 {
     use PushNotificationTrait;
+
     /**
      * Create the event listener.
      */
@@ -26,7 +25,8 @@ class RefundListener
         $this->sendNotification($event);
     }
 
-    private function sendNotification(RefundEvent $event):void{
+    private function sendNotification(RefundEvent $event): void
+    {
         $status = $event->status;
         $order = $event->order;
         $orderDetails = $event?->orderDetails;
@@ -41,7 +41,7 @@ class RefundListener
                 $key = 'refund_request_status_changed_by_admin';
             } elseif ($status == 'rejected') {
                 $key = 'refund_request_canceled_message';
-            }elseif ($status == 'refund_request') {
+            } elseif ($status == 'refund_request') {
                 $key = 'refund_request_message';
             } else {
                 $key = 'order_refunded_message';

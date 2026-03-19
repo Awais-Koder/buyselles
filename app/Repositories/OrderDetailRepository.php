@@ -10,17 +10,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrderDetailRepository implements OrderDetailRepositoryInterface
 {
-
     public function __construct(
         private readonly OrderDetail $orderDetail,
-    )
-    {
-
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'order_details');
+
         return $this->orderDetail->create($data);
     }
 
@@ -32,7 +29,7 @@ class OrderDetailRepository implements OrderDetailRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->orderDetail->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
@@ -56,29 +53,33 @@ class OrderDetailRepository implements OrderDetailRepositoryInterface
             ->when(isset($filters['seller_id']), function ($query) use ($filters) {
                 return $query->where('seller_id', $filters['seller_id']);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
     public function update(string $id, array $data): bool
     {
         cacheRemoveByType(type: 'order_details');
+
         return $this->orderDetail->find($id)->update($data);
     }
 
     public function delete(array $params): bool
     {
         $this->orderDetail->where($params)->delete();
+
         return true;
     }
 
     public function updateWhere(array $params, array $data): bool
     {
         cacheRemoveByType(type: 'order_details');
+
         return $this->orderDetail->where($params)->update($data);
     }
 

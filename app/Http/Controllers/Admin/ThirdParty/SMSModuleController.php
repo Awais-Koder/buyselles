@@ -21,11 +21,9 @@ class SMSModuleController extends BaseController
 {
     public function __construct(
         private readonly SettingRepositoryInterface $settingRepo,
-        private readonly SettingService             $settingService,
-        private readonly FirebaseService            $firebaseService,
-    )
-    {
-    }
+        private readonly SettingService $settingService,
+        private readonly FirebaseService $firebaseService,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -44,6 +42,7 @@ class SMSModuleController extends BaseController
         })->values()->all();
 
         $paymentUrl = $this->settingService->getVacationData(type: 'sms_setup');
+
         return view('admin-views.third-party.sms-index', compact('recaptcha', 'smsGateways', 'paymentGatewayPublishedStatus', 'paymentUrl', 'firebaseOtpVerification', 'companyPhone'));
     }
 
@@ -77,14 +76,16 @@ class SMSModuleController extends BaseController
         }
 
         ToastMagic::success(GATEWAYS_DEFAULT_UPDATE_200['message']);
+
         return back();
     }
 
     public function sendSMS(Request $request): RedirectResponse
     {
-        $result = RecaptchaService::verificationStatus(request: $request, session: 'smsTestRecaptchaSessionKey', action: "login", firebase: true);
-        if ($result && !$result['status']) {
+        $result = RecaptchaService::verificationStatus(request: $request, session: 'smsTestRecaptchaSessionKey', action: 'login', firebase: true);
+        if ($result && ! $result['status']) {
             ToastMagic::error($result['message']);
+
             return back();
         }
 
@@ -106,6 +107,7 @@ class SMSModuleController extends BaseController
         }
 
         $status == 'success' ? ToastMagic::success(translate('SMS_sent_successfully')) : ToastMagic::error($errorMessage);
+
         return redirect()->back();
     }
 }

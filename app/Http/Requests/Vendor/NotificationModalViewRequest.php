@@ -23,7 +23,7 @@ class NotificationModalViewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id'=>'required',
+            'id' => 'required',
         ];
     }
 }

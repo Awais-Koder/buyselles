@@ -2,10 +2,10 @@
 
 namespace App\Traits;
 
+use App\Models\PaymentRequest;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Foundation\Application;
 use InvalidArgumentException;
-use App\Models\PaymentRequest;
 
 trait Payment
 {
@@ -15,11 +15,11 @@ trait Payment
             throw new InvalidArgumentException(translate('Payment amount can not be 0'));
         }
 
-        if (!is_array($payment_info->getAdditionalData())) {
+        if (! is_array($payment_info->getAdditionalData())) {
             throw new InvalidArgumentException(translate('Additional data should be in a valid array'));
         }
 
-        $payment = new PaymentRequest();
+        $payment = new PaymentRequest;
         $payment->payment_amount = $payment_info->getPaymentAmount();
         $payment->success_hook = $payment_info->getSuccessHook();
         $payment->failure_hook = $payment_info->getFailureHook();

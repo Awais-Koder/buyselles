@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('brands', function (Blueprint $table) {
-            $table->string('image_storage_type',10)->default('public')->after('image')->nullable();
+            $table->string('image_storage_type', 10)->default('public')->after('image')->nullable();
         });
     }
 

@@ -16,11 +16,9 @@ class BlogCategoryController extends Controller
     use BlogCategoryTrait;
 
     public function __construct(
-        private readonly BlogCategory        $blogCategory,
+        private readonly BlogCategory $blogCategory,
         private readonly BlogCategoryService $blogCategoryService,
-    )
-    {
-    }
+    ) {}
 
     public function add(BlogCategoryAddRequest $request): jsonResponse
     {
@@ -28,6 +26,7 @@ class BlogCategoryController extends Controller
         $this->addBlogCategoryTranslation(request: $request, id: $blogCategory->id);
 
         $result = $this->renderBlogCategoryList();
+
         return response()->json([
             'message' => translate('category_added_successfully'),
             'html' => $result['html'],
@@ -74,7 +73,7 @@ class BlogCategoryController extends Controller
 
     public function deleteCategory(Request $request): JsonResponse
     {
-        $this->blogCategory->where('id',$request['category_id'])->delete();
+        $this->blogCategory->where('id', $request['category_id'])->delete();
         $result = $this->renderBlogCategoryList();
 
         return response()->json([
@@ -87,6 +86,7 @@ class BlogCategoryController extends Controller
     public function search(Request $request): JsonResponse
     {
         $result = $this->renderBlogCategoryList($request['searchValue'], $request->get('page'));
+
         return response()->json([
             'html' => $result['html'],
             'count' => $result['count'],
@@ -98,11 +98,11 @@ class BlogCategoryController extends Controller
         $categories = BlogCategory::query()
             ->with('translations')
             ->when($search, function ($query) use ($search) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhereHas('translations', function($q) use ($search) {
-                          $q->where('value', 'LIKE', "%{$search}%");
-                      });
+                        ->orWhereHas('translations', function ($q) use ($search) {
+                            $q->where('value', 'LIKE', "%{$search}%");
+                        });
                 });
             })
             ->orderBy('updated_at', 'desc')
@@ -114,6 +114,7 @@ class BlogCategoryController extends Controller
             )->withQueryString();
 
         $html = view('blog::admin-views.blog.category.partials.table-rows', compact('categories'))->render();
+
         return [
             'html' => $html,
             'count' => $categories->total(),
@@ -124,6 +125,7 @@ class BlogCategoryController extends Controller
     {
         $categories = $this->blogCategory->withoutGlobalScopes()->with('translations')->get();
         $dropdown = $this->blogCategoryService->getCategoryDropdown(request: $request, categories: $categories);
+
         return response()->json([
             'select_tag' => $dropdown,
         ]);

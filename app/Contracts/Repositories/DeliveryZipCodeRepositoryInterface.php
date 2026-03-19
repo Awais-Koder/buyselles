@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface DeliveryZipCodeRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface DeliveryZipCodeRepositoryInterface extends RepositoryInterface {}

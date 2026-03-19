@@ -8,7 +8,7 @@ use App\Utils\ProductManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-if (!function_exists('getOverallRating')) {
+if (! function_exists('getOverallRating')) {
     function getOverallRating(object|array|null $reviews): array
     {
         if (empty($reviews)) {
@@ -30,7 +30,7 @@ if (!function_exists('getOverallRating')) {
     }
 }
 
-if (!function_exists('getRating')) {
+if (! function_exists('getRating')) {
     function getRating(object|array $reviews): array
     {
         $rating5 = 0;
@@ -55,16 +55,12 @@ if (!function_exists('getRating')) {
                 $rating1 += 1;
             }
         }
+
         return [$rating5, $rating4, $rating3, $rating2, $rating1];
     }
 }
 
-if (!function_exists('getProductDiscount')) {
-    /**
-     * @param object|array $product
-     * @param string|float|int $price
-     * @return float
-     */
+if (! function_exists('getProductDiscount')) {
     function getProductDiscount(object|array $product, string|float|int $price): float
     {
         $discount = 0;
@@ -78,8 +74,8 @@ if (!function_exists('getProductDiscount')) {
     }
 }
 
-if (!function_exists('getPriceRangeWithDiscount')) {
-    function getPriceRangeWithDiscount(array|object $product, string|null $type = 'web'): float|string
+if (! function_exists('getPriceRangeWithDiscount')) {
+    function getPriceRangeWithDiscount(array|object $product, ?string $type = 'web'): float|string
     {
         $productUnitPrice = $product->unit_price;
         foreach (json_decode($product->variation) as $key => $variation) {
@@ -97,51 +93,56 @@ if (!function_exists('getPriceRangeWithDiscount')) {
             if (isset($product['clearanceSale']) && $product['clearanceSale']) {
                 $discountAmount = getProductPriceByType(product: $product, type: 'discounted_amount', result: 'value', price: $productUnitPrice, from: 'panel');
                 $productDiscountedPrice = setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice - $discountAmount), currencyCode: getCurrencyCode());
-                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . $productDiscountedPrice . '</span>' . '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">' . setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()) . '</del>';
+
+                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.$productDiscountedPrice.'</span>'.'<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">'.setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()).'</del>';
             } elseif ($product->discount > 0) {
                 $amount = $productUnitPrice - getProductDiscount(product: $product, price: $productUnitPrice);
                 $productDiscountedPrice = setCurrencySymbol(amount: usdToDefaultCurrency(amount: $amount), currencyCode: getCurrencyCode());
-                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . $productDiscountedPrice . '</span>' . '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">' . setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()) . '</del>';
+
+                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.$productDiscountedPrice.'</span>'.'<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">'.setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()).'</del>';
             } else {
-                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()) . '</span>';
+                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.setCurrencySymbol(amount: usdToDefaultCurrency(amount: $productUnitPrice), currencyCode: getCurrencyCode()).'</span>';
             }
         } else {
             if (isset($product['clearanceSale']) && $product['clearanceSale']) {
                 $discountAmount = getProductPriceByType(product: $product, type: 'discounted_amount', result: 'value', price: $productUnitPrice);
                 $productDiscountedPrice = webCurrencyConverter(amount: $productUnitPrice - $discountAmount);
-                return '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">' . webCurrencyConverter(amount: $productUnitPrice) . '</del>' . '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . $productDiscountedPrice . '</span>';
+
+                return '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">'.webCurrencyConverter(amount: $productUnitPrice).'</del>'.'<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.$productDiscountedPrice.'</span>';
 
             } elseif ($product->discount > 0) {
                 $productDiscountedPrice = webCurrencyConverter(amount: $productUnitPrice - getProductDiscount(product: $product, price: $productUnitPrice));
-                return '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">' . webCurrencyConverter(amount: $productUnitPrice) . '</del>' . '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . $productDiscountedPrice . '</span>';
+
+                return '<del class="product-total-unit-price align-middle text-muted opacity-75 fs-20 fw-semibold lh-1">'.webCurrencyConverter(amount: $productUnitPrice).'</del>'.'<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.$productDiscountedPrice.'</span>';
             } else {
-                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">' . webCurrencyConverter(amount: $productUnitPrice) . '</span>';
+                return '<span class="discounted-unit-price text-primary fs-30 fw-bold lh-1">'.webCurrencyConverter(amount: $productUnitPrice).'</span>';
             }
 
         }
     }
 }
 
-if (!function_exists('getRatingCount')) {
+if (! function_exists('getRatingCount')) {
     function getRatingCount($product_id, $rating)
     {
         return Review::where(['product_id' => $product_id, 'rating' => $rating])->whereNull('delivery_man_id')->count();
     }
 }
 
-if (!function_exists('units')) {
+if (! function_exists('units')) {
     function units(): array
     {
         return ['kg', 'pc', 'gms', 'ltrs', 'pair', 'oz', 'lb'];
     }
 }
 
-if (!function_exists('getVendorProductsCount')) {
+if (! function_exists('getVendorProductsCount')) {
     function getVendorProductsCount(string $type): int
     {
         $products = Cache::remember(CACHE_FOR_VENDOR_ALL_PRODUCT_LIST, CACHE_FOR_7_DAYS, function () {
             return DB::table('products')->where(['added_by' => 'seller'])->get();
         });
+
         return match ($type) {
             'new-product' => $products->where('request_status', 0)->count(),
             'product-updated-request' => $products->whereNotNull('is_shipping_cost_updated')->where('is_shipping_cost_updated', 0)->count(),
@@ -150,12 +151,13 @@ if (!function_exists('getVendorProductsCount')) {
         };
     }
 }
-if (!function_exists('getAdminProductsCount')) {
+if (! function_exists('getAdminProductsCount')) {
     function getAdminProductsCount(string $type): int
     {
         $products = Cache::remember(CACHE_FOR_IN_HOUSE_ALL_PRODUCT_LIST, CACHE_FOR_7_DAYS, function () {
             return DB::table('products')->where(['added_by' => 'admin'])->get();
         });
+
         return match ($type) {
             'all' => $products->count(),
             'new-product' => $products->where('request_status', 0)->count(),
@@ -166,37 +168,36 @@ if (!function_exists('getAdminProductsCount')) {
     }
 }
 
-
-if (!function_exists('getRestockProductFCMTopic')) {
+if (! function_exists('getRestockProductFCMTopic')) {
     function getRestockProductFCMTopic(array|object $restockRequest): string
     {
-        return 'restock_' . $restockRequest['id'] . '_product_restock_' . $restockRequest->product_id . '_topic';
+        return 'restock_'.$restockRequest['id'].'_product_restock_'.$restockRequest->product_id.'_topic';
     }
 }
 
-
-if (!function_exists('isProductInWishList')) {
+if (! function_exists('isProductInWishList')) {
     function isProductInWishList(string|int $productId): bool
     {
         if (session('wish_list') && in_array($productId, session('wish_list'))) {
             return true;
         }
+
         return false;
     }
 }
 
-if (!function_exists('isProductInCompareList')) {
+if (! function_exists('isProductInCompareList')) {
     function isProductInCompareList(string|int $productId): bool
     {
         if (session('compare_list') && in_array($productId, session('compare_list'))) {
             return true;
         }
+
         return false;
     }
 }
 
-
-if (!function_exists('getProductMaxUnitPriceRange')) {
+if (! function_exists('getProductMaxUnitPriceRange')) {
     function getProductMaxUnitPriceRange($type = null): int
     {
         $maxUnitPrice = Cache::remember(CACHE_FOR_PRODUCTS_MAX_UNIT_PRICE, CACHE_FOR_3_HOURS, function () {
@@ -212,7 +213,7 @@ if (!function_exists('getProductMaxUnitPriceRange')) {
             10000 => 1000,
             100000 => 5000,
             1000000 => 10000,
-            PHP_INT_MAX => 50000
+            PHP_INT_MAX => 50000,
         ];
 
         foreach ($ranges as $max => $increment) {
@@ -220,11 +221,12 @@ if (!function_exists('getProductMaxUnitPriceRange')) {
                 return ceil($maxUnitPrice / $increment) * $increment;
             }
         }
+
         return 0;
     }
 }
 
-if (!function_exists('getProductMinUnitPriceRange')) {
+if (! function_exists('getProductMinUnitPriceRange')) {
     function getProductMinUnitPriceRange($type = null): int
     {
         $minUnitPrice = Cache::remember(CACHE_FOR_PRODUCTS_MIN_UNIT_PRICE, CACHE_FOR_3_HOURS, function () {
@@ -244,7 +246,7 @@ if (!function_exists('getProductMinUnitPriceRange')) {
             1000 => 50,
             10000 => 100,
             100000 => 1000,
-            PHP_INT_MAX => 5000
+            PHP_INT_MAX => 5000,
         ];
 
         foreach ($ranges as $max => $increment) {
@@ -257,12 +259,12 @@ if (!function_exists('getProductMinUnitPriceRange')) {
     }
 }
 
-if (!function_exists('getFeaturedDealsProductList')) {
+if (! function_exists('getFeaturedDealsProductList')) {
     function getFeaturedDealsProductList()
     {
-        $cacheKey = 'cache_for_Featured_deals_products_list_' . getDefaultLanguage();
+        $cacheKey = 'cache_for_Featured_deals_products_list_'.getDefaultLanguage();
         $cacheKeys = Cache::get(CACHE_FOR_FEATURED_DEAL_PRODUCTS_LIST, []);
-        if (!in_array($cacheKey, $cacheKeys)) {
+        if (! in_array($cacheKey, $cacheKeys)) {
             $cacheKeys[] = $cacheKey;
             Cache::put(CACHE_FOR_FEATURED_DEAL_PRODUCTS_LIST, $cacheKeys, CACHE_FOR_3_HOURS);
         }
@@ -272,6 +274,7 @@ if (!function_exists('getFeaturedDealsProductList')) {
                 ->whereDate('start_date', '<=', date('Y-m-d'))
                 ->whereDate('end_date', '>=', date('Y-m-d'))->pluck('id')->first();
             $featuredDealProductIDs = $featuredDealID ? FlashDealProduct::where('flash_deal_id', $featuredDealID)->pluck('product_id')->toArray() : [];
+
             return ProductManager::getPriorityWiseFeatureDealQuery(
                 query: Product::active()->with(['category', 'clearanceSale' => function ($query) {
                     return $query->active();

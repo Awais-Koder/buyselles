@@ -7,15 +7,12 @@ use App\Models\RobotsMetaContent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
 class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterface
 {
     public function __construct(
         private readonly RobotsMetaContent $robotsMetaContent,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -30,8 +27,8 @@ class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterfac
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->robotsMetaContent->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -45,11 +42,12 @@ class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterfac
                 return $query->where(['id' => $filters['id']]);
             })->when(isset($filters['page_name']), function ($query) use ($filters) {
                 return $query->where(['page_name' => $filters['page_name']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -63,11 +61,12 @@ class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterfac
             return $query->where(['id' => $filters['id']]);
         })->when(isset($filters['page_name']), function ($query) use ($filters) {
             return $query->where(['page_name' => $filters['page_name']]);
-        })->when(!empty($orderBy), function ($query) use ($orderBy) {
+        })->when(! empty($orderBy), function ($query) use ($orderBy) {
             $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
         });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -86,6 +85,7 @@ class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterfac
         $robotsMetaContent = $this->robotsMetaContent->firstOrNew($params);
         $robotsMetaContent->fill($data);
         $robotsMetaContent->save();
+
         return true;
     }
 
@@ -93,5 +93,4 @@ class RobotsMetaContentRepository implements RobotsMetaContentRepositoryInterfac
     {
         return $this->robotsMetaContent->where($params)->delete();
     }
-
 }

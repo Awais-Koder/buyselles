@@ -16,19 +16,15 @@ class RobotsMetaContentController extends BaseController
 {
     public function __construct(
         private readonly RobotsMetaContentRepositoryInterface $robotsMetaContentRepo,
-        private readonly BusinessPageRepositoryInterface      $businessPageRepo,
-        private readonly SEOSettingsService                   $SEOSettingsService,
-    )
-    {
-    }
+        private readonly BusinessPageRepositoryInterface $businessPageRepo,
+        private readonly SEOSettingsService $SEOSettingsService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $businessPages = $this->businessPageRepo->getListWhere(dataLimit: 'all');
         $pageListArray = $this->SEOSettingsService->getRobotsMetaContentPages(businessPages: $businessPages);
@@ -38,6 +34,7 @@ class RobotsMetaContentController extends BaseController
         $pageListData = $this->robotsMetaContentRepo->getListWhereNotIn(whereNotIn: ['page_name' => $skipPages], dataLimit: 20);
 
         $defaultPageData = $this->robotsMetaContentRepo->getFirstWhere(params: ['page_name' => 'default']);
+
         return view('admin-views.seo-settings.robots-meta-content', [
             'pageList' => $pageListArray,
             'pageListData' => $pageListData,
@@ -49,18 +46,19 @@ class RobotsMetaContentController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->route('admin.seo-settings.robots-meta-content.index');
         }
         $businessPages = $this->businessPageRepo->getListWhere(dataLimit: 'all');
         $getPageInfo = $this->SEOSettingsService->getRobotsMetaContentPageName(name: $request['page_name'], businessPages: $businessPages);
-        if (!empty($getPageInfo)) {
+        if (! empty($getPageInfo)) {
             $robotsMetaContent = $this->robotsMetaContentRepo->getFirstWhere(params: ['page_name' => $request['page_name']]);
             if ($robotsMetaContent) {
                 $this->robotsMetaContentRepo->updateByParams(params: ['page_name' => $request['page_name']], data: [
                     'page_title' => $getPageInfo['title'],
                     'page_name' => $request['page_name'],
                     'page_url' => $getPageInfo['route'],
-                    "created_at" => now(),
+                    'created_at' => now(),
                 ]);
             } else {
                 $this->robotsMetaContentRepo->add(data: [
@@ -68,11 +66,12 @@ class RobotsMetaContentController extends BaseController
                     'page_name' => $request['page_name'],
                     'page_url' => $getPageInfo['route'],
                     'canonicals_url' => $getPageInfo['route'],
-                    "created_at" => now(),
+                    'created_at' => now(),
                 ]);
             }
             ToastMagic::success(translate('successfully_add'));
         }
+
         return redirect()->route('admin.seo-settings.robots-meta-content.index');
     }
 
@@ -80,10 +79,12 @@ class RobotsMetaContentController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->back();
         }
         $this->robotsMetaContentRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('successfully_delete'));
+
         return redirect()->route('admin.seo-settings.robots-meta-content.index');
     }
 
@@ -91,6 +92,7 @@ class RobotsMetaContentController extends BaseController
     {
         $pageData = $this->robotsMetaContentRepo->getFirstWhere(params: ['page_name' => $request['page_name']]);
         $pageName = $request['page_name'];
+
         return view('admin-views.seo-settings.robots-meta-content-view', [
             'pageData' => $pageData,
             'pageName' => $pageName,
@@ -101,6 +103,7 @@ class RobotsMetaContentController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return redirect()->route('admin.seo-settings.robots-meta-content.index');
         }
         $businessPages = $this->businessPageRepo->getListWhere(dataLimit: 'all');
@@ -108,7 +111,7 @@ class RobotsMetaContentController extends BaseController
         $getContentData = $this->SEOSettingsService->getRobotsMetaContentData(request: $request, oldData: $getOldData ?? null, businessPages: $businessPages);
         $this->robotsMetaContentRepo->updateOrInsert(params: ['page_name' => $request['page_name']], data: $getContentData);
         ToastMagic::success(translate('successfully_update'));
+
         return redirect()->route('admin.seo-settings.robots-meta-content.index');
     }
-
 }

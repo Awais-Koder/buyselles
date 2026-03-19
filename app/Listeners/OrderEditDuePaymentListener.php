@@ -6,10 +6,9 @@ use App\Events\OrderEditEvent;
 use App\Traits\EmailTemplateTrait;
 use App\Traits\PushNotificationTrait;
 
-
 class OrderEditDuePaymentListener
 {
-    use PushNotificationTrait, EmailTemplateTrait;
+    use EmailTemplateTrait, PushNotificationTrait;
 
     /**
      * Create the event listener.

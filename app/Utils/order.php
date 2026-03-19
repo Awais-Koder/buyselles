@@ -1,9 +1,8 @@
 <?php
 
-
 use Illuminate\Support\Str;
 
-if (!function_exists('getOrderSummary')) {
+if (! function_exists('getOrderSummary')) {
     function getOrderSummary(object $order): array
     {
         $sub_total = 0;
@@ -14,6 +13,7 @@ if (!function_exists('getOrderSummary')) {
             $total_discount_on_product += $detail->discount;
         }
         $total_shipping_cost = $order['shipping_cost'];
+
         return [
             'subtotal' => $sub_total,
             'total_tax' => $total_tax,
@@ -23,15 +23,14 @@ if (!function_exists('getOrderSummary')) {
     }
 }
 
-if (!function_exists('getUniqueId')) {
+if (! function_exists('getUniqueId')) {
     function getUniqueId(): string
     {
-        return rand(1000, 9999) . '-' . Str::random(5) . '-' . time();
+        return rand(1000, 9999).'-'.Str::random(5).'-'.time();
     }
 }
 
-
-if (!function_exists('getOrderStatusList')) {
+if (! function_exists('getOrderStatusList')) {
     function getOrderStatusList(): array
     {
         return [

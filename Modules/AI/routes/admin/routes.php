@@ -1,6 +1,5 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 use Modules\AI\app\Http\Controllers\Admin\AIProductController;
 use Modules\AI\app\Http\Controllers\Admin\AISettingController;
@@ -18,7 +17,7 @@ use Modules\AI\app\Http\Controllers\Admin\Blog\AIBlogController;
 */
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', 'actch:admin_panel']], function () {
-    //Product
+    // Product
     Route::group(['prefix' => 'product', 'as' => 'product.'], function () {
         Route::get('title-auto-fill', [AIProductController::class, 'titleAutoFill'])->name('title-auto-fill');
         Route::get('description-auto-fill', [AIProductController::class, 'descriptionAutoFill'])->name('description-auto-fill');
@@ -29,8 +28,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
         Route::post('analyze-image-auto-fill', [AIProductController::class, 'generateTitleFromImages'])->name('analyze-image-auto-fill');
         Route::post('generate-title-suggestions', [AIProductController::class, 'generateProductTitleSuggestion'])->name('generate-title-suggestions');
     });
-    //Blog
- Route::group(['prefix' => 'blog', 'as' => 'blog.'], function () {
+    // Blog
+    Route::group(['prefix' => 'blog', 'as' => 'blog.'], function () {
         Route::get('title-auto-fill', [AIBlogController::class, 'titleAutoFill'])->name('title-auto-fill');
         Route::get('description-auto-fill', [AIBlogController::class, 'descriptionAutoFill'])->name('description-auto-fill');
         Route::post('seo-section-auto-fill', [AIBlogController::class, 'seoSectionAutoFill'])->name('seo-section-auto-fill');

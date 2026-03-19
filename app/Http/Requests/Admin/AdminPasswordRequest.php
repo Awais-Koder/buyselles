@@ -27,6 +27,7 @@ class AdminPasswordRequest extends FormRequest
             'confirm_password' => 'required',
         ];
     }
+
     public function messages(): array
     {
         return [

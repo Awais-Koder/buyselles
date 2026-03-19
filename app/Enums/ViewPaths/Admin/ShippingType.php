@@ -6,6 +6,6 @@ enum ShippingType
 {
     const INDEX = [
         URI => 'index',
-        VIEW => ''
+        VIEW => '',
     ];
 }

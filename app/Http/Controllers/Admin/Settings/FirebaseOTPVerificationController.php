@@ -19,14 +19,13 @@ class FirebaseOTPVerificationController extends BaseController
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         $firebaseOTPVerification = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'firebase_otp_verification'])?->value ?? '';
         $configStatus = $this->checkFirebaseConfigAbility();
+
         return view('admin-views.third-party.firebase-configuration.authentication', [
             'firebaseOTPVerification' => json_decode($firebaseOTPVerification, true),
             'configStatus' => $configStatus,
@@ -37,6 +36,7 @@ class FirebaseOTPVerificationController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
+
             return back();
         }
         $this->businessSettingRepo->updateOrInsert(type: 'firebase_otp_verification', value: json_encode([
@@ -45,6 +45,7 @@ class FirebaseOTPVerificationController extends BaseController
         ]));
         clearWebConfigCacheKeys();
         ToastMagic::success(translate('Update_successfully'));
+
         return back();
     }
 
@@ -73,10 +74,10 @@ class FirebaseOTPVerificationController extends BaseController
         $data = [
             'type' => $request['key'],
         ];
+
         return response()->json([
             'status' => $status,
-            'htmlView' => view('admin-views.third-party.firebase-configuration.config-validation', ['data' => $data])->render()
+            'htmlView' => view('admin-views.third-party.firebase-configuration.config-validation', ['data' => $data])->render(),
         ]);
     }
-
 }

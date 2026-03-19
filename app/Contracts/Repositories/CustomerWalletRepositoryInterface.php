@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface CustomerWalletRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface CustomerWalletRepositoryInterface extends RepositoryInterface {}

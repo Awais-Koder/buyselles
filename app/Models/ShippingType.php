@@ -14,8 +14,6 @@ use Illuminate\Support\Carbon;
  * @property string|null $shipping_type
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class ShippingType extends Model
 {
@@ -40,7 +38,6 @@ class ShippingType extends Model
         'seller_id' => 'integer',
         'shipping_type' => 'string',
     ];
-
 
     protected static function boot(): void
     {

@@ -20,8 +20,6 @@ class SocialLoginServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -31,18 +29,18 @@ class SocialLoginServiceProvider extends ServiceProvider
             if ($socialLoginServices) {
                 foreach ($socialLoginServices as $socialLoginService) {
                     if ($socialLoginService['status'] == true && $socialLoginService['login_medium'] == 'google') {
-                        $google_config = array(
+                        $google_config = [
                             'client_id' => $socialLoginService['client_id'],
                             'client_secret' => $socialLoginService['client_secret'],
                             'redirect' => url('customer/auth/login/google/callback'),
-                        );
+                        ];
                         Config::set('services.google', $google_config);
                     } elseif ($socialLoginService['status'] == true && $socialLoginService['login_medium'] == 'facebook') {
-                        $facebook_config = array(
+                        $facebook_config = [
                             'client_id' => $socialLoginService['client_id'],
                             'client_secret' => $socialLoginService['client_secret'],
                             'redirect' => url('customer/auth/login/facebook/callback'),
-                        );
+                        ];
                         Config::set('services.facebook', $facebook_config);
                     }
                 }

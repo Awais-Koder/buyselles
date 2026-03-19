@@ -19,22 +19,19 @@ use Throwable;
 
 class ThemeController extends BaseController
 {
-    use SettingsTrait;
     use PushNotificationTrait;
+    use SettingsTrait;
 
     public function __construct(
         private readonly NotificationRepositoryInterface $notificationRepo,
         private readonly ThemeService $themeService,
-    )
-    {}
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         return $this->getView();
     }
@@ -42,21 +39,24 @@ class ThemeController extends BaseController
     public function getView(): View
     {
         $themes = $this->themeService->getDirectories();
+
         return view('admin-views.system-setup.themes.theme-setup', compact('themes'));
     }
 
     public function upload(ThemeSetupRequest $request, ThemeService $themeService): JsonResponse
     {
         $data = $themeService->getUploadData(request: $request);
+
         return response()->json([
             'status' => $data['status'],
-            'message'=> $data['message']
+            'message' => $data['message'],
         ]);
     }
 
     public function publish(Request $request, ThemeService $themeService): JsonResponse
     {
         $data = $themeService->getPublishData(request: $request);
+
         return response()->json($data);
     }
 
@@ -64,15 +64,16 @@ class ThemeController extends BaseController
     {
         $data = $themeService->getActivationData(request: $request);
         $data ? ToastMagic::success(translate('activated_successfully')) : ToastMagic::error(translate('activation failed'));
+
         return back();
     }
 
     public function delete(Request $request, ThemeService $themeService): JsonResponse
     {
         $data = $themeService->deleteTheme(request: $request);
+
         return response()->json($data);
     }
-
 
     public function notifyAllTheVendors(Request $request, ThemeService $themeService): JsonResponse
     {
@@ -90,7 +91,7 @@ class ThemeController extends BaseController
 
         return response()->json([
             'status' => $status,
-            'message'=> $message,
+            'message' => $message,
         ]);
     }
 }

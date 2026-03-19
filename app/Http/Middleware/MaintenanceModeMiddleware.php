@@ -3,10 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Traits\MaintenanceModeTrait;
-use App\Utils\Helpers;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class MaintenanceModeMiddleware
 {
@@ -14,10 +12,6 @@ class MaintenanceModeMiddleware
 
     /**
      * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return mixed
      */
     public function handle(Request $request, Closure $next): mixed
     {
@@ -25,8 +19,10 @@ class MaintenanceModeMiddleware
             if (request()->is('vendor/*')) {
                 return redirect()->route('maintenance-mode', ['maintenance_system' => 'vendor']);
             }
+
             return redirect()->route('maintenance-mode');
         }
+
         return $next($request);
     }
 }

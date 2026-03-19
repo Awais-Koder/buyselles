@@ -6,7 +6,6 @@ use Modules\AI\app\Contracts\PromptTemplateInterface;
 
 class DescriptionTemplate implements PromptTemplateInterface
 {
-
     public function build(?string $context = null, ?string $langCode = null, ?string $description = null, ?array $options = null): string
     {
         $langCode = $langCode ? strtoupper($langCode) : 'EN';
@@ -44,9 +43,8 @@ class DescriptionTemplate implements PromptTemplateInterface
         PROMPT;
     }
 
-
     public function getType(): string
     {
-        return "blog_description";
+        return 'blog_description';
     }
 }

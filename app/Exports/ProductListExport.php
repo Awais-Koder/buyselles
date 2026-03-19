@@ -17,7 +17,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class ProductListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -64,9 +64,10 @@ class ProductListExport implements FromView, ShouldAutoSize, WithStyles, WithCol
         ]);
 
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:S' . ($this->data['products']->count() + 3) => [
+            'A1:S'.($this->data['products']->count() + 3) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -84,16 +85,16 @@ class ProductListExport implements FromView, ShouldAutoSize, WithStyles, WithCol
     {
         $this->data['products']->each(function ($item, $index) use ($workSheet) {
             $tempImagePath = null;
-            $filePath = 'product/thumbnail/' . $item->thumbnail_full_url['key'];
+            $filePath = 'product/thumbnail/'.$item->thumbnail_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item->thumbnail_full_url['path'] && !$fileCheck) {
+            if ($item->thumbnail_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item->thumbnail_full_url['path']);
                 $imagePath = getImageForExport($item->thumbnail_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/products.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/products.png'));
             }
             $drawing->setName($item->name);
             $drawing->setDescription($item->name);
@@ -115,15 +116,15 @@ class ProductListExport implements FromView, ShouldAutoSize, WithStyles, WithCol
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:S1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A3:S' . ($this->data['products']->count() + 3)) // Adjust the range as per your needs
-                ->getAlignment()
+                $event->sheet->getStyle('A3:S'.($this->data['products']->count() + 3)) // Adjust the range as per your needs
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:S2') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -152,7 +153,7 @@ class ProductListExport implements FromView, ShouldAutoSize, WithStyles, WithCol
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

@@ -13,5 +13,4 @@ enum Chatting
         URI => 'message',
         VIEW => '',
     ];
-
 }

@@ -16,10 +16,8 @@ class BlogPrioritySetupController extends Controller
 {
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly PrioritySetupService               $prioritySetupService,
-    )
-    {
-    }
+        private readonly PrioritySetupService $prioritySetupService,
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -30,6 +28,7 @@ class BlogPrioritySetupController extends Controller
     {
         $blogCategoryPriority = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'blog_category_list_priority'])?->value ?? '', true);
         $blogPriority = json_decode($this->businessSettingRepo->getFirstWhere(params: ['type' => 'blog_list_priority'])?->value ?? '', true);
+
         return view('blog::admin-views.blog._priority-setup', compact('blogCategoryPriority', 'blogPriority'));
     }
 
@@ -52,6 +51,7 @@ class BlogPrioritySetupController extends Controller
             value: json_encode($this->prioritySetupService->updateBlogCategoryPrioritySetupData(request: $request))
         );
         ToastMagic::success(translate('blog_category_Priority_setup_updated_successfully'));
+
         return redirect()->back();
     }
 
@@ -66,6 +66,7 @@ class BlogPrioritySetupController extends Controller
             value: json_encode($this->prioritySetupService->updateBlogPrioritySetupData(request: $request))
         );
         ToastMagic::success(translate('blog_Priority_setup_updated_successfully'));
+
         return redirect()->back();
     }
 }

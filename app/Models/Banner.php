@@ -25,8 +25,6 @@ use Illuminate\Support\Facades\DB;
  * @property string $sub_title
  * @property string $button_text
  * @property string $background_color
- *
- * @package App\Models
  */
 class Banner extends Model
 {
@@ -67,6 +65,7 @@ class Banner extends Model
         if (count($this->storage) > 0) {
             $storage = $this->storage->where('key', 'photo')->first();
         }
+
         return $this->storageLink('banner', $value, $storage['value'] ?? 'public');
     }
 

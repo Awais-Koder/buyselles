@@ -8,6 +8,7 @@ use App\Traits\EmailTemplateTrait;
 class VendorRegistrationListener
 {
     use EmailTemplateTrait;
+
     /**
      * Create the event listener.
      */
@@ -24,9 +25,10 @@ class VendorRegistrationListener
         $this->sendMail($event);
     }
 
-    private function sendMail(VendorRegistrationEvent $event):void{
+    private function sendMail(VendorRegistrationEvent $event): void
+    {
         $email = $event->email;
         $data = $event->data;
-        $this->sendingMail(sendMailTo: $email,userType: $data['userType'],templateName: $data['templateName'],data: $data);
+        $this->sendingMail(sendMailTo: $email, userType: $data['userType'], templateName: $data['templateName'], data: $data);
     }
 }

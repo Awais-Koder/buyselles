@@ -15,17 +15,15 @@ use Illuminate\Http\Request;
 
 class BlogDownloadAppController extends Controller
 {
-    use SettingsTrait;
     use FileManagerTrait {
         delete as deleteFile;
         update as updateFile;
     }
+    use SettingsTrait;
 
     public function __construct(
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-    )
-    {
-    }
+    ) {}
 
     public function appDownloadSetup(): View
     {
@@ -40,7 +38,8 @@ class BlogDownloadAppController extends Controller
         ];
         $titleData = json_decode($this->getSettings(object: $web, type: 'blog_feature_download_app_title')?->value ?? '', true);
         $subTitleData = json_decode($this->getSettings(object: $web, type: 'blog_feature_download_app_subtitle')?->value ?? '', true);
-        return view("blog::admin-views.blog.app-download-setup", compact('businessSetting', 'languages', 'defaultLanguage', 'titleData', 'subTitleData'));
+
+        return view('blog::admin-views.blog.app-download-setup', compact('businessSetting', 'languages', 'defaultLanguage', 'titleData', 'subTitleData'));
     }
 
     public function updateDownloadAppButton(Request $request): RedirectResponse
@@ -58,7 +57,7 @@ class BlogDownloadAppController extends Controller
                         ? $downloadAppIcon['value']['image_name']
                         : $downloadAppIcon['value'])
                     : null, format: 'webp', image: $request->icon),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateOrInsert(type: 'blog_feature_download_app_icon', value: json_encode($downloadAppIconImage) ?? 0);
         }
@@ -71,28 +70,30 @@ class BlogDownloadAppController extends Controller
                         ? $downloadAppBackground['value']['image_name']
                         : $downloadAppBackground['value'])
                     : null, format: 'webp', image: $request->image),
-                'storage' => config('filesystems.disks.default') ?? 'public'
+                'storage' => config('filesystems.disks.default') ?? 'public',
             ];
             $this->businessSettingRepo->updateOrInsert(type: 'blog_feature_download_app_background', value: json_encode($downloadAppIconImage) ?? 0);
         }
 
         ToastMagic::success(translate('updated_successfully'));
+
         return back();
     }
 
     public function updateStatus(Request $request): JsonResponse
     {
         $this->businessSettingRepo->updateOrInsert(type: 'blog_feature_download_app_status', value: $request['status'] ?? 0);
+
         return response()->json([
             'status' => true,
-            'message' => translate('Status_updated_successfully')
+            'message' => translate('Status_updated_successfully'),
         ]);
     }
 
     public function deleteImage(Request $request): RedirectResponse
     {
         if ($request['icon']) {
-            $this->deleteFile(filePath: '/company/' . $request['icon']);
+            $this->deleteFile(filePath: '/company/'.$request['icon']);
             $icon = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'blog_feature_download_app_icon']);
             $this->businessSettingRepo->delete(params: ['value' => $icon['value']]);
             Toastr::success(translate('app_download_icon_removed_successfully'));
@@ -100,14 +101,14 @@ class BlogDownloadAppController extends Controller
             Toastr::warning(translate('no_image_found_to_delete'));
         }
         if ($request['image']) {
-            $this->deleteFile(filePath: '/company/' . $request['image']);
+            $this->deleteFile(filePath: '/company/'.$request['image']);
             $image = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'blog_feature_download_app_background']);
             $this->businessSettingRepo->delete(params: ['value' => $image['value']]);
             Toastr::success(translate('app_background_removed_successfully'));
         } else {
             Toastr::warning(translate('no_image_found_to_delete'));
         }
+
         return back();
     }
-
 }

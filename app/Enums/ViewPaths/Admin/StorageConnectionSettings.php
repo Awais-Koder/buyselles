@@ -6,16 +6,16 @@ enum StorageConnectionSettings
 {
     const INDEX = [
         URI => 'index',
-        VIEW => 'admin-views.third-party.storage-connection-settings.index'
+        VIEW => 'admin-views.third-party.storage-connection-settings.index',
     ];
 
     const STORAGE_TYPE = [
         URI => 'update-storage-type',
-        VIEW => ''
+        VIEW => '',
     ];
 
     const S3_STORAGE_CREDENTIAL = [
         URI => 's3-credential',
-        VIEW => ''
+        VIEW => '',
     ];
 }

@@ -2,7 +2,4 @@
 
 namespace Modules\AI\app\PromptTemplates;
 
-class CategoryTemplate
-{
-
-}
+class CategoryTemplate {}

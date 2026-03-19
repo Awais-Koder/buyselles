@@ -17,7 +17,7 @@ class InterfaceServiceProvider extends ServiceProvider
         $this->bindInterfaceWithRepository();
     }
 
-    private function bindInterfaceWithRepository():void
+    private function bindInterfaceWithRepository(): void
     {
         $this->app->bind(ControllerInterface::class, BaseController::class);
         $repositoriesPath = app_path('Repositories');
@@ -25,11 +25,11 @@ class InterfaceServiceProvider extends ServiceProvider
         $repositoryFiles = File::files($repositoriesPath);
         foreach ($repositoryFiles as $file) {
             $filename = pathinfo($file, PATHINFO_FILENAME);
-            $interfaceName = $filename . 'Interface';
-            $interfacePath = $contractsPath . DIRECTORY_SEPARATOR . $interfaceName . '.php';
+            $interfaceName = $filename.'Interface';
+            $interfacePath = $contractsPath.DIRECTORY_SEPARATOR.$interfaceName.'.php';
             if (File::exists($interfacePath)) {
-                $interface = 'App\Contracts\Repositories\\' . $interfaceName;
-                $repository = 'App\Repositories\\' . $filename;
+                $interface = 'App\Contracts\Repositories\\'.$interfaceName;
+                $repository = 'App\Repositories\\'.$filename;
                 $this->app->bind($interface, $repository);
             }
         }

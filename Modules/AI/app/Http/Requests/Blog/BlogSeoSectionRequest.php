@@ -9,6 +9,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class BlogSeoSectionRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Get the validation rules that apply to the request.
      */
@@ -19,7 +20,9 @@ class BlogSeoSectionRequest extends FormRequest
             'description' => 'nullable|string',
         ];
     }
-    public  function messages(): array{
+
+    public function messages(): array
+    {
         return [
             'name.required' => translate('blog_title_is_required_to_generate_seo_information'),
             'description.required' => translate('blog_description_is_required_to_generate_seo_information'),

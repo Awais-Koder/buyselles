@@ -12,9 +12,7 @@ class ProductSeoRepository implements ProductSeoRepositoryInterface
 {
     public function __construct(
         private readonly ProductSeo $productSeo,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,8 +27,8 @@ class ProductSeoRepository implements ProductSeoRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->productSeo->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -44,11 +42,12 @@ class ProductSeoRepository implements ProductSeoRepositoryInterface
                 return $query->where(['product_id' => $filters['product_id']]);
             })->when(isset($filters['key']), function ($query) use ($filters) {
                 return $query->where(['key' => $filters['key']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -67,6 +66,7 @@ class ProductSeoRepository implements ProductSeoRepositoryInterface
         $productSeo = $this->productSeo->firstOrNew($params);
         $productSeo->fill($data);
         $productSeo->save();
+
         return true;
     }
 
@@ -74,5 +74,4 @@ class ProductSeoRepository implements ProductSeoRepositoryInterface
     {
         return $this->productSeo->where($params)->delete();
     }
-
 }

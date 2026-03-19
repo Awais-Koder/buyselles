@@ -4,7 +4,6 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
 /**
  * @property-read string $images
  * @property-read string $file
@@ -25,7 +24,7 @@ class FileManagerUploadRequest extends FormRequest
             'images' => 'required_without:file',
             'images.*' => [
                 'mimes:jpg,jpeg,png,gif,webp',
-                'max:' . getFileUploadMaxSize(unit: 'kb'),
+                'max:'.getFileUploadMaxSize(unit: 'kb'),
             ],
             'file' => 'required_without:images',
             'path' => 'required',
@@ -42,5 +41,4 @@ class FileManagerUploadRequest extends FormRequest
             'path.required' => translate('the_path_is_required'),
         ];
     }
-
 }

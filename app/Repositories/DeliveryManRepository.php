@@ -12,9 +12,7 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
 {
     public function __construct(
         private readonly DeliveryMan $deliveryMan,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -29,8 +27,8 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->deliveryMan->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -54,27 +52,28 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
             ->when(isset($filters['seller_id']), function ($query) use ($filters) {
                 $query->where('seller_id', $filters['seller_id']);
             })
-            ->when(in_array('review', $relations), function ($query) use ($filters, $relations) {
+            ->when(in_array('review', $relations), function ($query) {
                 return $query->withCount('review')
                     ->withAvg('review', 'rating');
             })
-            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'rating', function ($query) use ($filters) {
+            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'rating', function ($query) {
                 return $query->withCount('review')
                     ->withAvg('review', 'rating')->orderBy('review_avg_rating', 'desc');
             })
-            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'latest', function ($query) use ($filters) {
+            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'latest', function ($query) {
                 return $query->orderBy('id', 'desc');
             })
-            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'oldest', function ($query) use ($filters) {
+            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'oldest', function ($query) {
                 return $query->orderBy('id', 'asc');
             })
             ->when(in_array('deliveredOrders', $relations), function ($query) {
-                return $query->whereHas('deliveredOrders',);
+                return $query->whereHas('deliveredOrders');
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(key($orderBy), current($orderBy));
             });
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
 
     }
@@ -85,11 +84,11 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
             ->when(isset($filters['seller_id']), function ($query) use ($filters) {
                 return $query->where('seller_id', $filters['seller_id']);
             })
-            ->when(in_array('review', $relations), function ($query) use ($filters, $relations) {
+            ->when(in_array('review', $relations), function ($query) {
                 return $query->withCount('review')
                     ->withAvg('review', 'rating');
             })
-            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'rating', function ($query) use ($filters) {
+            ->when(isset($filters['sort_by']) && $filters['sort_by'] == 'rating', function ($query) {
                 return $query->withCount('review')
                     ->withAvg('review', 'rating')->orderBy('review_avg_rating', 'desc');
             })
@@ -101,7 +100,7 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
                 });
             })
             ->withCount(current($relations))
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(key($orderBy), current($orderBy));
             })
             ->get();
@@ -115,22 +114,22 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
     public function delete(array $params): bool
     {
         $this->deliveryMan->where($params)->delete();
+
         return true;
     }
-
 
     public function getListWhereIn(array $orderBy = [], ?string $searchValue = null, array $filters = [], array $relations = [], array $nullFields = [], array $withCounts = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->deliveryMan
-            ->when(!empty($searchValue), function ($query) use ($searchValue) {
+            ->when(! empty($searchValue), function ($query) use ($searchValue) {
                 $query->where('f_name', 'like', "%$searchValue%")
                     ->orWhere('l_name', 'like', "%$searchValue%")
                     ->orWhere('phone', 'like', "%$searchValue%");
             })
-            ->when(!empty($filters) && isset($filters['order_seller']) && isset($filters['shipping_method']), function ($query) use ($filters) {
+            ->when(! empty($filters) && isset($filters['order_seller']) && isset($filters['shipping_method']), function ($query) use ($filters) {
                 $query->when($filters['order_seller'] == 'seller' && $filters['shipping_method'] == 'sellerwise_shipping', function ($query) use ($filters) {
                     $query->where(['seller_id' => $filters['seller_id']]);
-                })->when($filters['order_seller'] == 'seller' && $filters['shipping_method'] == 'inhouse_shipping', function ($query) use ($filters) {
+                })->when($filters['order_seller'] == 'seller' && $filters['shipping_method'] == 'inhouse_shipping', function ($query) {
                     $query->where(['seller_id' => 0]);
                 });
             })
@@ -140,14 +139,15 @@ class DeliveryManRepository implements DeliveryManRepositoryInterface
             ->when(isset($withCounts), function ($query) use ($withCounts) {
                 $query->withCount($withCounts);
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 }

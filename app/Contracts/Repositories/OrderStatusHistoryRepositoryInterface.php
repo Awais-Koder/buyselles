@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface OrderStatusHistoryRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface OrderStatusHistoryRepositoryInterface extends RepositoryInterface {}

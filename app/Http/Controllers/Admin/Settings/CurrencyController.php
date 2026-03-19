@@ -19,25 +19,20 @@ use Illuminate\Http\Request;
 
 class CurrencyController extends BaseController
 {
-
-    use PaymentGatewayTrait, CalculatorTrait;
+    use CalculatorTrait, PaymentGatewayTrait;
 
     public function __construct(
-        private readonly CurrencyRepositoryInterface        $currencyRepo,
+        private readonly CurrencyRepositoryInterface $currencyRepo,
         private readonly BusinessSettingRepositoryInterface $businessSettingRepo,
-        private readonly SettingRepositoryInterface         $settingRepo,
-        private readonly SettingService                     $settingService,
-    )
-    {
-    }
+        private readonly SettingRepositoryInterface $settingRepo,
+        private readonly SettingService $settingService,
+    ) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $paymentGatewayPublishedStatus = config('get_payment_publish_status') ?? 0;
         $paymentGatewayUrl = $this->settingService->getVacationData(type: 'payment_setup');
@@ -68,10 +63,11 @@ class CurrencyController extends BaseController
         $digitalPaymentStatus = getWebConfig(name: 'digital_payment')['status'] ?? 0;
         $currencyModel = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'currency_model']);
         $default = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'system_default_currency']);
+
         return view('admin-views.system-setup.currency.view', compact('activeCurrencies', 'currencies', 'currencyModel', 'default', 'paymentGatewayPublishedStatus', 'paymentGatewayUrl', 'digitalPaymentStatus'));
     }
 
-    function checkPaymentGatewaySupportedCurrencies($currencyCode, $currencyCodes, $paymentGateways): array
+    public function checkPaymentGatewaySupportedCurrencies($currencyCode, $currencyCodes, $paymentGateways): array
     {
         $isEnabledToUse = 0;
         $totalSupportedGateway = 0;
@@ -93,6 +89,7 @@ class CurrencyController extends BaseController
         if (count($supportForGateway) == 0) {
             $mustRequiredForGateway = 0;
         }
+
         return [
             'is_enabled_to_use' => $isEnabledToUse,
             'total_supported_gateway' => $totalSupportedGateway,
@@ -106,6 +103,7 @@ class CurrencyController extends BaseController
         $currencyExist = $this->currencyRepo->getFirstWhere(params: ['code' => $request['code']]);
         if ($currencyExist) {
             ToastMagic::warning(translate('Currency_already_exist'));
+
             return redirect()->back();
         }
         $this->currencyRepo->add([
@@ -117,6 +115,7 @@ class CurrencyController extends BaseController
 
         updateSetupGuideCacheKey(key: 'currency_setup', panel: 'admin');
         ToastMagic::success(translate('New_Currency_inserted_successfully'));
+
         return redirect()->back();
     }
 
@@ -124,31 +123,36 @@ class CurrencyController extends BaseController
     {
         if ($request['exchange_rate'] <= 0) {
             ToastMagic::error(translate('exchange_rate_cannot_be_zero'));
+
             return back();
         }
         $currency = $this->currencyRepo->getFirstWhere(params: ['id' => $request['id']]);
         if ($currency['code'] == 'BDT' && $request['code'] != 'BDT') {
             $config = $this->settingRepo->getFirstWhere(params: ['key_name' => 'ssl_commerz']);
             if ($config['is_active']) {
-                ToastMagic::warning(translate('Before_update_BDT') . ", " . translate('disable_the_SSLCOMMERZ_payment_gateway.'));
+                ToastMagic::warning(translate('Before_update_BDT').', '.translate('disable_the_SSLCOMMERZ_payment_gateway.'));
+
                 return back();
             }
         } elseif ($currency['code'] == 'INR' && $request['code'] != 'INR') {
             $config = $this->settingRepo->getFirstWhere(params: ['key_name' => 'razor_pay']);
             if ($config['is_active']) {
-                ToastMagic::warning(translate('Before_update_INR') . ", " . translate('disable_the_RAZOR_PAY_payment_gateway.'));
+                ToastMagic::warning(translate('Before_update_INR').', '.translate('disable_the_RAZOR_PAY_payment_gateway.'));
+
                 return back();
             }
         } elseif ($currency['code'] == 'MYR' && $request['code'] != 'MYR') {
             $config = $this->settingRepo->getFirstWhere(params: ['key_name' => 'senang_pay']);
             if ($config['is_active']) {
-                ToastMagic::warning(translate('Before_update_MYR') . ", " . translate('disable_the_SENANG_PAY_payment_gateway.'));
+                ToastMagic::warning(translate('Before_update_MYR').', '.translate('disable_the_SENANG_PAY_payment_gateway.'));
+
                 return back();
             }
         } elseif ($currency['code'] == 'ZAR' && $request['code'] != 'ZAR') {
             $config = $this->settingRepo->getFirstWhere(params: ['key_name' => 'paystack']);
             if ($config['is_active']) {
-                ToastMagic::warning(translate('Before_update_ZAR') . ", " . translate('disable_the_PAYSTACK_payment_gateway.'));
+                ToastMagic::warning(translate('Before_update_ZAR').', '.translate('disable_the_PAYSTACK_payment_gateway.'));
+
                 return back();
             }
         }
@@ -163,17 +167,19 @@ class CurrencyController extends BaseController
 
         updateSetupGuideCacheKey(key: 'currency_setup', panel: 'admin');
         ToastMagic::success(translate('currency_updated_successfully'));
+
         return redirect()->back();
     }
 
     public function delete(Request $request): RedirectResponse
     {
-        if (!in_array($request['id'], [1, 2, 3, 4, 5, 6, 7])) {
+        if (! in_array($request['id'], [1, 2, 3, 4, 5, 6, 7])) {
             $this->currencyRepo->delete(params: ['id' => $request['id']]);
             ToastMagic::success(translate('currency_delete_successfully'));
         } else {
             ToastMagic::warning(translate('default_currency_can_not_be_deleted'));
         }
+
         return redirect()->back();
     }
 
@@ -184,7 +190,7 @@ class CurrencyController extends BaseController
             if ($count == 1) {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('You_can_not_disable_all_currencies.')
+                    'message' => translate('You_can_not_disable_all_currencies.'),
                 ]);
             }
 
@@ -200,15 +206,16 @@ class CurrencyController extends BaseController
             if ($checkedData['must_required_for_gateway']) {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('If_you_disable_this_currency_please_check_in_payment_gateway_settings_that_gateway_only_dependent_on_support_this_currency')
+                    'message' => translate('If_you_disable_this_currency_please_check_in_payment_gateway_settings_that_gateway_only_dependent_on_support_this_currency'),
                 ]);
             }
         }
         $this->currencyRepo->update(id: $request['id'], data: ['status' => $request->get('status', 0)]);
         updateSetupGuideCacheKey(key: 'currency_setup', panel: 'admin');
+
         return response()->json([
             'status' => 1,
-            'message' => translate('Currency_status_successfully_changed.')
+            'message' => translate('Currency_status_successfully_changed.'),
         ]);
     }
 
@@ -216,6 +223,7 @@ class CurrencyController extends BaseController
     {
         if (in_array(0, $request['exchange_rate'])) {
             ToastMagic::error(translate('exchange_rate_cannot_be_zero'));
+
             return back();
         }
         $this->businessSettingRepo->updateWhere(params: ['type' => 'system_default_currency'], data: ['value' => $request['default_currency_id']]);
@@ -234,6 +242,7 @@ class CurrencyController extends BaseController
         session()->forget('currency_symbol');
         session()->forget('currency_exchange_rate');
         ToastMagic::success(translate('System_Default_currency_updated_successfully'));
+
         return redirect()->route('admin.system-setup.currency.view');
     }
 
@@ -250,13 +259,15 @@ class CurrencyController extends BaseController
                 $currencyItem->exchange_rate = $exchangeRateWithPrecision;
                 $currencyExchangeRate[] = $currencyItem;
             }
+
             return response()->json([
                 'mode' => 'multi_currency',
-                'view' => view('admin-views.system-setup.currency._default-currency', compact('currencyExchangeRate', 'defaultCurrency'))->render()
+                'view' => view('admin-views.system-setup.currency._default-currency', compact('currencyExchangeRate', 'defaultCurrency'))->render(),
             ]);
         } else {
             $this->currencyRepo->updateWhere(params: ['code' => $defaultCurrency['code']], data: ['exchange_rate' => 1]);
             $this->businessSettingRepo->updateWhere(params: ['type' => 'system_default_currency'], data: ['value' => $defaultCurrency['id']]);
+
             return response()->json([
                 'mode' => 'single_currency',
                 'message' => translate('System_default_currency_changed_successfully'),

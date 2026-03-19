@@ -12,13 +12,12 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
 {
     public function __construct(
         private readonly LoginSetup $loginSetup,
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
         cacheRemoveByType(type: 'login_setups');
+
         return $this->loginSetup->create($data);
     }
 
@@ -30,9 +29,9 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->loginSetup->with($relations)
-                ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                    return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
-                });
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
+            });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
     }
@@ -41,20 +40,21 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
     {
         $query = $this->loginSetup
             ->with($relations)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 $query->where('key', 'like', "%{$searchValue}%");
             })
-            ->when(isset($filters['id']) , function ($query) use ($filters){
+            ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where(['id' => $filters['id']]);
             })
-            ->when(isset($filters['key']) , function ($query) use ($filters){
+            ->when(isset($filters['key']), function ($query) use ($filters) {
                 return $query->where(['key' => $filters['key']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                $query->orderBy(key($orderBy),current($orderBy));
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                $query->orderBy(key($orderBy), current($orderBy));
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -62,36 +62,36 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
     {
         $query = $this->loginSetup
             ->with($relations)->where($filters)
-            ->when($searchValue, function ($query) use($searchValue){
+            ->when($searchValue, function ($query) use ($searchValue) {
                 return $query->where('key', 'like', "%$searchValue%");
             })
-            ->when(isset($filters['id']) , function ($query) use ($filters){
+            ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where(['id' => $filters['id']]);
             })
-            ->when(isset($filters['key']) , function ($query) use ($filters){
+            ->when(isset($filters['key']), function ($query) use ($filters) {
                 return $query->where(['key' => $filters['key']]);
             })
-            ->when(!empty($whereInFilters), function ($query) use ($whereInFilters) {
-                foreach ($whereInFilters as $key => $filterIndex){
-                    $query->whereIn($key , $filterIndex);
+            ->when(! empty($whereInFilters), function ($query) use ($whereInFilters) {
+                foreach ($whereInFilters as $key => $filterIndex) {
+                    $query->whereIn($key, $filterIndex);
                 }
             })
-            ->when(!empty($nullFields), function ($query) use ($nullFields) {
+            ->when(! empty($nullFields), function ($query) use ($nullFields) {
                 return $query->whereNull($nullFields);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
-        $filters += ['searchValue' =>$searchValue];
+        $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
-
-
 
     public function update(string $id, array $data): bool
     {
         cacheRemoveByType(type: 'login_setups');
+
         return $this->loginSetup->where('id', $id)->update($data);
     }
 
@@ -99,6 +99,7 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
     {
         cacheRemoveByType(type: 'login_setups');
         $this->loginSetup->where($params)->update($data);
+
         return true;
     }
 
@@ -107,7 +108,7 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
         cacheRemoveByType(type: 'login_setups');
         $this->loginSetup->updateOrInsert(['key' => $key], [
             'value' => $value,
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return true;
@@ -122,6 +123,7 @@ class LoginSetupRepository implements LoginSetupRepositoryInterface
     {
         cacheRemoveByType(type: 'login_setups');
         $this->loginSetup->where($params)->delete();
+
         return true;
     }
 }

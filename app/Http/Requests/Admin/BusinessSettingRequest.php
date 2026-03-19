@@ -63,5 +63,4 @@ class BusinessSettingRequest extends FormRequest
             'offline_payment.required_without_all' => 'At least one payment option should be checked.',
         ];
     }
-
 }

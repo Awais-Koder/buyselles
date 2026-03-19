@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+
 /**
  * @property int $translationable_id
  * @property string $translationable_type
@@ -11,11 +12,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $key
  * @property string $value
  */
-
 class Translation extends Model
 {
-
     public $timestamps = false;
+
     protected $table = 'translations';
 
     protected $fillable = [
@@ -43,6 +43,6 @@ class Translation extends Model
     protected static function boot(): void
     {
         parent::boot();
-//        static::addGlobalScope(new RememberScope);
+        //        static::addGlobalScope(new RememberScope);
     }
 }

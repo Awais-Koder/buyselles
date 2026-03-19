@@ -11,6 +11,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 class RefundStatusRequest extends FormRequest
 {
     use ResponseHandler;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -30,10 +31,11 @@ class RefundStatusRequest extends FormRequest
             'id' => 'required',
             'refund_status' => 'required|in:pending,approved,rejected,refunded',
             'approved_note' => $this->input('refund_status') == 'approved' ? 'required' : '',
-            'rejected_note' => $this->input('refund_status') == 'rejected' ? 'required': '',
-            'payment_method' => $this->input('refund_status') == 'refunded' ? 'required': '',
+            'rejected_note' => $this->input('refund_status') == 'rejected' ? 'required' : '',
+            'payment_method' => $this->input('refund_status') == 'refunded' ? 'required' : '',
         ];
     }
+
     public function messages(): array
     {
         return [
@@ -42,6 +44,7 @@ class RefundStatusRequest extends FormRequest
             'payment_method.required' => translate('The_payment_method_field_is_required'),
         ];
     }
+
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json(['errors' => $this->errorProcessor($validator)]));

@@ -16,20 +16,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManagerController extends BaseController
 {
-
-    public function __construct(private readonly FileManagerService $fileManagerService)
-    {
-    }
+    public function __construct(private readonly FileManagerService $fileManagerService) {}
 
     /**
-     * @param Request|null $request
-     * @param string|null $type
      * @return View Index function is the starting point of a controller
-     * Index function is the starting point of a controller
+     *              Index function is the starting point of a controller
      */
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
-        $targetFolder = $request['targetFolder'] ?? "cHVibGlj";
+        $targetFolder = $request['targetFolder'] ?? 'cHVibGlj';
         $storage = $request['storage'] ?? 'public';
 
         try {
@@ -38,10 +33,11 @@ class FileManagerController extends BaseController
             Cache::remember($cacheKey, now()->addMinutes(10), function () use ($storage) {
                 return Storage::disk($storage)->allFiles('/');
             });
-        } catch (\Exception $exception) {}
+        } catch (\Exception $exception) {
+        }
 
         $currentFolder = explode('/', base64_decode($targetFolder));
-        $previousFolder = count($currentFolder) > 1 ? str_replace('/' . end($currentFolder), '', base64_decode($targetFolder)) : 'public';
+        $previousFolder = count($currentFolder) > 1 ? str_replace('/'.end($currentFolder), '', base64_decode($targetFolder)) : 'public';
         $breadcrumb = $this->fileManagerService->getFileManagerBreadcrumb(path: base64_decode($targetFolder));
 
         $recentFiles = $this->fileManagerService->getRecentFiles(storage: $storage);
@@ -53,7 +49,7 @@ class FileManagerController extends BaseController
 
         $allFilesList = $this->fileManagerService->getAllFilesWithInfo(targetFolder: base64_decode($targetFolder), storage: $storage);
         $allItemList = collect(array_merge($allFilesList['folders'], $allFilesList['files']));
-        if (request()->has('search') && !empty(request('search'))) {
+        if (request()->has('search') && ! empty(request('search'))) {
             $allItemList = $allItemList->filter(function ($file) use ($request) {
                 return str_contains(strtolower($file['name']), strtolower($request['search']));
             });
@@ -84,6 +80,7 @@ class FileManagerController extends BaseController
     {
         if (env('APP_MODE') == 'demo') {
             ToastMagic::info(translate('This_option_is_disabled_for_demo'));
+
             return back();
         }
         $fileManagerService->uploadFileAndImages(request: $request);
@@ -94,6 +91,7 @@ class FileManagerController extends BaseController
         } else {
             ToastMagic::success(translate('File_uploaded_successfully'));
         }
+
         return back();
     }
 

@@ -128,7 +128,7 @@ class Order extends Model
         'delivery_service_name',
         'third_party_delivery_tracking_id',
         'edited_status',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $casts = [
@@ -185,9 +185,8 @@ class Order extends Model
         'delivery_type' => 'string',
         'delivery_service_name' => 'string',
         'third_party_delivery_tracking_id' => 'string',
-        'edited_status' => 'integer'
+        'edited_status' => 'integer',
     ];
-
 
     public function details(): HasMany
     {
@@ -301,6 +300,6 @@ class Order extends Model
     protected static function boot(): void
     {
         parent::boot();
-        //static::addGlobalScope(new RememberScope);
+        // static::addGlobalScope(new RememberScope);
     }
 }

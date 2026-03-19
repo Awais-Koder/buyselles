@@ -18,8 +18,7 @@ class VendorRegistrationEvent
     public function __construct(
         public readonly string $email,
         public readonly array $data,
-     )
-    {
+    ) {
         //
     }
 

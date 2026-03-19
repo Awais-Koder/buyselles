@@ -13,8 +13,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $zipcode
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class DeliveryZipCode extends Model
 {
@@ -30,5 +28,4 @@ class DeliveryZipCode extends Model
     protected $fillable = [
         'zipcode',
     ];
-
 }

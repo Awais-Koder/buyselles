@@ -44,8 +44,8 @@ class BusinessPageUpdateRequest extends FormRequest
         return [
             'title.required' => translate('title_is_required'),
             'slug.unique' => translate('slug_must_be_unique'),
-            'banner.mimes' => translate('banner_image_type_must_be') . getFileUploadFormats(skip: '.svg'),
-            'banner.max' => translate('banner_image_max_size_is_'). getFileUploadMaxSize(). 'MB',
+            'banner.mimes' => translate('banner_image_type_must_be').getFileUploadFormats(skip: '.svg'),
+            'banner.max' => translate('banner_image_max_size_is_').getFileUploadMaxSize().'MB',
         ];
     }
 
@@ -64,11 +64,10 @@ class BusinessPageUpdateRequest extends FormRequest
 
                 if (empty($cleanedDescription)) {
                     $validator->errors()->add(
-                        'description', translate('Description_is_required') . '!'
+                        'description', translate('Description_is_required').'!'
                     );
                 }
-            }
+            },
         ];
     }
-
 }

@@ -31,9 +31,9 @@ class UserWalletController extends Controller
             $totalWalletBalance = $user->wallet_balance;
             $types = json_decode($request->get('transaction_types', ''), true) ?? [];
             $transactionTypes = $this->getSelectTransactionTypes(types: $types);
-            if (request()->has('start_date') && request()->has('end_date') && !checkDateFormatInMDY($request['start_date']) && !checkDateFormatInMDY($request['end_date'])) {
-                $startDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['start_date'])->format('Y-m-d') . ' 00:00:00';
-                $endDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['end_date'])->format('Y-m-d') . ' 23:59:59';
+            if (request()->has('start_date') && request()->has('end_date') && ! checkDateFormatInMDY($request['start_date']) && ! checkDateFormatInMDY($request['end_date'])) {
+                $startDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['start_date'])->format('Y-m-d').' 00:00:00';
+                $endDate = Carbon::createFromFormat('m/d/Y h:i:s a', $request['end_date'])->format('Y-m-d').' 23:59:59';
             } else {
                 $startDate = '';
                 $endDate = '';
@@ -47,12 +47,12 @@ class UserWalletController extends Controller
                         $query->where('debit', '=', 0);
                     });
                 })
-                ->when(!empty($startDate) && !empty($endDate), function ($query) use ($startDate, $endDate) {
+                ->when(! empty($startDate) && ! empty($endDate), function ($query) use ($startDate, $endDate) {
                     return $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
-                ->when(!empty($transactionTypes) || in_array('added_via_payment_method', $types) || in_array('earned_by_referral', $types), function ($query) use ($transactionTypes, $types) {
+                ->when(! empty($transactionTypes) || in_array('added_via_payment_method', $types) || in_array('earned_by_referral', $types), function ($query) use ($transactionTypes, $types) {
                     $query->where(function ($subResult) use ($transactionTypes, $types) {
-                        if (!empty($transactionTypes)) {
+                        if (! empty($transactionTypes)) {
                             $subResult->whereIn('transaction_type', $transactionTypes);
                         }
                         if (in_array('added_via_payment_method', $types)) {
@@ -67,15 +67,15 @@ class UserWalletController extends Controller
                 ->paginate($request['limit'], ['*'], 'page', $request['offset']);
 
             return response()->json([
-                'limit' => (integer)$request['limit'],
-                'offset' => (integer)$request['offset'],
+                'limit' => (int) $request['limit'],
+                'offset' => (int) $request['offset'],
                 'total_wallet_balance' => $totalWalletBalance,
                 'total_size' => $walletTransactionList->total(),
                 'wallet_transaction_list' => $walletTransactionList->items(),
                 'filter_by' => $request['filter_by'],
                 'start_date' => $request['start_date'],
                 'end_date' => $request['end_date'],
-                'transaction_types' => (array)$types,
+                'transaction_types' => (array) $types,
             ], 200);
         } else {
             return response()->json(['message' => translate('access_denied!')], 422);
@@ -88,6 +88,7 @@ class UserWalletController extends Controller
             ->whereDate('start_date_time', '<=', now())
             ->whereDate('end_date_time', '>=', now())
             ->get();
+
         return response()->json(['bonus_list' => $addFundBonusCategories], 200);
     }
 

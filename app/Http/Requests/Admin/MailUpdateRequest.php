@@ -13,8 +13,6 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class MailUpdateRequest extends Request
 {
@@ -30,14 +28,14 @@ class MailUpdateRequest extends Request
     public function rules(): array
     {
         return [
-            "name" => 'required',
-            "host" => 'required',
-            "driver" => 'required',
-            "port" => 'required',
-            "username" => 'required',
-            "email" => 'required',
-            "encryption" => 'required',
-            "password" => 'required',
+            'name' => 'required',
+            'host' => 'required',
+            'driver' => 'required',
+            'port' => 'required',
+            'username' => 'required',
+            'email' => 'required',
+            'encryption' => 'required',
+            'password' => 'required',
         ];
     }
 

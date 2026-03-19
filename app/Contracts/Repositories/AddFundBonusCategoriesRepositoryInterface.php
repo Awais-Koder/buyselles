@@ -2,7 +2,4 @@
 
 namespace App\Contracts\Repositories;
 
-interface AddFundBonusCategoriesRepositoryInterface extends RepositoryInterface
-{
-
-}
+interface AddFundBonusCategoriesRepositoryInterface extends RepositoryInterface {}

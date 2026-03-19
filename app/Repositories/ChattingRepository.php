@@ -12,9 +12,7 @@ class ChattingRepository implements ChattingRepositoryInterface
 {
     public function __construct(
         private readonly Chatting $chatting
-    )
-    {
-    }
+    ) {}
 
     public function add(array $data): string|object
     {
@@ -33,7 +31,8 @@ class ChattingRepository implements ChattingRepositoryInterface
 
     public function getListBySelectWhere(array $joinColumn = [], array $select = [], array $filters = [], array $orderBy = []): Collection
     {
-        list($table, $first, $operator, $second) = $joinColumn;
+        [$table, $first, $operator, $second] = $joinColumn;
+
         return $this->chatting
             ->join($table, $first, $operator, $second)
             ->select($select)
@@ -45,8 +44,8 @@ class ChattingRepository implements ChattingRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->chatting->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -74,11 +73,12 @@ class ChattingRepository implements ChattingRepositoryInterface
             })->when(isset($filters['seen_by_customer']), function ($query) use ($filters) {
                 return $query->where(['seen_by_customer' => $filters['seen_by_customer']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -107,11 +107,12 @@ class ChattingRepository implements ChattingRepositoryInterface
                 return $query->where(['seen_notification' => $filters['seen_notification']]);
             })
             ->whereNotNull($whereNotNull)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -157,6 +158,7 @@ class ChattingRepository implements ChattingRepositoryInterface
     public function delete(array $params): bool
     {
         $this->chatting->where($params)->delete();
+
         return true;
     }
 

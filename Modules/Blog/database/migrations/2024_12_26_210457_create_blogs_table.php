@@ -20,9 +20,9 @@ return new class extends Migration
             $table->string('title');
             $table->longText('description');
             $table->string('image')->nullable();
-            $table->string('image_storage_type',15)->default('public')->nullable();
+            $table->string('image_storage_type', 15)->default('public')->nullable();
             $table->string('draft_image')->nullable();
-            $table->string('draft_image_storage_type',15)->default('public')->nullable();
+            $table->string('draft_image_storage_type', 15)->default('public')->nullable();
             $table->datetime('publish_date')->default(now());
             $table->tinyInteger('is_published')->default(0);
             $table->tinyInteger('status')->default(0);

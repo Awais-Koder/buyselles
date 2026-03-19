@@ -15,7 +15,6 @@ use App\Events\RefundEvent;
 use App\Exports\RefundRequestExport;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\RefundStatusRequest;
-use App\Repositories\VendorRepository;
 use App\Services\RefundStatusService;
 use App\Traits\CustomerTrait;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
@@ -33,33 +32,21 @@ class RefundController extends BaseController
     use CustomerTrait;
 
     public function __construct(
-        private readonly RefundRequestRepositoryInterface       $refundRequestRepo,
-        private readonly CustomerRepositoryInterface            $customerRepo,
-        private readonly OrderDetailRepositoryInterface         $orderDetailRepo,
-        private readonly RefundStatusRepositoryInterface        $refundStatusRepo,
-        private readonly RefundStatusService                    $refundStatusService,
-        private readonly OrderRepositoryInterface               $orderRepo,
-        private readonly VendorRepositoryInterface              $vendorRepo,
+        private readonly RefundRequestRepositoryInterface $refundRequestRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
+        private readonly OrderDetailRepositoryInterface $orderDetailRepo,
+        private readonly RefundStatusRepositoryInterface $refundStatusRepo,
+        private readonly RefundStatusService $refundStatusService,
+        private readonly OrderRepositoryInterface $orderRepo,
+        private readonly VendorRepositoryInterface $vendorRepo,
         private readonly OrderDetailsRewardsRepositoryInterface $orderDetailsRewardsRepo,
-    )
-    {
-    }
+    ) {}
 
-    /**
-     * @param Request|null $request
-     * @param string|null $type
-     * @return View|Collection|LengthAwarePaginator|callable|RedirectResponse|null
-     */
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         return $this->getList(request: $request, status: $type);
     }
 
-    /**
-     * @param object $request
-     * @param string $status
-     * @return View
-     */
     public function getList(object $request, string $status): View
     {
         $vendorId = auth('seller')->id();
@@ -70,9 +57,9 @@ class RefundController extends BaseController
             orderBy: ['id' => 'desc'],
             searchValue: $searchValue,
             filters: [
-                'status'    => $status,
+                'status' => $status,
                 'from_date' => $fromDate,
-                'to_date'   => $toDate
+                'to_date' => $toDate,
             ],
             whereHas: 'order',
             whereHasFilters: ['seller_is' => 'seller', 'seller_id' => $vendorId],
@@ -80,13 +67,10 @@ class RefundController extends BaseController
             dataLimit: getWebConfig('pagination_limit'),
 
         );
+
         return view('vendor-views.refund.index', compact('refundList', 'searchValue'));
     }
 
-    /**
-     * @param string|int $id
-     * @return View|RedirectResponse
-     */
     public function getDetailsView(string|int $id): View|RedirectResponse
     {
         $vendorId = auth('seller')->id();
@@ -96,8 +80,9 @@ class RefundController extends BaseController
             whereHasFilters: ['seller_is' => 'seller', 'seller_id' => $vendorId],
             relations: ['order.details'],
         );
-        if (!$refund || !$refund?->orderDetails || !$refund->order) {
+        if (! $refund || ! $refund?->orderDetails || ! $refund->order) {
             ToastMagic::error(translate('Refund Details not found'));
+
             return back();
         }
         $order = $refund->order;
@@ -111,14 +96,9 @@ class RefundController extends BaseController
         $referralDiscount = $order?->refer_and_earn_discount ?? 0;
         $refundAmount = $subtotal - $couponDiscount - $referralDiscount;
 
-
         return view(Refund::DETAILS[VIEW], compact('refund', 'order', 'refundAmount', 'subtotal', 'couponDiscount', 'refundAmount', 'referralDiscount'));
     }
 
-    /**
-     * @param RefundStatusRequest $request
-     * @return JsonResponse
-     */
     public function updateStatus(RefundStatusRequest $request): JsonResponse
     {
         $vendorId = auth('seller')->id();
@@ -128,23 +108,23 @@ class RefundController extends BaseController
             whereHasFilters: ['seller_is' => 'seller', 'seller_id' => $vendorId],
         );
         if (($request['refund_status'] == 'approved' && $refund['approved_count'] >= 2) || $request['refund_status'] == 'rejected' && $refund['denied_count'] >= 2) {
-            return response()->json(['error' => translate('you_already_changed_') . ($request['refund_status'] == 'approved' ? 'approve' : 'reject') . translate('_status_two_times') . '!!']);
+            return response()->json(['error' => translate('you_already_changed_').($request['refund_status'] == 'approved' ? 'approve' : 'reject').translate('_status_two_times').'!!']);
         }
         $customer = $this->customerRepo->getFirstWhere(params: ['id' => $refund['customer_id']]);
-        if (!isset($customer)) {
-            return response()->json(['error' => translate('this_account_has_been_deleted') . ',' . translate('you_can_not_modify_the_status') . '!!']);
+        if (! isset($customer)) {
+            return response()->json(['error' => translate('this_account_has_been_deleted').','.translate('you_can_not_modify_the_status').'!!']);
         }
 
         $orderDetails = $this->orderDetailRepo->getFirstWhere(['id' => $refund['order_details_id']]);
         $orderDetailsRewards = $this->orderDetailsRewardsRepo->getFirstWhere(params: ['order_details_id' => $refund['order_details_id'], 'reward_type' => 'loyalty_point']);
         $loyaltyPoint = $orderDetailsRewards['reward_amount'] ?? 0;
         if ($orderDetailsRewards && $customer['loyalty_point'] < $orderDetailsRewards['reward_amount'] && ($request['refund_status'] == 'refunded' || $request['refund_status'] == 'approved')) {
-            return response()->json(['error' => translate('customer_has_not_sufficient_loyalty_point_to_take_refund_for_this_order') . '.']);
+            return response()->json(['error' => translate('customer_has_not_sufficient_loyalty_point_to_take_refund_for_this_order').'.']);
         }
 
         if ($refund['change_by'] == 'admin') {
             return response()->json([
-                'error' => translate('refunded_status_can_not_be_changed'). '!! ' . translate('admin_already_changed_the_status') . ': ' . $refund['status'] . '!!'
+                'error' => translate('refunded_status_can_not_be_changed').'!! '.translate('admin_already_changed_the_status').': '.$refund['status'].'!!',
             ]);
         }
 
@@ -181,9 +161,10 @@ class RefundController extends BaseController
             );
             $order = $this->orderRepo->getFirstWhere(params: ['id' => $refund['order_id']]);
             event(new RefundEvent(status: $request['refund_status'], order: $order, refund: $refund, orderDetails: $orderDetails));
-            return response()->json(['message' => translate('refund_status_updated') . '!!']);
+
+            return response()->json(['message' => translate('refund_status_updated').'!!']);
         } else {
-            return response()->json(['message' => translate('refunded_status_can_not_be_changed') . '!!']);
+            return response()->json(['message' => translate('refunded_status_can_not_be_changed').'!!']);
         }
     }
 
@@ -192,9 +173,9 @@ class RefundController extends BaseController
         $vendorId = auth('seller')->id();
         $vendor = $this->vendorRepo->getFirstWhere(params: ['id' => $vendorId]);
         $filter = [
-          'status' => $request['status'],
-          'from_date' => $request['from_date'],
-          'to_date' => $request['to_date'],
+            'status' => $request['status'],
+            'from_date' => $request['from_date'],
+            'to_date' => $request['to_date'],
         ];
         $refundList = $this->refundRequestRepo->getListWhereHas(
             orderBy: ['id' => 'desc'],
@@ -205,6 +186,7 @@ class RefundController extends BaseController
             relations: ['order', 'order.seller', 'order.deliveryMan', 'product'],
             dataLimit: 'all',
         );
+
         return Excel::download(new RefundRequestExport([
             'data-from' => 'vendor',
             'vendor' => $vendor,

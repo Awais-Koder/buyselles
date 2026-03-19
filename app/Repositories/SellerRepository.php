@@ -10,10 +10,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class SellerRepository implements SellerRepositoryInterface
 {
+    public function __construct(private readonly Seller $seller) {}
 
-    public function __construct(private readonly Seller $seller)
-    {
-    }
     public function add(array $data): string|object
     {
         return $this->seller->create($data);
@@ -27,8 +25,8 @@ class SellerRepository implements SellerRepositoryInterface
     public function getList(array $orderBy = [], array $relations = [], int|string $dataLimit = DEFAULT_DATA_LIMIT, ?int $offset = null): Collection|LengthAwarePaginator
     {
         $query = $this->seller->with($relations)
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
-                return $query->orderBy(array_key_first($orderBy),array_values($orderBy)[0]);
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
+                return $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit);
@@ -43,11 +41,12 @@ class SellerRepository implements SellerRepositoryInterface
             ->when(isset($filters['id']), function ($query) use ($filters) {
                 return $query->where(['id' => $filters['id']]);
             })
-            ->when(!empty($orderBy), function ($query) use ($orderBy) {
+            ->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 
@@ -59,6 +58,7 @@ class SellerRepository implements SellerRepositoryInterface
     public function delete(array $params): bool
     {
         $this->seller->where($params)->delete();
+
         return true;
     }
 
@@ -68,9 +68,9 @@ class SellerRepository implements SellerRepositoryInterface
             ->when(isset($withCount['product']), function ($query) use ($withCount) {
                 return $query->withCount($withCount['product']);
             })
-            ->when(isset($relations['shop']), function ($query) use($relations){
+            ->when(isset($relations['shop']), function ($query) use ($relations) {
                 return $query->with($relations['shop']);
-            })->when(isset($relations['product.reviews']), function ($query) use($relations){
+            })->when(isset($relations['product.reviews']), function ($query) use ($relations) {
                 return $query->with($relations['product.reviews']);
             })
             ->when(isset($withCount['product']), function ($query) use ($withCount) {
@@ -82,11 +82,12 @@ class SellerRepository implements SellerRepositoryInterface
                 return $query->approved();
             })->when(isset($filters['brand_id']), function ($query) use ($filters) {
                 return $query->where(['brand_id' => $filters['brand_id']]);
-            })->when(!empty($orderBy), function ($query) use ($orderBy) {
+            })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);
             });
 
         $filters += ['searchValue' => $searchValue];
+
         return $dataLimit == 'all' ? $query->get() : $query->paginate($dataLimit)->appends($filters);
     }
 }

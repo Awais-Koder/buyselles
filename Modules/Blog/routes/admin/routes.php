@@ -1,10 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Blog\app\Http\Controllers\Admin\BlogCategoryController;
 use Modules\Blog\app\Http\Controllers\Admin\BlogController;
 use Modules\Blog\app\Http\Controllers\Admin\BlogDownloadAppController;
 use Modules\Blog\app\Http\Controllers\Admin\BlogPrioritySetupController;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,8 +35,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin']],
             Route::get('edit', 'getUpdateView')->name('edit');
             Route::post('update', 'update')->name('update');
             Route::post('status-update', 'updateStatus')->name('status-update');
-            Route::post('blog-status-update'. '/{id}', 'updateBlogStatus')->name('blog-status-update');
-            Route::get('draft-edit' . '/{id}', 'draftEdit')->name('draft-edit');
+            Route::post('blog-status-update'.'/{id}', 'updateBlogStatus')->name('blog-status-update');
+            Route::get('draft-edit'.'/{id}', 'draftEdit')->name('draft-edit');
             Route::post('delete', 'delete')->name('delete');
             Route::post('section-view', 'sectionView')->name('section-view');
         });

@@ -14,6 +14,7 @@ class AdminService implements AdminServiceInterface
         if (auth('admin')->attempt(['email' => $email, 'password' => $password], $rememberToken)) {
             return true;
         }
+
         return false;
     }
 
@@ -25,18 +26,18 @@ class AdminService implements AdminServiceInterface
 
     public function getIdentityImages(object $request, ?object $oldImages = null): bool|string
     {
-        if (!empty($oldImages['identify_image'])) {
+        if (! empty($oldImages['identify_image'])) {
             foreach (json_decode($oldImages['identify_image'], true) as $image) {
                 $imageName = is_string($image) ? $image : $image['image_name'];
-                $this->delete('admin/' . $imageName);
+                $this->delete('admin/'.$imageName);
             }
         }
 
         $identity_images = [];
-        if (!empty($request->file('identity_image'))) {
+        if (! empty($request->file('identity_image'))) {
             foreach ($request['identity_image'] as $img) {
                 $identity_images[] = [
-                    'image_name'=>$this->upload('admin/', 'webp', $img),
+                    'image_name' => $this->upload('admin/', 'webp', $img),
                     'storage' => getWebConfig(name: 'storage_connection_type') ?? 'public',
                 ];
             }
@@ -51,19 +52,21 @@ class AdminService implements AdminServiceInterface
     public function getProceedImage(object $request, ?string $oldImage = null): bool|string
     {
         if ($oldImage) {
-            $image =  $this->update('admin/', $oldImage,  'webp', $request['image']);
-        }else {
-            $image =  $this->upload('admin/', 'webp', $request['image']);
+            $image = $this->update('admin/', $oldImage, 'webp', $request['image']);
+        } else {
+            $image = $this->upload('admin/', 'webp', $request['image']);
         }
+
         return $image;
     }
 
     /**
      * @return array[f_name: mixed, l_name: mixed, phone: mixed, image: mixed|string]
      */
-    public function getAdminDataForUpdate(object $request, object $admin):array
+    public function getAdminDataForUpdate(object $request, object $admin): array
     {
         $image = $request['image'] ? $this->update(dir: 'admin/', oldImage: $admin['image'], format: 'webp', image: $request->file('image')) : $admin['image'];
+
         return [
             'name' => $request['name'],
             'email' => $request['email'],
@@ -75,11 +78,10 @@ class AdminService implements AdminServiceInterface
     /**
      * @return array[password: string]
      */
-    public function getAdminPasswordData(object $request):array
+    public function getAdminPasswordData(object $request): array
     {
         return [
             'password' => bcrypt($request['password']),
         ];
     }
-
 }

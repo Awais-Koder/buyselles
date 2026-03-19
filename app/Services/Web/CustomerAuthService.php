@@ -2,11 +2,10 @@
 
 namespace App\Services\Web;
 
+use App\Events\EmailVerificationEvent;
 use App\Utils\Helpers;
 use App\Utils\SMSModule;
-use App\Events\EmailVerificationEvent;
 use Exception;
-
 
 class CustomerAuthService
 {
@@ -21,14 +20,14 @@ class CustomerAuthService
             'login_hit_count' => 0,
             'is_temp_blocked' => 0,
             'temp_block_time' => null,
-            'updated_at' => now()
+            'updated_at' => now(),
         ];
     }
-
 
     public function sendCustomerPhoneVerificationToken($phone, $token): array
     {
         $response = SMSModule::sendCentralizedSMS($phone, $token);
+
         return [
             'response' => $response,
             'status' => 'success',
@@ -54,6 +53,7 @@ class CustomerAuthService
                 ];
 
                 event(new EmailVerificationEvent(email: $user['email'], data: $data));
+
                 return [
                     'status' => 'success',
                     'message' => translate('check_your_email'),
@@ -61,7 +61,7 @@ class CustomerAuthService
             } catch (Exception $exception) {
                 return [
                     'status' => 'error',
-                    'message' => translate('email_is_not_configured') . '. ' . translate('contact_with_the_administrator'),
+                    'message' => translate('email_is_not_configured').'. '.translate('contact_with_the_administrator'),
                 ];
             }
         } else {
@@ -75,7 +75,7 @@ class CustomerAuthService
     public function getCustomerRegisterData(object|array $request, object|array|null $referUser): array
     {
         return [
-            'name' => $request['f_name'] . ' ' . $request['l_name'],
+            'name' => $request['f_name'].' '.$request['l_name'],
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
             'email' => $request['email'],
@@ -90,7 +90,7 @@ class CustomerAuthService
     public function storeCustomerAuthReturnURL(): void
     {
         $historyUrls = session('recent_user_routes_history', []);
-        if (!empty($historyUrls)) {
+        if (! empty($historyUrls)) {
             $lastUrl = end($historyUrls);
             session()->put('keep_customer_login_redirect_url', $lastUrl);
         } else {
@@ -104,7 +104,7 @@ class CustomerAuthService
         if (session()->has('keep_customer_login_redirect_url')) {
             $keepReturnUrl = session('keep_customer_login_redirect_url');
         }
+
         return $keepReturnUrl;
     }
-
 }

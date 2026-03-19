@@ -5,25 +5,21 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OrderReportExport implements
-    FromView,
-    WithStyles,
-    WithColumnWidths,
-    WithHeadings,
-    WithEvents
+class OrderReportExport implements FromView, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
     protected $data;
+
     protected string $lastColumn = 'M';
 
     public function __construct($data)
@@ -68,7 +64,7 @@ class OrderReportExport implements
         $rowCount = $this->data['orders']->count() + 3;
 
         // Title & header fonts
-        $sheet->getStyle("A1:A2")->getFont()->setBold(true);
+        $sheet->getStyle('A1:A2')->getFont()->setBold(true);
 
         $sheet->getStyle("A3:{$this->lastColumn}3")
             ->getFont()
@@ -139,7 +135,7 @@ class OrderReportExport implements
 
                 // Merge cells
                 $event->sheet->mergeCells("A1:{$this->lastColumn}1");
-                $event->sheet->mergeCells("A2:B2");
+                $event->sheet->mergeCells('A2:B2');
                 $event->sheet->mergeCells("C2:{$this->lastColumn}2");
 
                 // Row heights

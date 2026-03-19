@@ -12,7 +12,6 @@ use App\Services\CustomerService;
 use App\Services\PasswordResetService;
 use App\Services\ShippingAddressService;
 use App\Traits\EmailTemplateTrait;
-use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -26,15 +25,13 @@ class CustomerController extends BaseController
     use EmailTemplateTrait;
 
     public function __construct(
-        private readonly CustomerRepositoryInterface      $customerRepo,
+        private readonly CustomerRepositoryInterface $customerRepo,
         private readonly PasswordResetRepositoryInterface $passwordResetRepo,
-        private readonly PasswordResetService             $passwordResetService,
-        private readonly ShippingAddressRepository        $shippingAddressRepo,
-        private readonly ShippingAddressService           $shippingAddressService,
+        private readonly PasswordResetService $passwordResetService,
+        private readonly ShippingAddressRepository $shippingAddressRepo,
+        private readonly ShippingAddressService $shippingAddressService,
 
-    )
-    {
-    }
+    ) {}
 
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
@@ -47,6 +44,7 @@ class CustomerController extends BaseController
             request: $request,
             dataLimit: getWebConfig(name: 'pagination_limit')
         );
+
         return response()->json($customers);
     }
 
@@ -63,11 +61,12 @@ class CustomerController extends BaseController
             'userType' => 'customer',
             'templateName' => 'registration-from-pos',
             'subject' => translate('Customer_Registration_Successfully_Completed'),
-            'title' => translate('welcome_to') . ' ' . getWebConfig(name: 'company_name') . '!',
+            'title' => translate('welcome_to').' '.getWebConfig(name: 'company_name').'!',
             'resetPassword' => $resetRoute,
-            'message' => translate('thank_you_for_joining') . ' ' . getWebConfig(name: 'company_name') . '.' . translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone') . ' ' . ($request['phone']) . '.' . translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer') . '.',
+            'message' => translate('thank_you_for_joining').' '.getWebConfig(name: 'company_name').'.'.translate('if_you_want_to_become_a_registered_customer_then_reset_your_password_below_by_using_this_phone').' '.($request['phone']).'.'.translate('then_you’ll_be_able_to_explore_the_website_and_app_as_a_registered_customer').'.',
         ];
         event(new CustomerRegistrationEvent(email: $request['email'], data: $data));
+
         return response()->json(['success' => true, 'message' => translate('customer_added_successfully')]);
     }
 }

@@ -20,28 +20,33 @@ class VendorRegistrationReasonController extends BaseController
 
         private readonly VendorRegistrationReasonRepository $vendorRegistrationReasonRepo,
         private readonly VendorRegistrationSettingService $vendorRegistrationSettingService,
-    )
-    {
-    }
+    ) {}
+
     public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse
     {
         // TODO: Implement index() method.
     }
+
     public function add(VendorRegistrationReasonRequest $request): RedirectResponse
     {
-        $this->vendorRegistrationReasonRepo->add($this->vendorRegistrationSettingService->getVendorRegistrationReasonData(request:$request));
+        $this->vendorRegistrationReasonRepo->add($this->vendorRegistrationSettingService->getVendorRegistrationReasonData(request: $request));
         ToastMagic::success(translate('vendor_registration_reason_added_successfully'));
+
         return redirect()->back();
     }
-    public function getUpdateView(Request $request):JsonResponse
+
+    public function getUpdateView(Request $request): JsonResponse
     {
-        $vendorRegistrationReason = $this->vendorRegistrationReasonRepo->getFirstWhere(params: ['id'=>$request['id']]);
-        return response()->json(['view'=>view('admin-views.business-settings.vendor-registration-setting.partial.update-reason-modal', compact('vendorRegistrationReason'))->render()]);
+        $vendorRegistrationReason = $this->vendorRegistrationReasonRepo->getFirstWhere(params: ['id' => $request['id']]);
+
+        return response()->json(['view' => view('admin-views.business-settings.vendor-registration-setting.partial.update-reason-modal', compact('vendorRegistrationReason'))->render()]);
     }
+
     public function update(VendorRegistrationReasonRequest $request): RedirectResponse
     {
-        $this->vendorRegistrationReasonRepo->update(id:$request['id'],data:$this->vendorRegistrationSettingService->getVendorRegistrationReasonData(request:$request));
+        $this->vendorRegistrationReasonRepo->update(id: $request['id'], data: $this->vendorRegistrationSettingService->getVendorRegistrationReasonData(request: $request));
         ToastMagic::success(translate('vendor_registration_reason_update_successfully'));
+
         return redirect()->back();
     }
 
@@ -49,13 +54,15 @@ class VendorRegistrationReasonController extends BaseController
     {
         $this->vendorRegistrationReasonRepo->delete(params: ['id' => $request['id']]);
         ToastMagic::success(translate('vendor_registration_reason_deleted_successfully'));
+
         return redirect()->back();
     }
 
     public function updateStatus(Request $request): JsonResponse
     {
-        $vendorReason = $this->vendorRegistrationReasonRepo->getFirstWhere(params: ['id'=>$request->id]);
-        $this->vendorRegistrationReasonRepo->update(id:$request['id'], data: ['status' => $vendorReason['status'] ? 0:1]);
-        return response()->json([ 'message' => translate('vendor_registration_reason_status_changed_successfully')]);
+        $vendorReason = $this->vendorRegistrationReasonRepo->getFirstWhere(params: ['id' => $request->id]);
+        $this->vendorRegistrationReasonRepo->update(id: $request['id'], data: ['status' => $vendorReason['status'] ? 0 : 1]);
+
+        return response()->json(['message' => translate('vendor_registration_reason_status_changed_successfully')]);
     }
 }

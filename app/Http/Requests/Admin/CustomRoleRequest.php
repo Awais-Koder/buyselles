@@ -13,8 +13,6 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class CustomRoleRequest extends Request
 {

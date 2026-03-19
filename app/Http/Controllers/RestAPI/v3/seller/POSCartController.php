@@ -18,32 +18,21 @@ use Modules\TaxModule\app\Traits\VatTaxManagement;
 
 class POSCartController extends Controller
 {
-
     use CustomerTrait;
     use VatTaxManagement;
     use VendorPOSManagement;
 
-    /**
-     * @param PasswordResetRepositoryInterface $passwordResetRepo
-     * @param DigitalProductVariationRepositoryInterface $digitalProductVariationRepo
-     * @param ProductRepositoryInterface $productRepo
-     * @param StorageRepositoryInterface $storageRepo
-     * @param PasswordResetService $passwordResetService
-     * @param CustomerRepositoryInterface $customerRepo
-     */
     public function __construct(
 
-        private readonly PasswordResetRepositoryInterface           $passwordResetRepo,
+        private readonly PasswordResetRepositoryInterface $passwordResetRepo,
         private readonly DigitalProductVariationRepositoryInterface $digitalProductVariationRepo,
-        private readonly ProductRepositoryInterface                 $productRepo,
-        private readonly StorageRepositoryInterface                 $storageRepo,
-        private readonly PasswordResetService                       $passwordResetService,
-        private readonly CustomerRepositoryInterface                $customerRepo,
-    )
-    {
-    }
+        private readonly ProductRepositoryInterface $productRepo,
+        private readonly StorageRepositoryInterface $storageRepo,
+        private readonly PasswordResetService $passwordResetService,
+        private readonly CustomerRepositoryInterface $customerRepo,
+    ) {}
 
-    public function getTaxAmountCart(Request $request):JsonResponse
+    public function getTaxAmountCart(Request $request): JsonResponse
     {
         if ($request['cart']) {
             $productIds = collect($request['cart'])->pluck('id')->toArray();
@@ -111,6 +100,7 @@ class POSCartController extends Controller
                     appliedDiscountedAmount: $couponDiscount + $extraDiscount,
                 );
                 $product['applied_tax_amount'] = $appliedTaxAmount;
+
                 return $product;
             });
 
@@ -119,6 +109,7 @@ class POSCartController extends Controller
         }
 
         unset($request['seller']);
+
         return response()->json($request->all());
     }
 }

@@ -22,7 +22,7 @@ return new class extends Migration
 
             $table->decimal('order_amount', 21, 12)->default(0);
             $table->decimal('order_due_amount', 21, 12)->default(0);
-            $table->string('order_due_payment_status')->nullable()->comment("paid or unpaid");
+            $table->string('order_due_payment_status')->nullable()->comment('paid or unpaid');
             $table->json('order_due_payment_info')->nullable();
             $table->string('order_due_payment_method')->nullable();
             $table->string('order_due_transaction_ref')->nullable();
@@ -36,7 +36,6 @@ return new class extends Migration
             $table->text('order_return_payment_note')->nullable();
 
             $table->timestamps();
-
 
             $table->unique('u_id');
             $table->index('order_id');

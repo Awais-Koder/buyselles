@@ -12,7 +12,9 @@ use Illuminate\Queue\SerializesModels;
 class DigitalProductDownloadMail extends Mailable
 {
     use Queueable, SerializesModels;
+
     protected $data;
+
     /**
      * Create a new message instance.
      */
@@ -37,7 +39,7 @@ class DigitalProductDownloadMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'email-templates.digital-product-download',with: ['data'=>$this->data]
+            view: 'email-templates.digital-product-download', with: ['data' => $this->data]
         );
     }
 

@@ -16,8 +16,6 @@ use Illuminate\Support\Facades\DB;
  * @property string $image
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class OrderDeliveryVerification extends Model
 {
@@ -35,20 +33,24 @@ class OrderDeliveryVerification extends Model
         'order_id',
         'image',
     ];
-    public function getImageFullUrlAttribute():array|null
+
+    public function getImageFullUrlAttribute(): ?array
     {
         $value = $this->image;
-        if (count($this->storage) > 0 ) {
-            $storage = $this->storage->where('key','image')->first();
+        if (count($this->storage) > 0) {
+            $storage = $this->storage->where('key', 'image')->first();
         }
-        return $this->storageLink('delivery-man/verification-image',$value,$storage['value'] ?? 'public');
+
+        return $this->storageLink('delivery-man/verification-image', $value, $storage['value'] ?? 'public');
     }
+
     protected $appends = ['image_full_url'];
+
     protected static function boot(): void
     {
         parent::boot();
         static::saved(function ($model) {
-            if($model->isDirty('image')){
+            if ($model->isDirty('image')) {
                 $storage = config('filesystems.disks.default') ?? 'public';
                 DB::table('storages')->updateOrInsert([
                     'data_type' => get_class($model),

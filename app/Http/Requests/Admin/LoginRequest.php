@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\SessionKey;
 use App\Enums\UserRole;
 use App\Traits\RecaptchaTrait;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,8 +11,6 @@ use Illuminate\Foundation\Http\FormRequest;
  *
  * @property string $email
  * @property string $password
- *
- * @package App\Models
  */
 class LoginRequest extends FormRequest
 {
@@ -21,8 +18,6 @@ class LoginRequest extends FormRequest
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -31,8 +26,6 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -46,8 +39,7 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => translate('the') . ' :attribute '.translate('field is required').'.'
+            'required' => translate('the').' :attribute '.translate('field is required').'.',
         ];
     }
-
 }

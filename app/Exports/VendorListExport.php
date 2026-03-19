@@ -5,20 +5,20 @@ namespace App\Exports;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
-use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class VendorListExport implements FromView, ShouldAutoSize, WithStyles, WithColumnWidths, WithHeadings, WithEvents
+class VendorListExport implements FromView, ShouldAutoSize, WithColumnWidths, WithEvents, WithHeadings, WithStyles
 {
     use Exportable;
 
@@ -54,15 +54,16 @@ class VendorListExport implements FromView, ShouldAutoSize, WithStyles, WithColu
             'rotation' => 0,
             'color' => ['rgb' => '063C93'],
         ]);
-        $sheet->getStyle('H5:J' . ($this->data['vendors']->count() + 4))->getFill()->applyFromArray([
+        $sheet->getStyle('H5:J'.($this->data['vendors']->count() + 4))->getFill()->applyFromArray([
             'fillType' => 'solid',
             'rotation' => 0,
             'color' => ['rgb' => 'FFF9D1'],
         ]);
         $sheet->setShowGridlines(false);
+
         return [
             // Define the style for cells with data
-            'A1:J' . ($this->data['vendors']->count() + 4) => [
+            'A1:J'.($this->data['vendors']->count() + 4) => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -80,16 +81,16 @@ class VendorListExport implements FromView, ShouldAutoSize, WithStyles, WithColu
          */ function ($item, $index) use ($workSheet) {
 
             $tempImagePath = null;
-            $filePath = 'shop/' . $item?->shop->image_full_url['key'];
+            $filePath = 'shop/'.$item?->shop->image_full_url['key'];
             $fileCheck = fileCheck(disk: 'public', path: $filePath);
-            if ($item?->shop->image_full_url['path'] && !$fileCheck) {
+            if ($item?->shop->image_full_url['path'] && ! $fileCheck) {
                 $tempImagePath = getTemporaryImageForExport($item?->shop->image_full_url['path']);
                 $imagePath = getImageForExport($item?->shop->image_full_url['path']);
-                $drawing = new MemoryDrawing();
+                $drawing = new MemoryDrawing;
                 $drawing->setImageResource($imagePath);
             } else {
-                $drawing = new Drawing();
-                $drawing->setPath(is_file(storage_path('app/public/' . $filePath)) ? storage_path('app/public/' . $filePath) : public_path('assets/back-end/img/seller_sale.png'));
+                $drawing = new Drawing;
+                $drawing->setPath(is_file(storage_path('app/public/'.$filePath)) ? storage_path('app/public/'.$filePath) : public_path('assets/back-end/img/seller_sale.png'));
             }
 
             $drawing->setName($item->f_name);
@@ -112,15 +113,15 @@ class VendorListExport implements FromView, ShouldAutoSize, WithStyles, WithColu
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getStyle('A1:J1') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
-                $event->sheet->getStyle('A4:J' . ($this->data['vendors']->count() + 4)) // Adjust the range as per your needs
-                ->getAlignment()
+                $event->sheet->getStyle('A4:J'.($this->data['vendors']->count() + 4)) // Adjust the range as per your needs
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                     ->setVertical(Alignment::VERTICAL_CENTER);
                 $event->sheet->getStyle('A2:J3') // Adjust the range as per your needs
-                ->getAlignment()
+                    ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT)
                     ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -145,7 +146,7 @@ class VendorListExport implements FromView, ShouldAutoSize, WithStyles, WithColu
     public function headings(): array
     {
         return [
-            '1'
+            '1',
         ];
     }
 }

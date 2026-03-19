@@ -16,19 +16,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-class   EmailTemplatesController extends BaseController
+class EmailTemplatesController extends BaseController
 {
     public function __construct(
-        private readonly EmailTemplatesRepository       $emailTemplatesRepo,
-        private readonly EmailTemplateService           $emailTemplateService,
-        private readonly BusinessSettingRepository      $businessSettingRepo,
-        private readonly SocialMediaRepository          $socialMediaRepo,
+        private readonly EmailTemplatesRepository $emailTemplatesRepo,
+        private readonly EmailTemplateService $emailTemplateService,
+        private readonly BusinessSettingRepository $businessSettingRepo,
+        private readonly SocialMediaRepository $socialMediaRepo,
         private readonly TranslationRepositoryInterface $translationRepo,
-    )
-    {
-    }
+    ) {}
 
-    public function index(Request|null $request, ?string $type = null): View
+    public function index(?Request $request, ?string $type = null): View
     {
         $socialMedia = $this->socialMediaRepo->getListWhere(filters: ['status' => 1], dataLimit: 'all');
 
@@ -41,6 +39,7 @@ class   EmailTemplatesController extends BaseController
         $language = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'pnc_language']);
         $socialMedia = $this->socialMediaRepo->getListWhere(filters: ['status' => 1], dataLimit: 'all');
         $template = $this->emailTemplatesRepo->getFirstWhere(params: ['user_type' => $userType, 'template_name' => $templateName], relations: ['translations', 'translationCurrentLanguage']);
+
         return view('admin-views.business-settings.email-template.index', compact('template', 'language', 'socialMedia'));
     }
 
@@ -60,10 +59,11 @@ class   EmailTemplatesController extends BaseController
             }
         }
         foreach ($emailTemplates as $value) {
-            if (!in_array($value['template_name'], $emailTemplateArray)) {
+            if (! in_array($value['template_name'], $emailTemplateArray)) {
                 $this->emailTemplatesRepo->delete(params: ['id' => $value['id']]);
             }
         }
+
         return $this->emailTemplatesRepo->getListWhere(filters: ['user_type' => $userType]);
     }
 
@@ -75,6 +75,7 @@ class   EmailTemplatesController extends BaseController
         $requestNames = ['title', 'body', 'button_name', 'footer_text', 'copyright_text'];
         $this->addTranslateData(lang: $request['lang'], requestNames: $requestNames, id: $emailTemplate['id'], request: $request);
         ToastMagic::success(translate('update_successfully'));
+
         return redirect()->back();
     }
 
@@ -102,9 +103,10 @@ class   EmailTemplatesController extends BaseController
         $emailTemplate = $this->emailTemplatesRepo->getFirstWhere(params: ['template_name' => $templateName, 'user_type' => $userType]);
         $templateName = str_replace('-', '_', $templateName);
         $this->emailTemplatesRepo->update(id: $emailTemplate['id'], data: ['status' => $request->get('status', 0)]);
+
         return response()->json([
-            'message' => $request->has('status') && $request['status'] ? translate($templateName . '_mail_is_on') : translate($templateName . '_mail_is_off'),
-            'success' => 200
+            'message' => $request->has('status') && $request['status'] ? translate($templateName.'_mail_is_on') : translate($templateName.'_mail_is_off'),
+            'success' => 200,
         ]);
     }
 }

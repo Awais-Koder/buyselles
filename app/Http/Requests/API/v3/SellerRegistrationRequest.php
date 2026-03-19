@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API\v3;
 
 use App\Traits\ResponseHandler;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
 
 class SellerRegistrationRequest extends FormRequest
 {
@@ -17,7 +17,9 @@ class SellerRegistrationRequest extends FormRequest
     }
 
     public function rules(): array
-    {   $maxFileSize = getFileUploadMaxSize(unit: 'kb');
+    {
+        $maxFileSize = getFileUploadMaxSize(unit: 'kb');
+
         return [
             'email' => 'required|email|unique:sellers,email',
             'shop_address' => 'required',
@@ -31,7 +33,7 @@ class SellerRegistrationRequest extends FormRequest
                 skipMimes: ['.svg', '.gif'],
                 maxSize: $maxFileSize,
                 isDisallowed: true),
-            'logo' =>  getRulesStringForImageValidation(
+            'logo' => getRulesStringForImageValidation(
                 rules: ['required'],
                 skipMimes: ['.svg', '.gif'],
                 maxSize: $maxFileSize,
@@ -49,7 +51,7 @@ class SellerRegistrationRequest extends FormRequest
                 maxSize: $maxFileSize,
                 isDisallowed: true
             ),
-            'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:' . $maxFileSize,
+            'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:'.$maxFileSize,
             'tax_identification_number' => 'nullable|string',
             'tin_expire_date' => 'nullable|date|after_or_equal:today',
 
@@ -65,23 +67,23 @@ class SellerRegistrationRequest extends FormRequest
             'password.min' => translate('Password must be at least 8 characters.'),
 
             'image.required' => translate('Profile image is required.'),
-            'image.mimes' => translate('The profile image must be a file of type: ') . getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
-            'image.max' => translate('The profile image may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'image.mimes' => translate('The profile image must be a file of type: ').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
+            'image.max' => translate('The profile image may not be greater than ').getFileUploadMaxSize().' MB.',
 
             'logo.required' => translate('Shop logo is required.'),
-            'logo.mimes' => translate('The logo must be a file of type: ') . getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
-            'logo.max' => translate('The logo may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'logo.mimes' => translate('The logo must be a file of type: ').getFileUploadFormats(skip: ['.svg', '.gif'], asMessage: true),
+            'logo.max' => translate('The logo may not be greater than ').getFileUploadMaxSize().' MB.',
 
             'banner.required' => translate('Shop banner is required.'),
-            'banner.mimes' => translate('The banner must be a file of type: ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'banner.max' => translate('The banner may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'banner.mimes' => translate('The banner must be a file of type: ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'banner.max' => translate('The banner may not be greater than ').getFileUploadMaxSize().' MB.',
 
-            'bottom_banner.mimes' => translate('The bottom banner must be a file of type: ') . getFileUploadFormats(skip: ['.svg'], asMessage: true),
-            'bottom_banner.max' => translate('The bottom banner may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'bottom_banner.mimes' => translate('The bottom banner must be a file of type: ').getFileUploadFormats(skip: ['.svg'], asMessage: true),
+            'bottom_banner.max' => translate('The bottom banner may not be greater than ').getFileUploadMaxSize().' MB.',
 
             'tin_expire_date.after_or_equal' => translate('TIN expiry date must be today or later.'),
-            'tin_certificate.mimes' => translate('The tin certificate must be a file of type: ') . getFileUploadFormats(skip: ['.png', '.gif', '.svg'], asMessage: true) . getFileUploadFormats(type: 'file', skip: ['.txt'], asMessage: 'true'),
-            'tin_certificate.max' => translate('The tin certificate may not be greater than ') . getFileUploadMaxSize() . ' MB.',
+            'tin_certificate.mimes' => translate('The tin certificate must be a file of type: ').getFileUploadFormats(skip: ['.png', '.gif', '.svg'], asMessage: true).getFileUploadFormats(type: 'file', skip: ['.txt'], asMessage: 'true'),
+            'tin_certificate.max' => translate('The tin certificate may not be greater than ').getFileUploadMaxSize().' MB.',
         ];
     }
 
@@ -89,7 +91,7 @@ class SellerRegistrationRequest extends FormRequest
     {
         throw new HttpResponseException(
             response()->json([
-                'message' => $this->errorProcessor($validator)
+                'message' => $this->errorProcessor($validator),
             ], 403)
         );
     }

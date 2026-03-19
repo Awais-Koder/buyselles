@@ -33,17 +33,17 @@ class MaintenanceModeNotificationListener
             'message' => [
                 'topic' => $data['topic'],
                 'data' => [
-                    'title' => (string)$data['title'],
-                    'body' => (string)$data['description'],
+                    'title' => (string) $data['title'],
+                    'body' => (string) $data['description'],
                     'image' => $data['image'] ?? '',
-                    'type' => (string)$data['type'],
-                    'is_read' => '0'
+                    'type' => (string) $data['type'],
+                    'is_read' => '0',
                 ],
-//                'notification' => [
-//                    'title' => (string)$data['title'],
-//                    'body' => (string)$data['description'],
-//                ]
-            ]
+                //                'notification' => [
+                //                    'title' => (string)$data['title'],
+                //                    'body' => (string)$data['description'],
+                //                ]
+            ],
         ]);
     }
 }

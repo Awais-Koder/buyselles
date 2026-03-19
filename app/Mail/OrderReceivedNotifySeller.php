@@ -30,6 +30,7 @@ class OrderReceivedNotifySeller extends Mailable
     public function build()
     {
         $o_id = $this->o_id;
+
         return $this->subject(translate('Order_Received_Notify_Seller'))->view('email-templates.order-received-notify-seller', ['id' => $o_id]);
     }
 }

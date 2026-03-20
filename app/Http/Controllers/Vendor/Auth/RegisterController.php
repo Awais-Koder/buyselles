@@ -62,9 +62,15 @@ class RegisterController extends BaseController
         $helpTopics = $this->helpTopicRepo->getListWhere(
             orderBy: ['id' => 'desc'],
             filters: ['type' => 'vendor_registration', 'status' => '1'],
-            dataLimit: 'all');
+            dataLimit: 'all'
+        );
 
-        return view(VIEW_FILE_NAMES['seller_registration'], compact('vendorRegistrationHeader', 'vendorRegistrationReasons', 'sellWithUs', 'downloadVendorApp', 'helpTopics', 'businessProcess', 'businessProcessStep'));
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session([SessionKey::VENDOR_RECAPTCHA_KEY => $mathNum1 + $mathNum2]);
+
+        return view(VIEW_FILE_NAMES['seller_registration'], compact('vendorRegistrationHeader', 'vendorRegistrationReasons', 'sellWithUs', 'downloadVendorApp', 'helpTopics', 'businessProcess', 'businessProcessStep', 'recaptcha', 'mathNum1', 'mathNum2'));
     }
 
     public function add(VendorAddRequest $request): JsonResponse

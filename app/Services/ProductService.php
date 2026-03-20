@@ -22,7 +22,7 @@ class ProductService
         if ($request->has('colors_active') && $request->has('colors') && count($request['colors']) > 0) {
             foreach ($request['colors'] as $color) {
                 $color_ = Str::replace('#', '', $color);
-                $imgKey = 'color_image_'.$color_;
+                $imgKey = 'color_image_' . $color_;
                 $file = $request->file($imgKey);
                 $inputImage = $request->input($imgKey);
                 if ($file) {
@@ -79,7 +79,6 @@ class ProductService
             'image_names' => $imageNames ?? [],
             'colored_image_names' => $colorImageSerial ?? [],
         ];
-
     }
 
     public function getProcessedUpdateImages(object $request, object $product): array
@@ -119,7 +118,7 @@ class ProductService
             $colorImageArray = $dbColorImage;
 
             foreach ($inputColors as $color) {
-                $image = 'color_image_'.$color;
+                $image = 'color_image_' . $color;
                 if (! in_array($color, $dbColorImageFinal)) {
                     if ($request->file($image)) {
                         $imageName = $this->upload(dir: 'product/', format: 'webp', image: $request->file($image));
@@ -138,7 +137,7 @@ class ProductService
                     $dbColorFilterImages = [];
                     foreach ($dbColorImage as $colorImage) {
                         if ($colorImage['color'] == $color) {
-                            $this->delete(filePath: 'product/'.$colorImage['image_name']);
+                            $this->delete(filePath: 'product/' . $colorImage['image_name']);
                             $imageName = $this->upload(dir: 'product/', format: 'webp', image: $request->file($image));
 
                             $productImages = collect($productImages)->filter(function ($productImageItem) use ($colorImage) {
@@ -317,7 +316,7 @@ class ProductService
 
     public function getSlug(object $request): string
     {
-        return Str::slug($request['name'][array_search('en', $request['lang'])], '-').'-'.Str::random(6);
+        return Str::slug($request['name'][array_search('en', $request['lang'])], '-') . '-' . Str::random(6);
     }
 
     public function getChoiceOptions(object $request): array
@@ -325,8 +324,8 @@ class ProductService
         $choice_options = [];
         if ($request->has('choice')) {
             foreach ($request->choice_no as $key => $no) {
-                $str = 'choice_options_'.$no;
-                $item['name'] = 'choice_'.$no;
+                $str = 'choice_options_' . $no;
+                $item['name'] = 'choice_' . $no;
                 $item['title'] = $request->choice[$key];
                 $item['options'] = explode(',', implode('|', $request[$str]));
                 $choice_options[] = $item;
@@ -344,7 +343,7 @@ class ProductService
         }
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $no) {
-                $name = 'choice_options_'.$no;
+                $name = 'choice_options_' . $no;
                 $myString = implode('|', $request[$name]);
                 $optionArray = array_filter(explode(',', $myString), function ($value) {
                     return $value !== '';
@@ -381,7 +380,7 @@ class ProductService
         $combinations = $this->getCombinations(arrays: $options);
         $combinations = $this->generatePhysicalVariationCombination(request: $request, options: $options, combinations: $combinations, product: $product);
         $generatedCombinations = json_decode($request->generated_combinations ?? '[]', true);
-        $generatedCombinations = is_array($generatedCombinations) && ! empty($generatedCombinations) ? collect($generatedCombinations)->filter(fn ($item) => isset($item['option']))->keyBy(fn ($item) => strtolower($item['option']))->toArray() : [];
+        $generatedCombinations = is_array($generatedCombinations) && ! empty($generatedCombinations) ? collect($generatedCombinations)->filter(fn($item) => isset($item['option']))->keyBy(fn($item) => strtolower($item['option']))->toArray() : [];
 
         foreach ($combinations as &$combination) {
             $key = strtolower($combination['type']);
@@ -406,7 +405,7 @@ class ProductService
                 $str = '';
                 foreach ($combination as $combinationKey => $item) {
                     if ($combinationKey > 0) {
-                        $str .= '-'.str_replace(' ', '', $item);
+                        $str .= '-' . str_replace(' ', '', $item);
                     } else {
                         if ($request->has('colors_active') && $request->has('colors') && count($request['colors']) > 0) {
                             $color_name = $this->color->where('code', $item)->first()->name;
@@ -418,9 +417,9 @@ class ProductService
                 }
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = currencyConverter(abs($request['price_'.str_replace('.', '_', $str)]));
-                $item['sku'] = $request['sku_'.str_replace('.', '_', $str)];
-                $item['qty'] = abs($request['qty_'.str_replace('.', '_', $str)]);
+                $item['price'] = currencyConverter(abs($request['price_' . str_replace('.', '_', $str)]));
+                $item['sku'] = $request['sku_' . str_replace('.', '_', $str)];
+                $item['qty'] = abs($request['qty_' . str_replace('.', '_', $str)]);
                 $variations[] = $item;
             }
         }
@@ -442,12 +441,12 @@ class ProductService
 
     public function getCategoryDropdown(object $request, object $categories): string
     {
-        $dropdown = '<option value="'. 0 .'" disabled selected>---'.translate('Select').'---</option>';
+        $dropdown = '<option value="' . 0 . '" disabled selected>---' . translate('Select') . '---</option>';
         foreach ($categories as $row) {
             if ($row->id == $request['sub_category']) {
-                $dropdown .= '<option value="'.$row->id.'" selected >'.$row->defaultName.'</option>';
+                $dropdown .= '<option value="' . $row->id . '" selected >' . $row->defaultName . '</option>';
             } else {
-                $dropdown .= '<option value="'.$row->id.'">'.$row->defaultName.'</option>';
+                $dropdown .= '<option value="' . $row->id . '">' . $row->defaultName . '</option>';
             }
         }
 
@@ -457,9 +456,9 @@ class ProductService
     public function deleteImages(object $product): bool
     {
         foreach (json_decode($product['images'], true) as $image) {
-            $this->delete(filePath: '/product/'.(isset($image['image_name']) ? $image['image_name'] : $image));
+            $this->delete(filePath: '/product/' . (isset($image['image_name']) ? $image['image_name'] : $image));
         }
-        $this->delete(filePath: '/product/thumbnail/'.$product['thumbnail']);
+        $this->delete(filePath: '/product/thumbnail/' . $product['thumbnail']);
 
         return true;
     }
@@ -467,7 +466,7 @@ class ProductService
     public function deletePreviewFile(object $product): bool
     {
         if ($product['preview_file']) {
-            $this->delete(filePath: '/product/preview/'.$product['preview_file']);
+            $this->delete(filePath: '/product/preview/' . $product['preview_file']);
         }
 
         return true;
@@ -569,7 +568,7 @@ class ProductService
             'discount' => $request['discount_type'] == 'flat' ? currencyConverter(amount: $request['discount']) : $request['discount'],
             'discount_type' => $request['discount_type'],
             'attributes' => $request['product_type'] == 'physical' ? json_encode($request['choice_attributes']) : json_encode([]),
-            'current_stock' => $request['product_type'] == 'physical' ? abs($stockCount) : 999999999,
+            'current_stock' => $request['product_type'] == 'physical' ? abs($stockCount) : 0,
             'minimum_order_qty' => $request['minimum_order_qty'],
             'video_provider' => 'youtube',
             'video_url' => $request['video_url'],
@@ -642,7 +641,7 @@ class ProductService
             'discount' => $request['discount_type'] == 'flat' ? currencyConverter(amount: $request['discount']) : $request['discount'],
             'discount_type' => $request['discount_type'],
             'attributes' => $request['product_type'] == 'physical' ? json_encode($request['choice_attributes']) : json_encode([]),
-            'current_stock' => $request['product_type'] == 'physical' ? abs($stockCount) : 999999999,
+            'current_stock' => $request['product_type'] == 'physical' ? abs($stockCount) : $product['current_stock'],
             'minimum_order_qty' => $request['minimum_order_qty'],
             'video_provider' => 'youtube',
             'video_url' => $request['video_url'],
@@ -669,7 +668,7 @@ class ProductService
             ];
         }
         if ($request['product_type'] == 'physical' && $product['preview_file']) {
-            $this->delete(filePath: '/product/preview/'.$product['preview_file']);
+            $this->delete(filePath: '/product/preview/' . $product['preview_file']);
             $dataArray += [
                 'preview_file' => null,
             ];
@@ -717,7 +716,7 @@ class ProductService
         } catch (\Exception $exception) {
             return [
                 'status' => false,
-                'message' => translate('you_have_uploaded_a_wrong_format_file').','.translate('please_upload_the_right_file'),
+                'message' => translate('you_have_uploaded_a_wrong_format_file') . ',' . translate('please_upload_the_right_file'),
                 'products' => [],
             ];
         }
@@ -727,7 +726,8 @@ class ProductService
             'category_id',
             'sub_category_id',
             'sub_sub_category_id',
-            'brand_id', 'unit',
+            'brand_id',
+            'unit',
             'minimum_order_qty',
             'status',
             'refundable',
@@ -765,7 +765,7 @@ class ProductService
                 if ($key != '' && $value === '' && ! in_array($key, $skip)) {
                     return [
                         'status' => false,
-                        'message' => translate('Please fill '.$key.' fields'),
+                        'message' => translate('Please fill ' . $key . ' fields'),
                         'products' => [],
                     ];
                 }
@@ -779,7 +779,7 @@ class ProductService
             $products[] = [
                 'name' => $collection['name'],
                 'shop_id' => $shopId,
-                'slug' => Str::slug($collection['name'], '-').'-'.Str::random(6),
+                'slug' => Str::slug($collection['name'], '-') . '-' . Str::random(6),
                 'category_ids' => json_encode([['id' => (string) $collection['category_id'], 'position' => 1], ['id' => (string) $collection['sub_category_id'], 'position' => 2], ['id' => (string) $collection['sub_sub_category_id'], 'position' => 3]]),
                 'category_id' => $collection['category_id'],
                 'sub_category_id' => $collection['sub_category_id'],
@@ -815,7 +815,7 @@ class ProductService
 
         return [
             'status' => true,
-            'message' => count($products).' - '.translate('products_imported_successfully'),
+            'message' => count($products) . ' - ' . translate('products_imported_successfully'),
             'products' => $products,
             'productsTax' => $productsTax,
         ];
@@ -829,18 +829,18 @@ class ProductService
         $digitalFiles = [];
         foreach ($digitalFileCombinations as $combinationKey => $combination) {
             foreach ($combination as $item) {
-                $string = $combinationKey.'-'.str_replace(' ', '', $item);
+                $string = $combinationKey . '-' . str_replace(' ', '', $item);
                 $uniqueKey = strtolower(str_replace('-', '_', $string));
-                $fileItem = $request->file('digital_files.'.$uniqueKey);
+                $fileItem = $request->file('digital_files.' . $uniqueKey);
                 $uploadedFile = '';
                 if ($fileItem) {
                     $uploadedFile = $this->fileUpload(dir: 'product/digital-product/', format: $fileItem->getClientOriginalExtension(), file: $fileItem);
                 }
                 $digitalFiles[] = [
                     'product_id' => $product->id,
-                    'variant_key' => $request->input('digital_product_variant_key.'.$uniqueKey),
-                    'sku' => $request->input('digital_product_sku.'.$uniqueKey),
-                    'price' => currencyConverter(amount: $request->input('digital_product_price.'.$uniqueKey)),
+                    'variant_key' => $request->input('digital_product_variant_key.' . $uniqueKey),
+                    'sku' => $request->input('digital_product_sku.' . $uniqueKey),
+                    'price' => currencyConverter(amount: $request->input('digital_product_price.' . $uniqueKey)),
                     'file' => $uploadedFile,
                 ];
             }
@@ -888,7 +888,7 @@ class ProductService
             $type = '';
             foreach ($combination as $combinationKey => $item) {
                 if ($combinationKey > 0) {
-                    $type .= '-'.str_replace(' ', '', $item);
+                    $type .= '-' . str_replace(' ', '', $item);
                 } else {
                     if ($request->has('colors_active') && $request->has('colors') && count($request['colors']) > 0) {
                         $color_name = $this->color->where('code', $item)->first()->name;
@@ -903,7 +903,7 @@ class ProductService
             foreach (explode(' ', $productName) as $value) {
                 $sku .= substr($value, 0, 1);
             }
-            $sku .= '-'.$type;
+            $sku .= '-' . $type;
             if (in_array($type, $existingType)) {
                 if ($product && $product->variation && count(json_decode($product->variation, true)) > 0) {
                     foreach (json_decode($product->variation, true) as $digitalVariation) {
@@ -938,8 +938,8 @@ class ProductService
                 foreach (explode(' ', $productName) as $value) {
                     $sku .= substr($value, 0, 1);
                 }
-                $string = $combinationKey.'-'.preg_replace('/\s+/', '-', $item);
-                $sku .= '-'.$combinationKey.'-'.str_replace(' ', '', $item);
+                $string = $combinationKey . '-' . preg_replace('/\s+/', '-', $item);
+                $sku .= '-' . $combinationKey . '-' . str_replace(' ', '', $item);
                 $uniqueKey = strtolower(str_replace('-', '_', $string));
                 if ($product && $product->digitalVariation && count($product->digitalVariation) > 0) {
                     $productDigitalVariationArray = [];
@@ -986,7 +986,7 @@ class ProductService
         $options = [];
         if ($request->has('extensions_type')) {
             foreach ($request->extensions_type as $type) {
-                $name = 'extensions_options_'.$type;
+                $name = 'extensions_options_' . $type;
                 $my_str = implode('|', $request[$name]);
                 $optionsArray = [];
                 foreach (explode(',', $my_str) as $option) {

@@ -9,19 +9,21 @@
                     </p>
                 </div>
 
-                @if(getActiveAIProviderConfigCache())
-                <button type="button"
-                    class="btn bg-white text-primary bg-transparent shadow-none border-0 opacity-1 generate_btn_wrapper p-0 general_setup_auto_fill"
-                    id="general_setup_auto_fill" data-route="{{ route('admin.product.general-setup-auto-fill') }}" data-item=""  data-lang="en">
-                    <div class="btn-svg-wrapper">
-                        <img width="18" height="18" class=""
-                            src="{{ dynamicAsset(path: 'public/assets//back-end/img/ai/blink-right-small.svg') }}" alt="">
-                    </div>
-                    <span class="ai-text-animation d-none" role="status">
-                        {{ translate('Just_a_second') }}
-                    </span>
-                    <span class="btn-text">{{ translate('Generate') }}</span>
-                </button>
+                @if (getActiveAIProviderConfigCache())
+                    <button type="button"
+                        class="btn bg-white text-primary bg-transparent shadow-none border-0 opacity-1 generate_btn_wrapper p-0 general_setup_auto_fill"
+                        id="general_setup_auto_fill" data-route="{{ route('admin.product.general-setup-auto-fill') }}"
+                        data-item="" data-lang="en">
+                        <div class="btn-svg-wrapper">
+                            <img width="18" height="18" class=""
+                                src="{{ dynamicAsset(path: 'public/assets//back-end/img/ai/blink-right-small.svg') }}"
+                                alt="">
+                        </div>
+                        <span class="ai-text-animation d-none" role="status">
+                            {{ translate('Just_a_second') }}
+                        </span>
+                        <span class="btn-text">{{ translate('Generate') }}</span>
+                    </button>
                 @endif
             </div>
             <div class="card-body">
@@ -34,12 +36,15 @@
                                     <span class="input-required-icon">*</span>
                                 </label>
                                 <div class="select-wrapper">
-                                    <select name="product_type" id="product_type" class="form-select" data-required-msg="{{ translate('product_type_is_required') }}" required>
-                                        <option value="physical" {{ $product->product_type == 'physical' ? 'selected' : ''}}>
+                                    <select name="product_type" id="product_type" class="form-select"
+                                        data-required-msg="{{ translate('product_type_is_required') }}" required>
+                                        <option value="physical"
+                                            {{ $product->product_type == 'physical' ? 'selected' : '' }}>
                                             {{ translate('physical') }}
                                         </option>
-                                        @if($digitalProductSetting)
-                                            <option value="digital" {{ $product->product_type == 'digital' ? 'selected' : ''}}>
+                                        @if ($digitalProductSetting)
+                                            <option value="digital"
+                                                {{ $product->product_type == 'digital' ? 'selected' : '' }}>
                                                 {{ translate('digital') }}
                                             </option>
                                         @endif
@@ -54,15 +59,13 @@
                                     {{ translate('category') }}
                                     <span class="input-required-icon">*</span>
                                 </label>
-                                <select class="custom-select action-get-request-onchange"
-                                        name="category_id"
-                                        id="category_id"
-                                        data-url-prefix="{{ url('/admin/products/get-categories?parent_id=') }}"
-                                        data-element-id="sub-category-select"
-                                        data-element-type="select"
-                                        data-placeholder="{{ translate('select_category') }}"
-                                        data-required-msg="{{ translate('Category_field_is_required') }}" required
-                                        required>
+                                <select class="custom-select action-get-request-onchange" name="category_id"
+                                    id="category_id"
+                                    data-url-prefix="{{ url('/admin/products/get-categories?parent_id=') }}"
+                                    data-element-id="sub-category-select" data-element-type="select"
+                                    data-placeholder="{{ translate('select_category') }}"
+                                    data-required-msg="{{ translate('Category_field_is_required') }}" required
+                                    required>
                                     <option value="{{ old('category_id') }}" selected disabled>
                                         {{ translate('select_category') }}
                                     </option>
@@ -78,13 +81,10 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="form-group">
                                 <label for="name" class="form-label">{{ translate('sub_Category') }}</label>
-                                <select
-                                    class="custom-select action-get-request-onchange"
-                                    name="sub_category_id" id="sub-category-select"
-                                    data-id="{{ $product['sub_category_id'] }}"
+                                <select class="custom-select action-get-request-onchange" name="sub_category_id"
+                                    id="sub-category-select" data-id="{{ $product['sub_category_id'] }}"
                                     data-url-prefix="{{ url('/admin/products/get-categories?parent_id=') }}"
-                                    data-element-id="sub-sub-category-select"
-                                    data-element-type="select"
+                                    data-element-id="sub-sub-category-select" data-element-type="select"
                                     data-placeholder="{{ translate('select_Sub_Category') }}">
                                 </select>
                             </div>
@@ -92,16 +92,13 @@
                         <div class="col-md-6 col-lg-4">
                             <div class="form-group">
                                 <label for="name" class="form-label">{{ translate('sub_Sub_Category') }}</label>
-                                <select class="custom-select"
-                                        name="sub_sub_category_id"
-                                        id="sub-sub-category-select"
-                                        data-id="{{ $product['sub_sub_category_id'] }}"
-                                        data-placeholder="{{ translate('select_Sub_Sub_Category') }}"
-                                >
+                                <select class="custom-select" name="sub_sub_category_id" id="sub-sub-category-select"
+                                    data-id="{{ $product['sub_sub_category_id'] }}"
+                                    data-placeholder="{{ translate('select_Sub_Sub_Category') }}">
                                 </select>
                             </div>
                         </div>
-                        @if($brandSetting)
+                        @if ($brandSetting)
                             <div class="col-md-6 col-lg-4 show-for-physical-product">
                                 <div class="form-group">
                                     <label class="form-label">
@@ -116,7 +113,7 @@
                                         </option>
                                         @foreach ($brands as $brand)
                                             <option value="{{ $brand['id'] }}"
-                                                {{ $brand['id'] == $product->brand_id ? 'selected' : ''}}>
+                                                {{ $brand['id'] == $product->brand_id ? 'selected' : '' }}>
                                                 {{ $brand['defaultName'] }}
                                             </option>
                                         @endforeach
@@ -128,11 +125,12 @@
                         <div class="col-md-6 col-lg-4 show-for-digital-product">
                             <div class="form-group">
                                 <label class="form-label">
-                                    {{ translate("Author") }}/{{ translate("Creator") }}/{{ translate("Artist") }}
+                                    {{ translate('Author') }}/{{ translate('Creator') }}/{{ translate('Artist') }}
                                 </label>
                                 <select class="custom-select tags" name="authors[]" multiple="multiple" id="mySelect">
-                                    @foreach($digitalProductAuthors as $authors)
-                                        <option value="{{ $authors['name'] }}" {{ in_array($authors['id'], $productAuthorIds) ? 'selected' : '' }}>
+                                    @foreach ($digitalProductAuthors as $authors)
+                                        <option value="{{ $authors['name'] }}"
+                                            {{ in_array($authors['id'], $productAuthorIds) ? 'selected' : '' }}>
                                             {{ $authors['name'] }}
                                         </option>
                                     @endforeach
@@ -142,9 +140,9 @@
 
                         <div class="col-md-6 col-lg-4 show-for-digital-product">
                             <div class="form-group">
-                                <label class="form-label">{{ translate("Publishing_House") }}</label>
+                                <label class="form-label">{{ translate('Publishing_House') }}</label>
                                 <select class="custom-select tags" name="publishing_house[]" multiple="multiple">
-                                    @foreach($publishingHouseList as $publishingHouse)
+                                    @foreach ($publishingHouseList as $publishingHouse)
                                         <option value="{{ $publishingHouse['name'] }}"
                                             {{ in_array($publishingHouse['id'], $productPublishingHouseIds) ? 'selected' : '' }}>
                                             {{ $publishingHouse['name'] }}
@@ -157,29 +155,66 @@
                         <div class="col-md-6 col-lg-4 show-for-digital-product">
                             <div class="form-group">
                                 <label for="digital-product-type-input" class="form-label">
-                                    {{ translate("delivery_type") }}
+                                    {{ translate('delivery_type') }}
                                     <span class="input-required-icon">*</span>
                                     <span class="tooltip-icon cursor-pointer" data-bs-toggle="tooltip"
-                                          aria-label="{{
-                                                    translate('for_Ready_Product_deliveries,_customers_can_pay_&_instantly_download_pre-uploaded_digital_products').' '.
-                                                    translate('For_Ready_After_Sale_deliveries,_customers_pay_first_then_admin_uploads_the_digital_products_that_become_available_to_customers_for_download') }}"
-                                          data-bs-title="{{
-                                                    translate('for_Ready_Product_deliveries,_customers_can_pay_&_instantly_download_pre-uploaded_digital_products').' '.
-                                                    translate('For_Ready_After_Sale_deliveries,_customers_pay_first_then_admin_uploads_the_digital_products_that_become_available_to_customers_for_download') }}">
+                                        aria-label="{{ translate(
+                                            'for_Ready_Product_deliveries,_customers_can_pay_&_instantly_download_pre-uploaded_digital_products',
+                                        ) .
+                                            ' ' .
+                                            translate(
+                                                'For_Ready_After_Sale_deliveries,_customers_pay_first_then_admin_uploads_the_digital_products_that_become_available_to_customers_for_download',
+                                            ) }}"
+                                        data-bs-title="{{ translate(
+                                            'for_Ready_Product_deliveries,_customers_can_pay_&_instantly_download_pre-uploaded_digital_products',
+                                        ) .
+                                            ' ' .
+                                            translate(
+                                                'For_Ready_After_Sale_deliveries,_customers_pay_first_then_admin_uploads_the_digital_products_that_become_available_to_customers_for_download',
+                                            ) }}">
                                         <i class="fi fi-sr-info"></i>
                                     </span>
                                 </label>
                                 <div class="select-wrapper">
-                                    <select name="digital_product_type" id="digital-product-type-input" class="form-select"
-                                            >
-                                        <option value="ready_after_sell" {{ $product->digital_product_type == 'ready_after_sell' ? 'selected' : ''}}>
-                                            {{ translate("ready_After_Sell") }}
+                                    <select name="digital_product_type" id="digital-product-type-input"
+                                        class="form-select">
+                                        <option value="ready_after_sell"
+                                            {{ $product->digital_product_type == 'ready_after_sell' ? 'selected' : '' }}>
+                                            {{ translate('ready_After_Sell') }}
                                         </option>
-                                        <option value="ready_product" {{ $product->digital_product_type == 'ready_product' ? 'selected' : ''}}>
-                                            {{ translate("ready_Product") }}
+                                        <option value="ready_product"
+                                            {{ $product->digital_product_type == 'ready_product' ? 'selected' : '' }}>
+                                            {{ translate('ready_Product') }}
                                         </option>
                                     </select>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 show-for-digital-product" id="digital-product-code-wrapper">
+                            <div class="form-group">
+                                <label class="form-label" for="digital_product_code">
+                                    {{ translate('Add Code to Pool') }}
+                                    <span class="tooltip-icon cursor-pointer" data-bs-toggle="tooltip"
+                                        aria-label="{{ translate('Enter a code to add it to this product\\'s code pool. Each buyer receives a unique code from the pool.') }}"
+                                        data-bs-title="{{ translate('Enter a code to add it to this product\\'s code pool. Each buyer receives a unique code from the pool.') }}">
+                                        <i class="fi fi-sr-info"></i>
+                                    </span>
+                                </label>
+                                @php
+                                    $poolStats = app(\App\Services\DigitalProductCodeService::class)->getPoolStats($product->id);
+                                @endphp
+                                <div class="d-flex gap-3 mb-2">
+                                    <span class="badge bg-success">{{ translate('Available') }}: {{ $poolStats['available'] }}</span>
+                                    <span class="badge bg-warning text-dark">{{ translate('Reserved') }}: {{ $poolStats['reserved'] }}</span>
+                                    <span class="badge bg-secondary">{{ translate('Sold') }}: {{ $poolStats['sold'] }}</span>
+                                    <span class="badge bg-info text-dark">{{ translate('Total') }}: {{ $poolStats['total'] }}</span>
+                                </div>
+                                <input type="text" id="digital_product_code" name="digital_product_code"
+                                    class="form-control"
+                                    placeholder="{{ translate('Enter a new code to add to the pool (e.g. XXXX-XXXX-XXXX-XXXX)') }}"
+                                    value="{{ old('digital_product_code') }}" autocomplete="off">
+                                <small class="text-muted">{{ translate('Leave blank to keep existing pool unchanged. For bulk upload, use the Import tool.') }}</small>
                             </div>
                         </div>
 
@@ -190,8 +225,8 @@
                                         {{ translate('product_SKU') }}
                                         <span class="input-required-icon">*</span>
                                         <span class="tooltip-icon cursor-pointer" data-bs-toggle="tooltip"
-                                              aria-label="{{ translate('create_a_unique_product_code_by_clicking_on_the_Generate_Code_button') }}"
-                                              data-bs-title="{{ translate('create_a_unique_product_code_by_clicking_on_the_Generate_Code_button') }}">
+                                            aria-label="{{ translate('create_a_unique_product_code_by_clicking_on_the_Generate_Code_button') }}"
+                                            data-bs-title="{{ translate('create_a_unique_product_code_by_clicking_on_the_Generate_Code_button') }}">
                                             <i class="fi fi-sr-info"></i>
                                         </span>
                                     </span>
@@ -202,9 +237,10 @@
                                     </span>
                                 </label>
                                 <input type="text" minlength="6" id="generate-sku-code" name="code"
-                                       class="form-control" value="{{ request('product-gallery') ? ' ' : $product->code }}"
-                                       data-required-msg="{{ translate('sku_code_is_required') }}"
-                                       placeholder="{{ translate('ex'). ': YU62TN' }}" required>
+                                    class="form-control"
+                                    value="{{ request('product-gallery') ? ' ' : $product->code }}"
+                                    data-required-msg="{{ translate('sku_code_is_required') }}"
+                                    placeholder="{{ translate('ex') . ': YU62TN' }}" required>
                             </div>
                         </div>
                         <div class="col-md-6 col-lg-4 show-for-physical-product">
@@ -216,7 +252,8 @@
                                 <div class="select-wrapper">
                                     <select class="form-select" name="unit">
                                         @foreach (units() as $unit)
-                                            <option value={{ $unit }} {{ $product->unit == $unit ? 'selected' : '' }}>
+                                            <option value={{ $unit }}
+                                                {{ $product->unit == $unit ? 'selected' : '' }}>
                                                 {{ $unit }}
                                             </option>
                                         @endforeach
@@ -229,15 +266,16 @@
                                 <label class="form-label d-flex align-items-center gap-2">
                                     {{ translate('Search_Tags') }}
                                     <span class="tooltip-icon cursor-pointer" data-bs-toggle="tooltip"
-                                          aria-label="{{ translate('add_the_product_search_tag_for_this_product_that_customers_can_use_to_search_quickly') }}"
-                                          data-bs-title="{{ translate('add_the_product_search_tag_for_this_product_that_customers_can_use_to_search_quickly') }}">
-                                          <i class="fi fi-sr-info"></i>
+                                        aria-label="{{ translate('add_the_product_search_tag_for_this_product_that_customers_can_use_to_search_quickly') }}"
+                                        data-bs-title="{{ translate('add_the_product_search_tag_for_this_product_that_customers_can_use_to_search_quickly') }}">
+                                        <i class="fi fi-sr-info"></i>
                                     </span>
                                 </label>
 
-                                <input type="text" class="form-control" name="tags" id="tags" placeholder="{{ translate('enter_tag') }}"
-                                       value="@foreach($product->tags as $c) {{ $c->tag.','}} @endforeach"
-                                       data-role="tagsinput">
+                                <input type="text" class="form-control" name="tags" id="tags"
+                                    placeholder="{{ translate('enter_tag') }}"
+                                    value="@foreach ($product->tags as $c) {{ $c->tag . ',' }} @endforeach"
+                                    data-role="tagsinput">
                             </div>
                         </div>
                     </div>
@@ -246,4 +284,3 @@
         </div>
     </div>
 </div>
-

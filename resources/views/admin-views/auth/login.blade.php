@@ -23,7 +23,8 @@
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/backend/admin/css/style.css') }}">
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/backend/admin/css/style-extended.css') }}">
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/backend/admin/css/custom.css') }}">
-    <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.css') }}">
+    <link rel="stylesheet"
+        href="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.css') }}">
 
     @if ($web_config['primary_color'])
         <style>
@@ -35,6 +36,7 @@
 
     {!! ToastMagic::styles() !!}
 </head>
+
 <body>
     <main id="content" role="main" class="main">
         <div class="auth-wrapper">
@@ -84,8 +86,8 @@
 
                             <input type="email" class="form-control form-control-lg" name="email"
                                 id="signingAdminEmail" tabindex="1" placeholder="email@address.com"
-                                value="{{ old('email') }}"
-                                aria-label="email@address.com" required data-msg="Please enter a valid email address.">
+                                value="{{ old('email') }}" aria-label="email@address.com" required
+                                data-msg="Please enter a valid email address.">
                         </div>
                         <div class="js-form-message form-group">
                             <label class="form-label user-select-none" for="signingAdminPassword" tabindex="0">
@@ -117,26 +119,34 @@
                             </div>
                         </div>
 
-                        @if(isset($recaptcha) && $recaptcha['status'] == 1)
+                        {{-- Captcha: Google reCAPTCHA v3 (if configured) OR math captcha fallback --}}
+                        @php($recaptcha = getWebConfig(name: 'recaptcha'))
+                        @if (isset($recaptcha) && $recaptcha['status'] == 1)
+                            {{-- Google reCAPTCHA v3 — invisible; JS (google-recaptcha-init.js) injects the token --}}
                             <div class="dynamic-default-and-recaptcha-section">
-                                <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response" data-action="login"
-                                       data-input="#login-default-captcha-section"
-                                       data-default-captcha="#login-default-captcha-section"
-                                >
-
+                                <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
+                                    data-action="login" data-input="#login-default-captcha-section"
+                                    data-default-captcha="#login-default-captcha-section">
                                 <div class="default-captcha-container d-none" id="login-default-captcha-section"
-                                     data-placeholder="{{ translate('enter_captcha_value') }}"
-                                     data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                     data-session="{{ $role == 'admin' ? 'adminRecaptchaSessionKey' : 'employeeRecaptchaSessionKey' }}"
-                                >
+                                    data-placeholder="{{ translate('enter_captcha_value') }}"
+                                    data-base-url="{{ route('g-recaptcha-session-store') }}"
+                                    data-session="{{ $role == 'admin' ? 'adminRecaptchaSessionKey' : 'employeeRecaptchaSessionKey' }}">
                                 </div>
                             </div>
                         @else
-                            <div class="default-captcha-container"
-                                 data-placeholder="{{ translate('enter_captcha_value') }}"
-                                 data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                 data-session="{{ $role == 'admin' ? 'adminRecaptchaSessionKey' : 'employeeRecaptchaSessionKey' }}"
-                            >
+                            {{-- Math captcha: numbers are server-rendered text only; answer lives in session --}}
+                            <div class="js-form-message form-group">
+
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                        style="background:var(--bs-primary-bg-subtle,#e8f0fe);letter-spacing:3px;white-space:nowrap;">
+                                        {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                    </span>
+                                    <input type="number" class="form-control form-control-lg"
+                                        name="default_captcha_value" id="mathCaptchaInput"
+                                        placeholder="{{ translate('Answer') }}" min="0" max="18"
+                                        autocomplete="off" required>
+                                </div>
                             </div>
                         @endif
 
@@ -153,7 +163,8 @@
                                         <span id="admin-email" data-email="{{ DemoConstant::ADMIN['email'] }}">
                                             {{ translate('email') }} : {{ DemoConstant::ADMIN['email'] }}
                                         </span>
-                                        <span id="admin-password" data-password="{{ DemoConstant::ADMIN['password'] }}">
+                                        <span id="admin-password"
+                                            data-password="{{ DemoConstant::ADMIN['password'] }}">
                                             {{ translate('password') }} : {{ DemoConstant::ADMIN['password'] }}
                                         </span>
                                     </div>
@@ -195,11 +206,12 @@
 
     @php($recaptcha = getWebConfig(name: 'recaptcha'))
     <span id="get-google-recaptcha-key"
-          data-value="{{ isset($recaptcha) && $recaptcha['status'] == 1 ? $recaptcha['site_key'] : '' }}"></span>
+        data-value="{{ isset($recaptcha) && $recaptcha['status'] == 1 ? $recaptcha['site_key'] : '' }}"></span>
     @if (isset($recaptcha) && $recaptcha['status'] == 1)
         <script src="https://www.google.com/recaptcha/api.js?render={{ $recaptcha['site_key'] }}"></script>
     @endif
-    <script src="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.js') }}"></script>
+    <script src="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.js') }}">
+    </script>
 
 </body>
 

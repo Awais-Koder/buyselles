@@ -42,9 +42,16 @@ class CustomerAuthController extends Controller
         if (theme_root_path() == 'default') {
             $this->customerAuthService->storeCustomerAuthReturnURL();
             $keepCustomerLoginRedirectUrl = session('keep_customer_login_redirect_url');
+            $recaptcha = getWebConfig(name: 'recaptcha');
+            $mathNum1 = rand(1, 9);
+            $mathNum2 = rand(1, 9);
+            session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
 
             return view('web-views.customer-views.auth.login', [
                 'keepCustomerLoginRedirectUrl' => $keepCustomerLoginRedirectUrl,
+                'recaptcha' => $recaptcha,
+                'mathNum1' => $mathNum1,
+                'mathNum2' => $mathNum2,
             ]);
         }
 
@@ -367,6 +374,10 @@ class CustomerAuthController extends Controller
             $getTimeInSecond = 0;
         }
         $userVerify = 0;
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
 
         return view(VIEW_FILE_NAMES['customer_auth_verify_otp_login'], [
             'userVerify' => $userVerify,
@@ -374,6 +385,9 @@ class CustomerAuthController extends Controller
             'otpResendTime' => $otpResendTime,
             'getTimeInSecond' => $getTimeInSecond,
             'otpFromType' => $request['action'] ?? '',
+            'recaptcha' => $recaptcha,
+            'mathNum1' => $mathNum1,
+            'mathNum2' => $mathNum2,
         ]);
     }
 
@@ -538,11 +552,19 @@ class CustomerAuthController extends Controller
     {
         $user = $this->customerRepo->getFirstWhere(params: ['phone' => base64_decode($request['identity'])]);
 
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
+
         return view(VIEW_FILE_NAMES['customer_auth_verify_otp_update_info'], [
             'user' => $user,
             'tempUser' => session('tempCustomerInfo'),
             'updateType' => 'otp',
             'identity' => $request['identity'],
+            'recaptcha' => $recaptcha,
+            'mathNum1' => $mathNum1,
+            'mathNum2' => $mathNum2,
         ]);
     }
 

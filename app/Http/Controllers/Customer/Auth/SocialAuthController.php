@@ -211,11 +211,19 @@ class SocialAuthController extends Controller
 
             return self::actionCustomerLoginProcess($request, $user, $user['email']);
         } else {
+            $recaptcha = getWebConfig(name: 'recaptcha');
+            $mathNum1 = rand(1, 9);
+            $mathNum2 = rand(1, 9);
+            session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
+
             return view(VIEW_FILE_NAMES['customer_auth_verify_otp_update_info'], [
                 'user' => $user,
                 'socialLoginNewCustomer' => $socialLoginNewCustomer,
                 'updateType' => 'social',
                 'identity' => $request['identity'],
+                'recaptcha' => $recaptcha,
+                'mathNum1' => $mathNum1,
+                'mathNum2' => $mathNum2,
             ]);
         }
     }

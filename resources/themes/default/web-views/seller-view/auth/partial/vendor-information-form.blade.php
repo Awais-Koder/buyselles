@@ -26,8 +26,8 @@
                                     <div class="d-flex flex-column gap-3 align-items-center">
                                         <div class="upload-file">
                                             <input type="file" class="upload-file__input" name="image"
-                                                   data-max-size="{{ getFileUploadMaxSize() }}"
-                                                accept="{{ getFileUploadFormats(skip: '.svg') }}" >
+                                                data-max-size="{{ getFileUploadMaxSize() }}"
+                                                accept="{{ getFileUploadFormats(skip: '.svg') }}">
                                             <div class="upload-file__img">
                                                 <div class="temp-img-box">
                                                     <div class="d-flex align-items-center flex-column gap-2">
@@ -73,8 +73,9 @@
                             <div class="border p-3 p-xl-4 rounded mb-4">
                                 <div class="d-flex flex-column gap-3 align-items-center">
                                     <div class="upload-file">
-                                        <input type="file" class="upload-file__input" name="logo" data-max-size="{{ getFileUploadMaxSize() }}"  accept="{{getFileUploadFormats(skip: '.svg')}}"
-                                            >
+                                        <input type="file" class="upload-file__input" name="logo"
+                                            data-max-size="{{ getFileUploadMaxSize() }}"
+                                            accept="{{ getFileUploadFormats(skip: '.svg') }}">
                                         <div class="upload-file__img">
                                             <div class="temp-img-box">
                                                 <div class="d-flex align-items-center flex-column gap-2">
@@ -104,8 +105,9 @@
                             <div class="border p-3 p-xl-4 rounded">
                                 <div class="d-flex flex-column gap-3 align-items-center">
                                     <div class="upload-file">
-                                        <input type="file" class="upload-file__input" name="banner" data-max-size="{{ getFileUploadMaxSize() }}"   accept="{{getFileUploadFormats(skip: '.svg')}}"
-                                            required>
+                                        <input type="file" class="upload-file__input" name="banner"
+                                            data-max-size="{{ getFileUploadMaxSize() }}"
+                                            accept="{{ getFileUploadFormats(skip: '.svg') }}" required>
                                         <div class="upload-file__img style--two">
                                             <div class="temp-img-box">
                                                 <div class="d-flex align-items-center flex-column gap-2">
@@ -174,9 +176,9 @@
 
                                             <div class="document-upload-wrapper doc-upload-wrapper">
                                                 <input type="file" name="tin_certificate"
-                                                       data-max-size="{{ getFileUploadMaxSize(type: 'file') }}"
-                                                       data-validation-error-msg="{{ translate('File_size_is_too_large_Maximum_').' '.getFileUploadMaxSize(type: 'file').' '.'MB' }}"
-                                                       class="document_input" accept=".pdf,.doc,.jpg">
+                                                    data-max-size="{{ getFileUploadMaxSize(type: 'file') }}"
+                                                    data-validation-error-msg="{{ translate('File_size_is_too_large_Maximum_') . ' ' . getFileUploadMaxSize(type: 'file') . ' ' . 'MB' }}"
+                                                    class="document_input" accept=".pdf,.doc,.jpg">
                                                 <div class="textbox">
                                                     <img class="svg"
                                                         src="{{ dynamicAsset(path: 'public/assets/back-end/img/icons/doc-upload-icon.svg') }}"
@@ -204,28 +206,28 @@
                         </div>
 
                         <div class="my-2">
-                            @php($recaptcha = getWebConfig(name: 'recaptcha'))
 
-                            @if(isset($recaptcha) && $recaptcha['status'] == 1)
+                            @if (isset($recaptcha) && $recaptcha['status'] == 1)
                                 <div class="dynamic-default-and-recaptcha-section">
-                                    <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
-                                           data-input="#login-default-captcha-section"
-                                           data-default-captcha="#login-default-captcha-section" data-action="register"
-                                    >
+                                    <input type="hidden" name="g-recaptcha-response"
+                                        class="render-grecaptcha-response" data-input="#login-default-captcha-section"
+                                        data-default-captcha="#login-default-captcha-section" data-action="register">
 
                                     <div class="default-captcha-container d-none" id="login-default-captcha-section"
-                                         data-placeholder="{{ translate('enter_captcha_value') }}"
-                                         data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                         data-session="{{ 'vendorRecaptchaSessionKey' }}"
-                                    >
+                                        data-placeholder="{{ translate('enter_captcha_value') }}"
+                                        data-base-url="{{ route('g-recaptcha-session-store') }}"
+                                        data-session="{{ 'vendorRecaptchaSessionKey' }}">
                                     </div>
                                 </div>
                             @else
-                                <div class="default-captcha-container"
-                                     data-placeholder="{{ translate('enter_captcha_value') }}"
-                                     data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                     data-session="{{ 'vendorRecaptchaSessionKey' }}"
-                                >
+                                <div class="d-flex align-items-center gap-3 mt-2">
+                                    <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                        style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                        {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                    </span>
+                                    <input type="number" class="form-control" name="default_captcha_value"
+                                        placeholder="{{ translate('Answer') }}" min="0" max="18"
+                                        autocomplete="off" required>
                                 </div>
                             @endif
                         </div>

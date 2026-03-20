@@ -32,6 +32,7 @@ use App\Http\Requests\ProductAddRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use App\Repositories\DigitalProductPublishingHouseRepository;
 use App\Repositories\TranslationRepository;
+use App\Services\DigitalProductCodeService;
 use App\Services\ProductService;
 use App\Traits\FileManagerTrait;
 use App\Traits\ProductTrait;
@@ -127,8 +128,15 @@ class ProductController extends BaseController
         $brands = $this->brandRepo->getListWhere(orderBy: ['id' => 'desc'], dataLimit: 'all');
         $categories = $this->categoryRepo->getListWhere(filters: ['position' => 0], relations: ['childes.childes'], dataLimit: 'all');
 
-        return view('vendor-views.product.list', compact('products', 'type', 'searchValue', 'brands',
-            'categories', 'filters', 'productWiseTax'));
+        return view('vendor-views.product.list', compact(
+            'products',
+            'type',
+            'searchValue',
+            'brands',
+            'categories',
+            'filters',
+            'productWiseTax'
+        ));
     }
 
     public function getRequestRestockListView(Request $request): View|RedirectResponse
@@ -168,8 +176,15 @@ class ProductController extends BaseController
         $subCategoryList = $this->categoryRepo->getListWhere(filters: ['parent_id' => $request['category_id']], dataLimit: 'all');
         $totalRestockProducts = $this->restockProductRepo->getListWhere(filters: $filters, dataLimit: 'all')->count();
 
-        return view('vendor-views.product.request-restock-list', compact('restockProducts', 'brands',
-            'categories', 'subCategory', 'filters', 'totalRestockProducts', 'subCategoryList'));
+        return view('vendor-views.product.request-restock-list', compact(
+            'restockProducts',
+            'brands',
+            'categories',
+            'subCategory',
+            'filters',
+            'totalRestockProducts',
+            'subCategoryList'
+        ));
     }
 
     public function deleteRestock(string|int $id): RedirectResponse
@@ -213,6 +228,9 @@ class ProductController extends BaseController
         $shopId = $this->shopRepo->getFirstWhere(params: ['seller_id' => auth('seller')->user()->id])['id'];
         $dataArray = $service->getAddProductData(request: $request, addedBy: 'seller', shopId: $shopId);
         $savedProduct = $this->productRepo->add(data: $dataArray);
+        if ($request['product_type'] === 'digital' && ! empty($request['digital_product_code'])) {
+            app(DigitalProductCodeService::class)->addToPool($savedProduct->id, $request['digital_product_code']);
+        }
         $this->productRepo->addRelatedTags(request: $request, product: $savedProduct);
         $this->translationRepo->add(request: $request, model: 'App\Models\Product', id: $savedProduct->id);
         $this->updateProductAuthorAndPublishingHouse(request: $request, product: $savedProduct);
@@ -280,6 +298,9 @@ class ProductController extends BaseController
         $this->updateProductAuthorAndPublishingHouse(request: $request, product: $product);
 
         $this->productRepo->update(id: $id, data: $dataArray);
+        if ($request['product_type'] === 'digital' && ! empty($request['digital_product_code'])) {
+            app(DigitalProductCodeService::class)->addToPool($id, $request['digital_product_code']);
+        }
         $this->productRepo->addRelatedTags(request: $request, product: $product);
         $this->translationRepo->update(request: $request, model: 'App\Models\Product', id: $id);
 
@@ -416,7 +437,7 @@ class ProductController extends BaseController
 
                     $fileItem = null;
                     if ($request['digital_product_type'] == 'ready_product') {
-                        $fileItem = $request->file('digital_files.'.$uniqueKey);
+                        $fileItem = $request->file('digital_files.' . $uniqueKey);
                     }
                     $uploadedFile = '';
                     if ($fileItem) {
@@ -424,9 +445,9 @@ class ProductController extends BaseController
                     }
                     $this->digitalProductVariationRepo->add(data: [
                         'product_id' => $product['id'],
-                        'variant_key' => $request->input('digital_product_variant_key.'.$uniqueKey),
-                        'sku' => $request->input('digital_product_sku.'.$uniqueKey),
-                        'price' => currencyConverter(amount: $request->input('digital_product_price.'.$uniqueKey)),
+                        'variant_key' => $request->input('digital_product_variant_key.' . $uniqueKey),
+                        'sku' => $request->input('digital_product_sku.' . $uniqueKey),
+                        'price' => currencyConverter(amount: $request->input('digital_product_price.' . $uniqueKey)),
                         'file' => $uploadedFile,
                     ]);
                 }
@@ -446,7 +467,7 @@ class ProductController extends BaseController
 
                     $fileItem = null;
                     if ($request['digital_product_type'] == 'ready_product') {
-                        $fileItem = $request->file('digital_files.'.$uniqueKey);
+                        $fileItem = $request->file('digital_files.' . $uniqueKey);
                     }
                     $uploadedFile = $variation['file'] ?? '';
                     $variation = $this->digitalProductVariationRepo->getFirstWhere(params: ['product_id' => $product['id'], 'variant_key' => $variation['variant_key']]);
@@ -454,9 +475,9 @@ class ProductController extends BaseController
                         $uploadedFile = $this->fileUpload(dir: 'product/digital-product/', format: $fileItem->getClientOriginalExtension(), file: $fileItem);
                     }
                     $this->digitalProductVariationRepo->updateByParams(params: ['product_id' => $product['id'], 'variant_key' => $variation['variant_key']], data: [
-                        'variant_key' => $request->input('digital_product_variant_key.'.$uniqueKey),
-                        'sku' => $request->input('digital_product_sku.'.$uniqueKey),
-                        'price' => currencyConverter(amount: $request->input('digital_product_price.'.$uniqueKey)),
+                        'variant_key' => $request->input('digital_product_variant_key.' . $uniqueKey),
+                        'sku' => $request->input('digital_product_sku.' . $uniqueKey),
+                        'price' => currencyConverter(amount: $request->input('digital_product_price.' . $uniqueKey)),
                         'file' => $uploadedFile,
                     ]);
                 }
@@ -574,7 +595,7 @@ class ProductController extends BaseController
             'productWiseTax' => $productWiseTax,
         ];
 
-        return Excel::download(new ProductListExport($data), ucwords($request['type']).'-'.'product-list.xlsx');
+        return Excel::download(new ProductListExport($data), ucwords($request['type']) . '-' . 'product-list.xlsx');
     }
 
     public function exportRestockList(Request $request): BinaryFileResponse
@@ -645,7 +666,7 @@ class ProductController extends BaseController
     {
         $variation = $this->digitalProductVariationRepo->getFirstWhere(params: ['product_id' => $request['product_id'], 'variant_key' => $request['variant_key']]);
         if ($variation) {
-            $this->deleteFile(filePath: '/product/digital-product/'.$variation['file']);
+            $this->deleteFile(filePath: '/product/digital-product/' . $variation['file']);
             $this->digitalProductVariationRepo->updateByParams(params: ['id' => $variation['id']], data: ['file' => null]);
 
             return response()->json([
@@ -696,7 +717,7 @@ class ProductController extends BaseController
 
         return response()->json([
             'success' => $success,
-            'message' => $success ? translate('status_updated_successfully') : translate('status_updated_failed').' '.translate('Product_must_be_approved'),
+            'message' => $success ? translate('status_updated_successfully') : translate('status_updated_failed') . ' ' . translate('Product_must_be_approved'),
         ], 200);
     }
 
@@ -777,9 +798,9 @@ class ProductController extends BaseController
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = currencyConverter(amount: abs($request['price_'.str_replace('.', '_', $str)]));
-                $item['sku'] = $request['sku_'.str_replace('.', '_', $str)];
-                $item['qty'] = abs($request['qty_'.str_replace('.', '_', $str)]);
+                $item['price'] = currencyConverter(amount: abs($request['price_' . str_replace('.', '_', $str)]));
+                $item['sku'] = $request['sku_' . str_replace('.', '_', $str)];
+                $item['qty'] = abs($request['qty_' . str_replace('.', '_', $str)]);
                 $variations[] = $item;
             }
         }
@@ -805,7 +826,7 @@ class ProductController extends BaseController
 
     public function deleteImage(Request $request, ProductService $service): RedirectResponse
     {
-        $this->deleteFile(filePath: '/product/'.$request['image']);
+        $this->deleteFile(filePath: '/product/' . $request['image']);
         $product = $this->productRepo->getFirstWhere(params: ['id' => $request['id']]);
 
         if (count(json_decode($product['images'])) < 2) {
@@ -906,7 +927,9 @@ class ProductController extends BaseController
                 return $query->with(['tax'])->wherehas('tax', function ($query) {
                     return $query->where('is_active', 1);
                 });
-            }], dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT));
+            }],
+            dataLimit: getWebConfig(name: WebConfigKey::PAGINATION_LIMIT)
+        );
 
         $products->map(function ($product) {
             if ($product->product_type == 'physical' && count(json_decode($product->choice_options)) > 0 || count(json_decode($product->colors)) > 0) {
@@ -931,7 +954,6 @@ class ProductController extends BaseController
         );
 
         return view('vendor-views.product.product-gallery', compact('products', 'brands', 'categories', 'searchValue'));
-
     }
 
     public function getStockLimitStatus(Request $request): JsonResponse
@@ -976,7 +998,8 @@ class ProductController extends BaseController
             orderBy: ['name' => 'asc'],
             filters: ['position' => 0],
             dataLimit: 8,
-            offset: $page);
+            offset: $page
+        );
 
         $visibleLimit = $filterBrands->perPage();
         $totalBrands = $filterBrands->total();

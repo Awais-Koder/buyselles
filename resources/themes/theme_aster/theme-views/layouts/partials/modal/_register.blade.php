@@ -7,19 +7,20 @@
             <div class="modal-body px-4 px-lg-5">
                 <div class="mb-4 text-center">
                     <img width="200" alt="" class="dark-support"
-                         src="{{ getStorageImages(path: $web_config['web_logo'], type: 'logo') }}">
+                        src="{{ getStorageImages(path: $web_config['web_logo'], type: 'logo') }}">
                 </div>
                 <div class="mb-4">
                     <h2 class="mb-2">{{ translate('sign_up') }}</h2>
                     <p class="text-muted">
                         {{ translate('login_to_your_account.') }} {{ translate('Do_n’t_have_account') }}?
-                        <span class="text-primary link-hover-base fw-bold" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <span class="text-primary link-hover-base fw-bold" data-bs-toggle="modal"
+                            data-bs-target="#loginModal">
                             {{ translate('login') }}
                         </span>
                     </p>
                 </div>
                 <form action="{{ route('customer.auth.sign-up') }}" method="POST" id="customer-form"
-                      enctype="multipart/form-data">
+                    enctype="multipart/form-data">
                     @csrf
                     <div class="custom-scrollbar height-45vh">
                         <div class="row">
@@ -27,63 +28,61 @@
                                 <div class="form-group mb-4">
                                     <label class="text-capitalize" for="f_name"> {{ translate('first_name') }}</label>
                                     <input type="text" id="f_name" name="f_name" class="form-control"
-                                           placeholder="{{ translate('ex') . ':' . translate('Jhone') }}"
-                                           value="{{ old('f_name') }}" required/>
+                                        placeholder="{{ translate('ex') . ':' . translate('Jhone') }}"
+                                        value="{{ old('f_name') }}" required />
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group mb-4">
                                     <label class="text-capitalize" for="l_name">{{ translate('last_name') }}</label>
                                     <input type="text" id="l_name" name="l_name" value="{{ old('l_name') }}"
-                                           class="form-control"
-                                           placeholder="{{ translate('ex') . ':' . translate('doe') }}" required/>
+                                        class="form-control"
+                                        placeholder="{{ translate('ex') . ':' . translate('doe') }}" required />
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group mb-4">
                                     <label for="r_email">{{ translate('email') }}</label>
                                     <input type="text" id="r_email" value="{{ old('email') }}" name="email"
-                                           class="form-control"
-                                           placeholder="{{ translate('enter_email_or_phone_number') }}"
-                                           autocomplete="off"
-                                           required/>
+                                        class="form-control"
+                                        placeholder="{{ translate('enter_email_or_phone_number') }}" autocomplete="off"
+                                        required />
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-group mb-4">
                                     <label for="phone">{{ translate('phone') }}</label>
                                     <input type="tel" id="phone" value="{{ old('phone') }}"
-                                           class="form-control phone-input-with-country-picker" name="phone"
-                                           placeholder="{{ translate('enter_phone_number') }}" required/>
+                                        class="form-control phone-input-with-country-picker" name="phone"
+                                        placeholder="{{ translate('enter_phone_number') }}" required />
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="mb-4">
-                                    @php($randomLabelId=rand(1111, 9999))
+                                    @php($randomLabelId = rand(1111, 9999))
                                     <label for="password-{{ $randomLabelId }}">
                                         {{ translate('password') }}
                                         <span class="text-danger mx-1 password-error"></span>
                                     </label>
                                     <div class="input-inner-end-ele">
                                         <input type="password" id="password-{{ $randomLabelId }}" name="password"
-                                               class="form-control"
-                                               placeholder="{{ translate('minimum_8_characters_long') }}"
-                                               autocomplete="off" required/>
+                                            class="form-control"
+                                            placeholder="{{ translate('minimum_8_characters_long') }}"
+                                            autocomplete="off" required />
                                         <i class="bi bi-eye-slash-fill togglePassword"></i>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="mb-4">
-                                    <label class="text-capitalize"
-                                           for="confirm_password-{{ $randomLabelId }}">
+                                    <label class="text-capitalize" for="confirm_password-{{ $randomLabelId }}">
                                         {{ translate('confirm_password') }}
                                     </label>
                                     <div class="input-inner-end-ele">
                                         <input type="password" id="confirm_password-{{ $randomLabelId }}"
-                                               class="form-control" name="con_password"
-                                               placeholder="{{ translate('minimum_8_characters_long') }}"
-                                               autocomplete="off" required/>
+                                            class="form-control" name="con_password"
+                                            placeholder="{{ translate('minimum_8_characters_long') }}"
+                                            autocomplete="off" required />
                                         <i class="bi bi-eye-slash-fill togglePassword"></i>
                                     </div>
                                 </div>
@@ -93,11 +92,11 @@
                                     <div class="mb-4">
                                         <div class="form-group">
                                             <label class="form-label form--label text-capitalize"
-                                                   for="referral_code">{{ translate('refer_code') }} <small
+                                                for="referral_code">{{ translate('refer_code') }} <small
                                                     class="text-muted">({{ translate('optional') }})</small></label>
                                             <input type="text" id="referral_code" class="form-control"
-                                                   name="referral_code"
-                                                   placeholder="{{ translate('use_referral_code') }}">
+                                                name="referral_code"
+                                                placeholder="{{ translate('use_referral_code') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -107,33 +106,43 @@
                         @php($recaptcha = getWebConfig(name: 'recaptcha'))
 
                         @if ($web_config['firebase_otp_verification'] && $web_config['firebase_otp_verification']['status'])
-                            <div class="generate-firebase-auth-recaptcha" id="firebase-auth-recaptcha-{{ rand(111, 999) }}"></div>
+                            <div class="generate-firebase-auth-recaptcha"
+                                id="firebase-auth-recaptcha-{{ rand(111, 999) }}"></div>
                         @elseif(isset($recaptcha) && $recaptcha['status'] == 1)
                             <div class="dynamic-default-and-recaptcha-section">
                                 <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
-                                       data-action="customer_auth" data-input="#register-default-captcha-section"
-                                       data-default-captcha="#register-default-captcha-section">
+                                    data-action="customer_auth" data-input="#register-default-captcha-section"
+                                    data-default-captcha="#register-default-captcha-section">
 
                                 <div class="default-captcha-container d-none" id="register-default-captcha-section"
-                                     data-placeholder="{{ translate('enter_captcha_value') }}"
-                                     data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                     data-session="{{ 'default_recaptcha_id_customer_auth' }}">
+                                    data-placeholder="{{ translate('enter_captcha_value') }}"
+                                    data-base-url="{{ route('g-recaptcha-session-store') }}"
+                                    data-session="{{ 'default_recaptcha_id_customer_auth' }}">
                                 </div>
                             </div>
                         @else
-                            <div class="default-captcha-container"
-                                 data-placeholder="{{ translate('enter_captcha_value') }}"
-                                 data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                 data-session="{{ 'default_recaptcha_id_customer_auth' }}">
+                            @php
+                                $mathNum1 = rand(1, 9);
+                                $mathNum2 = rand(1, 9);
+                                session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
+                            @endphp
+                            <div class="d-flex align-items-center gap-3 mt-2">
+                                <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                    style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                    {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                </span>
+                                <input type="number" class="form-control" name="default_captcha_value"
+                                    placeholder="{{ translate('Answer') }}" min="0" max="18"
+                                    autocomplete="off" required>
                             </div>
                         @endif
 
                         <div class="d-flex justify-content-center mt-4">
                             <label for="input-checked" class="d-flex gap-1 align-items-center mb-0 user-select-none">
-                                <input type="checkbox" id="input-checked" required/>
+                                <input type="checkbox" id="input-checked" required />
                                 {{ translate('i_agree_with_the') }}
                                 <a href="{{ route('business-page.view', ['slug' => 'terms-and-conditions']) }}"
-                                   class="text-info text-capitalize">
+                                    class="text-info text-capitalize">
                                     {{ translate('terms_&_conditions') }}
                                 </a>
                             </label>
@@ -142,7 +151,7 @@
 
                     <div class="d-flex justify-content-center mt-4 mb-3">
                         <button type="submit" id="customer-sign-up-btn" class="btn btn-primary px-5 text-capitalize"
-                                disabled>{{ translate('sign_up') }}</button>
+                            disabled>{{ translate('sign_up') }}</button>
                     </div>
                 </form>
 
@@ -158,8 +167,8 @@
                             @if ($socialLoginService && $socialLoginServiceKey != 'apple')
                                 <a href="{{ route('customer.auth.service-login', $socialLoginServiceKey) }}">
                                     <img width="35"
-                                         src="{{ theme_asset('assets/img/svg/' . $socialLoginServiceKey . '.svg') }}"
-                                         alt="" class="dark-support"/>
+                                        src="{{ theme_asset('assets/img/svg/' . $socialLoginServiceKey . '.svg') }}"
+                                        alt="" class="dark-support" />
                                 </a>
                             @endif
                         @endforeach
@@ -173,14 +182,14 @@
 @push('script')
     <script>
         "use strict";
-        $('#input-checked').change(function () {
+        $('#input-checked').change(function() {
             if ($(this).is(':checked')) {
                 $('#customer-sign-up-btn').removeAttr('disabled');
             } else {
                 $('#customer-sign-up-btn').attr('disabled', 'disabled');
             }
         });
-        $('#customer-form').submit(function (event) {
+        $('#customer-form').submit(function(event) {
             event.preventDefault();
             let formData = $(this).serialize();
 
@@ -188,10 +197,10 @@
                 type: 'POST',
                 url: $(this).attr('action'),
                 data: formData,
-                beforeSend: function () {
+                beforeSend: function() {
                     $("#loading").addClass("d-grid");
                 },
-                success: function (response) {
+                success: function(response) {
                     if (response.errors) {
                         for (let index = 0; index < response.errors.length; index++) {
                             toastr.error(response.errors[index].message);
@@ -206,7 +215,7 @@
                         window.location.href = response.redirect_url;
                     }
                 },
-                error: function (xhr) {
+                error: function(xhr) {
                     $("#loading").removeClass("d-grid");
 
                     if (xhr.responseJSON && xhr.responseJSON.error) {
@@ -215,7 +224,7 @@
                             ProgressBar: true
                         });
                     } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        $.each(xhr.responseJSON.errors, function (key, value) {
+                        $.each(xhr.responseJSON.errors, function(key, value) {
                             toastr.error(value, {
                                 CloseButton: true,
                                 ProgressBar: true
@@ -228,7 +237,7 @@
                         });
                     }
                 },
-                complete: function () {
+                complete: function() {
                     $("#loading").removeClass("d-grid");
                 }
             });

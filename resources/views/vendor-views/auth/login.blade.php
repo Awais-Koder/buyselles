@@ -11,7 +11,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{{ translate('vendor_Login') }}</title>
-    <link rel="shortcut icon" href="{{ getStorageImages(path: getWebConfig(name: 'company_fav_icon'), type: 'backend-logo') }}">
+    <link rel="shortcut icon"
+        href="{{ getStorageImages(path: getWebConfig(name: 'company_fav_icon'), type: 'backend-logo') }}">
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/back-end/css/google-fonts.css') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +24,8 @@
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/back-end/vendor/icon-set/style.css') }}">
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/back-end/css/theme.minc619.css?v=1.0') }}">
     <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/back-end/css/style.css') }}">
-    <link rel="stylesheet" href="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.css') }}">
+    <link rel="stylesheet"
+        href="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.css') }}">
 
     @if ($web_config['primary_color'])
         <style>
@@ -112,7 +114,8 @@
                         <div class="form-group mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="termsCheckbox" name="remember">
+                                    <input type="checkbox" class="custom-control-input" id="termsCheckbox"
+                                        name="remember">
                                     <label class="custom-control-label text-muted" for="termsCheckbox">
                                         {{ translate('remember_me') }}
                                     </label>
@@ -124,26 +127,27 @@
                         </div>
 
 
-                        @if(isset($recaptcha) && $recaptcha['status'] == 1)
+                        @if (isset($recaptcha) && $recaptcha['status'] == 1)
                             <div class="dynamic-default-and-recaptcha-section">
-                                <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response" data-action="login"
-                                       data-input="#login-default-captcha-section"
-                                       data-default-captcha="#login-default-captcha-section"
-                                >
+                                <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
+                                    data-action="login" data-input="#login-default-captcha-section"
+                                    data-default-captcha="#login-default-captcha-section">
 
                                 <div class="default-captcha-container d-none" id="login-default-captcha-section"
-                                     data-placeholder="{{ translate('enter_captcha_value') }}"
-                                     data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                     data-session="{{ 'vendorRecaptchaSessionKey' }}"
-                                >
+                                    data-placeholder="{{ translate('enter_captcha_value') }}"
+                                    data-base-url="{{ route('g-recaptcha-session-store') }}"
+                                    data-session="{{ 'vendorRecaptchaSessionKey' }}">
                                 </div>
                             </div>
                         @else
-                            <div class="default-captcha-container"
-                                 data-placeholder="{{ translate('enter_captcha_value') }}"
-                                 data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                 data-session="{{ 'vendorRecaptchaSessionKey' }}"
-                            >
+                            <div class="d-flex align-items-center gap-3 mt-2 mb-2">
+                                <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                    style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                    {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                </span>
+                                <input type="number" class="form-control form-control-lg"
+                                    name="default_captcha_value" placeholder="{{ translate('Answer') }}"
+                                    min="0" max="18" autocomplete="off" required>
                             </div>
                         @endif
 
@@ -203,11 +207,12 @@
 
     @php($recaptcha = getWebConfig(name: 'recaptcha'))
     <span id="get-google-recaptcha-key"
-          data-value="{{ isset($recaptcha) && $recaptcha['status'] == 1 ? $recaptcha['site_key'] : '' }}"></span>
+        data-value="{{ isset($recaptcha) && $recaptcha['status'] == 1 ? $recaptcha['site_key'] : '' }}"></span>
     @if (isset($recaptcha) && $recaptcha['status'] == 1)
         <script src="https://www.google.com/recaptcha/api.js?render={{ $recaptcha['site_key'] }}"></script>
     @endif
-    <script src="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.js') }}"></script>
+    <script src="{{ dynamicAsset(path: 'public/assets/backend/libs/google-recaptcha/google-recaptcha-init.js') }}">
+    </script>
 </body>
 
 </html>

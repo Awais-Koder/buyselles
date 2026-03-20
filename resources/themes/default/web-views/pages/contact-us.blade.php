@@ -74,7 +74,7 @@
                                 </div>
 
                                 @php($recaptcha = getWebConfig(name: 'recaptcha'))
-                                @if(isset($recaptcha) && $recaptcha['status'] == 1)
+                                @if (isset($recaptcha) && $recaptcha['status'] == 1)
                                     <div class="dynamic-default-and-recaptcha-section">
                                         <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
                                             data-action="contact" data-action="contact"
@@ -88,10 +88,19 @@
                                         </div>
                                     </div>
                                 @else
-                                    <div class="default-captcha-container"
-                                        data-placeholder="{{ translate('enter_captcha_value') }}"
-                                        data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                        data-session="{{ 'default_captcha_value_contact' }}">
+                                    @php
+                                        $mathNum1 = rand(1, 9);
+                                        $mathNum2 = rand(1, 9);
+                                        session(['default_captcha_value_contact' => $mathNum1 + $mathNum2]);
+                                    @endphp
+                                    <div class="d-flex align-items-center gap-3 mt-2">
+                                        <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                            style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                            {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                        </span>
+                                        <input type="number" class="form-control" name="default_captcha_value"
+                                            placeholder="{{ translate('Answer') }}" min="0" max="18"
+                                            autocomplete="off" required>
                                     </div>
                                 @endif
                                 <div class=" ">

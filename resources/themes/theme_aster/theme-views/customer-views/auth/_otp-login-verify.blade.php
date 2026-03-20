@@ -1,7 +1,6 @@
 @extends('theme-views.layouts.app')
 
 @section('title', translate('customer_Verify') . ' | ' . $web_config['company_name'] . ' ' . translate('ecommerce'))
-@php($recaptcha = getWebConfig(name: 'recaptcha'))
 @section('content')
     <main class="main-content d-flex flex-column gap-3 py-3 mb-30">
         <div class="container" id="otp_form_section">
@@ -27,8 +26,8 @@
                                 <p class="text-muted mx-w mx-auto width--27-5rem">
                                     {{ translate('we_have_sent_a_verification_code_to') }}
                                     <?php
-                                        $identityString = base64_decode($identity);
-                                        $identityString = '******' . substr($identityString, -4);
+                                    $identityString = base64_decode($identity);
+                                    $identityString = '******' . substr($identityString, -4);
                                     ?>
                                     {{ $identityString }}
                                 </p>
@@ -71,7 +70,8 @@
                                     <input type="hidden" name="type" value="{{ request('type') }}">
 
                                     @if ($web_config['firebase_otp_verification'] && $web_config['firebase_otp_verification']['status'])
-                                        <div class="generate-firebase-auth-recaptcha" id="firebase-auth-recaptcha-{{ rand(111, 999) }}"></div>
+                                        <div class="generate-firebase-auth-recaptcha"
+                                            id="firebase-auth-recaptcha-{{ rand(111, 999) }}"></div>
                                     @elseif(isset($recaptcha) && $recaptcha['status'] == 1)
                                         <div class="dynamic-default-and-recaptcha-section">
                                             <input type="hidden" name="g-recaptcha-response"
@@ -86,10 +86,14 @@
                                             </div>
                                         </div>
                                     @else
-                                        <div class="default-captcha-container"
-                                            data-placeholder="{{ translate('enter_captcha_value') }}"
-                                            data-base-url="{{ route('g-recaptcha-session-store') }}"
-                                            data-session="{{ 'default_recaptcha_id_customer_auth' }}">
+                                        <div class="d-flex align-items-center gap-3 mt-2">
+                                            <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
+                                                style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                                {{ $mathNum1 }} + {{ $mathNum2 }} = ?
+                                            </span>
+                                            <input type="number" class="form-control" name="default_captcha_value"
+                                                placeholder="{{ translate('Answer') }}" min="0" max="18"
+                                                autocomplete="off" required>
                                         </div>
                                     @endif
                                     <div class="d-flex justify-content-center gap-3 mt-2">

@@ -36,8 +36,12 @@ class ForgotPasswordController extends Controller
     public function reset_password()
     {
         $verification_by = getWebConfig(name: 'forgot_password_verification');
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
 
-        return view(VIEW_FILE_NAMES['recover_password'], compact('verification_by'));
+        return view(VIEW_FILE_NAMES['recover_password'], compact('verification_by', 'recaptcha', 'mathNum1', 'mathNum2'));
     }
 
     public function resetPasswordRequest(Request $request): RedirectResponse|JsonResponse

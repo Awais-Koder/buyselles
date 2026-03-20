@@ -46,7 +46,12 @@ class ForgotPasswordController extends BaseController
 
     public function getForgotPasswordView(): View
     {
-        return view(ForgotPassword::INDEX[VIEW]);
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session(['default_recaptcha_id_vendor_forgot_password' => $mathNum1 + $mathNum2]);
+
+        return view(ForgotPassword::INDEX[VIEW], compact('recaptcha', 'mathNum1', 'mathNum2'));
     }
 
     /**

@@ -47,10 +47,15 @@ class RegisterController extends Controller
         $this->customerAuthService->storeCustomerAuthReturnURL();
         $keepCustomerLoginRedirectUrl = session('keep_customer_login_redirect_url');
         $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        session(['default_recaptcha_id_customer_auth' => $mathNum1 + $mathNum2]);
 
         return view('web-views.customer-views.auth.register', [
             'recaptcha' => $recaptcha,
             'keepCustomerLoginRedirectUrl' => $keepCustomerLoginRedirectUrl,
+            'mathNum1' => $mathNum1,
+            'mathNum2' => $mathNum2,
         ]);
     }
 

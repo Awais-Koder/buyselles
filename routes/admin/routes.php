@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\POS\POSOrderController;
 use App\Http\Controllers\Admin\Product\AttributeController;
 use App\Http\Controllers\Admin\Product\BrandController;
 use App\Http\Controllers\Admin\Product\CategoryController;
+use App\Http\Controllers\Admin\Product\DigitalCodeImportController;
 use App\Http\Controllers\Admin\Product\ProductController;
 use App\Http\Controllers\Admin\Product\ReviewController;
 use App\Http\Controllers\Admin\Product\SubCategoryController;
@@ -236,6 +237,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
         Route::controller(ProductController::class)->group(function () {
             Route::get('multiple-product-details', 'getMultipleProductDetailsView')->name('multiple-product-details');
         });
+
+        Route::controller(DigitalCodeImportController::class)
+            ->prefix('digital-code-import')
+            ->name('digital-code-import.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('template', 'downloadTemplate')->name('template');
+                Route::post('upload', 'import')->name('upload');
+            });
     });
 
     Route::group(['prefix' => 'orders', 'as' => 'orders.', 'middleware' => ['module:order_management']], function () {

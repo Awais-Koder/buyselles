@@ -37,12 +37,16 @@ class LoginController extends BaseController
         $userType = array_search($type, $loginTypes);
         abort_if(! $userType, 404);
 
-        $recaptchaBuilder = $this->generateDefaultReCaptcha(4);
-        Session::put(SessionKey::ADMIN_RECAPTCHA_KEY, $recaptchaBuilder->getPhrase());
-
         $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
+        $sessionKey = ($userType === UserRole::ADMIN) ? SessionKey::ADMIN_RECAPTCHA_KEY : SessionKey::EMPLOYEE_RECAPTCHA_KEY;
 
-        return view('admin-views.auth.login', compact('recaptchaBuilder', 'recaptcha'))->with(['role' => $userType]);
+        if (! (isset($recaptcha) && $recaptcha['status'] == 1)) {
+            Session::put($sessionKey, (string) ($mathNum1 + $mathNum2));
+        }
+
+        return view('admin-views.auth.login', compact('mathNum1', 'mathNum2', 'recaptcha'))->with(['role' => $userType]);
     }
 
     public function generateReCaptcha()

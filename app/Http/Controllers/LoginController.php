@@ -6,8 +6,6 @@ use App\Enums\SessionKey;
 use App\Models\Admin;
 use App\Models\BusinessSetting;
 use Brian2694\Toastr\Facades\Toastr;
-use Gregwar\Captcha\CaptchaBuilder;
-use Gregwar\Captcha\PhraseBuilder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -36,16 +34,18 @@ class LoginController extends Controller
         $role = array_search($user_type, $loginTypes, true);
         abort_if($role == null, 404);
 
-        $custome_recaptcha = new CaptchaBuilder;
-        $custome_recaptcha->build();
-        Session::put('six_captcha', $custome_recaptcha->getPhrase());
+        $recaptcha = getWebConfig(name: 'recaptcha');
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
 
-        if ($role == 'admin') {
-            return view('admin-views.auth.login', compact('custome_recaptcha', 'role'));
-        } elseif ($role == 'employee') {
-            return view('admin-views.auth.login', compact('custome_recaptcha', 'role'));
+        if (! (isset($recaptcha) && $recaptcha['status'] == 1)) {
+            $sessionKey = $role === 'admin' ? SessionKey::ADMIN_RECAPTCHA_KEY : SessionKey::EMPLOYEE_RECAPTCHA_KEY;
+            Session::put($sessionKey, (string) ($mathNum1 + $mathNum2));
         }
 
+        if ($role === 'admin' || $role === 'employee') {
+            return view('admin-views.auth.login', compact('mathNum1', 'mathNum2', 'role'));
+        }
     }
 
     public function submit(Request $request): RedirectResponse
@@ -74,8 +74,8 @@ class LoginController extends Controller
                     },
                 ],
             ]);
-        } elseif (strtolower(session($sessionKey)) != strtolower($request['default_captcha_value'])) {
-            Toastr::error(translate('ReCAPTCHA_Failed'));
+        } elseif (session($sessionKey) === null || (string) $request['default_captcha_value'] !== session($sessionKey)) {
+            Toastr::error(translate('Incorrect answer, please try again'));
 
             return back();
         }
@@ -101,7 +101,6 @@ class LoginController extends Controller
                 return redirect()->back()->withInput($request->only('email', 'remember'))
                     ->withErrors(['You are blocked!!, contact with admin.']);
             }
-
         } else {
             Toastr::error(translate('role_missing'));
 
@@ -129,24 +128,8 @@ class LoginController extends Controller
         return false;
     }
 
-    public function captcha(Request $request, $tmp)
+    public function captcha(Request $request, $tmp): void
     {
-        $phrase = new PhraseBuilder;
-        $code = $phrase->build(4);
-        $builder = new CaptchaBuilder($code, $phrase);
-        $builder->setBackgroundColor(220, 210, 230);
-        $builder->setMaxAngle(25);
-        $builder->setMaxBehindLines(0);
-        $builder->setMaxFrontLines(0);
-        $builder->build($width = 100, $height = 40, $font = null);
-        $phrase = $builder->getPhrase();
-
-        if (Session::has($request->captcha_session_id)) {
-            Session::forget($request->captcha_session_id);
-        }
-        Session::put($request->captcha_session_id, $phrase);
-        header('Cache-Control: no-cache, must-revalidate');
-        header('Content-Type:image/jpeg');
-        $builder->output();
+        // Legacy route kept for backwards compatibility — math captcha is now used on login.
     }
 }

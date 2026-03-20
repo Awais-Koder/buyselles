@@ -33,9 +33,16 @@ class LoginController extends Controller
     {
         $recaptchaBuilder = $this->generateDefaultReCaptcha(4);
         $recaptcha = getWebConfig(name: 'recaptcha');
-        Session::put(SessionKey::VENDOR_RECAPTCHA_KEY, $recaptchaBuilder->getPhrase());
+        $mathNum1 = rand(1, 9);
+        $mathNum2 = rand(1, 9);
 
-        return view('vendor-views.auth.login', compact('recaptchaBuilder', 'recaptcha'));
+        if (isset($recaptcha) && $recaptcha['status'] == 1) {
+            Session::put(SessionKey::VENDOR_RECAPTCHA_KEY, $recaptchaBuilder->getPhrase());
+        } else {
+            Session::put(SessionKey::VENDOR_RECAPTCHA_KEY, $mathNum1 + $mathNum2);
+        }
+
+        return view('vendor-views.auth.login', compact('recaptchaBuilder', 'recaptcha', 'mathNum1', 'mathNum2'));
     }
 
     public function login(LoginRequest $request): RedirectResponse

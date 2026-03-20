@@ -283,7 +283,7 @@ class Product extends Model
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
         } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
+            return Cache::remember('product-shop-close-' . $this->id, 3600, function () {
                 return $this?->seller?->shop?->temporary_close ?? 0;
             });
         }
@@ -332,7 +332,6 @@ class Product extends Model
     {
         return $this->hasMany(OrderDetail::class, 'product_id')
             ->where('delivery_status', 'delivered');
-
     }
 
     // old relation: wish_list

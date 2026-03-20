@@ -1,7 +1,6 @@
 @extends('layouts.front-end.app')
 
 @section('title', translate('vendor_Apply'))
-@php($recaptcha = getWebConfig(name: 'recaptcha'))
 @push('css_or_js')
     <link href="{{ theme_asset(path: 'public/assets/back-end/css/select2.min.css') }}" rel="stylesheet" />
     <link href="{{ theme_asset(path: 'public/assets/back-end/css/croppie.css') }}" rel="stylesheet">
@@ -13,8 +12,9 @@
 
 
 @section('content')
-    <form id="seller-registration" action="{{ route('vendor.auth.registration.add') }}" method="POST" class="form-advance-validation form-advance-file-validation"
-        enctype="multipart/form-data">
+    @php($recaptcha = getWebConfig(name: 'recaptcha'))
+    <form id="seller-registration" action="{{ route('vendor.auth.registration.add') }}" method="POST"
+        class="form-advance-validation form-advance-file-validation" enctype="multipart/form-data">
         @csrf
         <div class="py-5">
             <div class="first-el">
@@ -192,7 +192,7 @@
                 $('.confirm-password-error').text('');
             }
         }
-        $('#user_password, #confirm_password').on('keyup change', function () {
+        $('#user_password, #confirm_password').on('keyup change', function() {
             checkPasswordMatch();
         });
     </script>

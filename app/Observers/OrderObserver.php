@@ -3,26 +3,33 @@
 namespace App\Observers;
 
 use App\Models\Order;
+use App\Services\DigitalProductCodeService;
 use App\Traits\PushNotificationTrait;
 
 class OrderObserver
 {
     use PushNotificationTrait;
 
+    public function __construct(private readonly DigitalProductCodeService $codeService) {}
+
     /**
      * Handle the Order "created" event.
      */
     public function created(Order $order): void
     {
-        //        $order->flushCache();
+        //
     }
 
     /**
      * Handle the Order "updated" event.
+     * When payment_status transitions to 'paid', assign digital codes to all eligible order details.
      */
     public function updated(Order $order): void
     {
-        //        $order->flushCache();
+        if ($order->wasChanged('payment_status') && $order->payment_status === 'paid') {
+            $order->loadMissing('orderDetails');
+            $this->codeService->assignCodesForOrder($order);
+        }
     }
 
     /**

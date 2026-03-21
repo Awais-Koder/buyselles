@@ -9,20 +9,24 @@ use App\Enums\ViewPaths\Vendor\Review;
 use App\Http\Controllers\Vendor\Auth\ForgotPasswordController;
 use App\Http\Controllers\Vendor\Auth\LoginController;
 use App\Http\Controllers\Vendor\Auth\RegisterController;
-use App\Http\Controllers\Vendor\DashboardController;
 use App\Http\Controllers\Vendor\ChattingController;
 use App\Http\Controllers\Vendor\Coupon\CouponController;
 use App\Http\Controllers\Vendor\CustomerController;
+use App\Http\Controllers\Vendor\DashboardController;
 use App\Http\Controllers\Vendor\DeliveryMan\DeliveryManController;
 use App\Http\Controllers\Vendor\DeliveryMan\DeliveryManWalletController;
 use App\Http\Controllers\Vendor\DeliveryMan\DeliveryManWithdrawController;
 use App\Http\Controllers\Vendor\DeliveryMan\EmergencyContactController;
 use App\Http\Controllers\Vendor\NotificationController;
+use App\Http\Controllers\Vendor\Order\OrderController;
 use App\Http\Controllers\Vendor\Order\OrderEditController;
+use App\Http\Controllers\Vendor\OrderReportController;
 use App\Http\Controllers\Vendor\POS\CartController;
 use App\Http\Controllers\Vendor\POS\POSController;
 use App\Http\Controllers\Vendor\POS\POSOrderController;
+use App\Http\Controllers\Vendor\Product\DigitalCodeImportController;
 use App\Http\Controllers\Vendor\Product\ProductController;
+use App\Http\Controllers\Vendor\ProductReportController;
 use App\Http\Controllers\Vendor\ProfileController;
 use App\Http\Controllers\Vendor\Promotion\ClearanceSaleController;
 use App\Http\Controllers\Vendor\RefundController;
@@ -32,13 +36,10 @@ use App\Http\Controllers\Vendor\Shipping\ShippingMethodController;
 use App\Http\Controllers\Vendor\Shipping\ShippingTypeController;
 use App\Http\Controllers\Vendor\ShopController;
 use App\Http\Controllers\Vendor\SystemController;
+use App\Http\Controllers\Vendor\TransactionReportController;
+use App\Http\Controllers\Vendor\VendorPaymentInfoController;
 use App\Http\Controllers\Vendor\WithdrawController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Vendor\Order\OrderController;
-use App\Http\Controllers\Vendor\TransactionReportController;
-use App\Http\Controllers\Vendor\ProductReportController;
-use App\Http\Controllers\Vendor\OrderReportController;
-use App\Http\Controllers\Vendor\VendorPaymentInfoController;
 
 Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], function () {
 
@@ -99,7 +100,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::get('new-cart-id', 'addNewCartId')->name('new-cart-id');
                 });
                 Route::controller(POSOrderController::class)->group(function () {
-                    Route::post(POSOrder::ORDER_DETAILS[URI] . '/{id}', 'index')->name('order-details');
+                    Route::post(POSOrder::ORDER_DETAILS[URI].'/{id}', 'index')->name('order-details');
                     Route::post(POSOrder::ORDER_PLACE[URI], 'placeOrder')->name('order-place');
                     Route::any(POSOrder::CANCEL_ORDER[URI], 'cancelOrder')->name('cancel-order');
                     Route::any(POSOrder::HOLD_ORDERS[URI], 'getAllHoldOrdersView')->name('view-hold-orders');
@@ -107,10 +108,10 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
             });
             Route::group(['prefix' => 'refund', 'as' => 'refund.'], function () {
                 Route::controller(RefundController::class)->group(function () {
-                    Route::get(Refund::INDEX[URI] . '/{status}', 'index')->name('index');
-                    Route::get(Refund::DETAILS[URI] . '/{id}', 'getDetailsView')->name('details');
+                    Route::get(Refund::INDEX[URI].'/{status}', 'index')->name('index');
+                    Route::get(Refund::DETAILS[URI].'/{id}', 'getDetailsView')->name('details');
                     Route::post(Refund::UPDATE_STATUS[URI], 'updateStatus')->name('update-status');
-                    Route::get(Refund::EXPORT[URI] . '/{status}', 'exportList')->name('export');
+                    Route::get(Refund::EXPORT[URI].'/{status}', 'exportList')->name('export');
                 });
             });
 
@@ -147,6 +148,15 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
 
                     Route::post('load-more-brands', 'loadMoreBrands')->name('load-more-brands');
                 });
+
+                Route::controller(DigitalCodeImportController::class)
+                    ->prefix('digital-code-import')
+                    ->name('digital-code-import.')
+                    ->group(function () {
+                        Route::get('/', 'index')->name('index');
+                        Route::get('template', 'downloadTemplate')->name('template');
+                        Route::post('upload', 'import')->name('upload');
+                    });
             });
 
             Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
@@ -156,7 +166,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::get('export-excel/{status}', 'exportList')->name('export-excel');
                     Route::get('generate-invoice/{id}', 'generateInvoice')->name('generate-invoice');
                     Route::get('details/{id}', 'getView')->name('details');
-                    Route::post('address-update', 'updateAddress')->name('address-update');// update address from order details
+                    Route::post('address-update', 'updateAddress')->name('address-update'); // update address from order details
                     Route::post('payment-status', 'updatePaymentStatus')->name('payment-status');
                     Route::post('update-deliver-info', 'updateDeliverInfo')->name('update-deliver-info');
                     Route::get('add-delivery-man/{order_id}/{d_man_id}', 'addDeliveryMan')->name('add-delivery-man');
@@ -188,7 +198,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
             Route::group(['prefix' => 'reviews', 'as' => 'reviews.'], function () {
                 Route::controller(ReviewController::class)->group(function () {
                     Route::get(Review::INDEX[URI], 'index')->name('index');
-                    Route::get(Review::UPDATE_STATUS[URI] . '/{id}/{status}', 'updateStatus')->name('update-status');
+                    Route::get(Review::UPDATE_STATUS[URI].'/{id}/{status}', 'updateStatus')->name('update-status');
                     Route::get(Review::EXPORT[URI], 'exportList')->name('export');
                     Route::post(Review::REVIEW_REPLY[URI], 'addReviewReply')->name('add-review-reply');
                 });
@@ -198,10 +208,10 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                 Route::controller(CouponController::class)->group(function () {
                     Route::get(Coupon::INDEX[URI], 'index')->name('index');
                     Route::post(Coupon::ADD[URI], 'add')->name('add');
-                    Route::get(Coupon::UPDATE[URI] . '/{id}', 'getUpdateView')->name('update');
-                    Route::post(Coupon::UPDATE[URI] . '/{id}', 'update');
-                    Route::get(Coupon::UPDATE_STATUS[URI] . '/{id}/{status}', 'updateStatus')->name('update-status');
-                    Route::delete(Coupon::DELETE[URI] . '/{id}', 'delete')->name('delete');
+                    Route::get(Coupon::UPDATE[URI].'/{id}', 'getUpdateView')->name('update');
+                    Route::post(Coupon::UPDATE[URI].'/{id}', 'update');
+                    Route::get(Coupon::UPDATE_STATUS[URI].'/{id}/{status}', 'updateStatus')->name('update-status');
+                    Route::delete(Coupon::DELETE[URI].'/{id}', 'delete')->name('delete');
                     Route::get(Coupon::QUICK_VIEW[URI], 'getQuickView')->name('quick-view');
                     Route::get(Coupon::EXPORT[URI], 'exportList')->name('export');
                 });
@@ -217,7 +227,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::get('multiple-product-details', 'getMultipleProductDetailsView')->name('multiple-clearance-product-details');
                     Route::post('add-clearance-product', 'addClearanceProduct')->name('add-product');
                     Route::post('clearance-product-status-update', 'updateProductStatus')->name('product-status-update');
-                    Route::delete('clearance-delete' . '/{product_id}', 'deleteClearanceProduct')->name('clearance-delete');
+                    Route::delete('clearance-delete'.'/{product_id}', 'deleteClearanceProduct')->name('clearance-delete');
                     Route::delete('clearance-products-delete', 'deleteClearanceAllProduct')->name('clearance-delete-all-product');
                     Route::post('update-discount', 'updateDiscountAmount')->name('update-discount');
                 });
@@ -225,7 +235,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
 
             Route::group(['prefix' => 'messages', 'as' => 'messages.'], function () {
                 Route::controller(ChattingController::class)->group(function () {
-                    Route::get(Chatting::INDEX[URI] . '/{type}', 'index')->name('index');
+                    Route::get(Chatting::INDEX[URI].'/{type}', 'index')->name('index');
                     Route::get(Chatting::MESSAGE[URI], 'getMessageByUser')->name('message');
                     Route::post(Chatting::MESSAGE[URI], 'addVendorMessage');
                     Route::get(Chatting::NEW_NOTIFICATION[URI], 'getNewNotification')->name('new-notification');
@@ -385,5 +395,4 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
             });
         });
     });
-
 });

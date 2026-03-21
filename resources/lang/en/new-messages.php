@@ -10243,4 +10243,13 @@ return [
 	"The_import_runs_in_the_background._You_will_receive_a_dashboard_notification_and_an_email_when_the_job_is_complete." => "The import runs in the background. You will receive a dashboard notification and an email when the job is complete.",
 	"Has_Code_Already" => "Has Code Already",
 	"Digital_Product_Type" => "Digital Product Type",
+	"Product_ID" => "Product ID",
+	"Import_items_file" => "Import items file",
+	"Business_Analytics" => "Business Analytics",
+	"Here_you_can_setup_the_price_and_other_information_for_the_product." => "Here you can setup the price and other information for the product.",
+	"Category_" => "Category ",
+	"Here_you_can_setup_the_foundational_details_required_for_product_creation." => "Here you can setup the foundational details required for product creation.",
+	"there_is_no_FAQs" => "There is no FAQs",
+	"Your_Message_Send_Successfully" => "Your Message Send Successfully",
+	"order_edit_return_amount_message" => "Order edit return amount message",
 ];

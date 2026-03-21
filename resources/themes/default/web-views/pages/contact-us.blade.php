@@ -73,12 +73,17 @@
                                     </div>
                                 </div>
 
-                                @php($recaptcha = getWebConfig(name: 'recaptcha'))
-                                @if (isset($recaptcha) && $recaptcha['status'] == 1)
+                                @php
+                                    $recaptcha = getWebConfig(name: 'recaptcha');
+                                    $showRecaptcha =
+                                        isset($recaptcha) &&
+                                        ($recaptcha['status'] ?? 0) == 1 &&
+                                        \Illuminate\Support\Facades\Route::has('g-recaptcha-session-store');
+                                @endphp
+                                @if ($showRecaptcha)
                                     <div class="dynamic-default-and-recaptcha-section">
                                         <input type="hidden" name="g-recaptcha-response" class="render-grecaptcha-response"
-                                            data-action="contact" data-action="contact"
-                                            data-input="#login-default-captcha-section"
+                                            data-action="contact" data-input="#login-default-captcha-section"
                                             data-default-captcha="#login-default-captcha-section">
 
                                         <div class="default-captcha-container d-none" id="login-default-captcha-section"

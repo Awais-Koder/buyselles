@@ -27,8 +27,13 @@ class CustomerRegistrationRequest extends FormRequest
             'f_name' => 'required',
             'email' => 'required|email|unique:users',
             'phone' => 'required|unique:users|max:20',
-            'password' => 'required|same:con_password',
-
+            'password' => [
+                'required',
+                'min:8',
+                'same:con_password',
+                // At least: 1 uppercase, 1 lowercase, 1 digit, 1 special character (all special chars allowed, no spaces)
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s])(?!.*\s).{8,}$/',
+            ],
         ];
     }
 
@@ -40,6 +45,9 @@ class CustomerRegistrationRequest extends FormRequest
             'phone.required' => translate('phone_number_is_required'),
             'phone.unique' => translate('phone_number_already_has_been_taken'),
             'phone.max' => translate('The_phone_number_may_not_be_greater_than_20_characters'),
+            'password.min' => translate('Password_must_be_at_least_8_characters'),
+            'password.regex' => translate('Password_must_contain_uppercase_lowercase_number_and_special_character'),
+            'password.same' => translate('passwords_must_match_with_confirm_password'),
         ];
     }
 

@@ -54,6 +54,7 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+
 Route::get('/image-proxy', function () {
     $url = request('url');
     if (! $url) {
@@ -103,6 +104,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
 
     Route::controller(WebController::class)->group(function () {
         Route::get('checkout-details', 'checkout_details')->name('checkout-details');
+        Route::post('digital-checkout-proceed', 'digitalCheckoutProceed')->name('digital-checkout-proceed');
         Route::get('checkout-shipping', 'checkout_shipping')->name('checkout-shipping');
         Route::get('checkout-payment', 'checkout_payment')->name('checkout-payment');
         Route::get('checkout-review', 'checkout_review')->name('checkout-review');

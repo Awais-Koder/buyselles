@@ -71,6 +71,8 @@
                                 <div class="password-toggle rtl">
                                     <input class="form-control text-align-direction" name="password" type="password"
                                         id="si-password" placeholder="{{ translate('minimum_8_characters_long') }}"
+                                        minlength="8" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]|.*[_\-@]).{8,}$"
+                                        title="{{ translate('Password must be at least 8 characters and contain uppercase, lowercase, a number, and a special character (e.g. @, -, _)') }}"
                                         required>
                                     <label class="password-toggle-btn">
                                         <input class="custom-control-input" type="checkbox"><i
@@ -78,6 +80,9 @@
                                             class="sr-only">{{ translate('show_password') }} </span>
                                     </label>
                                 </div>
+                                <small class="text-muted d-block mt-1">
+                                    {{ translate('Min. 8 chars · uppercase · lowercase · number · special char (@, -, _, etc.)') }}
+                                </small>
                             </div>
 
                         </div>

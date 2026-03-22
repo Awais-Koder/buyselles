@@ -136,7 +136,8 @@ class ChattingController extends BaseController
             $getUser = $this->deliveryManRepo->getFirstWhere(params: ['id' => $request['delivery_man_id']]);
             $this->chattingRepo->updateAllWhere(
                 params: ['admin_id' => $adminId, 'delivery_man_id' => $request['delivery_man_id']],
-                data: ['seen_by_admin' => 1]);
+                data: ['seen_by_admin' => 1]
+            );
 
             $chattingMessages = $this->chattingRepo->getListWhereNotNull(
                 orderBy: ['id' => 'DESC'],
@@ -271,5 +272,24 @@ class ChattingController extends BaseController
                 'chattingMessages' => $message,
             ])->render(),
         ];
+    }
+
+    public function getNewNotification(): JsonResponse
+    {
+        $chatting = $this->chattingRepo->getListWhereNotNull(
+            filters: ['admin_id' => 0, 'notification_receiver' => 'admin', 'seen_notification' => 0],
+            whereNotNull: ['admin_id'],
+        )->count();
+
+        $this->chattingRepo->updateListWhereNotNull(
+            filters: ['admin_id' => 0, 'notification_receiver' => 'admin', 'seen_notification' => 0],
+            whereNotNull: ['admin_id'],
+            data: ['seen_notification' => 1]
+        );
+
+        return response()->json([
+            'newMessagesExist' => $chatting,
+            'message' => $chatting > 1 ? $chatting.' '.translate('New_Message') : translate('New_Message'),
+        ]);
     }
 }

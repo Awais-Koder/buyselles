@@ -196,25 +196,32 @@
                                 <label class="form-label" for="digital_product_code">
                                     {{ translate('Add Code to Pool') }}
                                     <span class="tooltip-icon cursor-pointer" data-bs-toggle="tooltip"
-                                        aria-label="{{ translate('Enter a code to add it to this product\\'s code pool. Each buyer receives a unique code from the pool.') }}"
-                                        data-bs-title="{{ translate('Enter a code to add it to this product\\'s code pool. Each buyer receives a unique code from the pool.') }}">
+                                        aria-label="{{ translate('Enter a code to add it to this product code pool. Each buyer receives a unique code from the pool.') }}"
+                                        data-bs-title="{{ translate('Enter a code to add it to this product code pool. Each buyer receives a unique code from the pool.') }}">
                                         <i class="fi fi-sr-info"></i>
                                     </span>
                                 </label>
                                 @php
-                                    $poolStats = app(\App\Services\DigitalProductCodeService::class)->getPoolStats($product->id);
+                                    $poolStats = app(\App\Services\DigitalProductCodeService::class)->getPoolStats(
+                                        $product->id,
+                                    );
                                 @endphp
                                 <div class="d-flex gap-3 mb-2">
-                                    <span class="badge bg-success">{{ translate('Available') }}: {{ $poolStats['available'] }}</span>
-                                    <span class="badge bg-warning text-dark">{{ translate('Reserved') }}: {{ $poolStats['reserved'] }}</span>
-                                    <span class="badge bg-secondary">{{ translate('Sold') }}: {{ $poolStats['sold'] }}</span>
-                                    <span class="badge bg-info text-dark">{{ translate('Total') }}: {{ $poolStats['total'] }}</span>
+                                    <span class="badge bg-success">{{ translate('Available') }}:
+                                        {{ $poolStats['available'] }}</span>
+                                    <span class="badge bg-warning text-dark">{{ translate('Reserved') }}:
+                                        {{ $poolStats['reserved'] }}</span>
+                                    <span class="badge bg-secondary">{{ translate('Sold') }}:
+                                        {{ $poolStats['sold'] }}</span>
+                                    <span class="badge bg-info text-dark">{{ translate('Total') }}:
+                                        {{ $poolStats['total'] }}</span>
                                 </div>
                                 <input type="text" id="digital_product_code" name="digital_product_code"
                                     class="form-control"
                                     placeholder="{{ translate('Enter a new code to add to the pool (e.g. XXXX-XXXX-XXXX-XXXX)') }}"
                                     value="{{ old('digital_product_code') }}" autocomplete="off">
-                                <small class="text-muted">{{ translate('Leave blank to keep existing pool unchanged. For bulk upload, use the Import tool.') }}</small>
+                                <small
+                                    class="text-muted">{{ translate('Leave blank to keep existing pool unchanged. For bulk upload, use the Import tool.') }}</small>
                             </div>
                         </div>
 

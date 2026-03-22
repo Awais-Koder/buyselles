@@ -17,17 +17,31 @@ class User extends Authenticatable
 {
     use HasApiTokens, Notifiable, StorageTrait;
 
-    public mixed $email;
-
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'f_name', 'l_name', 'name', 'email', 'password', 'country_code', 'phone', 'image', 'login_medium',
-        'is_active', 'social_id', 'is_phone_verified', 'temporary_token', 'referral_code', 'referred_by',
-        'street_address', 'country', 'city', 'zip',
+        'f_name',
+        'l_name',
+        'name',
+        'email',
+        'password',
+        'country_code',
+        'phone',
+        'image',
+        'login_medium',
+        'is_active',
+        'social_id',
+        'is_phone_verified',
+        'temporary_token',
+        'referral_code',
+        'referred_by',
+        'street_address',
+        'country',
+        'city',
+        'zip',
     ];
 
     /**
@@ -36,7 +50,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     /**

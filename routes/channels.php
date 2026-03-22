@@ -14,3 +14,13 @@
 Broadcast::channel('App.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+// Admin inbox channel — authenticated via admin guard
+Broadcast::channel('admin.chat', function () {
+    return auth('admin')->check();
+}, ['guards' => ['admin']]);
+
+// Vendor inbox channel — authenticated via seller guard
+Broadcast::channel('seller.{sellerId}.chat', function ($seller, int $sellerId) {
+    return (int) $seller->id === $sellerId;
+}, ['guards' => ['seller']]);

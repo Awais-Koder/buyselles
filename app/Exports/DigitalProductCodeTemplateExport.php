@@ -20,18 +20,23 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
 {
     use Exportable;
 
-    protected ?int $sellerId;
-
-    public function __construct(?int $sellerId = null)
-    {
-        $this->sellerId = $sellerId;
-    }
+    /**
+     * Column layout:
+     *   A  product_id       – leave blank to look up by name or create a new product
+     *   B  product_name     – required; used for lookup or creation
+     *   C  price            – required only when creating a NEW product
+     *   D  category_id      – required only when creating a NEW product
+     *   E  pin              – the digital code (REQUIRED)
+     *   F  serial_number    – optional reference number
+     *   G  expiry_date      – optional, format YYYY-MM-DD
+     */
+    public function __construct(protected readonly ?int $sellerId = null) {}
 
     public function collection(): \Illuminate\Support\Collection
     {
         $query = Product::query()
             ->where('product_type', 'digital')
-            ->selectRaw('id, name, digital_product_type, (SELECT COUNT(*) FROM digital_product_codes WHERE product_id = products.id AND status = "available") as available_codes_count');
+            ->select('id', 'name', 'unit_price', 'category_id');
 
         if ($this->sellerId !== null) {
             $query->where('user_id', $this->sellerId)->where('added_by', 'seller');
@@ -39,39 +44,68 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
             $query->where('added_by', 'admin');
         }
 
-        return $query->get()->map(function (Product $product): array {
-            return [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'digital_product_type' => $product->digital_product_type ?? 'ready_product',
-                'has_code_already' => $product->available_codes_count > 0 ? 'Yes (' . $product->available_codes_count . ' available)' : 'No',
-                'digital_code' => '',
-            ];
-        });
+        $rows = $query->get()->map(fn(Product $product): array => [
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'price' => '',          // left blank — product already exists
+            'category_id' => '',    // left blank — product already exists
+            'pin' => '',            // fill this in
+            'serial_number' => '',  // optional
+            'expiry_date' => '',    // optional (YYYY-MM-DD e.g. 2026-12-31)
+        ]);
+
+        // Append blank rows for adding new products in the same upload
+        for ($i = 0; $i < 5; $i++) {
+            $rows->push([
+                'product_id' => '',
+                'product_name' => '',
+                'price' => '',
+                'category_id' => '',
+                'pin' => '',
+                'serial_number' => '',
+                'expiry_date' => '',
+            ]);
+        }
+
+        // Prepend a clearly-marked example row so users understand every column.
+        // The importer skips any row whose product_name contains "⚠ EXAMPLE".
+        $rows->prepend([
+            'product_id' => '101',
+            'product_name' => '⚠ EXAMPLE — DELETE THIS ROW',
+            'price' => '9.99',
+            'category_id' => '25',
+            'pin' => 'ABCD-1234-EFGH-5678',
+            'serial_number' => 'SN-00123',
+            'expiry_date' => '2026-12-31',
+        ]);
+
+        return $rows;
     }
 
     public function headings(): array
     {
         return [
-            'Product ID',
-            'Product Name',
-            'Digital Product Type',
-            'Has Code Already',
-            'digital_code (fill this)',
+            'product_id',
+            'product_name',
+            'price',
+            'category_id',
+            'pin',
+            'serial_number',
+            'expiry_date',
         ];
     }
 
     public function styles(Worksheet $sheet): array
     {
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true)->getColor()->setARGB(Color::COLOR_BLACK);
-        $sheet->getStyle('A1:E1')->getFill()->applyFromArray([
+        // Header row — dark-blue background, white text
+        $sheet->getStyle('A1:G1')->getFont()->setBold(true)->getColor()->setARGB(Color::COLOR_WHITE);
+        $sheet->getStyle('A1:G1')->getFill()->applyFromArray([
             'fillType' => Fill::FILL_SOLID,
             'color' => ['rgb' => '063C93'],
         ]);
-        $sheet->getStyle('E1')->getFont()->setBold(true)->getColor()->setARGB(Color::COLOR_BLACK);
 
         return [
-            'A1:E1' => [
+            'A1:G1' => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                     'vertical' => Alignment::VERTICAL_CENTER,
@@ -86,7 +120,7 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet;
                 $lastRow = $sheet->getHighestRow();
-                $lastRange = 'A1:E' . $lastRow;
+                $lastRange = 'A1:G' . $lastRow;
 
                 $sheet->getStyle($lastRange)->applyFromArray([
                     'borders' => [
@@ -101,20 +135,48 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
                     ],
                 ]);
 
-                // Highlight the digital_code column (E) with a light-yellow fill to guide the user
                 if ($lastRow > 1) {
-                    $sheet->getStyle('E2:E' . $lastRow)->getFill()->applyFromArray([
+                    // Row 2 is always the example row — style it distinctively
+                    $sheet->getStyle('A2:G2')->getFill()->applyFromArray([
                         'fillType' => Fill::FILL_SOLID,
-                        'color' => ['rgb' => 'FFFBE6'],
+                        'color' => ['rgb' => 'D4EDDA'], // light green
                     ]);
+                    $sheet->getStyle('A2:G2')->getFont()->setItalic(true);
+                    $sheet->getStyle('A2:G2')->getFont()->getColor()->setARGB('006400'); // dark green text
+
+                    // Highlight PIN column (E) for all data rows — the most important field
+                    if ($lastRow > 2) {
+                        $sheet->getStyle('E3:E' . $lastRow)->getFill()->applyFromArray([
+                            'fillType' => Fill::FILL_SOLID,
+                            'color' => ['rgb' => 'FFF3CD'],
+                        ]);
+                    }
+
+                    // Highlight new-product-only columns (C price, D category_id) lightly
+                    if ($lastRow > 2) {
+                        foreach (['C', 'D'] as $col) {
+                            $sheet->getStyle($col . '3:' . $col . $lastRow)->getFill()->applyFromArray([
+                                'fillType' => Fill::FILL_SOLID,
+                                'color' => ['rgb' => 'EAF6FF'],
+                            ]);
+                        }
+                    }
+
+                    // Add a comment on the expiry_date header (G1) explaining the format
+                    $comment = $sheet->getComment('G1');
+                    $comment->getText()->createTextRun("Date format: YYYY-MM-DD\nExample: 2026-12-31\nLeave blank for codes that do not expire.\nCodes past this date are marked expired automatically each night.");
+                    $comment->setWidth('220pt');
+                    $comment->setHeight('70pt');
                 }
 
-                // Lock non-editable columns A–D with a comment hint
-                $sheet->getColumnDimension('A')->setWidth(15);
-                $sheet->getColumnDimension('B')->setWidth(40);
-                $sheet->getColumnDimension('C')->setWidth(25);
-                $sheet->getColumnDimension('D')->setWidth(20);
+                // Column widths
+                $sheet->getColumnDimension('A')->setWidth(14);
+                $sheet->getColumnDimension('B')->setWidth(42);
+                $sheet->getColumnDimension('C')->setWidth(18);
+                $sheet->getColumnDimension('D')->setWidth(16);
                 $sheet->getColumnDimension('E')->setWidth(40);
+                $sheet->getColumnDimension('F')->setWidth(22);
+                $sheet->getColumnDimension('G')->setWidth(20);
 
                 $sheet->getRowDimension(1)->setRowHeight(25);
             },

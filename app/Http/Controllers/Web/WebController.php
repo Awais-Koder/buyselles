@@ -204,7 +204,6 @@ class WebController extends Controller
         } else {
             return $query->orderBy('name', $orderBy)->latest()->paginate($paginateLimit)->appends(['order_by' => $orderBy, 'search' => $request['search']]);
         }
-
     }
 
     public function getAllVendorsView(Request $request): View|RedirectResponse
@@ -228,15 +227,17 @@ class WebController extends Controller
             }]);
 
         $vendorsList = $shopQuery
-            ->with(['seller' => fn ($query) => $query->withCount('orders')
-                ->with(['product.reviews' => fn ($query) => $query->active()]),
+            ->with([
+                'seller' => fn ($query) => $query->withCount('orders')
+                    ->with(['product.reviews' => fn ($query) => $query->active()]),
             ])
             ->get()
             ->map(fn ($shop) => $this->shopService::calculateReviews($shop));
 
         $inhouseShop = $this->shopService->getInhouseShopData($request);
         if ($inhouseShop) {
-            $vendorsList = $vendorsList->reject(fn ($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
+            $vendorsList = $vendorsList->reject(
+                fn ($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
             )->prepend($inhouseShop);
         }
         $vendorsList = $this->shopService->applyOrdering($vendorsList, $request);
@@ -379,9 +380,43 @@ class WebController extends Controller
         ]);
     }
 
+    /**
+     * Handle digital-only checkout: capture delivery email and proceed to payment.
+     * No shipping address required for purely digital carts.
+     */
+    public function digitalCheckoutProceed(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'digital_delivery_email' => ['required', 'email'],
+        ]);
+
+        // Store delivery email and set address sessions to 0 (no physical address needed)
+        session([
+            'digital_delivery_email' => $request->input('digital_delivery_email'),
+            'address_id' => 0,
+            'billing_address_id' => 0,
+        ]);
+
+        return redirect()->route('checkout-payment');
+    }
+
     public function checkout_payment(Request $request): View|RedirectResponse
     {
-        if (! session('address_id') && ! session('billing_address_id')) {
+        // Check if cart is digital-only (no physical items checked)
+        $cartQuery = auth('customer')->check()
+            ? Cart::where('customer_id', auth('customer')->id())
+            : Cart::where('temp_user_id', session('guest_id'));
+
+        $isDigitalOnlyCart = ! $cartQuery->where('product_type', 'physical')
+            ->where('is_checked', 1)
+            ->exists();
+
+        if ($isDigitalOnlyCart) {
+            // Digital items need no shipping address — auto-set sessions if not already set
+            if (! session()->has('address_id')) {
+                session(['address_id' => 0, 'billing_address_id' => 0]);
+            }
+        } elseif (! session('address_id') && ! session('billing_address_id')) {
             Toastr::error(translate('Please_update_address_information'));
 
             return redirect()->route('checkout-details');
@@ -389,7 +424,7 @@ class WebController extends Controller
 
         if (
             ! ((auth('customer')->check() && Cart::where(['customer_id' => auth('customer')->id()])->count() > 0)
-            || (getWebConfig(name: 'guest_checkout') && session()->has('guest_id') && session('guest_id')))
+                || (getWebConfig(name: 'guest_checkout') && session()->has('guest_id') && session('guest_id')))
         ) {
             Toastr::warning(translate('please_login_your_account'));
             if (theme_root_path() == 'default') {
@@ -493,7 +528,8 @@ class WebController extends Controller
         if ($request['payment_method'] != 'cash_on_delivery') {
             if ($request->ajax()) {
                 return response()->json([
-                    'status' => 0, 'message' => translate('Something_went_wrong'),
+                    'status' => 0,
+                    'message' => translate('Something_went_wrong'),
                 ]);
             }
 
@@ -943,8 +979,21 @@ class WebController extends Controller
         return response()->json([
             'success' => 1,
             'product' => $product,
-            'view' => view(VIEW_FILE_NAMES['product_quick_view_partials'], compact('product', 'countWishlist', 'countOrder', 'initialProductConfig',
-                'relatedProducts', 'currentDate', 'productAuthorsInfo', 'productPublishingHouseInfo', 'wishlist_status', 'overallRating', 'rating', 'firstVariationQuantity', 'compareList'))->render(),
+            'view' => view(VIEW_FILE_NAMES['product_quick_view_partials'], compact(
+                'product',
+                'countWishlist',
+                'countOrder',
+                'initialProductConfig',
+                'relatedProducts',
+                'currentDate',
+                'productAuthorsInfo',
+                'productPublishingHouseInfo',
+                'wishlist_status',
+                'overallRating',
+                'rating',
+                'firstVariationQuantity',
+                'compareList'
+            ))->render(),
         ]);
     }
 
@@ -1074,7 +1123,6 @@ class WebController extends Controller
         }
 
         return view(VIEW_FILE_NAMES['products_view_page'], compact('products', 'data'), $data);
-
     }
 
     public function viewWishlist(Request $request): View
@@ -1130,7 +1178,6 @@ class WebController extends Controller
                         'count' => $countWishlist,
                         'product_count' => $product_count,
                     ]);
-
                 } else {
                     $wishlist = new Wishlist;
                     $wishlist->customer_id = auth('customer')->id();
@@ -1149,12 +1196,12 @@ class WebController extends Controller
 
                     return response()->json([
                         'success' => translate('Product has been added to wishlist'),
-                        'value' => 1, 'count' => $countWishlist,
+                        'value' => 1,
+                        'count' => $countWishlist,
                         'id' => $request->product_id,
                         'product_count' => $product_count,
                     ]);
                 }
-
             } else {
                 return response()->json(['error' => translate('please_login_your_account'), 'value' => 0]);
             }
@@ -1414,7 +1461,6 @@ class WebController extends Controller
                     $guestPhone = $orderDetailsData->order->customer->phone;
                 }
             } catch (\Throwable $th) {
-
             }
 
             $verifyData = [
@@ -1461,7 +1507,6 @@ class WebController extends Controller
                 'new_time' => $otpIntervalTime,
                 'message' => ($mailStatus || $smsStatus) ? translate('OTP_sent_successfully') : translate('OTP_sent_fail'),
             ]);
-
         }
     }
 

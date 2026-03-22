@@ -134,6 +134,7 @@ class ChattingController extends BaseController
             $whereNotNull = ['user_id', 'admin_id'];
             $relation = ['admin'];
             $type = 'admin';
+            event(new ChattingEvent(key: 'message_from_customer', type: 'admin', userData: (object) ['id' => 0], messageForm: $customer));
         } else {
             $vendorData = $this->vendorRepo->getFirstWhere(params: ['id' => $request['vendor_id']], relations: ['shop']);
 
@@ -143,7 +144,8 @@ class ChattingController extends BaseController
                     userId: $customerId,
                     type: 'seller',
                     shopId: $vendorData?->shop?->id,
-                    vendorId: $vendorData['id'])
+                    vendorId: $vendorData['id']
+                )
             );
 
             event(new ChattingEvent(key: 'message_from_customer', type: 'seller', userData: $vendorData, messageForm: $customer));
@@ -191,7 +193,8 @@ class ChattingController extends BaseController
                 'seen_by_customer' => 0,
             ];
             $unseenMessageCount = $this->chattingRepo->getListWhere(
-                filters: $filter, dataLimit: 'all'
+                filters: $filter,
+                dataLimit: 'all'
             )->count();
             if ($index === 0) {
                 $chatting['unseen_message_count'] = 0;

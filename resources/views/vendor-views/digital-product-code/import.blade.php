@@ -14,7 +14,7 @@
             <nav aria-label="breadcrumb" class="mt-1">
                 <ol class="breadcrumb mb-0">
                     <li class="breadcrumb-item">
-                        <a href="{{ route('vendor.dashboard') }}">{{ translate('dashboard') }}</a>
+                        <a href="{{ route('vendor.dashboard.index') }}">{{ translate('dashboard') }}</a>
                     </li>
                     <li class="breadcrumb-item">
                         <a href="{{ route('vendor.products.list', 'all') }}">{{ translate('products') }}</a>
@@ -48,20 +48,21 @@
                     </div>
                     <div class="card-body d-flex flex-column gap-3">
                         <p class="text-muted mb-0">
-                            {{ translate('Download_the_Excel_template_that_contains_all_your_digital_products._Fill_in_the') }}
-                            <strong class="text-warning">{{ translate('digital_code_(fill_this)') }}</strong>
-                            {{ translate('column_and_upload_the_file_back.') }}
+                            {{ translate('Download_the_Excel_template._Add_one_digital_code_(PIN)_per_row._You_can_restock_existing_products_or_create_new_ones_directly_in_the_file.') }}
                         </p>
                         <ul class="list-unstyled mb-0 text-muted small">
                             <li><i class="bi bi-check2 text-success me-1"></i>
-                                {{ translate('Template_only_includes_your_own_digital_products') }}
+                                {{ translate('Existing_products:_fill_in_product_name_+_pin._product_id_also_accepted.') }}
                             </li>
                             <li><i class="bi bi-check2 text-success me-1"></i>
-                                {{ translate('Do_NOT_change_the_Product_ID_column') }}</li>
+                                {{ translate('New_products:_fill_product_name_+_price_+_category_id_+_pin') }}</li>
                             <li><i class="bi bi-check2 text-success me-1"></i>
-                                {{ translate('Rows_with_empty_digital_code_are_skipped') }}</li>
+                                {{ translate('serial_number_and_expiry_date_are_optional') }}</li>
                             <li><i class="bi bi-check2 text-success me-1"></i>
-                                {{ translate('Only_digital-type_products_are_included') }}</li>
+                                {{ translate('Codes_past_their_expiry_date_will_be_removed_from_stock_automatically') }}
+                            </li>
+                            <li><i class="bi bi-check2 text-success me-1"></i>
+                                {{ translate('Rows_with_empty_pin_are_skipped') }}</li>
                         </ul>
                         <div class="mt-auto">
                             <a href="{{ route('vendor.products.digital-code-import.template') }}"
@@ -140,35 +141,67 @@
                         </h5>
                     </div>
                     <div class="card-body p-0">
+                        {{-- Column legend --}}
+                        <div class="px-3 pt-3 pb-1">
+                            <div class="row g-2 small">
+                                <div class="col-md-6">
+                                    <div class="alert alert-secondary py-2 mb-0">
+                                        <strong>{{ translate('Restocking_an_existing_product') }}</strong><br>
+                                        {{ translate('Fill:') }} <code>product_name</code> + <code>pin</code><br>
+                                        <span
+                                            class="text-muted">({{ translate('product_id_can_be_used_instead_of_product_name') }})</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-info py-2 mb-0">
+                                        <strong>{{ translate('Creating_a_new_product') }}</strong><br>
+                                        {{ translate('Fill:') }} <code>product_name</code> + <code>price</code> +
+                                        <code>category_id</code> + <code>pin</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-bordered table-sm mb-0 text-center">
                                 <thead style="background-color: var(--bs-primary); color: var(--bs-white);">
                                     <tr>
-                                        <th>{{ translate('Product_ID') }}</th>
-                                        <th>{{ translate('Product_Name') }}</th>
-                                        <th>{{ translate('Digital_Product_Type') }}</th>
-                                        <th>{{ translate('Has_Code_Already') }}</th>
-                                        <th style="color: var(--bs-warning);">{{ translate('digital_code_(fill_this)') }}
-                                        </th>
+                                        <th>product_id</th>
+                                        <th>product_name</th>
+                                        <th style="background:#1a4da8;">price</th>
+                                        <th style="background:#1a4da8;">category_id</th>
+                                        <th style="color: var(--bs-warning);">pin</th>
+                                        <th>serial_number</th>
+                                        <th>expiry_date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td class="text-muted">101</td>
                                         <td class="text-muted text-start">PUBG Mobile 60 UC</td>
-                                        <td class="text-muted">ready_product</td>
-                                        <td class="text-muted">No</td>
+                                        <td class="text-muted"><em>leave blank</em></td>
+                                        <td class="text-muted"><em>leave blank</em></td>
                                         <td class="text-warning fw-semibold">ABCD-1234-EFGH</td>
+                                        <td class="text-muted">SN-001</td>
+                                        <td class="text-muted">2025-12-31</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-muted">102</td>
-                                        <td class="text-muted text-start">Netflix 1 Month</td>
-                                        <td class="text-muted">ready_product</td>
-                                        <td class="text-muted">Yes</td>
-                                        <td class="text-warning fw-semibold">XXXX-9999-YYYY</td>
+                                        <td class="text-muted"><em>leave blank</em></td>
+                                        <td class="text-muted text-start">Steam Wallet $10</td>
+                                        <td class="text-primary fw-semibold">10.00</td>
+                                        <td class="text-primary fw-semibold">25</td>
+                                        <td class="text-warning fw-semibold">STEAM-XXXX-9999</td>
+                                        <td class="text-muted"></td>
+                                        <td class="text-muted"></td>
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="px-3 py-2 small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>expiry_date</strong> {{ translate('format:') }} <code>YYYY-MM-DD</code>
+                            &mdash;
+                            {{ translate('Codes_past_this_date_are_automatically_removed_from_stock_each_night.') }}
+                            {{ translate('Leave_blank_for_codes_that_do_not_expire.') }}
                         </div>
                     </div>
                 </div>

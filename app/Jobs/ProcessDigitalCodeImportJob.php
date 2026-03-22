@@ -37,7 +37,7 @@ class ProcessDigitalCodeImportJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $importer = app(DigitalProductCodesImport::class);
+            $importer = app(DigitalProductCodesImport::class, ['sellerId' => $this->sellerId]);
             Excel::import($importer, $this->filePath);
 
             $summary = $importer->getSummary();

@@ -13,13 +13,45 @@ class DigitalProductCodeService
 {
     /**
      * Add a single plain-text code to the pool for a product.
-     * The code is encrypted before storage.
+     * The code is AES-256-CBC encrypted before storage.
+     * A SHA-256 hash of the normalised plain code is stored for duplicate detection.
+     *
+     * Returns null (without throwing) when a duplicate is detected so callers can
+     * gracefully count skipped rows.
      */
-    public function addToPool(int $productId, string $plainCode): DigitalProductCode
-    {
+    public function addToPool(
+        int $productId,
+        string $plainCode,
+        ?string $serialNumber = null,
+        ?string $expiryDate = null,
+    ): ?DigitalProductCode {
+        $normalised = strtolower(trim($plainCode));
+        $hash = hash('sha256', $normalised);
+
+        // ── Duplicate detection ──────────────────────────────────────────────
+        // 1. Global PIN duplicate (by hash — works without decrypting AES data)
+        if (DigitalProductCode::where('code_hash', $hash)->exists()) {
+            return null;
+        }
+
+        // 2. Serial number duplicate within the same product
+        if ($serialNumber !== null && $serialNumber !== '') {
+            $cleanSerial = trim($serialNumber);
+            if (DigitalProductCode::where('product_id', $productId)
+                ->where('serial_number', $cleanSerial)
+                ->exists()
+            ) {
+                return null;
+            }
+        }
+        // ────────────────────────────────────────────────────────────────────
+
         $record = DigitalProductCode::create([
             'product_id' => $productId,
             'code' => Crypt::encryptString(trim($plainCode)),
+            'code_hash' => $hash,
+            'serial_number' => $serialNumber ? trim($serialNumber) : null,
+            'expiry_date' => $expiryDate ?: null,
             'status' => 'available',
         ]);
 
@@ -29,19 +61,30 @@ class DigitalProductCodeService
     }
 
     /**
-     * Add many plain-text codes for a product in one shot.
-     * Skips blank entries and already-available duplicates (by checking hash).
+     * Add many codes for a product in one shot.
+     * Each item in $records should be:
+     *   ['code' => string, 'serial_number' => ?string, 'expiry_date' => ?string]
+     * Passing a plain string is also accepted for backwards compatibility.
      *
-     * @param  array<int, string>  $plainCodes
+     * @param  array<int, string|array{code: string, serial_number?: string|null, expiry_date?: string|null}>  $records
      * @return array{inserted: int, skipped: int}
      */
-    public function bulkAddToPool(int $productId, array $plainCodes): array
+    public function bulkAddToPool(int $productId, array $records): array
     {
         $inserted = 0;
         $skipped = 0;
 
-        foreach ($plainCodes as $plainCode) {
-            $plainCode = trim((string) $plainCode);
+        foreach ($records as $record) {
+            // Support both plain strings (legacy) and structured arrays
+            if (is_string($record)) {
+                $plainCode = trim($record);
+                $serialNumber = null;
+                $expiryDate = null;
+            } else {
+                $plainCode = trim((string) ($record['code'] ?? ''));
+                $serialNumber = isset($record['serial_number']) ? trim((string) $record['serial_number']) : null;
+                $expiryDate = $record['expiry_date'] ?? null;
+            }
 
             if ($plainCode === '') {
                 $skipped++;
@@ -49,13 +92,12 @@ class DigitalProductCodeService
                 continue;
             }
 
-            DigitalProductCode::create([
-                'product_id' => $productId,
-                'code' => Crypt::encryptString($plainCode),
-                'status' => 'available',
-            ]);
-
-            $inserted++;
+            $result = $this->addToPool($productId, $plainCode, $serialNumber, $expiryDate);
+            if ($result === null) {
+                $skipped++; // duplicate
+            } else {
+                $inserted++;
+            }
         }
 
         $this->syncStock($productId);
@@ -66,6 +108,7 @@ class DigitalProductCodeService
     /**
      * Pick one available code for a product and mark it as reserved.
      * Uses a DB-level lock (SELECT … FOR UPDATE) to prevent race conditions.
+     * Codes with a past expiry date are skipped automatically.
      *
      * Returns null if no available code exists.
      */
@@ -76,6 +119,10 @@ class DigitalProductCodeService
             $record = DigitalProductCode::query()
                 ->where('product_id', $productId)
                 ->where('status', 'available')
+                ->where(function ($q): void {
+                    $q->whereNull('expiry_date')
+                        ->orWhereDate('expiry_date', '>=', now()->toDateString());
+                })
                 ->lockForUpdate()
                 ->first();
 
@@ -163,6 +210,10 @@ class DigitalProductCodeService
                     $record = DigitalProductCode::query()
                         ->where('product_id', $productId)
                         ->where('status', 'available')
+                        ->where(function ($q): void {
+                            $q->whereNull('expiry_date')
+                                ->orWhereDate('expiry_date', '>=', now()->toDateString());
+                        })
                         ->lockForUpdate()
                         ->first();
 
@@ -215,18 +266,50 @@ class DigitalProductCodeService
     }
 
     /**
-     * Sync the product's current_stock to match available codes in the pool.
+     * Sync the product's current_stock to match available, non-expired codes.
      */
     public function syncStock(int $productId): void
     {
         $available = DigitalProductCode::query()
             ->where('product_id', $productId)
             ->where('status', 'available')
+            ->where(function ($q): void {
+                $q->whereNull('expiry_date')
+                    ->orWhereDate('expiry_date', '>=', now()->toDateString());
+            })
             ->count();
 
         Product::query()
             ->where('id', $productId)
             ->update(['current_stock' => $available]);
+    }
+
+    /**
+     * Mark all codes whose expiry_date is in the past (and status is 'available')
+     * as 'expired', then sync stock for affected products.
+     * Called by the daily MarkExpiredDigitalCodesCommand.
+     *
+     * @return int Number of codes marked expired
+     */
+    public function markExpiredCodes(): int
+    {
+        // Find all product IDs that will be affected before we update
+        $affectedProductIds = DigitalProductCode::query()
+            ->pastExpiry()
+            ->distinct()
+            ->pluck('product_id')
+            ->toArray();
+
+        $count = DigitalProductCode::query()
+            ->pastExpiry()
+            ->update(['status' => 'expired', 'updated_at' => now()]);
+
+        // Sync stock for every impacted product
+        foreach ($affectedProductIds as $productId) {
+            $this->syncStock($productId);
+        }
+
+        return $count;
     }
 
     /**

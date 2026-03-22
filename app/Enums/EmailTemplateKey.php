@@ -54,7 +54,7 @@ enum EmailTemplateKey
 
     const CUSTOMER_EMAIL_LIST = [
         EmailTemplateKey::ORDER_PLACE,
-        // EmailTemplateKey::FORGET_PASSWORD,
+        EmailTemplateKey::FORGET_PASSWORD,
         EmailTemplateKey::REGISTRATION_VERIFICATION,
         EmailTemplateKey::REGISTRATION_FROM_POS,
         EmailTemplateKey::ACCOUNT_BLOCK,

@@ -14,9 +14,17 @@ trait EmailTemplateTrait
     use FileManagerTrait;
 
     protected function textVariableFormat(
-        $value, $userName = null, $adminName = null, $vendorName = null, $shopName = null, $shopId = null,
-        $deliveryManName = null, $orderId = null, $emailId = null)
-    {
+        $value,
+        $userName = null,
+        $adminName = null,
+        $vendorName = null,
+        $shopName = null,
+        $shopId = null,
+        $deliveryManName = null,
+        $orderId = null,
+        $emailId = null,
+        $passwordResetURL = null
+    ) {
         $data = $value;
         if ($data) {
             $data = $userName ? str_replace('{userName}', $userName, $data) : $data;
@@ -27,6 +35,7 @@ trait EmailTemplateTrait
             $data = $deliveryManName ? str_replace('{deliveryManName}', $deliveryManName, $data) : $data;
             $data = $orderId ? str_replace('{orderId}', $orderId, $data) : $data;
             $data = $emailId ? str_replace('{emailId}', $emailId, $data) : $data;
+            $data = $passwordResetURL ? str_replace('{passwordResetURL}', $passwordResetURL, $data) : $data;
         }
 
         return $data;
@@ -55,7 +64,8 @@ trait EmailTemplateTrait
                 shopId: $data['shopId'] ?? null,
                 deliveryManName: $data['deliveryManName'] ?? null,
                 orderId: $data['orderId'] ?? null,
-                emailId: $data['emailId'] ?? null
+                emailId: $data['emailId'] ?? null,
+                passwordResetURL: $data['passwordResetURL'] ?? null
             );
             $template['title'] = $this->textVariableFormat(
                 value: $template['title'],

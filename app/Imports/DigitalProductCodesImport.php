@@ -158,8 +158,11 @@ class DigitalProductCodesImport implements ToCollection, WithHeadingRow
     private function createProduct(string $name, float $price, int $categoryId): ?Product
     {
         try {
+            $slug = \Illuminate\Support\Str::slug($name, '-').'-'.\Illuminate\Support\Str::random(6);
+
             return Product::create([
                 'name' => $name,
+                'slug' => $slug,
                 'unit_price' => $price,
                 'purchase_price' => 0,
                 'category_id' => $categoryId,

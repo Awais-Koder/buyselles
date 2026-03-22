@@ -13,15 +13,27 @@
                 <ol class="list-unstyled font-size-md p-0">
                     <li>
                         <span class="text-primary mr-2">{{ translate('1') }}.</span>
-                        {{ translate('use_your_registered_phone.') }}
+                        @if ($verification_by === 'email')
+                            {{ translate('use_your_registered_email.') }}
+                        @else
+                            {{ translate('use_your_registered_phone.') }}
+                        @endif
                     </li>
                     <li>
                         <span class="text-primary mr-2">{{ translate('2') }}.</span>
-                        {{ translate('we_will_send_you_a_temporary_OTP_in_your_phone') }}.
+                        @if ($verification_by === 'email')
+                            {{ translate('we_will_send_you_a_password_reset_link_to_your_email') }}.
+                        @else
+                            {{ translate('we_will_send_you_a_temporary_OTP_in_your_phone') }}.
+                        @endif
                     </li>
                     <li>
                         <span class="text-primary mr-2">{{ translate('3') }}.</span>
-                        {{ translate('use_the_OTP_code_to_change_your_password_on_our_secure_website.') }}
+                        @if ($verification_by === 'email')
+                            {{ translate('use_the_link_to_reset_your_password_on_our_secure_website.') }}
+                        @else
+                            {{ translate('use_the_OTP_code_to_change_your_password_on_our_secure_website.') }}
+                        @endif
                     </li>
                 </ol>
 
@@ -30,16 +42,23 @@
                         method="post" id="customer-forgot-password-form">
                         @csrf
                         <div class="form-group">
-                            <label for="recover-email">
-                                {{ translate('Phone') }}
-                            </label>
-                            <input class="form-control clean-phone-input-value" type="text" name="identity" required
-                                placeholder="{{ translate('enter_your_phone_number') }}">
-                            <span class="fs-12 text-muted">*
-                                {{ translate('must_use_country_code_before_phone_number') }}</span>
-                            <div class="invalid-feedback">
-                                {{ translate('please_provide_valid_phone_number') }}
-                            </div>
+                            @if ($verification_by === 'email')
+                                <label for="recover-email">{{ translate('Email') }}</label>
+                                <input class="form-control" type="email" name="identity" id="recover-email" required
+                                    placeholder="{{ translate('enter_your_email_address') }}">
+                                <div class="invalid-feedback">
+                                    {{ translate('please_provide_valid_email') }}
+                                </div>
+                            @else
+                                <label for="recover-phone">{{ translate('Phone') }}</label>
+                                <input class="form-control clean-phone-input-value" type="text" name="identity"
+                                    id="recover-phone" required placeholder="{{ translate('enter_your_phone_number') }}">
+                                <span class="fs-12 text-muted">*
+                                    {{ translate('must_use_country_code_before_phone_number') }}</span>
+                                <div class="invalid-feedback">
+                                    {{ translate('please_provide_valid_phone_number') }}
+                                </div>
+                            @endif
                         </div>
 
                         @if ($web_config['firebase_otp_verification'] && $web_config['firebase_otp_verification']['status'])
@@ -70,7 +89,11 @@
                         @endif
 
                         <button class="btn btn--primary" type="submit">
-                            {{ translate('send_OTP') }}
+                            @if ($verification_by === 'email')
+                                {{ translate('send_reset_link') }}
+                            @else
+                                {{ translate('send_OTP') }}
+                            @endif
                         </button>
                     </form>
                 </div>

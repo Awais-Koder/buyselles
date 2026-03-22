@@ -62,7 +62,9 @@ class ForgotPasswordController extends Controller
             return back();
         }
 
-        $customer = $this->customerRepo->getByIdentity(filters: ['phone' => $request['identity']]);
+        $verificationBy = getWebConfig(name: 'forgot_password_verification') ?? 'email';
+        $lookupFilter = $verificationBy === 'email' ? ['email' => $request['identity']] : ['phone' => $request['identity']];
+        $customer = $this->customerRepo->getByIdentity(filters: $lookupFilter);
         if (! $customer) {
             Toastr::error(translate('No_such_user_found'));
 
@@ -76,7 +78,6 @@ class ForgotPasswordController extends Controller
         }
 
         session()->put('forgot_password_identity', $request['identity']);
-        $verificationBy = 'phone';
         $otpIntervalTime = getWebConfig(name: 'otp_resend_time') ?? 1;
         $smsErrorMsg = translate('something_went_wrong.').' '.translate('please_try_again_after_sometime');
 
@@ -309,12 +310,14 @@ class ForgotPasswordController extends Controller
     public function resetPasswordSubmit(Request $request): View|Redirector|RedirectResponse
     {
         $validator = Validator::make($request->all(), [
-            'password' => 'required|same:confirm_password',
+            'password' => ['required', 'same:confirm_password', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/'],
+        ], [
+            'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter').', '.translate('_one_lowercase_letter').', '.translate('_one_digit_').', '.translate('_one_special_character').', '.translate('_and_no_spaces').'.',
         ]);
 
         $token = $request['reset_token'];
         if ($validator->fails()) {
-            Toastr::error(translate('password_mismatch'));
+            Toastr::error($validator->errors()->first());
 
             return view(VIEW_FILE_NAMES['reset_password'], compact('token'));
         }

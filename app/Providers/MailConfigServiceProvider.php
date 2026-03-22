@@ -29,21 +29,17 @@ class MailConfigServiceProvider extends ServiceProvider
                 $emailServices_smtp = getWebConfig(name: 'mail_config_sendgrid');
             }
             if ($emailServices_smtp['status'] == 1) {
-                $config = [
-                    'driver' => $emailServices_smtp['driver'],
-                    'host' => $emailServices_smtp['host'],
-                    'port' => $emailServices_smtp['port'],
-                    'username' => $emailServices_smtp['username'],
-                    'password' => $emailServices_smtp['password'],
-                    'encryption' => $emailServices_smtp['encryption'],
-                    'from' => ['address' => $emailServices_smtp['email_id'], 'name' => $emailServices_smtp['name']],
-                    'sendmail' => '/usr/sbin/sendmail -bs',
-                    'pretend' => false,
-                ];
-                Config::set('mail', $config);
+                Config::set('mail.default', 'smtp');
+                Config::set('mail.mailers.smtp.transport', 'smtp');
+                Config::set('mail.mailers.smtp.host', $emailServices_smtp['host']);
+                Config::set('mail.mailers.smtp.port', (int) $emailServices_smtp['port']);
+                Config::set('mail.mailers.smtp.username', $emailServices_smtp['username']);
+                Config::set('mail.mailers.smtp.password', $emailServices_smtp['password']);
+                Config::set('mail.mailers.smtp.encryption', $emailServices_smtp['encryption']);
+                Config::set('mail.from.address', $emailServices_smtp['email_id']);
+                Config::set('mail.from.name', $emailServices_smtp['name']);
             }
         } catch (Exception $ex) {
-
         }
     }
 }

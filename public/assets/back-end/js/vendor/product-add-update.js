@@ -22,7 +22,7 @@ let messageWantAddOrUpdateThisProduct = $(
 ).data("text");
 let getSystemCurrencyCode = $("#system-currency-code").data("value");
 
-$(document).on("ready", function() {
+$(document).on("ready", function () {
     $(".summernote").summernote({
         height: 150,
         toolbar: [
@@ -34,7 +34,7 @@ $(document).on("ready", function() {
             ["height", ["height"]]
         ],
         callbacks: {
-            onChange: function(contents, $editable) {
+            onChange: function (contents, $editable) {
                 if ($(this).hasClass("product-description-default-language")) {
                     var textWithoutTagsAndEntities = contents.replace(
                         /<[^>]+>|&[^;]+;/g,
@@ -66,7 +66,7 @@ $(document).on("ready", function() {
     $(".color-var-select").select2({
         templateResult: colorCodeSelect,
         templateSelection: colorCodeSelect,
-        escapeMarkup: function(m) {
+        escapeMarkup: function (m) {
             return m;
         }
     });
@@ -87,6 +87,7 @@ function getProductTypeFunctionality() {
     let productType = $("#product_type").val();
     if (productType && productType.toString() === "physical") {
         $("#digital_product_type_show").hide();
+        $("#digital-product-code-wrapper").hide();
         $(".physical_product_show").show();
         elementDigitalProductTypeByID.val(
             $("#digital_product_type option:first").val()
@@ -98,6 +99,7 @@ function getProductTypeFunctionality() {
         elementProductColorSwitcherByIDFunctionality("reset");
     } else if (productType && productType.toString() === "digital") {
         $("#digital_product_type_show").show();
+        $("#digital-product-code-wrapper").show();
         $(".physical_product_show").hide();
         $(".digital-product-sections-show").show();
         $(".digitalProductVariationSetupSection").show();
@@ -123,7 +125,7 @@ function getDigitalProductTypeFunctionality() {
     getUpdateDigitalVariationFunctionality();
 }
 
-$("#product_type").on("change", function() {
+$("#product_type").on("change", function () {
     getProductTypeFunctionality();
 });
 
@@ -131,7 +133,7 @@ elementDigitalProductTypeByID.on("change", () =>
     getDigitalProductTypeFunctionality()
 );
 
-$("#product-color-switcher").on("click", function() {
+$("#product-color-switcher").on("click", function () {
     elementProductColorSwitcherByIDFunctionality();
     colorWiseImageFunctionality($("#colors-selector"));
 });
@@ -174,7 +176,7 @@ function elementProductColorSwitcherByIDFunctionality(action = null) {
     }
 }
 
-$(document).on("ready", function() {
+$(document).on("ready", function () {
     if ($("#product-color-switcher").prop("checked")) {
         $(".color_image_column").removeClass("d-none");
         elementAdditionalImageColumn.removeClass("col-md-9");
@@ -188,7 +190,7 @@ $(document).on("ready", function() {
     }
 });
 
-$('input[name="colors_active"]').on("change", function() {
+$('input[name="colors_active"]').on("change", function () {
     if (!$('input[name="colors_active"]').is(":checked")) {
         $("#colors-selector").prop("disabled", true);
     } else {
@@ -196,18 +198,18 @@ $('input[name="colors_active"]').on("change", function() {
     }
 });
 
-$("#product-choice-attributes").on("change", function() {
+$("#product-choice-attributes").on("change", function () {
     $("#sku_combination")
         .empty()
         .html("");
     $("#customer-choice-options-container").empty().html("");
-    $.each($("#product-choice-attributes option:selected"), function() {
+    $.each($("#product-choice-attributes option:selected"), function () {
         addMoreCustomerChoiceOption($(this).val(), $(this).text());
     });
     getUpdateSKUFunctionality();
 });
 
-$("#colors-selector").on("change", function() {
+$("#colors-selector").on("change", function () {
     getUpdateSKUFunctionality();
     if ($("#product-color-switcher").prop("checked")) {
         // colorWiseImageFunctionality($("#colors-selector"));
@@ -221,7 +223,7 @@ $("#colors-selector").on("change", function() {
     }
 });
 
-$('input[name="unit_price"]').on("keyup", function() {
+$('input[name="unit_price"]').on("keyup", function () {
     let productType = elementProductTypeByID.val();
     if (productType && productType.toString() === "physical") {
         getUpdateSKUFunctionality();
@@ -243,7 +245,7 @@ function getUpdateSKUFunctionality() {
         type: "POST",
         url: $("#route-vendor-products-sku-combination").data("url"),
         data: $("#product_form").serialize(),
-        success: function(data) {
+        success: function (data) {
             $("#sku_combination").html(data.view);
             updateProductQuantity();
             updateProductQuantityByKeyUp();
@@ -261,7 +263,7 @@ function getUpdateSKUFunctionality() {
     });
 }
 
-$("#discount_type").on("change", function() {
+$("#discount_type").on("change", function () {
     if (
         $(this)
             .val()
@@ -277,7 +279,7 @@ $("#discount_type").on("change", function() {
     }
 });
 
-$(".action-add-more-image").on("change", function() {
+$(".action-add-more-image").on("change", function () {
     let parentDiv = $(this).closest("div");
     parentDiv.find(".delete_file_input").removeClass("d-none");
     parentDiv.find(".delete_file_input").fadeIn();
@@ -287,7 +289,7 @@ $(".action-add-more-image").on("change", function() {
 function addMoreImage(thisData, targetSection) {
     let $fileInputs = $(targetSection + " input[type='file']");
     let nonEmptyCount = 0;
-    $fileInputs.each(function() {
+    $fileInputs.each(function () {
         if (parseFloat($(this).prop("files").length) === 0) {
             nonEmptyCount++;
         }
@@ -327,14 +329,14 @@ function addMoreImage(thisData, targetSection) {
         $(targetSection).append(newHtmlData);
     }
 
-    elementCustomUploadInputFileByID.on("change", function() {
+    elementCustomUploadInputFileByID.on("change", function () {
         if (parseFloat($(this).prop("files").length) !== 0) {
             let parentDiv = $(this).closest("div");
             parentDiv.find(".delete_file_input").fadeIn();
         }
     });
 
-    $(".delete_file_input_section").click(function() {
+    $(".delete_file_input_section").click(function () {
         $(this)
             .closest("div")
             .parent()
@@ -347,21 +349,21 @@ function addMoreImage(thisData, targetSection) {
         $("#additional_Image_Section .col-md-4").removeClass("col-lg-2");
     }
 
-    $(".action-add-more-image").on("change", function() {
+    $(".action-add-more-image").on("change", function () {
         let parentDiv = $(this).closest("div");
         parentDiv.find(".delete_file_input").removeClass("d-none");
         parentDiv.find(".delete_file_input").fadeIn();
         addMoreImage(this, $(this).data("target-section"));
     });
 
-    $(".onerror-add-class-d-none").on("error", function() {
+    $(".onerror-add-class-d-none").on("error", function () {
         $(this).addClass("d-none");
     });
 
     onErrorImage();
 }
 
-$(function() {
+$(function () {
     $("#coba").spartanMultiImagePicker({
         fieldName: "images[]",
         maxCount: 15,
@@ -373,18 +375,18 @@ $(function() {
             width: "100%"
         },
         dropFileLabel: "Drop Here",
-        onAddRow: function(index, file) {},
-        onRenderedPreview: function(index) {},
-        onRemoveRow: function(index) {},
-        onExtensionErr: function() {
+        onAddRow: function (index, file) { },
+        onRenderedPreview: function (index) { },
+        onRemoveRow: function (index) { },
+        onExtensionErr: function () {
             toastMagic.error(messagePleaseOnlyInputPNGOrJPG);
         },
-        onSizeErr: function() {
+        onSizeErr: function () {
             toastMagic.error(messageFileSizeTooBig);
         }
     });
 });
-$(document).on('change', 'input[name^="choice_options_"]', function() {
+$(document).on('change', 'input[name^="choice_options_"]', function () {
     getUpdateSKUFunctionality();
 });
 
@@ -406,12 +408,12 @@ function addMoreCustomerChoiceOption(index, name) {
         .insertAdjacentHTML("beforeend", genHtml);
 
     document.querySelectorAll("input[data-role=tagsinput], select[multiple][data-role=tagsinput]")
-        .forEach(function(input) {
+        .forEach(function (input) {
             $(input).tagsinput();
         });
 }
 
-$(".delete_file_input").on("click", function() {
+$(".delete_file_input").on("click", function () {
     let $parentDiv = $(this)
         .parent()
         .parent();
@@ -421,7 +423,7 @@ $(".delete_file_input").on("click", function() {
     $(this).hide();
 });
 
-$(".delete_preview_file_input").on("click", function() {
+$(".delete_preview_file_input").on("click", function () {
     let parentDiv = $(this)
         .parent()
         .parent();
@@ -442,7 +444,7 @@ $(".delete_preview_file_input").on("click", function() {
         data: formData,
         contentType: false,
         processData: false,
-        success: function(response) {
+        success: function (response) {
             if (response.errors) {
                 for (let i = 0; i < response.errors.length; i++) {
                     setTimeout(() => {
@@ -459,7 +461,7 @@ $(".delete_preview_file_input").on("click", function() {
     });
 });
 
-$(".onerror-add-class-d-none").on("error", function() {
+$(".onerror-add-class-d-none").on("error", function () {
     $(this).addClass("d-none");
 });
 
@@ -482,7 +484,7 @@ function uploadColorImage(thisData = null) {
                         window.URL.createObjectURL(thisData.files[0])
                     );
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
         if (maxFileSizeLimitIAsByte && maxFileSizeLimitIAsByte < thisData.files[0]?.size) {
             try {
@@ -494,30 +496,30 @@ function uploadColorImage(thisData = null) {
                         resetFileUploadAllImage(uploadWrapper);
                     }
                 }, 200)
-            } catch (e) {}
+            } catch (e) { }
         }
     }
 }
 
-$(".action-upload-color-image").on("change", function() {
+$(".action-upload-color-image").on("change", function () {
     uploadColorImage(this);
 });
 
-$(".delete_file_input").click(function() {
+$(".delete_file_input").click(function () {
     let $parentDiv = $(this).closest("div");
     $parentDiv.find('input[type="file"]').val("");
     $parentDiv.find(".img_area_with_preview img").addClass("d-none");
     $(this).hide();
 });
 
-elementCustomUploadInputFileByID.on("change", function() {
+elementCustomUploadInputFileByID.on("change", function () {
     if (parseFloat($(this).prop("files").length) !== 0) {
         let $parentDiv = $(this).closest("div");
         $parentDiv.find(".delete_file_input").fadeIn();
     }
 });
 
-$(".product-add-requirements-check").on("click", async function() {
+$(".product-add-requirements-check").on("click", async function () {
     Swal.fire({
         title: messageAreYouSure,
         text: messageWantAddOrUpdateThisProduct,
@@ -551,10 +553,10 @@ $(".product-add-requirements-check").on("click", async function() {
                     data: formData,
                     contentType: false,
                     processData: false,
-                    beforeSend: function() {
+                    beforeSend: function () {
                         $("#loading").fadeIn();
                     },
-                    success: function(data) {
+                    success: function (data) {
                         if (data.errors) {
                             for (
                                 let index = 0;
@@ -576,11 +578,11 @@ $(".product-add-requirements-check").on("click", async function() {
                             $("#product_form").submit();
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         toastMagic.error(errorThrown);
                         $("#loading").fadeOut();
                     },
-                    complete: function() {
+                    complete: function () {
                         $("#loading").fadeOut();
                         formSubmitCleanup($('#product_form'));
                     },
@@ -590,7 +592,7 @@ $(".product-add-requirements-check").on("click", async function() {
     });
 });
 
-$(".action-onclick-generate-number").on("click", function() {
+$(".action-onclick-generate-number").on("click", function () {
     let getElement = $(this).data("input");
     $(getElement).val(generateRandomString(6));
     generateSKUPlaceHolder();
@@ -609,7 +611,7 @@ function generateRandomString(length) {
 
 
 
-$("#generate_number").on("keyup", function() {
+$("#generate_number").on("keyup", function () {
     generateSKUPlaceHolder();
 });
 
@@ -622,17 +624,17 @@ function generateSKUPlaceHolder() {
     $(".store-keeping-unit").attr("placeholder", newPlaceholderValue);
 }
 
-$(window).on("load", function() {
+$(window).on("load", function () {
     generateSKUPlaceHolder();
 });
 
-$("#digital-product-type-select").on("change", function() {
+$("#digital-product-type-select").on("change", function () {
     $(
         "#digital-product-type-choice-section .extension-choice-section"
     ).remove();
     $("#digital-product-variation-section").empty().html();
     $("#digital-product-single-file-upload-section").empty().html();
-    $.each($("#digital-product-type-select option:selected"), function() {
+    $.each($("#digital-product-type-select option:selected"), function () {
         addMoreDigitalProductChoiceOption($(this).val(), $(this).text());
     });
     getUpdateDigitalVariationFunctionality();
@@ -673,7 +675,7 @@ function getUpdateDigitalVariationFunctionality() {
             "url"
         ),
         data: $("#product_form").serialize(),
-        success: function(response) {
+        success: function (response) {
 
             if (response?.combination_count > 0) {
                 $("#digital-product-variation-section").html(response.view);
@@ -697,7 +699,7 @@ function getUpdateDigitalVariationFunctionality() {
 }
 
 function deleteDigitalVariationFileFunctionality() {
-    $(".digital-variation-file-delete-button").on("click", function() {
+    $(".digital-variation-file-delete-button").on("click", function () {
         let variantKey = $(this).data("variant");
         let productId = $(this).data("product");
 
@@ -715,7 +717,7 @@ function deleteDigitalVariationFileFunctionality() {
                 product_id: productId,
                 variant_key: variantKey
             },
-            success: function(response) {
+            success: function (response) {
                 getUpdateDigitalVariationFunctionality();
                 response.status === 1
                     ? toastMagic.success(response.message)
@@ -726,8 +728,8 @@ function deleteDigitalVariationFileFunctionality() {
 }
 
 function ProductVariationFileUploadFunctionality() {
-    $('.variation-upload-item input[type="file"]').each(function() {
-        $(this).on("change", function() {
+    $('.variation-upload-item input[type="file"]').each(function () {
+        $(this).on("change", function () {
             const file = $(this)[0].files[0];
 
             let maxFileSizeLimit = Number($(this)[0]?.dataset?.maxSize || ($('#imageUploadMaxSize').data('max-size') || 20));
@@ -764,7 +766,7 @@ function ProductVariationFileUploadFunctionality() {
             }
         });
     });
-    $(".cancel-upload").on("click", function() {
+    $(".cancel-upload").on("click", function () {
         $(this)
             .closest(".variation-upload-item")
             .find(".variation-upload-file")
@@ -784,19 +786,19 @@ function ProductVariationFileUploadFunctionality() {
     });
 }
 
-$(".product-title-default-language").on("change keyup keypress", function() {
+$(".product-title-default-language").on("change keyup keypress", function () {
     $("#meta_title").val($(this).val());
     getUpdateDigitalVariationFunctionality();
 });
 
-$(".image-uploader__zip").on("change", function(event) {
+$(".image-uploader__zip").on("change", function (event) {
     const file = event.target.files[0];
     const target = $(this)
         .closest(".image-uploader")
         .find(".image-uploader__title");
     if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             target.text(file.name);
         };
         reader.readAsDataURL(file);
@@ -806,7 +808,7 @@ $(".image-uploader__zip").on("change", function(event) {
         $(".zip-remove-btn").hide();
     }
 });
-$(".image-uploader .zip-remove-btn").on("click", function(event) {
+$(".image-uploader .zip-remove-btn").on("click", function (event) {
     $(this)
         .closest(".image-uploader")
         .find(".image-uploader__zip")
@@ -818,7 +820,7 @@ $(".image-uploader .zip-remove-btn").on("click", function(event) {
     $(this).hide();
 });
 
-$.fn.select2DynamicDisplay = function() {
+$.fn.select2DynamicDisplay = function () {
     function updateDisplay($element) {
         var $rendered = $element
             .siblings(".select2-container")
@@ -844,7 +846,7 @@ $.fn.select2DynamicDisplay = function() {
             .appendTo($container);
 
         // Calculate the width of items and determine how many fit
-        selectedItems.forEach(function(item) {
+        selectedItems.forEach(function (item) {
             var $tempItem = $("<span>")
                 .text(item.text)
                 .css({
@@ -870,7 +872,7 @@ $.fn.select2DynamicDisplay = function() {
         const $searchForm = $rendered.find(".select2-search");
 
         var html = "";
-        itemsToShow.forEach(function(item) {
+        itemsToShow.forEach(function (item) {
             html += `<li class="name">
                                     <span>${item.text}</span>
                                     <span class="close-icon" data-id="${item.id}"><i class="tio-clear"></i></span>
@@ -887,7 +889,7 @@ $.fn.select2DynamicDisplay = function() {
 
         function debounce(func, wait) {
             let timeout;
-            return function(...args) {
+            return function (...args) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
@@ -896,14 +898,14 @@ $.fn.select2DynamicDisplay = function() {
         // Attach event listener with debouncing
         $(".select2-search input").on(
             "input",
-            debounce(function() {
+            debounce(function () {
                 const inputValue = $(this)
                     .val()
                     .toLowerCase();
 
                 const $listItems = $(".select2-results__options li");
 
-                $listItems.each(function() {
+                $listItems.each(function () {
                     const itemText = $(this)
                         .text()
                         .toLowerCase();
@@ -912,7 +914,7 @@ $.fn.select2DynamicDisplay = function() {
             }, 100)
         );
 
-        $(".select2-search input").on("keydown", function(e) {
+        $(".select2-search input").on("keydown", function (e) {
             if (e.which === 13) {
                 e.preventDefault();
 
@@ -937,7 +939,7 @@ $.fn.select2DynamicDisplay = function() {
             }
         });
     }
-    return this.each(function() {
+    return this.each(function () {
         var $this = $(this);
 
         $this.select2({
@@ -956,17 +958,17 @@ $.fn.select2DynamicDisplay = function() {
         }
 
         // Bind change event to update display
-        $this.on("change", function() {
+        $this.on("change", function () {
             updateDisplay($this);
         });
 
         // Initial display update
         updateDisplay($this);
 
-        $(window).on("resize", function() {
+        $(window).on("resize", function () {
             updateDisplay($this);
         });
-        $(window).on("load", function() {
+        $(window).on("load", function () {
             updateDisplay($this);
         });
 
@@ -974,7 +976,7 @@ $.fn.select2DynamicDisplay = function() {
         $(document).on(
             "click",
             ".select2-selection__rendered .close-icon",
-            function(e) {
+            function (e) {
                 e.stopPropagation();
                 var $removeIcon = $(this);
                 var itemId = $removeIcon.data("id");
@@ -982,7 +984,7 @@ $.fn.select2DynamicDisplay = function() {
                     .closest(".select2")
                     .siblings(".multiple-select2");
                 $this2.val(
-                    $this2.val().filter(function(id) {
+                    $this2.val().filter(function (id) {
                         return id != itemId;
                     })
                 );

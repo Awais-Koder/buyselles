@@ -231,6 +231,24 @@
                                         placeholder="{{ translate('Answer') }}" min="0" max="18"
                                         autocomplete="off" required>
                                 </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var c = document.querySelector('[data-math-captcha-key="vendorRecaptchaSessionKey"]');
+                                        if (!c) return;
+                                        fetch('/captcha/math-refresh?session_key=vendorRecaptchaSessionKey', {
+                                                credentials: 'same-origin'
+                                            })
+                                            .then(function(r) {
+                                                return r.json();
+                                            })
+                                            .then(function(d) {
+                                                var q = c.querySelector('[data-math-question]');
+                                                var inp = c.querySelector('input[name="default_captcha_value"]');
+                                                if (q) q.textContent = d.num1 + ' + ' + d.num2 + ' = ?';
+                                                if (inp) inp.value = '';
+                                            });
+                                    });
+                                </script>
                             @endif
                         </div>
 

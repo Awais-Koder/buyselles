@@ -31,6 +31,7 @@ use App\Models\Storage;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\DigitalProductCodeService;
 use App\Traits\CommonTrait;
 use App\Traits\CustomerTrait;
 use App\Traits\PdfGenerator;
@@ -38,6 +39,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\TaxModule\app\Traits\VatTaxManagement;
 
@@ -241,7 +243,8 @@ class OrderManager
         }
         // free delivery over amount transaction end
 
-        if ($order['seller_is'] == 'seller' &&
+        if (
+            $order['seller_is'] == 'seller' &&
             $shipping_model == 'sellerwise_shipping'
         ) {
             $editHistoryAmount = OrderEditHistory::where([
@@ -1288,6 +1291,18 @@ class OrderManager
 
             $order = Order::with('customer', 'seller.shop', 'details')->find($order_id);
             OrderManager::getAddOrderTransactionsOnGenerateOrder(order: $order, ordersData: $ordersData);
+
+            // ── Assign digital product codes when order is paid at creation ──
+            if (($data['payment_status'] ?? '') === 'paid') {
+                try {
+                    app(DigitalProductCodeService::class)->assignAndNotify($order);
+                } catch (\Throwable $e) {
+                    Log::error('OrderManager: digital code assignment/email failed', [
+                        'order_id' => $order_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             $orderPlacedNotificationEvents[] = OrderManager::getGenerateOrderNotificationInfo(
                 vendorType: $vendorWiseCart['seller_is'],
@@ -2369,12 +2384,14 @@ class OrderManager
             $lastActualCompletedIndex = -1;
 
             for ($i = 0; $i < $terminalIndex; $i++) {
-                if (! in_array($statusKeys[$i], $terminalStatuses)
+                if (
+                    ! in_array($statusKeys[$i], $terminalStatuses)
                     && $statusKeys[$i] !== 'order_delivered'
                     && isset($orderTracking[$statusKeys[$i]])
                     && is_array($orderTracking[$statusKeys[$i]])
                     && $orderTracking[$statusKeys[$i]]['status'] === true
-                    && $orderTracking[$statusKeys[$i]]['date_time'] !== null) {
+                    && $orderTracking[$statusKeys[$i]]['date_time'] !== null
+                ) {
                     $lastActualCompletedIndex = $i;
                 }
             }
@@ -2383,10 +2400,12 @@ class OrderManager
                 $backfillDateTime = $orderTracking[$statusKeys[$lastActualCompletedIndex]]['date_time'];
 
                 for ($j = 0; $j < $lastActualCompletedIndex; $j++) {
-                    if (is_array($orderTracking[$statusKeys[$j]])
+                    if (
+                        is_array($orderTracking[$statusKeys[$j]])
                         && $orderTracking[$statusKeys[$j]]['status'] === false
                         && $statusKeys[$j] !== 'order_delivered'
-                        && ! in_array($statusKeys[$j], $terminalStatuses)) {
+                        && ! in_array($statusKeys[$j], $terminalStatuses)
+                    ) {
                         $orderTracking[$statusKeys[$j]]['status'] = true;
                         $orderTracking[$statusKeys[$j]]['date_time'] = $backfillDateTime;
                     }
@@ -2408,7 +2427,6 @@ class OrderManager
                     $orderTracking[$terminalStatus]['date_time'] = null;
                 }
             }
-
         } else {
 
             $lastCompletedIndex = null;

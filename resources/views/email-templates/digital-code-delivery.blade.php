@@ -156,8 +156,14 @@ $direction = Session::get('direction');
                 <td>
                     {{-- Header --}}
                     <div class="text-center mb-3">
-                        <img class="mail-img" src="{{ getStorageImages(path: $companyLogo, type: 'backend-logo') }}"
-                            alt="{{ $companyName }}">
+                        @php
+                            try {
+                                $logoUrl = getStorageImages(path: $companyLogo, type: 'backend-logo');
+                            } catch (\Throwable $e) {
+                                $logoUrl = asset('assets/back-end/img/placeholder-logo.png');
+                            }
+                        @endphp
+                        <img class="mail-img" src="{{ $logoUrl }}" alt="{{ $companyName }}">
                     </div>
 
                     <h2 class="text-center" style="color:#006161; margin-bottom:4px;">

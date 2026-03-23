@@ -78,15 +78,15 @@
                         </div>
 
                         <ul class="list-unstyled mb-0 text-muted small">
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('expiry_date format: YYYY-MM-DD (e.g. 2026-12-31)') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('Leave expiry_date blank for codes that never expire') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('Duplicate PINs and serial numbers are rejected automatically') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('Codes past expiry are removed from stock nightly at 03:00') }}</li>
-                            <li><i class="bi bi-shield-fill-check text-primary me-1"></i>
+                            <li>
                                 {{ translate('All PINs are encrypted with AES-256 before being saved') }}</li>
                         </ul>
 

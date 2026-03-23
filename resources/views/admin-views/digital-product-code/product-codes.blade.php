@@ -39,19 +39,20 @@
             <div class="alert alert-{{ $summary['processed'] > 0 ? 'success' : 'warning' }} alert-dismissible fade show"
                 role="alert">
                 <strong><i class="bi bi-check-circle-fill me-1"></i>{{ translate('Import Complete') }}</strong>
-                <ul class="mb-0 mt-1">
-                    <li><strong>{{ $summary['processed'] }}</strong> {{ translate('code(s) imported successfully') }}</li>
+                <div class="mt-1">
+                    <div><strong>{{ $summary['processed'] }}</strong> {{ translate('code(s) imported successfully') }}
+                    </div>
                     @if ($summary['duplicates'] > 0)
-                        <li class="text-warning">
+                        <div class="text-warning">
                             <strong>{{ $summary['duplicates'] }}</strong>
                             {{ translate('code(s) skipped — duplicate PIN or serial number already exists in the system.') }}
-                        </li>
+                        </div>
                     @endif
                     @if ($summary['skipped'] > 0)
-                        <li class="text-muted"><strong>{{ $summary['skipped'] }}</strong>
-                            {{ translate('blank/example row(s) skipped') }}</li>
+                        <div class="text-muted"><strong>{{ $summary['skipped'] }}</strong>
+                            {{ translate('blank/example row(s) skipped') }}</div>
                     @endif
-                </ul>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif

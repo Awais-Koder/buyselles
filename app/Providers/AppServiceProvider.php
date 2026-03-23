@@ -50,6 +50,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Define DOMAIN_POINTED_DIRECTORY for CLI/queue context (artisan).
+        // Web requests already define it in public/index.php or index.php.
+        if (! defined('DOMAIN_POINTED_DIRECTORY')) {
+            define('DOMAIN_POINTED_DIRECTORY', 'public');
+        }
+
         $loader = AliasLoader::getInstance();
         $loader->alias('Helper', \App\Utils\Helpers::class);
         $loader->alias('Madzipper', \Madnest\Madzipper\Madzipper::class);
@@ -221,7 +227,6 @@ class AppServiceProvider extends ServiceProvider
                     Schema::defaultStringLength(191);
                 }
             } catch (Exception $exception) {
-
             }
 
             try {

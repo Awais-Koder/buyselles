@@ -214,6 +214,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::get('account-order-details-vendor-info', 'account_order_details_seller_info')->name('account-order-details-vendor-info')->middleware('customer');
         Route::get('account-order-details-delivery-man-info', 'account_order_details_delivery_man_info')->name('account-order-details-delivery-man-info')->middleware('customer');
         Route::get('account-order-details-reviews', 'getAccountOrderDetailsReviewsView')->name('account-order-details-reviews')->middleware('customer');
+        Route::get('account-order-details-digital-codes', 'getAccountOrderDetailsDigitalCodesView')->name('account-order-details-digital-codes')->middleware('customer');
         Route::get('generate-invoice/{id}', 'generate_invoice')->name('generate-invoice');
         Route::get('account-wishlist', 'account_wishlist')->name('account-wishlist'); // add to card not work
         Route::get('refund-request/{id}', 'refund_request')->name('refund-request');

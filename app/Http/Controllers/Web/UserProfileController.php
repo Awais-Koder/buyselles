@@ -15,6 +15,7 @@ use App\Http\Requests\Web\CustomerProfileUpdateRequest;
 use App\Models\Coupon;
 use App\Models\DeliveryMan;
 use App\Models\DeliveryZipCode;
+use App\Models\DigitalProductCode;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -87,7 +88,6 @@ class UserProfileController extends Controller
         $customerDetail = User::where('id', auth('customer')->id())->first();
 
         return view(VIEW_FILE_NAMES['user_account'], compact('customerDetail'));
-
     }
 
     public function getUserProfileUpdate(CustomerProfileUpdateRequest $request): RedirectResponse
@@ -346,11 +346,9 @@ class UserProfileController extends Controller
     {
         if (auth('customer')->check()) {
             return view('web-views.users-profile.account-payment');
-
         } else {
             return redirect()->route('home');
         }
-
     }
 
     public function account_order(Request $request)
@@ -482,7 +480,6 @@ class UserProfileController extends Controller
         $rating_percentage = $rating_count != 0 ? ($vendorRattingStatusPositive * 100) / $rating_count : 0;
 
         return view(VIEW_FILE_NAMES['seller_info'], compact('avg_rating', 'product_count', 'rating_count', 'order', 'rating_percentage', 'paymentGatewayList', 'cashOnDeliveryStatus', 'offlinePaymentMethods', 'offlinePaymentStatus'));
-
     }
 
     public function account_order_details_delivery_man_info(Request $request)
@@ -552,6 +549,35 @@ class UserProfileController extends Controller
 
             return view(VIEW_FILE_NAMES['order_details_review'], compact('order', 'paymentGatewayList', 'cashOnDeliveryStatus', 'offlinePaymentMethods', 'offlinePaymentStatus'));
         }
+        Toastr::warning(translate('invalid_order'));
+
+        return redirect()->route('account-oder');
+    }
+
+    public function getAccountOrderDetailsDigitalCodesView(Request $request): View|RedirectResponse
+    {
+        $order = $this->order->with(['customer', 'details.product'])
+            ->where(['id' => $request['id'], 'customer_id' => auth('customer')->id(), 'is_guest' => '0'])
+            ->first();
+
+        if ($order) {
+            $digitalCodes = DigitalProductCode::query()
+                ->where('order_id', $order->id)
+                ->where('status', 'sold')
+                ->with('product')
+                ->get()
+                ->map(function ($code) {
+                    return [
+                        'productName' => $code->product?->name ?? translate('Digital_Product'),
+                        'code' => $code->decryptCode(),
+                        'serial' => $code->serial_number,
+                        'expiry' => $code->expiry_date?->format('Y-m-d'),
+                    ];
+                });
+
+            return view(VIEW_FILE_NAMES['order_details_digital_codes'], compact('order', 'digitalCodes'));
+        }
+
         Toastr::warning(translate('invalid_order'));
 
         return redirect()->route('account-oder');
@@ -726,7 +752,6 @@ class UserProfileController extends Controller
         } else {
             return redirect()->back();
         }
-
     }
 
     public function track_order(): View
@@ -819,7 +844,6 @@ class UserProfileController extends Controller
                 } elseif ($billingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
                 }
-
             } elseif ($userInfo) {
                 $orderExist = Order::with('latestEditHistory')->where('id', $request['order_id'])->whereHas('details', function ($query) use ($userInfo) {
                     $query->where('customer_id', $userInfo->id);
@@ -844,7 +868,6 @@ class UserProfileController extends Controller
                 } elseif ($billingAddress['phone'] == $request['phone_number']) {
                     $orderExist = $order;
                 }
-
             } elseif ($user->phone == $request['phone_number']) {
                 $orderExist = Order::with('details', 'latestEditHistory')->where('id', $request['order_id'])->whereHas('details', function ($query) {
                     $query->where('customer_id', auth('customer')->id());
@@ -904,7 +927,6 @@ class UserProfileController extends Controller
         } else {
             return redirect()->route('track-order.index')->with('Error', translate('invalid_Order_Id_or_phone_Number'));
         }
-
     }
 
     public function order_cancel($id)

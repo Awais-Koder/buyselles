@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\DigitalCodeDeliveryMail;
 use App\Models\DigitalProductCode;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class DigitalProductCodeService
 {
@@ -310,6 +312,76 @@ class DigitalProductCodeService
         }
 
         return $count;
+    }
+
+    /**
+     * Assign codes for a paid order and send customer email in one call.
+     * Safe to call from non-Eloquent contexts (e.g. OrderManager raw insert).
+     */
+    public function assignAndNotify(Order $order): void
+    {
+        $order->loadMissing('orderDetails');
+        $this->assignCodesForOrder($order);
+        $this->sendDigitalCodeEmail($order);
+    }
+
+    /**
+     * Send all assigned digital codes for this order to the customer via email.
+     */
+    public function sendDigitalCodeEmail(Order $order): void
+    {
+        try {
+            $assignedCodes = DigitalProductCode::query()
+                ->where('order_id', $order->id)
+                ->where('status', 'sold')
+                ->with('product')
+                ->get();
+
+            if ($assignedCodes->isEmpty()) {
+                return;
+            }
+
+            $codes = $assignedCodes->map(function (DigitalProductCode $record): array {
+                return [
+                    'productName' => $record->product?->name ?? translate('Digital Product'),
+                    'code' => $record->decryptCode(),
+                    'serial' => $record->serial_number,
+                    'expiry' => $record->expiry_date?->format('Y-m-d'),
+                ];
+            })->all();
+
+            if ($order->is_guest) {
+                $addressData = $order->billing_address_data ?? $order->shipping_address_data;
+                $email = $addressData?->email ?? null;
+                $name = trim(($addressData?->contact_person_name ?? translate('Customer')));
+            } else {
+                $order->loadMissing('customer');
+                $email = $order->customer?->email ?? null;
+                $name = trim($order->customer?->f_name.' '.$order->customer?->l_name);
+            }
+
+            if (! $email) {
+                return;
+            }
+
+            $companyName = getWebConfig(name: 'company_name') ?? config('app.name');
+
+            $data = [
+                'subject' => translate('Your Digital Codes — Order #').$order->id,
+                'customerName' => $name ?: translate('Customer'),
+                'orderId' => $order->id,
+                'orderDate' => $order->created_at?->format('Y-m-d'),
+                'codes' => $codes,
+                'companyName' => $companyName,
+            ];
+
+            Mail::to($email)->queue(new DigitalCodeDeliveryMail($data));
+        } catch (\Throwable $e) {
+            Log::error('DigitalProductCodeService: failed to send digital code email', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

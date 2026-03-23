@@ -114,20 +114,23 @@
 
                             {{-- Action buttons --}}
                             <div class="mt-3 d-flex flex-wrap gap-2">
-                                @if (isset($order_ids) && count($order_ids) > 0)
-                                    @php
-                                        $receiptUrl = route('order.digital-codes.receipt');
-                                        $queryStr = collect($order_ids)
-                                            ->map(fn($id) => 'orderIds[]=' . urlencode($id))
-                                            ->join('&');
-                                    @endphp
-                                    <a href="{{ $receiptUrl }}?{{ $queryStr }}" target="_blank"
-                                        class="btn btn--primary">
-                                        <i class="fa fa-print me-1"></i>
-                                        {{ translate('Print_/_Save_as_PDF') }}
-                                    </a>
-                                @endif
+                                <button type="button" id="printThermalReceiptBtn"
+                                    class="btn btn--primary d-flex align-items-center gap-1">
+                                    <i class="fa fa-print"></i>
+                                    <span>{{ translate('Print_Receipt') }}</span>
+                                </button>
                             </div>
+
+                            {{-- Hidden data for thermal receipt printing --}}
+                            <script type="application/json" id="thermalReceiptData">
+                                @json([
+                                    'shopName'     => getWebConfig(name: 'company_name') ?? 'Buyselles',
+                                    'shopPhone'    => getWebConfig(name: 'company_phone') ?? '',
+                                    'orderIds'     => $order_ids ?? [],
+                                    'orderDate'    => now()->format('Y-m-d H:i'),
+                                    'codes'        => collect($digitalCodes)->toArray(),
+                                ])
+                            </script>
 
                             <p class="text-danger mt-3 mb-0" style="font-size:0.8rem;">
                                 <i class="fa fa-exclamation-triangle"></i>

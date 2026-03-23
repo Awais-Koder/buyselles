@@ -14,6 +14,7 @@ return [
     'seller_info' => 'web-views.users-profile.account-details.seller-info',
     'delivery_man_info' => 'web-views.users-profile.account-details.delivery-man-info',
     'order_details_review' => 'web-views.users-profile.account-details.reviews',
+    'order_details_digital_codes' => 'web-views.users-profile.account-details.digital-codes',
     'track_order_wise_result' => 'web-views.users-profile.account-details.track-order',
     'account_wishlist' => 'web-views.users-profile.account-wishlist',
     'user_restock_requests' => 'web-views.users-profile.account-restock-requests',

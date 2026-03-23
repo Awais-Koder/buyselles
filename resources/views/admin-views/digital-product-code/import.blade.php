@@ -51,18 +51,18 @@
                             {{ translate('Download_the_Excel_template._Add_one_digital_code_(PIN)_per_row._You_can_restock_existing_in-house_products_or_create_new_ones_in_the_same_file.') }}
                         </p>
                         <ul class="list-unstyled mb-0 text-muted small">
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('Existing_products:_fill_product_name_+_pin_(product_id_also_accepted)') }}
                             </li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('New_products:_fill_product_name_+_price_+_category_id_+_pin') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('serial_number_and_expiry_date_are_optional') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('expiry_date_format:_YYYY-MM-DD_(e.g._2026-12-31)') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('Codes_past_expiry_are_auto-marked_expired_nightly') }}</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i>
+                            <li>
                                 {{ translate('The_green_example_row_in_the_template_is_skipped_automatically') }}</li>
                         </ul>
                         <div class="mt-auto">

@@ -14,6 +14,7 @@ return [
     'seller_info' => 'theme-views.users-profile.account-order-details.seller-info',
     'delivery_man_info' => 'theme-views.users-profile.account-order-details.delivery-man-info',
     'order_details_review' => 'theme-views.users-profile.account-order-details._reviews',
+    'order_details_digital_codes' => 'theme-views.users-profile.account-order-details.digital-codes',
     'track_order_wise_result' => 'theme-views.users-profile.account-order-details.track-order',
     'tracking-page' => 'theme-views.order.tracking-page',
     'track_order' => 'theme-views.order.tracking',

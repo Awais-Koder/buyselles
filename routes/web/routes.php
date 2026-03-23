@@ -270,6 +270,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
             Route::get('/code/captcha/{tmp}', 'captcha')->name('default-captcha');
         });
     });
+
+    Route::get('captcha/math-refresh', [\App\Http\Controllers\SharedController::class, 'refreshMathCaptcha'])->name('captcha.math.refresh');
 });
 
 Route::group(['prefix' => 'cart', 'as' => 'cart.', 'namespace' => 'Web'], function () {

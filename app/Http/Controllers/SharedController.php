@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SessionKey;
 use App\Http\Requests\Request;
 use App\Traits\ActivationClass;
 use App\Traits\RecaptchaTrait;
@@ -67,6 +68,25 @@ class SharedController extends Controller
         header('Pragma:no-cache');
         header('Expires:Sat, 26 Jul 1997 05:00:00 GMT');
         $recaptchaBuilder->output();
+    }
+
+    public function refreshMathCaptcha(Request $request): JsonResponse
+    {
+        $allowedKeys = [
+            'default_recaptcha_id_customer_auth',
+            'default_recaptcha_id_vendor_forgot_password',
+            'default_captcha_value_contact',
+            SessionKey::VENDOR_RECAPTCHA_KEY,
+        ];
+        $sessionKey = $request->query('session_key', 'default_recaptcha_id_customer_auth');
+        if (! in_array($sessionKey, $allowedKeys)) {
+            $sessionKey = 'default_recaptcha_id_customer_auth';
+        }
+        $num1 = rand(1, 9);
+        $num2 = rand(1, 9);
+        session([$sessionKey => $num1 + $num2]);
+
+        return response()->json(['num1' => $num1, 'num2' => $num2]);
     }
 
     public function getActivationCheckView(Request $request): View|RedirectResponse

@@ -32,6 +32,7 @@ class LogUserBrowsingNavigationMiddleware
                 'customer/auth/*',
                 'customer/reward-points/*',
                 'g-recaptcha-session-store*',
+                'captcha/math-refresh*',
                 'vendor/auth/*',
                 'user-account',
                 'user-profile',

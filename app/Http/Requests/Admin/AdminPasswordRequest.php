@@ -23,7 +23,7 @@ class AdminPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => 'required|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/|same:confirm_password',
+            'password' => 'required|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s])(?!.*\s).{8,}$/|same:confirm_password',
             'confirm_password' => 'required',
         ];
     }

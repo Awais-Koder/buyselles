@@ -310,7 +310,7 @@ class ForgotPasswordController extends Controller
     public function resetPasswordSubmit(Request $request): View|Redirector|RedirectResponse
     {
         $validator = Validator::make($request->all(), [
-            'password' => ['required', 'same:confirm_password', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/'],
+            'password' => ['required', 'same:confirm_password', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s])(?!.*\s).{8,}$/'],
         ], [
             'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter').', '.translate('_one_lowercase_letter').', '.translate('_one_digit_').', '.translate('_one_special_character').', '.translate('_and_no_spaces').'.',
         ]);

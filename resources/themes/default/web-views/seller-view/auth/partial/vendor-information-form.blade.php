@@ -220,9 +220,11 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="d-flex align-items-center gap-3 mt-2">
+                                <div class="d-flex align-items-center gap-3 mt-2"
+                                    data-math-captcha-key="vendorRecaptchaSessionKey">
                                     <span class="fs-5 fw-bold user-select-none px-3 py-2 rounded"
-                                        style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);">
+                                        style="background: rgba(var(--bs-primary-rgb, 13,110,253), 0.1); letter-spacing: 3px; white-space: nowrap; border: 1px solid rgba(var(--bs-primary-rgb, 13,110,253), 0.2);"
+                                        data-math-question>
                                         {{ $mathNum1 }} + {{ $mathNum2 }} = ?
                                     </span>
                                     <input type="number" class="form-control" name="default_captcha_value"

@@ -82,6 +82,8 @@ class RecaptchaService
                 ];
             }
         } elseif (strtolower(session($session)) != strtolower($request['default_captcha_value'])) {
+            session()->forget($session);
+
             return [
                 'status' => false,
                 'message' => translate('ReCAPTCHA_failed.'),

@@ -54,7 +54,7 @@ class DeliveryManUpdateRequest extends FormRequest
             ),
         ];
         if ($this['password']) {
-            $rules['password'] = 'required|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/|same:confirm_password';
+            $rules['password'] = 'required|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s])(?!.*\s).{8,}$/|same:confirm_password';
         }
 
         return $rules;

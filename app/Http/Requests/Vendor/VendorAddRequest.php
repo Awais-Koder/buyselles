@@ -36,7 +36,7 @@ class VendorAddRequest extends FormRequest
             'phone' => 'required|unique:sellers|max:20',
             'email' => 'required|unique:sellers',
             'image' => 'required|mimes:jpg,jpeg,png,webp,gif,bmp,tif,tiff',
-            'password' => 'required|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W)(?!.*\s).{8,}$/|same:confirm_password',
+            'password' => 'required|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s])(?!.*\s).{8,}$/|same:confirm_password',
             'shop_name' => 'required',
             'shop_address' => 'required',
             'logo' => 'required|mimes: jpg,jpeg,png,webp,gif,bmp,tif,tiff',

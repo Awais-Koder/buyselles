@@ -150,11 +150,28 @@ $("#chat-form").on("submit", function (e) {
         url: $("#route-messages-store").data("url"),
         data: $("#chat-form").serialize(),
         success: function (respons) {
-            toastr.success($("#message-send-successfully").data("text"), {
+            if (respons && respons.status === 'error') {
+                toastr.error(respons.message);
+                return;
+            }
+            toastr.success($("#message-send-successfully").data("text"), '', {
                 CloseButton: true,
                 ProgressBar: true,
             });
             $("#chat-form").trigger("reset");
+            $("#chat-form").find("textarea[name='message']").val('');
+        },
+        error: function (xhr) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                toastr.success($("#message-send-successfully").data("text"), '', {
+                    CloseButton: true,
+                    ProgressBar: true,
+                });
+                $("#chat-form").trigger("reset");
+                $("#chat-form").find("textarea[name='message']").val('');
+            } else {
+                toastr.error('Something went wrong. Please try again.');
+            }
         },
     });
 });

@@ -275,14 +275,14 @@ class DashboardController extends BaseController
             $count = $products?->sum('restock_product_customers_count') ?? 0;
             $restockProduct = [
                 'title' => $firstProduct?->product?->name ?? '',
-                'body' => $count < 100 ? translate('This_product_has').' '.$count.' '.translate('restock_request') : translate('This_product_has').' 99+ '.translate('restock_request'),
+                'body' => $count < 100 ? translate('This_product_has') . ' ' . $count . ' ' . translate('restock_request') : translate('This_product_has') . ' 99+ ' . translate('restock_request'),
                 'image' => getStorageImages(path: $firstProduct?->product?->thumbnail_full_url ?? '', type: 'product'),
                 'route' => route('admin.products.request-restock-list'),
             ];
         } elseif (count($restockProductList) > 1) {
             $restockProduct = [
                 'title' => translate('Restock_Request'),
-                'body' => count($restockProductList) < 100 ? (count($restockProductList).' '.translate('products_have_restock_request')) : ('99 +'.' '.translate('more_products_have_restock_request')),
+                'body' => count($restockProductList) < 100 ? (count($restockProductList) . ' ' . translate('products_have_restock_request')) : ('99 +' . ' ' . translate('more_products_have_restock_request')),
                 'image' => dynamicAsset(path: 'public/assets/back-end/img/icons/restock-request-icon.svg'),
                 'route' => route('admin.products.request-restock-list'),
             ];
@@ -298,13 +298,38 @@ class DashboardController extends BaseController
             data: ['seen_notification' => 1]
         );
 
+        $pendingOrderCount = \App\Models\Order::where('order_status', 'pending')->count();
+        $confirmedOrderCount = \App\Models\Order::where('order_status', 'confirmed')->count();
+        $processingOrderCount = \App\Models\Order::where('order_status', 'processing')->count();
+        $outForDeliveryOrderCount = \App\Models\Order::where('order_status', 'out_for_delivery')->count();
+        $deliveredOrderCount = \App\Models\Order::where('order_status', 'delivered')->count();
+        $canceledOrderCount = \App\Models\Order::where('order_status', 'canceled')->count();
+        $returnedOrderCount = \App\Models\Order::where('order_status', 'returned')->count();
+        $failedOrderCount = \App\Models\Order::where('order_status', 'failed')->count();
+        $allOrderCount = \App\Models\Order::count();
+        $unreadChatCount = \App\Models\Chatting::where('seen_by_admin', 0)
+            ->whereRaw('(sent_by_customer = 1 OR sent_by_seller = 1 OR sent_by_delivery_man = 1)')
+            ->count();
+        $unreadContactCount = \App\Models\Contact::where('seen', 0)->count();
+
         return response()->json([
             'success' => 1,
             'new_order_count' => $newOrder,
             'restockProductCount' => $restockProductList->count(),
             'restockProduct' => $restockProduct,
             'newMessagesExist' => $chatting,
-            'message' => $chatting > 1 ? $chatting.' '.translate('New_Message') : translate('New_Message'),
+            'message' => $chatting > 1 ? $chatting . ' ' . translate('New_Message') : translate('New_Message'),
+            'pending_order_count' => $pendingOrderCount,
+            'confirmed_order_count' => $confirmedOrderCount,
+            'processing_order_count' => $processingOrderCount,
+            'out_for_delivery_order_count' => $outForDeliveryOrderCount,
+            'delivered_order_count' => $deliveredOrderCount,
+            'canceled_order_count' => $canceledOrderCount,
+            'returned_order_count' => $returnedOrderCount,
+            'failed_order_count' => $failedOrderCount,
+            'all_order_count' => $allOrderCount,
+            'unread_chat_count' => $unreadChatCount,
+            'unread_contact_count' => $unreadContactCount,
         ]);
     }
 }

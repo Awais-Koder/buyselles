@@ -28,7 +28,7 @@
 
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle-fill me-2"></i>
+                <i class="fi fi-sr-check me-2"></i>
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -68,7 +68,7 @@
                         <div class="mt-auto">
                             <a href="{{ route('admin.products.digital-code-import.template') }}"
                                 class="btn btn-outline-primary w-100">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                                <i class="fi fi-rr-download me-2"></i>
                                 {{ translate('Download_Excel_Template') }}
                             </a>
                         </div>
@@ -108,19 +108,19 @@
 
                             {{-- Info box --}}
                             <div class="alert alert-info py-2 small mb-3">
-                                <i class="bi bi-info-circle-fill me-1"></i>
+                                <i class="fi fi-sr-info me-1"></i>
                                 {{ translate('The_import_runs_in_the_background._You_will_receive_a_dashboard_notification_and_an_email_when_the_job_is_complete.') }}
                             </div>
 
                             {{-- Warning box --}}
                             <div class="alert alert-warning py-2 small mb-3">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <i class="fi fi-sr-triangle-warning me-1"></i>
                                 {{ translate('Each_code_is_added_to_the_pool._Existing_codes_are_NOT_removed.') }}
                             </div>
 
                             <button type="submit" class="btn btn-success w-100" id="submitBtn">
                                 <span class="normal-state">
-                                    <i class="bi bi-upload me-2"></i>
+                                    <i class="fi fi-sr-inbox-in me-2"></i>
                                     {{ translate('Upload_&_Start_Import') }}
                                 </span>
                                 <span class="loading-state d-none">
@@ -139,7 +139,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-table me-2"></i>
+                            <i class="fi fi-rr-list me-2"></i>
                             {{ translate('Excel_Column_Format') }}
                         </h5>
                     </div>
@@ -229,7 +229,8 @@
                         </div>
 
                         {{-- Live example rows --}}
-                        <p class="fw-semibold mb-2 small"><i class="bi bi-eye me-1"></i>How the filled file should look:
+                        <p class="fw-semibold mb-2 small"><i class="fi fi-sr-eye me-1"></i>How the filled file should
+                            look:
                         </p>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0 small text-center">

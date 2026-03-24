@@ -38,6 +38,18 @@ enum EmailTemplateKey
 
     const RESET_PASSWORD_VERIFICATION = 'reset-password-verification';
 
+    const ORDER_CONFIRMED = 'order-confirmed';
+
+    const ORDER_PROCESSING = 'order-processing';
+
+    const ORDER_OUT_FOR_DELIVERY = 'order-out-for-delivery';
+
+    const ORDER_RETURNED = 'order-returned';
+
+    const ORDER_FAILED = 'order-failed';
+
+    const ORDER_CANCELED = 'order-canceled';
+
     const ADMIN_EMAIL_LIST = [
         EmailTemplateKey::ORDER_RECEIVED,
     ];
@@ -54,6 +66,13 @@ enum EmailTemplateKey
 
     const CUSTOMER_EMAIL_LIST = [
         EmailTemplateKey::ORDER_PLACE,
+        EmailTemplateKey::ORDER_CONFIRMED,
+        EmailTemplateKey::ORDER_PROCESSING,
+        EmailTemplateKey::ORDER_OUT_FOR_DELIVERY,
+        EmailTemplateKey::ORDER_DELIVERED,
+        EmailTemplateKey::ORDER_RETURNED,
+        EmailTemplateKey::ORDER_FAILED,
+        EmailTemplateKey::ORDER_CANCELED,
         EmailTemplateKey::FORGET_PASSWORD,
         EmailTemplateKey::REGISTRATION_VERIFICATION,
         EmailTemplateKey::REGISTRATION_FROM_POS,

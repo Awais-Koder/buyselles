@@ -28,7 +28,7 @@
             </div>
             <a href="{{ route('admin.products.digital-code-import.product-import', $product->id) }}"
                 class="btn btn-primary">
-                <i class="bi bi-upload me-2"></i>
+                <i class="fi fi-sr-inbox-in me-2"></i>
                 {{ translate('Upload More Codes') }}
             </a>
         </div>
@@ -38,7 +38,7 @@
             @php $summary = session('import_summary'); @endphp
             <div class="alert alert-{{ $summary['processed'] > 0 ? 'success' : 'warning' }} alert-dismissible fade show"
                 role="alert">
-                <strong><i class="bi bi-check-circle-fill me-1"></i>{{ translate('Import Complete') }}</strong>
+                <strong><i class="fi fi-sr-check me-1"></i>{{ translate('Import Complete') }}</strong>
                 <div class="mt-1">
                     <div><strong>{{ $summary['processed'] }}</strong> {{ translate('code(s) imported successfully') }}
                     </div>
@@ -59,7 +59,7 @@
 
         @if (session('import_error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <i class="fi fi-sr-triangle-warning me-1"></i>
                 {{ session('import_error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -68,7 +68,7 @@
         {{-- ⚠ Expiry warning banner --}}
         @if ($expiringCount > 0)
             <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                <i class="fi fi-sr-triangle-warning fs-5"></i>
                 <div>
                     <strong>{{ translate('Expiry Warning') }}:</strong>
                     {{ $expiringCount }} {{ translate('code(s) will expire within the next 7 days.') }}
@@ -115,7 +115,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">
-                    <i class="bi bi-table me-2"></i>
+                    <i class="fi fi-rr-list me-2"></i>
                     {{ translate('Code Pool') }}
                     <span class="badge bg-secondary ms-1">{{ $stats['total'] }}</span>
                 </h5>
@@ -150,12 +150,20 @@
                                         {{ $code->serial_number ?: '—' }}
                                     </td>
                                     <td>
-                                        {{-- PIN is never shown in list view — security requirement --}}
-                                        <span class="font-monospace text-muted">
-                                            ████-████-████-████
-                                        </span>
-                                        <i class="bi bi-lock-fill text-secondary ms-1 small"
-                                            title="{{ translate('PIN is encrypted. Only revealed at time of delivery.') }}"></i>
+                                        {{-- PIN masked by default; Super Admin can reveal on demand --}}
+                                        <span class="font-monospace text-muted pin-display"
+                                            id="pin-{{ $code->id }}">████-████-████-████</span>
+                                        <i class="fi fi-rr-lock text-secondary ms-1 small pin-lock-icon"
+                                            id="pin-lock-{{ $code->id }}"
+                                            title="{{ translate('PIN is AES-256 encrypted. Only revealed at delivery.') }}"></i>
+                                        @if ($canViewPin)
+                                            <button type="button"
+                                                class="btn btn-link btn-sm p-0 ms-1 text-secondary reveal-pin-btn"
+                                                data-code-id="{{ $code->id }}"
+                                                title="{{ translate('Reveal decrypted PIN') }}">
+                                                <i class="fi fi-sr-eye fs-6" id="pin-eye-{{ $code->id }}"></i>
+                                            </button>
+                                        @endif
                                     </td>
                                     <td class="small">
                                         @if ($code->expiry_date)
@@ -163,10 +171,10 @@
                                                 class="{{ $isPastExpiry ? 'text-danger' : ($isExpiringSoon ? 'text-warning fw-semibold' : 'text-muted') }}">
                                                 {{ $code->expiry_date->format('Y-m-d') }}
                                                 @if ($isExpiringSoon)
-                                                    <i class="bi bi-exclamation-triangle-fill ms-1"
+                                                    <i class="fi fi-sr-triangle-warning ms-1"
                                                         title="{{ translate('Expiring within 7 days') }}"></i>
                                                 @elseif ($isPastExpiry)
-                                                    <i class="bi bi-x-circle-fill ms-1"></i>
+                                                    <i class="fi fi-sr-cross ms-1"></i>
                                                 @endif
                                             </span>
                                         @else
@@ -193,12 +201,12 @@
                             @empty
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-muted">
-                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                        <i class="fi fi-sr-inbox-in fs-2 d-block mb-2"></i>
                                         {{ translate('No codes in the pool yet.') }}
                                         <br>
                                         <a href="{{ route('admin.products.digital-code-import.product-import', $product->id) }}"
                                             class="btn btn-sm btn-primary mt-2">
-                                            <i class="bi bi-upload me-1"></i>
+                                            <i class="fi fi-sr-inbox-in me-1"></i>
                                             {{ translate('Upload Codes') }}
                                         </a>
                                     </td>
@@ -216,9 +224,100 @@
         </div>
 
         <div class="mt-2 small text-muted">
-            <i class="bi bi-lock-fill me-1"></i>
-            {{ translate('All PINs are stored AES-256 encrypted. They are only decrypted at the moment of delivery to the customer.') }}
+            <i class="fi fi-rr-lock me-1"></i>
+            {{ translate('All PINs are stored AES-256 encrypted. Serial numbers are stored as plain text. PINs are only decrypted at the moment of delivery to the customer.') }}
+            @if ($canViewPin)
+                {{ translate('You can reveal any PIN on demand using the eye icon.') }}
+            @endif
         </div>
 
     </div>
 @endsection
+
+@push('css_or_js')
+    <style>
+        .pin-spin {
+            display: inline-block;
+            animation: pin-spin-anim 0.8s linear infinite;
+        }
+
+        @@keyframes pin-spin-anim {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+@endpush
+
+@push('script')
+    <script>
+        'use strict';
+
+        @if ($canViewPin)
+            (function() {
+                const decryptUrl = '{{ route('admin.products.digital-code-import.decrypt-code', ':id') }}';
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+                document.querySelectorAll('.reveal-pin-btn').forEach(function(btn) {
+                    let revealed = false;
+
+                    btn.addEventListener('click', function() {
+                        const codeId = this.dataset.codeId;
+                        const pinSpan = document.getElementById('pin-' + codeId);
+                        const lockIcon = document.getElementById('pin-lock-' + codeId);
+                        const eyeIcon = document.getElementById('pin-eye-' + codeId);
+
+                        if (revealed) {
+                            // Hide again
+                            pinSpan.textContent = '████-████-████-████';
+                            pinSpan.classList.remove('text-success', 'fw-semibold');
+                            pinSpan.classList.add('text-muted');
+                            lockIcon.classList.remove('d-none');
+                            eyeIcon.className = 'fi fi-sr-eye fs-6';
+                            revealed = false;
+                            return;
+                        }
+
+                        // Show spinner while fetching
+                        eyeIcon.className = 'fi fi-rr-refresh fs-6 pin-spin';
+
+                        fetch(decryptUrl.replace(':id', codeId), {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken,
+                                },
+                            })
+                            .then(function(r) {
+                                return r.json();
+                            })
+                            .then(function(data) {
+                                if (data.pin) {
+                                    pinSpan.textContent = data.pin;
+                                    pinSpan.classList.remove('text-muted');
+                                    pinSpan.classList.add('text-success', 'fw-semibold');
+                                    lockIcon.classList.add('d-none');
+                                    eyeIcon.className = 'fi fi-sr-eye-crossed fs-6';
+                                    revealed = true;
+                                } else {
+                                    eyeIcon.className = 'fi fi-sr-eye fs-6';
+                                    alert(data.error ||
+                                        '{{ addslashes(translate('Decryption failed')) }}');
+                                }
+                            })
+                            .catch(function() {
+                                eyeIcon.className = 'fi fi-sr-eye fs-6';
+                                alert(
+                                    '{{ addslashes(translate('Network error. Please try again.')) }}'
+                                );
+                            });
+                    });
+                });
+            })();
+        @endif
+    </script>
+@endpush

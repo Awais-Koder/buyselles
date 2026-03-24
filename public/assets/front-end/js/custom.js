@@ -496,11 +496,30 @@ $("#shop-view-chat-form").on("submit", function (e) {
         url: $("#route-messages-store").data("url"),
         data: $("#shop-view-chat-form").serialize(),
         success: function (response) {
-            toastr.success($("#message-send-successfully").data("text"), {
+            if (response && response.status === 'error') {
+                toastr.error(response.message);
+                return;
+            }
+            toastr.success($("#message-send-successfully").data("text"), '', {
                 CloseButton: true,
                 ProgressBar: true,
             });
             $("#shop-view-chat-form").trigger("reset");
+            $("#shop-view-chat-form").find("textarea[name='message']").val('');
+            $('#exampleModal').modal('hide');
+        },
+        error: function (xhr) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                toastr.success($("#message-send-successfully").data("text"), '', {
+                    CloseButton: true,
+                    ProgressBar: true,
+                });
+                $("#shop-view-chat-form").trigger("reset");
+                $("#shop-view-chat-form").find("textarea[name='message']").val('');
+                $('#exampleModal').modal('hide');
+            } else {
+                toastr.error('Something went wrong. Please try again.');
+            }
         },
     });
 });
@@ -542,11 +561,28 @@ $("#seller-chat-form").on("submit", function (e) {
         url: $("#route-messages-store").data("url"),
         data: $(this).serialize(),
         success: function (response) {
-            toastr.success($("#message-send-successfully").data("text"), {
+            if (response && response.status === 'error') {
+                toastr.error(response.message);
+                return;
+            }
+            toastr.success($("#message-send-successfully").data("text"), '', {
                 CloseButton: true,
                 ProgressBar: true,
             });
             $("#seller-chat-form").trigger("reset");
+            $("#seller-chat-form").find("textarea[name='message']").val('');
+        },
+        error: function (xhr) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                toastr.success($("#message-send-successfully").data("text"), '', {
+                    CloseButton: true,
+                    ProgressBar: true,
+                });
+                $("#seller-chat-form").trigger("reset");
+                $("#seller-chat-form").find("textarea[name='message']").val('');
+            } else {
+                toastr.error('Something went wrong. Please try again.');
+            }
         },
     });
 });
@@ -563,11 +599,28 @@ $("#deliveryman-chat-form").on("submit", function (e) {
         url: $("#route-messages-store").data("url"),
         data: $(this).serialize(),
         success: function (response) {
-            toastr.success($("#message-send-successfully").data("text"), {
+            if (response && response.status === 'error') {
+                toastr.error(response.message);
+                return;
+            }
+            toastr.success($("#message-send-successfully").data("text"), '', {
                 CloseButton: true,
                 ProgressBar: true,
             });
             $("#deliveryman-chat-form").trigger("reset");
+            $("#deliveryman-chat-form").find("textarea[name='message']").val('');
+        },
+        error: function (xhr) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                toastr.success($("#message-send-successfully").data("text"), '', {
+                    CloseButton: true,
+                    ProgressBar: true,
+                });
+                $("#deliveryman-chat-form").trigger("reset");
+                $("#deliveryman-chat-form").find("textarea[name='message']").val('');
+            } else {
+                toastr.error('Something went wrong. Please try again.');
+            }
         },
     });
 });
@@ -1658,7 +1711,7 @@ function cartQuantityInitialize() {
             Swal.fire({
                 icon: "error",
                 title: $("#message-cart").data("text"),
-                text: $("#message-minimum-order-quantity-cannot-less-than").data("text")+ " "+ minValue,
+                text: $("#message-minimum-order-quantity-cannot-less-than").data("text") + " " + minValue,
             });
             $(".input-number").val($(".input-number").attr("min"));
         }
@@ -2016,7 +2069,7 @@ function updateProductDetailsBottomSection(formSelector, response) {
         productDetailsStickySection.find(".discounted-badge-element").addClass("d-none");
     }
     let actionAddToCartBtn = $(formSelector).find(".product-add-to-cart-button");
-     let topAddToCartBtn = $('.add-to-cart-details-form').find(".product-add-to-cart-button");
+    let topAddToCartBtn = $('.add-to-cart-details-form').find(".product-add-to-cart-button");
     if (response?.in_cart_status === 1) {
         $(formSelector).find('.product-exist-in-cart-list[name="key"]').val(response?.in_cart_key);
         actionAddToCartBtn.html(actionAddToCartBtn.data("update"));
@@ -2102,7 +2155,7 @@ function updateProductDetailsTopSection(formSelector, response) {
         $(formSelector).find(".btn-number[data-type='minus'][data-field='quantity']").attr("disabled", true);
     }
 }
-document.addEventListener('change', function(e){
+document.addEventListener('change', function (e) {
     const t = e.target;
     if (!t.matches('input[type="radio"][name="color"], input[type="radio"][name^="choice_"]')) return;
 
@@ -2118,7 +2171,7 @@ document.addEventListener('change', function(e){
     }
     let match = Array.from(document.querySelectorAll(selector)).find(i => (i.value || '').toLowerCase() === val);
     if (!match && name === "color" && !isSticky) {
-        const code = val.replace('#','');
+        const code = val.replace('#', '');
         match = document.querySelector('input[id^="sticky-"][id$="-color-' + code + '"]');
     }
     if (match) match.checked = true;
@@ -2373,7 +2426,7 @@ $(".password-check").on("keyup keypress change click", function () {
                 .html(passwordErrorMessage.data("number"))
                 .removeClass("d-none");
             break;
-        case !/[@.#$!%*?&]/.test(password):
+        case !/[^a-zA-Z0-9\s]/.test(password):
             passwordError
                 .html(passwordErrorMessage.data("symbol"))
                 .removeClass("d-none");

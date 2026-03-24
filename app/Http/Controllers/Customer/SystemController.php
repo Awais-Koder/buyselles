@@ -117,7 +117,6 @@ class SystemController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
         } elseif (isset($shipping['shipping_method_id']) && $shipping['shipping_method_id'] == 0) {
 
             if ($shipping['contact_person_name'] == null || $shipping['address'] == null || $shipping['city'] == null || $shipping['zip'] == null || $shipping['country'] == null || ($is_guest && $shipping['email'] == null)) {
@@ -207,7 +206,6 @@ class SystemController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
             } elseif ($billing['billing_method_id'] == 0) {
 
                 if ($billing['billing_contact_person_name'] == null || $billing['billing_address'] == null || $billing['billing_city'] == null || $billing['billing_zip'] == null || $billing['billing_country'] == null || ($is_guest && $billing['billing_contact_email'] == null)) {
@@ -356,7 +354,6 @@ class SystemController extends Controller
                 'email' => auth('customer')->check() ? null : $shipping['email'],
                 'is_billing' => 0,
             ]);
-
         } elseif (isset($shipping['update_address']) && $shipping['update_address'] == 'on') {
             $getShipping = ShippingAddress::find($addressId);
             $getShipping->contact_person_name = $shipping['contact_person_name'];
@@ -369,7 +366,6 @@ class SystemController extends Controller
             $getShipping->latitude = $shipping['latitude'] ?? '';
             $getShipping->longitude = $shipping['longitude'] ?? '';
             $getShipping->save();
-
         } elseif (isset($shipping['shipping_method_id']) && ! isset($shipping['update_address']) && ! isset($shipping['save_address'])) {
             $addressId = ShippingAddress::insertGetId([
                 'customer_id' => auth('customer')->check() ? 0 : ((session()->has('guest_id') ? session('guest_id') : 0)),
@@ -504,7 +500,7 @@ class SystemController extends Controller
             session()->forget('newRegisterCustomerInfo');
         }
 
-        if (! session('address_id') && ! session('billing_address_id')) {
+        if (session('address_id') === null && session('billing_address_id') === null) {
             return response()->json([
                 'errors' => translate('Please_update_address_information'),
             ], 403);

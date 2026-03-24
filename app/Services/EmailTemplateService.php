@@ -41,6 +41,12 @@ class EmailTemplateService
             EmailTemplateKey::DIGITAL_PRODUCT_OTP => ['product_information', 'order_information', 'button_content', 'banner_image'],
             EmailTemplateKey::ORDER_PLACE => ['icon', 'product_information', 'banner_image'],
             EmailTemplateKey::ORDER_DELIVERED => ['product_information', 'order_information', 'button_content', 'banner_image'],
+            EmailTemplateKey::ORDER_CONFIRMED => ['icon', 'product_information', 'banner_image'],
+            EmailTemplateKey::ORDER_PROCESSING => ['icon', 'product_information', 'banner_image'],
+            EmailTemplateKey::ORDER_OUT_FOR_DELIVERY => ['icon', 'product_information', 'banner_image'],
+            EmailTemplateKey::ORDER_RETURNED => ['icon', 'product_information', 'banner_image'],
+            EmailTemplateKey::ORDER_FAILED => ['icon', 'product_information', 'banner_image'],
+            EmailTemplateKey::ORDER_CANCELED => ['icon', 'product_information', 'banner_image'],
             EmailTemplateKey::FORGET_PASSWORD => ['product_information', 'order_information', 'button_content', 'banner_image'],
             EmailTemplateKey::ORDER_RECEIVED => ['icon', 'product_information', 'button_content', 'banner_image'],
             EmailTemplateKey::ADD_FUND_TO_WALLET => ['product_information', 'order_information', 'button_content', 'banner_image'],
@@ -53,10 +59,22 @@ class EmailTemplateService
 
     public function getAddData(string $userType, string $templateName, ?array $hideField, string $title, string $body): array
     {
+        $orderStatusTemplates = [
+            EmailTemplateKey::ORDER_CONFIRMED,
+            EmailTemplateKey::ORDER_PROCESSING,
+            EmailTemplateKey::ORDER_OUT_FOR_DELIVERY,
+            EmailTemplateKey::ORDER_DELIVERED,
+            EmailTemplateKey::ORDER_RETURNED,
+            EmailTemplateKey::ORDER_FAILED,
+            EmailTemplateKey::ORDER_CANCELED,
+        ];
+
+        $designName = in_array($templateName, $orderStatusTemplates) ? 'order-status-change' : $templateName;
+
         return [
             'template_name' => $templateName,
             'user_type' => $userType,
-            'template_design_name' => $templateName,
+            'template_design_name' => $designName,
             'title' => $title,
             'body' => $body,
             'hide_field' => $hideField,
@@ -115,6 +133,13 @@ class EmailTemplateService
             EmailTemplateKey::DIGITAL_PRODUCT_DOWNLOAD => 'Congratulations',
             EmailTemplateKey::DIGITAL_PRODUCT_OTP => 'Digital Product Download OTP Verification',
             EmailTemplateKey::ORDER_PLACE => 'Order' . ' # ' . '{orderId}' . ' Has Been Placed Successfully!',
+            EmailTemplateKey::ORDER_CONFIRMED => 'Order' . ' # ' . '{orderId}' . ' Has Been Confirmed!',
+            EmailTemplateKey::ORDER_PROCESSING => 'Order' . ' # ' . '{orderId}' . ' Is Being Packaged!',
+            EmailTemplateKey::ORDER_OUT_FOR_DELIVERY => 'Order' . ' # ' . '{orderId}' . ' Is Out For Delivery!',
+            EmailTemplateKey::ORDER_DELIVERED => 'Order' . ' # ' . '{orderId}' . ' Has Been Delivered!',
+            EmailTemplateKey::ORDER_RETURNED => 'Order' . ' # ' . '{orderId}' . ' Has Been Returned',
+            EmailTemplateKey::ORDER_FAILED => 'Order' . ' # ' . '{orderId}' . ' Failed To Deliver',
+            EmailTemplateKey::ORDER_CANCELED => 'Order' . ' # ' . '{orderId}' . ' Has Been Canceled',
             EmailTemplateKey::FORGET_PASSWORD => 'Change Password Request',
             EmailTemplateKey::ORDER_RECEIVED => 'New Order Received',
             EmailTemplateKey::ADD_FUND_TO_WALLET => 'Transaction Successful',
@@ -146,6 +171,13 @@ class EmailTemplateService
             EmailTemplateKey::DIGITAL_PRODUCT_DOWNLOAD => '<p>Thank you for choosing ' . getWebConfig(name: 'company_name') . ' shop! Your digital product is ready for download. To download your product use your email <b>{emailId}</b> and order # {orderId} below.</b><br></p>',
             EmailTemplateKey::DIGITAL_PRODUCT_OTP => '<p><b>Hi ' . $userType . ',</b></p><p>Your verification code is</p>',
             EmailTemplateKey::ORDER_PLACE => '<p><b>Hi ' . $userType . ',</b></p><p>Your order from {vendorName} has been placed to know the current status of your order click track order</p>',
+            EmailTemplateKey::ORDER_CONFIRMED => '<p><b>Hi ' . $userType . ',</b></p><p>Great news! Your order # {orderId} has been confirmed by the seller and is now being prepared.</p>',
+            EmailTemplateKey::ORDER_PROCESSING => '<p><b>Hi ' . $userType . ',</b></p><p>Your order # {orderId} is now being packaged and will be shipped soon.</p>',
+            EmailTemplateKey::ORDER_OUT_FOR_DELIVERY => '<p><b>Hi ' . $userType . ',</b></p><p>Your order # {orderId} is out for delivery and will arrive soon. Please keep your phone nearby.</p>',
+            EmailTemplateKey::ORDER_DELIVERED => '<p><b>Hi ' . $userType . ',</b></p><p>Your order # {orderId} has been delivered successfully. We hope you enjoy your purchase!</p>',
+            EmailTemplateKey::ORDER_RETURNED => '<p><b>Hi ' . $userType . ',</b></p><p>Your order # {orderId} has been returned. If you have any queries please contact our support team.</p>',
+            EmailTemplateKey::ORDER_FAILED => '<p><b>Hi ' . $userType . ',</b></p><p>We are sorry to inform you that the delivery of your order # {orderId} has failed. Please contact our support team for assistance.</p>',
+            EmailTemplateKey::ORDER_CANCELED => '<p><b>Hi ' . $userType . ',</b></p><p>Your order # {orderId} has been canceled. If you did not request this cancellation please contact our support team.</p>',
             EmailTemplateKey::FORGET_PASSWORD => '<p><b>Hi ' . $userType . ',</b></p><p>Please click the link below to reset your password.</p><p><a href="{passwordResetURL}">Reset Password</a></p><p>If you did not request a password reset, please ignore this email.</p>',
             EmailTemplateKey::ORDER_RECEIVED => '<p><b>Hi ' . $userType . ',</b></p><p>We have sent you this email to notify that you have a new order.You will be able to see your orders after login to your panel.</p>',
             EmailTemplateKey::ADD_FUND_TO_WALLET => '<div style="text-align: center; ">Amount successfully credited to your wallet .</div><div style="text-align: center; "><br></div>',

@@ -31,7 +31,7 @@ class DigitalCodeImportController extends BaseController
     {
         $export = new DigitalProductCodeTemplateExport(sellerId: null);
 
-        return Excel::download($export, 'digital-code-template-' . now()->format('Y-m-d') . '.xlsx');
+        return Excel::download($export, 'digital-code-template-'.now()->format('Y-m-d').'.xlsx');
     }
 
     public function import(Request $request): RedirectResponse
@@ -41,7 +41,7 @@ class DigitalCodeImportController extends BaseController
         ]);
 
         $storedPath = $request->file('excel_file')->store('digital-code-imports', 'local');
-        $absolutePath = storage_path('app/' . $storedPath);
+        $absolutePath = storage_path('app/'.$storedPath);
 
         $importedBy = auth('admin')->user()->name ?? 'Admin';
         $adminId = (int) auth('admin')->id();
@@ -87,11 +87,14 @@ class DigitalCodeImportController extends BaseController
 
         $codes = $codesQuery->paginate(50)->withQueryString();
 
+        $canViewPin = \App\Utils\Helpers::module_permission_check('view_encrypted_pin');
+
         return view('admin-views.digital-product-code.product-codes', compact(
             'product',
             'codes',
             'stats',
-            'expiringCount'
+            'expiringCount',
+            'canViewPin'
         ));
     }
 
@@ -117,9 +120,34 @@ class DigitalCodeImportController extends BaseController
             ->firstOrFail();
 
         $export = new ProductCodeTemplateExport(productName: $product->name);
-        $filename = 'codes-' . str()->slug($product->name) . '-' . now()->format('Y-m-d') . '.xlsx';
+        $filename = 'codes-'.str()->slug($product->name).'-'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download($export, $filename);
+    }
+
+    /**
+     * Decrypt and return the plain-text PIN for a single code record.
+     * Super Admin only — never exposed to sub-admins.
+     */
+    public function decryptCode(int $id): JsonResponse
+    {
+        if (! \App\Utils\Helpers::module_permission_check('view_encrypted_pin')) {
+            return response()->json(['error' => translate('you_are_not_authorized_to_view_decrypted_pins')], 403);
+        }
+
+        $code = DigitalProductCode::findOrFail($id);
+
+        try {
+            $plain = $code->decryptCode();
+        } catch (\Exception) {
+            return response()->json(['error' => translate('decryption_failed_code_may_be_corrupted')], 500);
+        }
+
+        return response()->json([
+            'id' => $code->id,
+            'pin' => $plain,
+            'serial' => $code->serial_number,
+        ]);
     }
 
     /**
@@ -150,7 +178,7 @@ class DigitalCodeImportController extends BaseController
 
         // Detect header row — first row with 'pin' or 'digital_code' in it
         $headerRow = $rows->first();
-        $hasHeader = $headerRow->filter(fn($v) => in_array(
+        $hasHeader = $headerRow->filter(fn ($v) => in_array(
             strtolower((string) $v),
             ['pin', 'digital_code', 'serial_number', 'expiry_date'],
             true
@@ -185,6 +213,7 @@ class DigitalCodeImportController extends BaseController
             // Skip blank and example rows
             if ($pin === '' || str_contains(strtoupper($pin), 'EXAMPLE')) {
                 $skipped++;
+
                 continue;
             }
 

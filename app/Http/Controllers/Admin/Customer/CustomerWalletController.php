@@ -16,6 +16,7 @@ use App\Http\Requests\Admin\AddFundRequest;
 use App\Http\Requests\Admin\BonusSetupRequest;
 use App\Services\CustomerWalletService;
 use App\Traits\PaginatorTrait;
+use App\Utils\Helpers;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -61,11 +62,18 @@ class CustomerWalletController extends BaseController
 
     public function addFund(AddFundRequest $request, CustomerWalletService $customerWalletService): JsonResponse
     {
+        if (! Helpers::module_permission_check('wallet_add_fund')) {
+            return response()->json(['errors' => [
+                'message' => translate('you_are_not_authorized_to_add_fund_to_wallet'),
+            ]], 403);
+        }
+
         $walletTransaction = $this->walletTransactionRepo->addWalletTransaction(
             user_id: $request['customer_id'],
             amount: $request['amount'],
             transactionType: 'add_fund_by_admin',
-            reference: $request['reference']);
+            reference: $request['reference']
+        );
 
         $customer = $this->customerRepo->getFirstWhere(params: ['id' => $request['customer_id']]);
         $customerWalletService->sendPushNotificationMessage(request: $request, customer: $customer);

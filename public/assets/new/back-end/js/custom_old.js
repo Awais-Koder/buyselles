@@ -1,4 +1,4 @@
-$(".change-language").on("click", function() {
+$(".change-language").on("click", function () {
     let getText = $("#get-confirm-and-cancel-button-text");
     Swal.fire({
         title: getText.data("sure"),
@@ -23,7 +23,7 @@ $(".change-language").on("click", function() {
                 data: {
                     language_code: $(this).data("language-code")
                 },
-                success: function(data) {
+                success: function (data) {
                     toastMagic.success(data.message);
                     location.reload();
                 }
@@ -32,19 +32,19 @@ $(".change-language").on("click", function() {
     });
 });
 
-$("#formUrlChange").on("click", function() {
+$("#formUrlChange").on("click", function () {
     let action = $(this).data("action");
     $("#form-data").attr("action", action);
 });
 
 function callDemo() {
-    $(".call-demo").on("click", function() {
+    $(".call-demo").on("click", function () {
         toastMagic.info($("#call-demo-message").data("text"));
     });
 }
 callDemo();
 
-$(".toggle-switch-dynamic-image").on("click", function(event) {
+$(".toggle-switch-dynamic-image").on("click", function (event) {
     event.preventDefault();
     const modalId = $(this).data("modal-id");
     const toggleId = $(this).data("toggle-id");
@@ -66,7 +66,7 @@ $(".toggle-switch-dynamic-image").on("click", function(event) {
     );
 });
 
-$(document).on("click", ".toggle-switch-message", function(event) {
+$(document).on("click", ".toggle-switch-message", function (event) {
     event.preventDefault();
     let rootPath = $("#get-root-path-for-toggle-modal-image").data("path");
     const modalId = $(this).data("modal-id");
@@ -154,7 +154,7 @@ function toggleModal(
     $("#" + modalId).modal("show");
 }
 
-$("#toggle-modal-ok-button").on("click", function() {
+$("#toggle-modal-ok-button").on("click", function () {
     const toggleIdName = $(this).attr("toggle-ok-button");
     const toggleId = $("#" + $(this).attr("toggle-ok-button"));
     if (toggleId.is(":checked")) {
@@ -214,7 +214,7 @@ function checkAlternativeCheckbox(toggleIdName) {
     }
 }
 
-$("#toggle-status-modal-ok-button").on("click", function() {
+$("#toggle-status-modal-ok-button").on("click", function () {
     const toggleId = $("#" + $(this).attr("toggle-ok-button"));
     if (toggleId.is(":checked")) {
         toggleId.prop("checked", false);
@@ -225,7 +225,7 @@ $("#toggle-status-modal-ok-button").on("click", function() {
     checkAlternativeCheckbox($(this).attr("toggle-ok-button"));
     submitStatusUpdateForm(toggleOkButton);
 });
-$("#toggle-status-custom-modal-ok-button").on("click", function() {
+$("#toggle-status-custom-modal-ok-button").on("click", function () {
     const toggleId = $("#" + $(this).attr("toggle-ok-button"));
     if (toggleId.is(":checked")) {
         toggleId.prop("checked", false);
@@ -249,7 +249,7 @@ function submitStatusUpdateForm(formId) {
         url: form.attr("action"),
         method: form.attr("method"),
         data: form.serialize(),
-        success: function(data) {
+        success: function (data) {
             switch (form.data("from")) {
                 case "deal":
                     toastMagic.success(updateText.data("text"));
@@ -321,7 +321,7 @@ function submitStatusUpdateForm(formId) {
                         toastMagic.success(data.message);
                     } else {
                         toastMagic.error(data.message);
-                        setTimeout(function() {
+                        setTimeout(function () {
                             location.reload();
                         }, 2000);
                     }
@@ -331,7 +331,7 @@ function submitStatusUpdateForm(formId) {
                         toastMagic.success(data.message);
                     } else {
                         toastMagic.info(data.message);
-                        setTimeout(function() {
+                        setTimeout(function () {
                             location.reload();
                         }, 1000);
                     }
@@ -342,7 +342,7 @@ function submitStatusUpdateForm(formId) {
                     } else {
                         toastMagic.info(data.message);
                     }
-                    setTimeout(function() {
+                    setTimeout(function () {
                         location.reload();
                     }, 1000);
                     break;
@@ -354,7 +354,7 @@ function submitStatusUpdateForm(formId) {
                     } else {
                         toastMagic.info(data.message);
                     }
-                    setTimeout(function() {
+                    setTimeout(function () {
                         location.reload();
                     }, 2500);
                     break;
@@ -370,7 +370,7 @@ function submitStatusUpdateForm(formId) {
 //     new HSTogglePassword(this).init();
 // });
 
-$(".delete-data").on("click", function() {
+$(".delete-data").on("click", function () {
     let getText = $("#get-confirm-and-cancel-button-text-for-delete");
     Swal.fire({
         title: getText.data("sure"),
@@ -390,7 +390,7 @@ $(".delete-data").on("click", function() {
 });
 
 function deleteDataWithoutForm() {
-    $(".delete-data-without-form").on("click", function() {
+    $(".delete-data-without-form").on("click", function () {
         let getText = $("#get-confirm-and-cancel-button-text-for-delete");
         let dataFrom = $(this).data("from");
         Swal.fire({
@@ -415,7 +415,7 @@ function deleteDataWithoutForm() {
                     url: $(this).data("action"),
                     method: "POST",
                     data: { id: id },
-                    success: function(response) {
+                    success: function (response) {
                         if (dataFrom == "currency") {
                             if (response.status == 1) {
                                 toastMagic.success(
@@ -449,17 +449,17 @@ function deleteDataWithoutForm() {
 deleteDataWithoutForm();
 
 function locationReload() {
-    $(".reload-by-onclick").on("click", function() {
+    $(".reload-by-onclick").on("click", function () {
         location.reload();
     });
 }
 locationReload();
-$(".image-input").on("change", function() {
+$(".image-input").on("change", function () {
     let input = this;
     let img = document.getElementById($(this).data("image-id"));
     if (input.files && input.files[0]) {
         let reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             if (img !== null) {
                 img.src = e.target.result;
             }
@@ -474,7 +474,7 @@ $(".image-input").on("change", function() {
     }
 });
 
-$(".copy-to-clipboard").on("click", function() {
+$(".copy-to-clipboard").on("click", function () {
     let copiedText = $($(this).data("id")).text();
     let tempInput = $("<textarea>");
     $("body").append(tempInput);
@@ -519,32 +519,32 @@ $(".copy-to-clipboard").on("click", function() {
 //     }
 // });
 
-$(".onerror-chatting").on("error", function() {
+$(".onerror-chatting").on("error", function () {
     let image = $("#onerror-chatting").data("onerror-chatting");
     $(this).attr("src", image);
 });
 
-$(".onerror-user").on("error", function() {
+$(".onerror-user").on("error", function () {
     let image = $("#onerror-user").data("onerror-user");
     $(this).attr("src", image);
 });
 
 var backgroundImage = $("[data-bg-img]");
 backgroundImage
-    .css("background-image", function() {
+    .css("background-image", function () {
         return 'url("' + $(this).data("bg-img") + '")';
     })
     .removeAttr("data-bg-img")
     .addClass("bg-img");
 
 function onErrorImage() {
-    $(".onerror-image").on("error", function() {
+    $(".onerror-image").on("error", function () {
         let image = $(this).data("onerror");
         $(this).attr("src", image);
     });
 }
 onErrorImage();
-$(window).on("load", function() {
+$(window).on("load", function () {
     onErrorImage();
 });
 
@@ -554,18 +554,18 @@ $(".get-customer-list-by-ajax-request").select2({
     ],
     ajax: {
         url: $("#get-customer-list-route").data("action"),
-        data: function(params) {
+        data: function (params) {
             return {
                 searchValue: params.term, // search term
                 page: params.page
             };
         },
-        processResults: function(data) {
+        processResults: function (data) {
             return {
                 results: data
             };
         },
-        __port: function(params, success, failure) {
+        __port: function (params, success, failure) {
             var $request = $.ajax(params);
 
             $request.then(success);
@@ -582,18 +582,18 @@ $(".get-customer-list-without-all-customer").select2({
     dropdownParent: $('#add-fund-modal'),
     ajax: {
         url: $("#get-customer-list-without-all-customer-route").data("action"),
-        data: function(params) {
+        data: function (params) {
             return {
                 searchValue: params.term, // search term
                 page: params.page
             };
         },
-        processResults: function(data) {
+        processResults: function (data) {
             return {
                 results: data
             };
         },
-        __port: function(params, success, failure) {
+        __port: function (params, success, failure) {
             var $request = $.ajax(params);
 
             $request.then(success);
@@ -604,7 +604,7 @@ $(".get-customer-list-without-all-customer").select2({
     }
 });
 
-$("#start-date-time,#end-date-time").change(function() {
+$("#start-date-time,#end-date-time").change(function () {
     let from = $("#start-date-time");
     let to = $("#end-date-time");
     if (from.val() !== "" && to.val() !== "" && from.val() > to.val()) {
@@ -614,15 +614,15 @@ $("#start-date-time,#end-date-time").change(function() {
     }
 });
 
-$(".set-customer-value").on("change", function() {
+$(".set-customer-value").on("change", function () {
     $('input[name="customer_id"]').val($(this).val());
 });
 
-$(".withdraw-status-filter").on("change", function() {
+$(".withdraw-status-filter").on("change", function () {
     location.href =
         $(this).data("action") + "?" + "approved" + "=" + $(this).val();
 });
-$(".form-alert").on("click", function() {
+$(".form-alert").on("click", function () {
     let getText = $("#get-confirm-and-cancel-button-text");
     Swal.fire({
         title: getText.data("sure"),
@@ -641,7 +641,7 @@ $(".form-alert").on("click", function() {
     });
 });
 
-$("#general-section").click(function() {
+$("#general-section").click(function () {
     $("#password-section").removeClass("active");
     $("#general-section").addClass("active");
     $("html, body").animate(
@@ -651,7 +651,7 @@ $("#general-section").click(function() {
         2000
     );
 });
-$("#password-section").click(function() {
+$("#password-section").click(function () {
     $("#general-section").removeClass("active");
     $("#password-section").addClass("active");
     $("html, body").animate(
@@ -662,7 +662,7 @@ $("#password-section").click(function() {
     );
 });
 
-$(".image-preview-before-upload").on("change", function() {
+$(".image-preview-before-upload").on("change", function () {
     let getElementId = $(this).data("preview");
     $(getElementId).attr("src", window.URL.createObjectURL(this.files[0]));
     $(getElementId).removeClass("d-none");
@@ -672,9 +672,9 @@ $(".image-preview-before-upload").on("change", function() {
         .css("opacity", "0");
 });
 
-$(document).on("ready", function() {
+$(document).on("ready", function () {
     if ($(".image-preview-before-upload").length) {
-        $(".image-preview-before-upload").each(function() {
+        $(".image-preview-before-upload").each(function () {
             if ($(this).data("image")) {
                 let getElementId = $(this).data("preview");
                 $(getElementId).attr("src", $(this).data("image"));
@@ -690,14 +690,14 @@ $(document).on("ready", function() {
 
 var backgroundImage = $("[data-bg-img]");
 backgroundImage
-    .css("background-image", function() {
+    .css("background-image", function () {
         return 'url("' + $(this).data("bg-img") + '")';
     })
     .removeAttr("data-bg-img")
     .addClass("bg-img");
 
 $("#inhouse-vacation-start-date, #inhouse-vacation-end-date").change(
-    function() {
+    function () {
         let elementFromDate = $("#inhouse-vacation-start-date");
         let elementToDate = $("#inhouse-vacation-end-date");
         let fromDate = elementFromDate.val();
@@ -733,7 +733,7 @@ $(".js-example-responsive").select2({
     width: "resolve"
 });
 
-$(".update-status").on("click", function() {
+$(".update-status").on("click", function () {
     let id = $(this).data("id");
     let status = $(this).data("status");
     let getText = $("#get-confirm-and-cancel-button-text");
@@ -762,7 +762,7 @@ $(".update-status").on("click", function() {
                     id: id,
                     status: status
                 },
-                success: function(response) {
+                success: function (response) {
                     toastMagic.success(response.message);
                     if (targetUrl) {
                         location.href = targetUrl;
@@ -775,7 +775,7 @@ $(".update-status").on("click", function() {
     });
 });
 
-$(".action-update-product-quantity").on("click", function() {
+$(".action-update-product-quantity").on("click", function () {
     $.ajaxSetup({
         headers: {
             "X-CSRF-TOKEN": $('meta[name="_token"]').attr("content")
@@ -786,32 +786,32 @@ $(".action-update-product-quantity").on("click", function() {
         method: "get",
         url: $(this).data("url"),
         dataType: "json",
-        beforeSend: function() {
+        beforeSend: function () {
             $("#loading").fadeIn();
         },
-        success: function(response) {
+        success: function (response) {
             $(".rest-part-content")
                 .empty()
                 .html(response.view);
             $(modalSelector).modal("show");
             updateProductQuantityByKeyUp();
         },
-        complete: function() {
+        complete: function () {
             $("#loading").fadeOut();
         }
     });
 });
 
-$(".action-onclick-reload-page").on("click", function() {
+$(".action-onclick-reload-page").on("click", function () {
     location.reload();
 });
 
-$(".action-select-onchange-get-view").on("change", function() {
+$(".action-select-onchange-get-view").on("change", function () {
     let getUrlPrefix = $(this).data("url-prefix");
     location.href = getUrlPrefix + $(this).val();
 });
 
-$(".action-upload-section-dot-area").on("change", function() {
+$(".action-upload-section-dot-area").on("change", function () {
     if (this.files && this.files[0]) {
         let reader = new FileReader();
         reader.onload = () => {
@@ -824,7 +824,7 @@ $(".action-upload-section-dot-area").on("change", function() {
     }
 });
 
-$(".action-print-invoice").on("click", function() {
+$(".action-print-invoice").on("click", function () {
     printDiv($(this).data("value"));
 });
 
@@ -836,7 +836,7 @@ function printDiv(divName) {
     document.body.innerHTML = originalContents;
 }
 
-$(".form-system-language-tab").on("click", function(e) {
+$(".form-system-language-tab").on("click", function (e) {
     e.preventDefault();
     $(".form-system-language-tab").removeClass("active");
     $(".form-system-language-form").addClass("d-none");
@@ -851,7 +851,7 @@ $(".form-system-language-tab").on("click", function(e) {
     $("." + lang + "-form").removeClass("d-none");
 });
 
-$(".form-dynamic-language-tab").on("click", function(e) {
+$(".form-dynamic-language-tab").on("click", function (e) {
     e.preventDefault();
     let commonClass = $(this).data("common");
     let targetSelector = $(this).data("target-selector");
@@ -861,7 +861,7 @@ $(".form-dynamic-language-tab").on("click", function(e) {
     $(targetSelector).removeClass("d-none");
 });
 
-$(".open-info-web").on("click", function() {
+$(".open-info-web").on("click", function () {
     let websiteInfo = document.getElementById("website_info");
     if (websiteInfo.style.display === "none") {
         websiteInfo.style.display = "block";
@@ -870,7 +870,7 @@ $(".open-info-web").on("click", function() {
     }
 });
 
-$(window).on("load", function() {
+$(window).on("load", function () {
     if ($(".navbar-vertical-content li.active").length) {
         $(".navbar-vertical-content").animate(
             {
@@ -883,14 +883,14 @@ $(window).on("load", function() {
 });
 
 let $rows = $(".navbar-vertical-content .navbar-nav > li");
-$("#search-bar-input").keyup(function() {
+$("#search-bar-input").keyup(function () {
     let val = $.trim($(this).val())
         .replace(/ +/g, " ")
         .toLowerCase();
 
     $rows
         .show()
-        .filter(function() {
+        .filter(function () {
             let text = $(this)
                 .text()
                 .replace(/\s+/g, " ")
@@ -900,17 +900,17 @@ $("#search-bar-input").keyup(function() {
         .hide();
 });
 
-$("#reset").on("click", function() {
+$("#reset").on("click", function () {
     let placeholderImg = $("#placeholderImg").data("img");
     $("#viewer").attr("src", placeholderImg);
     $(".spartan_remove_row").click();
 });
 
-$(".check-order").on("click", function() {
+$(".check-order").on("click", function () {
     location.href = $("#get-orders-list-route").data("action");
 });
 
-$(".ignore-check-order").on("click", function() {
+$(".ignore-check-order").on("click", function () {
     $("#popup-modal")
         .appendTo("body")
         .modal("hide");
@@ -926,13 +926,13 @@ $(".ignore-check-order").on("click", function() {
         data: {
             _token: token
         },
-        success: function(response) {
+        success: function (response) {
             console.log(response);
         }
     });
 });
 
-$(document).mouseup(function(e) {
+$(document).mouseup(function (e) {
     let container = $("#search-card");
     if (!container.is(e.target) && container.has(e.target).length === 0) {
         container.hide();
@@ -940,7 +940,7 @@ $(document).mouseup(function(e) {
 });
 
 function getPageViewOnClick() {
-    $(".get-view-by-onclick").on("click", function() {
+    $(".get-view-by-onclick").on("click", function () {
         location.href = $(this).data("link");
     });
 }
@@ -962,7 +962,7 @@ function updateProductQuantity() {
 }
 
 function updateProductQuantityByKeyUp() {
-    $('input[name^="qty_"]').on("keyup", function() {
+    $('input[name^="qty_"]').on("keyup", function () {
         let qty_elements = $('input[name^="qty_"]');
         let totalQtyCheck = 0;
         let total_qty = 0;
@@ -978,7 +978,7 @@ function updateProductQuantityByKeyUp() {
             $(this).val(parseInt($(this).val()));
         }
     });
-    $('input[name="current_stock"]').on("keyup", function() {
+    $('input[name="current_stock"]').on("keyup", function () {
         if ($(this).val() % 1) {
             toastMagic.warning(
                 $("#get-quantity-check-message").data("warning")
@@ -988,19 +988,19 @@ function updateProductQuantityByKeyUp() {
     });
 }
 updateProductQuantityByKeyUp();
-$(".onsubmit-disable-action-button").on("submit", function() {
+$(".onsubmit-disable-action-button").on("submit", function () {
     $('.onsubmit-disable-action-button button[type="submit"]').attr(
         "disabled",
         true
     );
 });
-$(".reset-button").on("click", function() {
+$(".reset-button").on("click", function () {
     $(".select-product-button").text(
         $("#get-select-product-text").data("text")
     );
 });
 
-$(".form-submit").on("click", async function()  {
+$(".form-submit").on("click", async function () {
     let getText = $("#get-confirm-and-cancel-button-text");
     let targetUrl = $(this).data("redirect-route");
     const getFormId = $(this).data("form-id");
@@ -1014,7 +1014,7 @@ $(".form-submit").on("click", async function()  {
         cancelButtonText: getText.data("cancel"),
         confirmButtonText: getText.data("confirm"),
         reverseButtons: true
-    }).then( async result => {
+    }).then(async result => {
         if (result.value) {
             let formData = new FormData(document.getElementById(getFormId));
             if (!await validateFormHelper($(this))) return false;
@@ -1029,10 +1029,10 @@ $(".form-submit").on("click", async function()  {
                 data: formData,
                 contentType: false,
                 processData: false,
-                beforeSend: function() {
+                beforeSend: function () {
                     $("#loading").fadeIn();
                 },
-                success: function(data) {
+                success: function (data) {
                     if (data.errors) {
                         for (let index = 0; index < data.errors.length; index++) {
                             setTimeout(() => {
@@ -1043,20 +1043,20 @@ $(".form-submit").on("click", async function()  {
                         toastMagic.error(data.error);
                     } else {
                         toastMagic.success(data.message);
-                       setTimeout(function (){
-                           if (targetUrl) {
-                               location.href = targetUrl;
-                           } else {
-                               location.reload();
-                           }
-                       },2000);
+                        setTimeout(function () {
+                            if (targetUrl) {
+                                location.href = targetUrl;
+                            } else {
+                                location.reload();
+                            }
+                        }, 2000);
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
-                        $.each(errors, function(field, messages) {
-                            $.each(messages, function(index, message) {
+                        $.each(errors, function (field, messages) {
+                            $.each(messages, function (index, message) {
                                 toastMagic.error(message);
                             });
                         });
@@ -1065,7 +1065,7 @@ $(".form-submit").on("click", async function()  {
                         toastMagic.error("Something went wrong!");
                     }
                 },
-                complete: function() {
+                complete: function () {
                     formSubmitCleanup($(this));
                     $("#loading").fadeOut();
                 }
@@ -1074,7 +1074,7 @@ $(".form-submit").on("click", async function()  {
     });
 });
 function removeSymbol() {
-    $(".remove-symbol").on("keyup", function() {
+    $(".remove-symbol").on("keyup", function () {
         $(this).val(
             $(this)
                 .val()
@@ -1084,14 +1084,14 @@ function removeSymbol() {
 }
 removeSymbol();
 
-$("input[name=phone]").on("keyup keypress", function() {
+$("input[name=phone]").on("keyup keypress", function () {
     $(this).val(
         $(this)
             .val()
             .replace(/[^0-9]/g, "")
     );
 });
-$(".password-check").on("keyup keypress change click", function() {
+$(".password-check").on("keyup keypress change click", function () {
     let password = $(this).val();
     let passwordError = $(".password-error");
     let passwordErrorMessage = $("#password-error-message");
@@ -1116,7 +1116,7 @@ $(".password-check").on("keyup keypress change click", function() {
                 .html(passwordErrorMessage.data("number"))
                 .removeClass("d-none");
             break;
-        case !/[@.#$!%*?&]/.test(password):
+        case !/[^a-zA-Z0-9\s]/.test(password):
             passwordError
                 .html(passwordErrorMessage.data("symbol"))
                 .removeClass("d-none");
@@ -1138,7 +1138,7 @@ $('#user_password, #confirm_password').on("keyup change", function () {
 });
 
 
-$(".product-gallery-filter").on("change", function() {
+$(".product-gallery-filter").on("change", function () {
     let name = $(this).attr("name");
     let getData = $("#get-product-gallery-route");
     let brandId = name == "brand_id" ? $(this).val() : getData.data("brand-id");
@@ -1175,19 +1175,19 @@ function buttonDisableOrEnableFunction(className, status) {
 //
 //     return { width: width, height: height };
 // }
-$(".download-path-not-found").on("click", function(event) {
+$(".download-path-not-found").on("click", function (event) {
     toastMagic.error($("#download-path-not-found-message").data("message"));
 });
-$(document).ready(function() {
-    $(".switcher_input_js").on("change", function() {
+$(document).ready(function () {
+    $(".switcher_input_js").on("change", function () {
         $(".switcher_input_js")
             .not(this)
             .prop("checked", !$(this).is(":checked"));
         $(".custom_sorting_radio_list").slideToggle();
     });
 });
-$(document).ready(function() {
-    $(".switcher-input-js").on("change", function() {
+$(document).ready(function () {
+    $(".switcher-input-js").on("change", function () {
         $("." + $(this).data("parent-class") + " " + ".switcher-input-js")
             .not(this)
             .prop("checked", !$(this).is(":checked"));
@@ -1211,7 +1211,7 @@ $(document).ready(function() {
         }
         $(customSortingSection).slideToggle();
     });
-    $(".check-box").on("change", function() {
+    $(".check-box").on("change", function () {
         $("." + $(this).data("parent-class") + " " + ".check-box")
             .not(this)
             .prop("checked", !$(this).is(":checked"));
@@ -1228,7 +1228,7 @@ function productStockLimitStatus() {
         $.get({
             url: productStockAction,
             dataType: "json",
-            success: function(response) {
+            success: function (response) {
                 if (response.status === "one_product") {
                     $(".product-limited-stock-alert .image")
                         .attr("src", "")
@@ -1258,11 +1258,11 @@ function productStockLimitStatus() {
                         .html(
                             response.product_count <= 100
                                 ? response.product_count -
-                                      1 +
-                                      "+ " +
-                                      getMessage.data(
-                                          "message-for-three-plus-product"
-                                      )
+                                1 +
+                                "+ " +
+                                getMessage.data(
+                                    "message-for-three-plus-product"
+                                )
                                 : getMessage.data("message-for-multiple")
                         );
                     $(".product-limited-stock-alert .product-list")
@@ -1282,11 +1282,11 @@ function productStockLimitStatus() {
     }
 }
 
-$(".product-stock-limit-close").on("click", function() {
+$(".product-stock-limit-close").on("click", function () {
     $(".product-limited-stock-alert").removeClass("active");
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     if (
         document.cookie.indexOf("6valley_stock_limit_status=accepted") !== -1 ||
         document.cookie.indexOf("6valley_stock_limit_status=reject") !== -1
@@ -1298,7 +1298,7 @@ $(document).ready(function() {
     }
 });
 
-$(document).on("click", ".product-stock-alert-hide", function() {
+$(document).on("click", ".product-stock-alert-hide", function () {
     document.cookie =
         "6valley_stock_limit_status=accepted; max-age=" +
         60 * 60 * 24 * 30 +
@@ -1306,17 +1306,17 @@ $(document).on("click", ".product-stock-alert-hide", function() {
     $(".product-limited-stock-alert").hide();
 });
 
-$(document).on("click", ".product-stock-limit-close", function() {
+$(document).on("click", ".product-stock-limit-close", function () {
     document.cookie =
         "6valley_stock_limit_status=reject; max-age=" + 60 * 20 + "; path=/";
     $(".product-limited-stock-alert").hide();
 });
 
-$("#payment-gateway-cards input[name=status]").on("change", function() {
+$("#payment-gateway-cards input[name=status]").on("change", function () {
     $(this).val($(this).prop("checked") ? 1 : 0);
 });
 
-$("#xml_file_input").on("change", function() {
+$("#xml_file_input").on("change", function () {
     $("#xml_file_upload_placeholder").addClass("d-none");
     $("#xml_file_upload_progress").removeClass("d-none");
     setTimeout(() => {
@@ -1325,7 +1325,7 @@ $("#xml_file_input").on("change", function() {
     }, 1000);
 });
 
-$("#xml_file_upload_cancel").on("click", function() {
+$("#xml_file_upload_cancel").on("click", function () {
     $("#xml_file_upload_submit").attr("disabled", true);
     $("#xml_file_upload_placeholder").removeClass("d-none");
     $("#xml_file_upload_progress").addClass("d-none");
@@ -1333,7 +1333,7 @@ $("#xml_file_upload_cancel").on("click", function() {
     xmlFileUploadCancelProcess();
 });
 
-$(".xml_file_upload_close").on("click", function() {
+$(".xml_file_upload_close").on("click", function () {
     $("#xml_file_upload_submit").attr("disabled", true);
     $("#xml_file_upload_placeholder").removeClass("d-none");
     $("#xml_file_upload_progress").addClass("d-none");
@@ -1343,7 +1343,7 @@ $(".xml_file_upload_close").on("click", function() {
 
 $("#xml_file_upload_progress .xml_file_upload_cancel_icon").on(
     "click",
-    function() {
+    function () {
         xmlFileUploadCancelProcess();
     }
 );
@@ -1384,7 +1384,7 @@ function xmlFileUploadCancelProcess() {
     $("#xml_file_upload_form").trigger("reset");
 }
 
-$(".getDownloadFileUsingFileUrl").on("click", function() {
+$(".getDownloadFileUsingFileUrl").on("click", function () {
     let getLink = $(this).data("file-path");
     downloadFileUsingFileUrl(getLink);
 });
@@ -1405,7 +1405,7 @@ function downloadFileUsingFileUrl(url) {
         .catch(error => console.error("Error downloading file:", error));
 }
 
-$(window).on("load", function() {
+$(window).on("load", function () {
     $(".date-range-js")
         .daterangepicker({
             autoUpdateInput: false,
@@ -1414,14 +1414,14 @@ $(window).on("load", function() {
                 cancelLabel: "Clear"
             }
         })
-        .on("apply.daterangepicker", function(ev, picker) {
+        .on("apply.daterangepicker", function (ev, picker) {
             $(this).val(
                 picker.startDate.format("MMMM D, YYYY") +
-                    " - " +
-                    picker.endDate.format("MMMM D, YYYY")
+                " - " +
+                picker.endDate.format("MMMM D, YYYY")
             );
         })
-        .on("cancel.daterangepicker", function(ev, picker) {
+        .on("cancel.daterangepicker", function (ev, picker) {
             $(this).val("");
             $(this).attr("placeholder", "Select Date");
             $(this)
@@ -1434,7 +1434,7 @@ $(window).on("load", function() {
         .attr("placeholder", "Select date");
 });
 
-$("#robotsMetaContentPageSelect").on("change", function() {
+$("#robotsMetaContentPageSelect").on("change", function () {
     robotsMetaContentPageSelect();
 });
 
@@ -1446,11 +1446,11 @@ function robotsMetaContentPageSelect() {
     $("#robotsMetaContentPageUrl").val(routePath);
 }
 
-$(".action-input-no-index-event").on("click", function() {
+$(".action-input-no-index-event").on("click", function () {
     $(".input-no-index-sub-element").prop("checked", true);
 });
 
-$(document).on("click", ".product-restock-request-alert-hide", function() {
+$(document).on("click", ".product-restock-request-alert-hide", function () {
     document.cookie = "6valley_restock_request_status=accepted; path=/";
     $(".product-restock-stock-alert").hide();
 });
@@ -1467,7 +1467,7 @@ function productRestockStockLimitStatus(response) {
     mainElement.addClass("active");
 }
 
-$(".product-restock-stock-close").on("click", function() {
+$(".product-restock-stock-close").on("click", function () {
     document.cookie = "6valley_restock_request_status=accepted; path=/";
     $(".product-restock-stock-alert").hide();
 });
@@ -1491,7 +1491,7 @@ function validateDateRangePickerDateInput(e) {
 
 function changeInputTypeForDateRangePicker(element) {
     try {
-        element.on("keydown", function(event) {
+        element.on("keydown", function (event) {
             validateDateRangePickerDateInput(event);
         });
 
@@ -1501,7 +1501,7 @@ function changeInputTypeForDateRangePicker(element) {
                 .removeAttr("readonly")
                 .removeClass("cursor-pointer");
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function ajaxSetupToken() {
@@ -1524,8 +1524,8 @@ function checkFirebaseAuthVerification() {
                 key: checkbox.data("key")
             },
             async: false,
-            beforeSend: function() {},
-            success: function(response) {
+            beforeSend: function () { },
+            success: function (response) {
                 if (response?.status === false) {
                     $("#firebaseAuthConfigValidation .modal-body")
                         .empty()
@@ -1536,13 +1536,13 @@ function checkFirebaseAuthVerification() {
                     checkbox.prop("checked", !checkbox.prop("checked"));
                 }
             },
-            complete: function() {}
+            complete: function () { }
         });
     }
     return firebaseAuthVerification;
 }
 
-$(".clearance-product-add-submit").on("click", function() {
+$(".clearance-product-add-submit").on("click", function () {
     let form = $(".clearance-add-product")[0];
     let formData = new FormData(form);
     ajaxSetupToken();
@@ -1551,10 +1551,10 @@ $(".clearance-product-add-submit").on("click", function() {
         data: formData,
         contentType: false,
         processData: false,
-        beforeSend: function() {
+        beforeSend: function () {
             $("#loading").fadeIn();
         },
-        success: function(response) {
+        success: function (response) {
             if (response.status) {
                 $("#product-add-modal").modal("hide");
                 toastMagic.success(response.message);
@@ -1567,13 +1567,13 @@ $(".clearance-product-add-submit").on("click", function() {
             }
         },
         timeout: 5000,
-        complete: function() {
+        complete: function () {
             $("#loading").fadeOut();
         }
     });
 });
 
-$(".stock-clearance-delete-data").on("click", function() {
+$(".stock-clearance-delete-data").on("click", function () {
     let getText = $("#get-confirm-and-cancel-button-text-for-delete");
     Swal.fire({
         title: getText.data("sure"),
@@ -1612,7 +1612,7 @@ $(".stock-clearance-delete-data").on("click", function () {
 });
 
 
-$(".discount-amount-submit").on("click", function() {
+$(".discount-amount-submit").on("click", function () {
     let form = $(".discount-amount-update")[0];
     let formData = new FormData(form);
     ajaxSetupToken();
@@ -1621,10 +1621,10 @@ $(".discount-amount-submit").on("click", function() {
         data: formData,
         contentType: false,
         processData: false,
-        beforeSend: function() {
+        beforeSend: function () {
             $("#loading").fadeIn();
         },
-        success: function(response) {
+        success: function (response) {
             if (response.status) {
                 $("#discount-update-modal").modal("hide");
                 toastMagic.success(response.message);
@@ -1634,13 +1634,13 @@ $(".discount-amount-submit").on("click", function() {
                 toastMagic.error(response.message);
             }
         },
-        complete: function() {
+        complete: function () {
             $("#loading").fadeOut();
         }
     });
 });
 
-$(".stock-clearance-delete-all-products").on("click", function() {
+$(".stock-clearance-delete-all-products").on("click", function () {
     let getText = $(
         "#get-confirm-and-cancel-button-text-for-delete-all-products"
     );
@@ -1661,7 +1661,7 @@ $(".stock-clearance-delete-all-products").on("click", function() {
     });
 });
 
-$("#payment-methods-settings-form").on("submit", function(event) {
+$("#payment-methods-settings-form").on("submit", function (event) {
     event.preventDefault();
     if (
         !$("#cash-on-delivery").prop("checked") &&
@@ -1680,7 +1680,7 @@ $("#payment-methods-settings-form").on("submit", function(event) {
         type: $(this).attr("method"),
         url: $(this).data("action"),
         data: $(this).serialize(),
-        success: function(response) {
+        success: function (response) {
             if (response?.status === "success") {
                 toastMagic.success(response?.message);
                 location.reload();
@@ -1714,8 +1714,8 @@ $("#payment-methods-settings-form").on("submit", function(event) {
     });
 });
 
-$(document).ready(function() {
-    $("#discount_type").on("change", function() {
+$(document).ready(function () {
+    $("#discount_type").on("change", function () {
         let discountType = $(this).val();
         const symbol =
             discountType === "percentage"
@@ -1725,7 +1725,7 @@ $(document).ready(function() {
     });
 });
 
-$('[pattern="[0-9]*"]').on("keypress", function(event) {
+$('[pattern="[0-9]*"]').on("keypress", function (event) {
     // Allow only numeric keys (0-9)
     if (event.which < 48 || event.which > 57) {
         event.preventDefault();

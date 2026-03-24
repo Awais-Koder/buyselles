@@ -7,15 +7,20 @@
 @endphp
 
 @php($direction = session('direction'))
-@if (env('APP_MODE')=='demo')
-    <div class="__announcement-bar" style="background-image: url({{ dynamicAsset(path: 'public/assets/website-top-header.png') }})">
+@if (env('APP_MODE') == 'demo')
+    <div class="__announcement-bar"
+        style="background-image: url({{ dynamicAsset(path: 'public/assets/website-top-header.png') }})">
         <div class="container">
             <div class="wrapper">
                 <div class="txt">
                     This is a demo website - Buy genuine 6Valley using our official link !
                 </div>
-                <a href="https://codecanyon.net/item/6valley-multivendor-ecommerce-complete-ecommerce-mobile-app-web-and-admin-panel/31448597?s_rank=19" class="click" target="_blank">Click Now <img src="{{ asset('public/assets/arrowww.png') }}" alt=""></a>
-                <a href="https://codecanyon.net/item/6valley-multivendor-ecommerce-complete-ecommerce-mobile-app-web-and-admin-panel/31448597?s_rank=19" class="px-3 py-1 rounded" style="background-color: #FF7500; color:#ffffff" target="_blank">Buy Now</a>
+                <a href="https://codecanyon.net/item/6valley-multivendor-ecommerce-complete-ecommerce-mobile-app-web-and-admin-panel/31448597?s_rank=19"
+                    class="click" target="_blank">Click Now <img src="{{ asset('public/assets/arrowww.png') }}"
+                        alt=""></a>
+                <a href="https://codecanyon.net/item/6valley-multivendor-ecommerce-complete-ecommerce-mobile-app-web-and-admin-panel/31448597?s_rank=19"
+                    class="px-3 py-1 rounded" style="background-color: #FF7500; color:#ffffff" target="_blank">Buy
+                    Now</a>
             </div>
         </div>
     </div>
@@ -67,13 +72,13 @@
                     <div class="topbar-text dropdown">
                         <a class="btn-icon topbar-link" href="javascript:" data-bs-toggle="dropdown">
                             @foreach (json_decode($lang['value'], true) as $data)
-                                    <?php
-                                    $langFlagCode = $data['code'];
-                                    if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                        $countryCodeArr = explode('-', $data['code']);
-                                        $langFlagCode = $countryCodeArr[0];
-                                    }
-                                    ?>
+                                <?php
+                                $langFlagCode = $data['code'];
+                                if (\Illuminate\Support\Str::contains($data['code'], '-')) {
+                                    $countryCodeArr = explode('-', $data['code']);
+                                    $langFlagCode = $countryCodeArr[0];
+                                }
+                                ?>
                                 @if ($data['code'] == $local)
                                     <img width="20"
                                         src="{{ dynamicAsset(path: 'public/assets/front-end/img/flags/' . strtolower($langFlagCode) . '.png') }}"
@@ -83,13 +88,13 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             @foreach (json_decode($lang['value'], true) as $key => $data)
-                                    <?php
-                                    $langFlagCode = $data['code'];
-                                    if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                        $countryCodeArr = explode('-', $data['code']);
-                                        $langFlagCode = $countryCodeArr[0];
-                                    }
-                                    ?>
+                                <?php
+                                $langFlagCode = $data['code'];
+                                if (\Illuminate\Support\Str::contains($data['code'], '-')) {
+                                    $countryCodeArr = explode('-', $data['code']);
+                                    $langFlagCode = $countryCodeArr[0];
+                                }
+                                ?>
                                 @if ($data['status'] == 1)
                                     <li class="change-language" data-action="{{ route('change-language') }}"
                                         data-language-code="{{ $data['code'] }}">
@@ -97,7 +102,7 @@
                                             href="javascript:">
                                             <div class="d-flex gap-2 align-items-center">
                                                 <img width="20"
-                                                    src="{{ dynamicAsset(path: 'public/assets/front-end/img/flags/' .strtolower($langFlagCode) . '.png') }}"
+                                                    src="{{ dynamicAsset(path: 'public/assets/front-end/img/flags/' . strtolower($langFlagCode) . '.png') }}"
                                                     alt="{{ $data['name'] }}" />
                                                 <span class="text-capitalize">{{ $data['name'] }}</span>
                                             </div>
@@ -117,13 +122,12 @@
                             @php($pendingOrderCount = \App\Models\Order::where('order_status', 'pending')->count())
                             <div class="position-relative lh-1 mt-1">
                                 <i class="fi fi-sr-shopping-cart fs-18"></i>
-                                @if ($pendingOrderCount > 0)
-                                    <span
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        {{ $pendingOrderCount > 99 ? '99+' : $pendingOrderCount }}
-                                        <span class="visually-hidden">{{ translate('pending_Orders') }}</span>
-                                    </span>
-                                @endif
+                                <span id="header-pending-order-badge"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    style="{{ $pendingOrderCount > 0 ? '' : 'display:none;' }}">
+                                    {{ $pendingOrderCount > 99 ? '99+' : $pendingOrderCount }}
+                                    <span class="visually-hidden">{{ translate('pending_Orders') }}</span>
+                                </span>
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-cart dropdown-menu-end">
@@ -170,7 +174,8 @@
                                                                                     src="{{ getStorageImages(path: $productImage, type: 'backend-product') }}">
                                                                                 @if ($imageKey == 2 && count($productImages) > 3)
                                                                                     <div class="extra-images rounded">
-                                                                                        <span class="extra-image-count">
+                                                                                        <span
+                                                                                            class="extra-image-count">
                                                                                             +
                                                                                             {{ count($productImages) - 3 }}
                                                                                         </span>
@@ -226,18 +231,32 @@
 
                 @if (\App\Utils\Helpers::module_permission_check('support_section'))
                     <li class="nav-item">
+                        <a class="btn-icon" href="{{ route('admin.messages.index', ['type' => 'customer']) }}"
+                            data-bs-title="{{ translate('inbox') }}" data-bs-toggle="tooltip">
+                            <div class="position-relative lh-1 mt-1">
+                                <i class="fi fi-sr-envelope fs-18"></i>
+
+                                @php($unreadChat = \App\Models\Chatting::where('seen_by_admin', 0)->whereRaw('(sent_by_customer = 1 OR sent_by_seller = 1 OR sent_by_delivery_man = 1)')->count())
+                                <span id="header-unread-chat-badge"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    style="{{ $unreadChat > 0 ? '' : 'display:none;' }}">
+                                    {{ $unreadChat > 99 ? '99+' : $unreadChat }}
+                                </span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="btn-icon" href="{{ route('admin.contact.list') }}"
                             data-bs-title="{{ translate('message') }}" data-bs-toggle="tooltip">
                             <div class="position-relative lh-1 mt-1">
                                 <i class="fi fi-sr-comment-alt-dots fs-18"></i>
 
                                 @php($message = \App\Models\Contact::where('seen', 0)->count())
-                                @if ($message > 0)
-                                    <span
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        {{ $message > 99 ? '99+' : $message }}
-                                    </span>
-                                @endif
+                                <span id="header-unread-contact-badge"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                    style="{{ $message > 0 ? '' : 'display:none;' }}">
+                                    {{ $message > 99 ? '99+' : $message }}
+                                </span>
                             </div>
                         </a>
                     </li>
@@ -485,7 +504,7 @@
                         },
                         error: function(xhr, status, error) {
                             console.error(xhr.responseText);
-                             toggleSearchLoader('hide');
+                            toggleSearchLoader('hide');
                         }
                     });
                 }

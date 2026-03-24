@@ -54,6 +54,9 @@
                         <span
                             class="aside-mini-hidden-element flex-grow-1 d-flex justify-content-between align-items-center">
                             <span class="text-truncate max-w-180">{{ translate('orders') }}</span>
+                            @php($sidebarPendingCount = \App\Models\Order::where('order_status', 'pending')->count())
+                            <span id="sidebar-pending-order-badge" class="badge badge-pill badge-danger ml-1"
+                                style="{{ $sidebarPendingCount > 0 ? '' : 'display:none;' }}">{{ $sidebarPendingCount > 99 ? '99+' : $sidebarPendingCount }}</span>
                             <i class="fi fi-sr-angle-down"></i>
                         </span>
                     </a>
@@ -66,7 +69,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('all') }}
                                 </span>
-                                <span class="badge fw-bold badge-info badge-sm text-bg-info">
+                                <span id="sidebar-all-order-count"
+                                    class="badge fw-bold badge-info badge-sm text-bg-info">
                                     {{ \App\Models\Order::count() }}
                                 </span>
                             </a>
@@ -78,7 +82,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('pending') }}
                                 </span>
-                                <span class="badge fw-bold badge-info badge-sm text-bg-info">
+                                <span id="sidebar-pending-order-count"
+                                    class="badge fw-bold badge-info badge-sm text-bg-info">
                                     {{ \App\Models\Order::where(['order_status' => 'pending'])->count() }}
                                 </span>
                             </a>
@@ -90,7 +95,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('confirmed') }}
                                 </span>
-                                <span class="badge fw-bold badge-success badge-sm text-bg-success">
+                                <span id="sidebar-confirmed-order-count"
+                                    class="badge fw-bold badge-success badge-sm text-bg-success">
                                     {{ \App\Models\Order::where(['order_status' => 'confirmed'])->count() }}
                                 </span>
                             </a>
@@ -102,7 +108,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('packaging') }}
                                 </span>
-                                <span class="badge fw-bold badge-warning badge-sm text-bg-warning">
+                                <span id="sidebar-processing-order-count"
+                                    class="badge fw-bold badge-warning badge-sm text-bg-warning">
                                     {{ \App\Models\Order::where(['order_status' => 'processing'])->count() }}
                                 </span>
                             </a>
@@ -114,7 +121,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('out_for_delivery') }}
                                 </span>
-                                <span class="badge fw-bold badge-warning badge-sm text-bg-warning">
+                                <span id="sidebar-out-for-delivery-order-count"
+                                    class="badge fw-bold badge-warning badge-sm text-bg-warning">
                                     {{ \App\Models\Order::where(['order_status' => 'out_for_delivery'])->count() }}
                                 </span>
                             </a>
@@ -126,7 +134,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('delivered') }}
                                 </span>
-                                <span class="badge fw-bold badge-success badge-sm text-bg-success">
+                                <span id="sidebar-delivered-order-count"
+                                    class="badge fw-bold badge-success badge-sm text-bg-success">
                                     {{ \App\Models\Order::where(['order_status' => 'delivered'])->count() }}
                                 </span>
                             </a>
@@ -138,7 +147,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('returned') }}
                                 </span>
-                                <span class="badge fw-bold badge-danger badge-sm text-bg-danger">
+                                <span id="sidebar-returned-order-count"
+                                    class="badge fw-bold badge-danger badge-sm text-bg-danger">
                                     {{ \App\Models\Order::where('order_status', 'returned')->count() }}
                                 </span>
                             </a>
@@ -149,7 +159,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('failed_to_Deliver') }}
                                 </span>
-                                <span class="badge fw-bold badge-danger badge-sm text-bg-danger">
+                                <span id="sidebar-failed-order-count"
+                                    class="badge fw-bold badge-danger badge-sm text-bg-danger">
                                     {{ \App\Models\Order::where(['order_status' => 'failed'])->count() }}
                                 </span>
                             </a>
@@ -162,7 +173,8 @@
                                 <span class="flex-grow-1 text-truncate">
                                     {{ translate('canceled') }}
                                 </span>
-                                <span class="badge fw-bold badge-danger badge-sm text-bg-danger">
+                                <span id="sidebar-canceled-order-count"
+                                    class="badge fw-bold badge-danger badge-sm text-bg-danger">
                                     {{ \App\Models\Order::where(['order_status' => 'canceled'])->count() }}
                                 </span>
                             </a>
@@ -632,7 +644,14 @@
                         href="{{ route('admin.messages.index', ['type' => 'customer']) }}">
                         <i class="fi fi-sr-envelope"></i>
                         <span class="aside-mini-hidden-element text-truncate">
-                            {{ translate('inbox') }}
+                            <span class="position-relative">
+                                {{ translate('inbox') }}
+                                @php($unreadChat = \App\Models\Chatting::where('seen_by_admin', 0)->whereRaw('(sent_by_customer = 1 OR sent_by_seller = 1 OR sent_by_delivery_man = 1)')->count())
+                                @if ($unreadChat > 0)
+                                    <span
+                                        class="btn-status btn-xs-status btn-status-danger position-absolute top-0 menu-status"></span>
+                                @endif
+                            </span>
                         </span>
                     </a>
                 </li>

@@ -10,7 +10,7 @@ $(document).on('ready', function () {
         $.HSCore.components.HSValidation.init($(this));
     });
 });
-$('.forget-password-form').on('click',function (){
+$('.forget-password-form').on('click', function () {
     $.ajaxSetup({
         headers: {
             'X-XSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -29,17 +29,17 @@ $('.forget-password-form').on('click',function (){
                         toastMagic.error(data.errors[index].message);
                     }, index * 500);
                 }
-            } else if(data.error){
+            } else if (data.error) {
                 toastMagic.error(data.error);
             }
-            else if(data.verificationBy === 'mail'){
+            else if (data.verificationBy === 'mail') {
                 $('.password-reset-successfully-modal').modal('show');
-                $('.forget-password-form').attr('disabled',true);
-            }else if(data.verificationBy === 'phone' || data.passwordUpdate){
-                location.href=data.redirectRoute;
+                $('.forget-password-form').attr('disabled', true);
+            } else if (data.verificationBy === 'phone' || data.passwordUpdate) {
+                location.href = data.redirectRoute;
                 toastMagic.success(data.success)
             }
-        },complete: function () {
+        }, complete: function () {
             $('#loading').fadeOut();
         },
     })
@@ -65,7 +65,7 @@ $('.password-check').on('keyup keypress change click', function () {
         case !(/\d/.test(password)):
             passwordError.html(passwordErrorMessage.data('number')).removeClass('d-none');
             break;
-        case !(/[@.#$!%*?&]/.test(password)):
+        case !(/[^a-zA-Z0-9\s]/.test(password)):
             passwordError.html(passwordErrorMessage.data('symbol')).removeClass('d-none');
             break;
         default:

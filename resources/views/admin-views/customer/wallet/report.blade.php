@@ -9,7 +9,7 @@
                     alt="">
                 {{ translate('wallet') }}
             </h2>
-            @if ($customerStatus == 1)
+            @if ($customerStatus == 1 && \App\Utils\Helpers::module_permission_check('wallet_add_fund'))
                 <button type="button" class="btn btn-primary text-capitalize" data-bs-toggle="modal"
                     data-bs-target="#add-fund-modal">
                     {{ translate('add_fund') }}
@@ -17,59 +17,65 @@
             @endif
         </div>
 
-        <div class="modal fade" id="add-fund-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
-            aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header d-flex justify-content-between border-0">
-                        <h3 class="modal-title text-capitalize" id="exampleModalLongTitle">{{ translate('add_fund') }}</h3>
-                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ route('admin.customer.wallet.add-fund') }}" method="post"
-                            enctype="multipart/form-data" id="add-fund" class="" novalidate="novalidate">
-                            @csrf
-                            <div class="row g-4">
-                                <div class="col-sm-6">
-                                    <div class="form-group d-flex flex-column">
-                                        <label class="mb-2 d-flex" for="customer">{{ translate('customer') }}</label>
-                                        <select id='form-customer' name="customer_id"
-                                            data-placeholder="{{ translate('select_customer') }}"
-                                            class="get-customer-list-without-all-customer form-select" data-required-msg="{{ translate('customer_field_is_required')}}" required>
-                                        </select>
+        @if (\App\Utils\Helpers::module_permission_check('wallet_add_fund'))
+            <div class="modal fade" id="add-fund-modal" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex justify-content-between border-0">
+                            <h3 class="modal-title text-capitalize" id="exampleModalLongTitle">{{ translate('add_fund') }}
+                            </h3>
+                            <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ route('admin.customer.wallet.add-fund') }}" method="post"
+                                enctype="multipart/form-data" id="add-fund" class="" novalidate="novalidate">
+                                @csrf
+                                <div class="row g-4">
+                                    <div class="col-sm-6">
+                                        <div class="form-group d-flex flex-column">
+                                            <label class="mb-2 d-flex" for="customer">{{ translate('customer') }}</label>
+                                            <select id='form-customer' name="customer_id"
+                                                data-placeholder="{{ translate('select_customer') }}"
+                                                class="get-customer-list-without-all-customer form-select"
+                                                data-required-msg="{{ translate('customer_field_is_required') }}" required>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label class="mb-2 d-flex" for="amount">{{ translate('amount') }}</label>
+                                            <input type="number" class="form-control" name="amount" id="amount"
+                                                step=".01" placeholder="{{ translate('ex') . ':' . '500' }}"
+                                                data-required-msg="{{ translate('amount_field_is_required') }}" required>
+                                            <small id="amount_error" style="color: red; display: none;">Amount cannot be
+                                                zero or
+                                                negative</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="mb-2 d-flex align-items-center gap-1"
+                                                for="reference">{{ translate('reference') }}
+                                                <small>({{ translate('optional') }})</small></label>
+                                            <input type="text" class="form-control" name="reference"
+                                                placeholder="{{ translate('ex') . ':' . 'abc990' }}" id="reference">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 col-12">
-                                    <div class="form-group">
-                                        <label class="mb-2 d-flex" for="amount">{{ translate('amount') }}</label>
-                                        <input type="number" class="form-control" name="amount" id="amount"
-                                            step=".01" placeholder="{{ translate('ex') . ':' . '500' }}" data-required-msg="{{ translate('amount_field_is_required')}}" required>
-                                        <small id="amount_error" style="color: red; display: none;">Amount cannot be zero or
-                                            negative</small>
-                                    </div>
+                                <div class="d-flex justify-content-end gap-3 mt-4">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">{{ translate('close') }}</button>
+                                    <button type="submit" id="submit"
+                                        class="btn btn-primary">{{ translate('submit') }}</button>
                                 </div>
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <label class="mb-2 d-flex align-items-center gap-1"
-                                            for="reference">{{ translate('reference') }}
-                                            <small>({{ translate('optional') }})</small></label>
-                                        <input type="text" class="form-control" name="reference"
-                                            placeholder="{{ translate('ex') . ':' . 'abc990' }}" id="reference">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-end gap-3 mt-4">
-                                <button type="button" class="btn btn-secondary"
-                                    data-bs-dismiss="modal">{{ translate('close') }}</button>
-                                <button type="submit" id="submit"
-                                    class="btn btn-primary">{{ translate('submit') }}</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         <div class="card mt-3">
             <div class="card-header text-capitalize">
@@ -287,73 +293,74 @@
     <script>
         'use strict';
 
-        let errorTimeout;
+        @if (\App\Utils\Helpers::module_permission_check('wallet_add_fund'))
+            let errorTimeout;
 
-        $("#amount").on('input', function() {
-            const value = parseFloat($(this).val());
-            if (isNaN(value) || value <= 0) {
-                $(this).val('');
-                $("#amount_error").fadeIn(200);
-                clearTimeout(errorTimeout);
-                errorTimeout = setTimeout(function() {
-                    $("#amount_error").fadeOut(500);
-                }, 1000);
-            } else {
-                $("#amount_error").fadeOut(300);
-            }
-        });
-
-
-
-        $('#add-fund').on('submit', function(e) {
-            e.preventDefault();
-            let formData = new FormData(this);
-            Swal.fire({
-                title: "{{ translate('are_you_sure') . '?' }} ",
-                text: '{{ translate('you_want_to_add_fund') }} ' + $('#amount').val() +
-                    ' {{ getCurrencyCode(type: 'default') . ' ' . translate('to') }} ' + $(
-                        '#form-customer option:selected').text() + '{{ translate('to_wallet') }}',
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: '#377dff',
-                cancelButtonColor: '#dd3333',
-                cancelButtonText: '{{ translate('no') }}',
-                confirmButtonText: '{{ translate('add') }}',
-                reverseButtons: true
-            }).then(result => {
-                if (result.value) {
-                    $.ajaxSetup({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        }
-                    });
-                    $.post({
-                        url: '{{ route('admin.customer.wallet.add-fund') }}',
-                        data: formData,
-                        cache: false,
-                        contentType: false,
-                        processData: false,
-                        success: function(data) {
-                            console.log(data);
-                            if (data.errors) {
-                                $.each(data.errors, function(i, err) {
-                                    setTimeout(function() {
-                                        toastMagic.error(err.message);
-                                    }, 500 * (i + 1));
-                                });
-                            } else {
-                                toastMagic.success(
-                                    '{{ translate('fund_added_successfully') }}');
-                                setTimeout(() => {
-                                    location.reload()
-                                }, 500);
-                            }
-                        },
-                        complete: function () {
-                        }
-                    });
+            $("#amount").on('input', function() {
+                const value = parseFloat($(this).val());
+                if (isNaN(value) || value <= 0) {
+                    $(this).val('');
+                    $("#amount_error").fadeIn(200);
+                    clearTimeout(errorTimeout);
+                    errorTimeout = setTimeout(function() {
+                        $("#amount_error").fadeOut(500);
+                    }, 1000);
+                } else {
+                    $("#amount_error").fadeOut(300);
                 }
+            });
+
+
+
+            $('#add-fund').on('submit', function(e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                Swal.fire({
+                    title: "{{ translate('are_you_sure') . '?' }} ",
+                    text: '{{ translate('you_want_to_add_fund') }} ' + $('#amount').val() +
+                        ' {{ getCurrencyCode(type: 'default') . ' ' . translate('to') }} ' + $(
+                            '#form-customer option:selected').text() + '{{ translate('to_wallet') }}',
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: '#377dff',
+                    cancelButtonColor: '#dd3333',
+                    cancelButtonText: '{{ translate('no') }}',
+                    confirmButtonText: '{{ translate('add') }}',
+                    reverseButtons: true
+                }).then(result => {
+                    if (result.value) {
+                        $.ajaxSetup({
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            }
+                        });
+                        $.post({
+                            url: '{{ route('admin.customer.wallet.add-fund') }}',
+                            data: formData,
+                            cache: false,
+                            contentType: false,
+                            processData: false,
+                            success: function(data) {
+                                console.log(data);
+                                if (data.errors) {
+                                    $.each(data.errors, function(i, err) {
+                                        setTimeout(function() {
+                                            toastMagic.error(err.message);
+                                        }, 500 * (i + 1));
+                                    });
+                                } else {
+                                    toastMagic.success(
+                                        '{{ translate('fund_added_successfully') }}');
+                                    setTimeout(() => {
+                                        location.reload()
+                                    }, 500);
+                                }
+                            },
+                            complete: function() {}
+                        });
+                    }
+                })
             })
-        })
+        @endif
     </script>
 @endpush

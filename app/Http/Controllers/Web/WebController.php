@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\BusinessSetting;
 use App\Models\Cart;
+use App\Models\CartShipping;
 use App\Models\Category;
 use App\Models\Contact;
 use App\Models\Currency;
@@ -23,6 +24,7 @@ use App\Models\Review;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\ShippingAddress;
+use App\Models\ShippingType;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\User;
@@ -160,7 +162,7 @@ class WebController extends Controller
             }])
                 ->withCount('brandProducts')
                 ->when($request->has('search'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request['search'] . '%');
+                    $query->where('name', 'LIKE', '%'.$request['search'].'%');
                 });
 
             return view(VIEW_FILE_NAMES['all_brands'], [
@@ -213,7 +215,7 @@ class WebController extends Controller
             ?? $this->robotsMetaContentRepo->getFirstWhere(['page_name' => 'default']);
 
         if (getWebConfig('business_mode') === 'single') {
-            Toastr::warning(translate('access_denied') . ' !!');
+            Toastr::warning(translate('access_denied').' !!');
 
             return back();
         }
@@ -229,16 +231,16 @@ class WebController extends Controller
 
         $vendorsList = $shopQuery
             ->with([
-                'seller' => fn($query) => $query->withCount('orders')
-                    ->with(['product.reviews' => fn($query) => $query->active()]),
+                'seller' => fn ($query) => $query->withCount('orders')
+                    ->with(['product.reviews' => fn ($query) => $query->active()]),
             ])
             ->get()
-            ->map(fn($shop) => $this->shopService::calculateReviews($shop));
+            ->map(fn ($shop) => $this->shopService::calculateReviews($shop));
 
         $inhouseShop = $this->shopService->getInhouseShopData($request);
         if ($inhouseShop) {
             $vendorsList = $vendorsList->reject(
-                fn($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
+                fn ($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
             )->prepend($inhouseShop);
         }
         $vendorsList = $this->shopService->applyOrdering($vendorsList, $request);
@@ -414,10 +416,10 @@ class WebController extends Controller
 
         if ($isDigitalOnlyCart) {
             // Digital items need no shipping address — auto-set sessions if not already set
-            if (! session()->has('address_id')) {
+            if (! session()->has('address_id') || session('address_id') === null) {
                 session(['address_id' => 0, 'billing_address_id' => 0]);
             }
-        } elseif (! session('address_id') && ! session('billing_address_id')) {
+        } elseif (session('address_id') === null && session('billing_address_id') === null) {
             Toastr::error(translate('Please_update_address_information'));
 
             return redirect()->route('checkout-details');
@@ -723,7 +725,7 @@ class WebController extends Controller
                 if (empty($customerName) && $record->order) {
                     $order = $record->order;
                     if ($order->customer) {
-                        $customerName = $order->customer->name ?? $order->customer->f_name . ' ' . $order->customer->l_name;
+                        $customerName = $order->customer->name ?? $order->customer->f_name.' '.$order->customer->l_name;
                     } else {
                         $billingAddress = is_object($order->billing_address_data)
                             ? $order->billing_address_data
@@ -744,7 +746,19 @@ class WebController extends Controller
             return back()->with('error', 'Something went wrong!');
         }
 
-        if (! session('address_id') && ! session('billing_address_id')) {
+        // Check if cart is digital-only — no shipping address required
+        $isDigitalOnlyCart = ! Cart::where(auth('customer')->check()
+            ? ['customer_id' => auth('customer')->id()]
+            : ['temp_user_id' => session('guest_id')])
+            ->where('product_type', 'physical')
+            ->where('is_checked', 1)
+            ->exists();
+
+        if ($isDigitalOnlyCart) {
+            if (! session()->has('address_id') || session('address_id') === null) {
+                session(['address_id' => 0, 'billing_address_id' => 0]);
+            }
+        } elseif (session('address_id') === null && session('billing_address_id') === null) {
             Toastr::error(translate('Please_update_address_information'));
 
             return redirect()->route('checkout-details');
@@ -846,7 +860,20 @@ class WebController extends Controller
 
     public function checkout_complete_wallet(Request $request): View|RedirectResponse
     {
-        if (! session('address_id') && ! session('billing_address_id')) {
+        // Check if cart is digital-only — no shipping address required
+        $isDigitalOnlyCart = ! Cart::where(auth('customer')->check()
+            ? ['customer_id' => auth('customer')->id()]
+            : ['temp_user_id' => session('guest_id')])
+            ->where('product_type', 'physical')
+            ->where('is_checked', 1)
+            ->exists();
+
+        if ($isDigitalOnlyCart) {
+            // Digital products need no shipping address — auto-set sessions
+            if (! session()->has('address_id') || session('address_id') === null) {
+                session(['address_id' => 0, 'billing_address_id' => 0]);
+            }
+        } elseif (session('address_id') === null && session('billing_address_id') === null) {
             Toastr::error(translate('Please_update_address_information'));
 
             return redirect()->route('checkout-details');
@@ -869,7 +896,7 @@ class WebController extends Controller
 
         $user = Helpers::getCustomerInformation($request);
         if ($paymentAmount > $user->wallet_balance) {
-            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order') . '!!');
+            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order').'!!');
 
             return back();
         } else {
@@ -943,6 +970,54 @@ class WebController extends Controller
             || (getWebConfig(name: 'guest_checkout') && session()->has('guest_id') && session('guest_id'))
         ) {
             ProductManager::updateProductPriceInCartList(request: $request);
+
+            // Auto-assign default shipping method for physical products
+            $shippingMethodConfig = getWebConfig(name: 'shipping_method');
+            $cartGroups = CartManager::getCartListGroupQuery();
+            foreach ($cartGroups as $group) {
+                $hasPhysical = false;
+                $sellerId = null;
+                $sellerIs = null;
+                $cartGroupId = null;
+                foreach ($group as $item) {
+                    if ($item->product_type == 'physical' && $item->is_checked) {
+                        $hasPhysical = true;
+                        $sellerId = $item->seller_id;
+                        $sellerIs = $item->seller_is;
+                        $cartGroupId = $item->cart_group_id;
+                        break;
+                    }
+                }
+                if ($hasPhysical && $cartGroupId) {
+                    if ($shippingMethodConfig == 'inhouse_shipping') {
+                        $adminShipping = ShippingType::where('seller_id', 0)->first();
+                        $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
+                    } else {
+                        if ($sellerIs == 'admin') {
+                            $adminShipping = ShippingType::where('seller_id', 0)->first();
+                            $shippingType = isset($adminShipping) ? $adminShipping->shipping_type : 'order_wise';
+                        } else {
+                            $sellerShipping = ShippingType::where('seller_id', $sellerId)->first();
+                            $shippingType = isset($sellerShipping) ? $sellerShipping->shipping_type : 'order_wise';
+                        }
+                    }
+                    if ($shippingType == 'order_wise') {
+                        $existingShipping = CartShipping::where('cart_group_id', $cartGroupId)->first();
+                        if (! $existingShipping) {
+                            $shippingMethods = Helpers::getShippingMethods($sellerId, $sellerIs);
+                            if ($shippingMethods->count() > 0) {
+                                $defaultMethod = $shippingMethods->first();
+                                $cartShipping = new CartShipping;
+                                $cartShipping->cart_group_id = $cartGroupId;
+                                $cartShipping->shipping_method_id = $defaultMethod->id;
+                                $cartShipping->shipping_cost = $defaultMethod->cost;
+                                $cartShipping->save();
+                            }
+                        }
+                    }
+                }
+            }
+
             $topRatedShops = [];
             $newSellers = [];
             $currentDate = date('Y-m-d H:i:s');
@@ -1274,7 +1349,7 @@ class WebController extends Controller
     public function deleteWishlist(Request $request): JsonResponse|RedirectResponse
     {
         $this->wishlist->where(['product_id' => $request['id'], 'customer_id' => auth('customer')->id()])->delete();
-        $data = translate('product_has_been_remove_from_wishlist') . '!';
+        $data = translate('product_has_been_remove_from_wishlist').'!';
         $wishlists = $this->wishlist->where('customer_id', auth('customer')->id())->paginate(15);
         $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
         session()->forget('wish_list');
@@ -1387,7 +1462,7 @@ class WebController extends Controller
             if ($orderDetailsData->order->payment_status !== 'paid') {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('Payment_must_be_confirmed_first') . ' !!',
+                    'message' => translate('Payment_must_be_confirmed_first').' !!',
                 ]);
             }
 
@@ -1437,7 +1512,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('order_Not_Found') . ' !',
+                'message' => translate('order_Not_Found').' !',
             ]);
         }
     }
@@ -1483,7 +1558,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('the_OTP_is_incorrect') . ' !',
+                'message' => translate('the_OTP_is_incorrect').' !',
             ]);
         }
     }
@@ -1498,7 +1573,7 @@ class WebController extends Controller
             return response()->json([
                 'status' => 0,
                 'time_count' => CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
-                'message' => translate('Please_try_again_after') . ' ' . CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
+                'message' => translate('Please_try_again_after').' '.CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
             ]);
         } else {
             $guestEmail = '';
@@ -1548,7 +1623,7 @@ class WebController extends Controller
                         'userType' => 'customer',
                         'templateName' => 'digital-product-otp',
                         'subject' => translate('verification_Code'),
-                        'title' => translate('verification_Code') . '!',
+                        'title' => translate('verification_Code').'!',
                         'verificationCode' => $token,
                     ];
                     event(new DigitalProductOtpVerificationEvent(email: $guestEmail, data: $data));
@@ -1636,7 +1711,7 @@ class WebController extends Controller
                             'userType' => 'customer',
                             'templateName' => 'digital-product-otp',
                             'subject' => translate('verification_Code'),
-                            'title' => translate('verification_Code') . '!',
+                            'title' => translate('verification_Code').'!',
                             'verificationCode' => $token,
                         ];
                         event(new DigitalProductOtpVerificationEvent(email: $customer['email'], data: $data));
@@ -1735,7 +1810,7 @@ class WebController extends Controller
         Session::put('product_view_style', $request['value']);
 
         return response()->json([
-            'message' => translate('View_style_updated') . '!',
+            'message' => translate('View_style_updated').'!',
         ]);
     }
 

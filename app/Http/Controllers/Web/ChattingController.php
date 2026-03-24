@@ -118,7 +118,11 @@ class ChattingController extends BaseController
             $whereNotNull = ['user_id', 'delivery_man_id'];
             $relation = ['deliveryMan'];
             $type = 'delivery-man';
-            event(new ChattingEvent(key: 'message_from_customer', type: 'delivery_man', userData: $getUser, messageForm: $customer));
+            try {
+                event(new ChattingEvent(key: 'message_from_customer', type: 'delivery_man', userData: $getUser, messageForm: $customer));
+            } catch (\Throwable $e) {
+                // Broadcasting may fail if Pusher/WebSocket server is unavailable — ignore gracefully
+            }
         } elseif ($request->has(key: 'vendor_id') && $request['vendor_id'] == 0) {
             $this->chattingRepo->add(
                 data: $this->chattingService->addChattingDataForWeb(
@@ -134,7 +138,11 @@ class ChattingController extends BaseController
             $whereNotNull = ['user_id', 'admin_id'];
             $relation = ['admin'];
             $type = 'admin';
-            event(new ChattingEvent(key: 'message_from_customer', type: 'admin', userData: (object) ['id' => 0], messageForm: $customer));
+            try {
+                event(new ChattingEvent(key: 'message_from_customer', type: 'admin', userData: (object) ['id' => 0], messageForm: $customer));
+            } catch (\Throwable $e) {
+                // Broadcasting may fail if Pusher/WebSocket server is unavailable — ignore gracefully
+            }
         } else {
             $vendorData = $this->vendorRepo->getFirstWhere(params: ['id' => $request['vendor_id']], relations: ['shop']);
 
@@ -148,7 +156,11 @@ class ChattingController extends BaseController
                 )
             );
 
-            event(new ChattingEvent(key: 'message_from_customer', type: 'seller', userData: $vendorData, messageForm: $customer));
+            try {
+                event(new ChattingEvent(key: 'message_from_customer', type: 'seller', userData: $vendorData, messageForm: $customer));
+            } catch (\Throwable $e) {
+                // Broadcasting may fail if Pusher/WebSocket server is unavailable — ignore gracefully
+            }
             $getUser = $vendorData->shop;
             $requestColumn = 'seller_id';
             $requestId = $vendorData['id'];

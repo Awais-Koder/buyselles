@@ -172,6 +172,10 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::post('delete-wishlist', 'deleteWishlist')->name('delete-wishlist');
         Route::get('delete-wishlist-all', 'deleteAllWishListItems')->name('delete-wishlist-all')->middleware('customer');
         Route::get('searched-products-for-compare', 'getSearchedProductsForCompareList')->name('searched-products-compare'); // theme fashion compare list
+
+        Route::post('set-location', 'setLocation')->name('set-location');
+        Route::get('get-location-cities/{countryId}', 'getLocationCities')->name('get-location-cities');
+        Route::get('get-location-areas/{cityId}', 'getLocationAreas')->name('get-location-areas');
     });
 
     Route::controller(CurrencyController::class)->group(function () {

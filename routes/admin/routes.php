@@ -69,6 +69,7 @@ use App\Http\Controllers\Admin\Settings\FirebaseOTPVerificationController;
 use App\Http\Controllers\Admin\Settings\InhouseShopController;
 use App\Http\Controllers\Admin\Settings\InvoiceSettingsController;
 use App\Http\Controllers\Admin\Settings\LanguageController;
+use App\Http\Controllers\Admin\Settings\LocationController;
 use App\Http\Controllers\Admin\Settings\OrderSettingsController;
 use App\Http\Controllers\Admin\Settings\PagesController;
 use App\Http\Controllers\Admin\Settings\PrioritySetupController;
@@ -1051,6 +1052,35 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::controller(InvoiceSettingsController::class)->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::post('/', 'update')->name('update');
+                });
+            });
+
+            Route::group(['prefix' => 'location', 'as' => 'location.'], function () {
+                Route::controller(LocationController::class)->group(function () {
+                    // Countries
+                    Route::get('/', 'index')->name('index');
+                    Route::post('add-country', 'addCountry')->name('add-country');
+                    Route::post('update-country/{id}', 'updateCountry')->name('update-country');
+                    Route::delete('delete-country', 'deleteCountry')->name('delete-country');
+                    Route::post('country-status', 'updateCountryStatus')->name('country-status');
+
+                    // Cities
+                    Route::get('cities/{countryId}', 'cities')->name('cities');
+                    Route::post('add-city', 'addCity')->name('add-city');
+                    Route::post('update-city/{id}', 'updateCity')->name('update-city');
+                    Route::delete('delete-city', 'deleteCity')->name('delete-city');
+                    Route::post('city-status', 'updateCityStatus')->name('city-status');
+
+                    // Areas
+                    Route::get('areas/{cityId}', 'areas')->name('areas');
+                    Route::post('add-area', 'addArea')->name('add-area');
+                    Route::post('update-area/{id}', 'updateArea')->name('update-area');
+                    Route::delete('delete-area', 'deleteArea')->name('delete-area');
+                    Route::post('area-status', 'updateAreaStatus')->name('area-status');
+
+                    // AJAX dropdowns
+                    Route::get('get-cities/{countryId}', 'getCitiesByCountry')->name('get-cities');
+                    Route::get('get-areas/{cityId}', 'getAreasByCity')->name('get-areas');
                 });
             });
         });

@@ -45,7 +45,8 @@ class SendMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'email-templates.index', with: ['data' => $this->data, 'template' => $this->template, 'socialMedia' => $this->socialMedia]
+            view: 'email-templates.index',
+            with: ['data' => $this->data, 'template' => $this->template, 'socialMedia' => $this->socialMedia]
         );
     }
 
@@ -65,5 +66,19 @@ class SendMail extends Mailable
         }
 
         return [];
+    }
+
+    /**
+     * Send the message using the given mailer, then clean up temporary attachments.
+     */
+    public function send($mailer)
+    {
+        try {
+            return parent::send($mailer);
+        } finally {
+            if (isset($this->data['attachmentPath']) && file_exists($this->data['attachmentPath'])) {
+                @unlink($this->data['attachmentPath']);
+            }
+        }
     }
 }

@@ -100,7 +100,7 @@ class UserLoyaltyController extends Controller
         CustomerManager::create_loyalty_point_transaction($user->id, $walletTransaction->transaction_id, $request['point'], 'point_to_wallet');
 
         try {
-            Mail::to($user['email'])->send(new \App\Mail\AddFundToWallet($walletTransaction));
+            Mail::to($user['email'])->queue(new \App\Mail\AddFundToWallet($walletTransaction));
         } catch (\Exception $ex) {
         }
 

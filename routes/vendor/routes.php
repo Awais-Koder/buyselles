@@ -34,6 +34,7 @@ use App\Http\Controllers\Vendor\ReviewController;
 use App\Http\Controllers\Vendor\Shipping\CategoryShippingCostController;
 use App\Http\Controllers\Vendor\Shipping\ShippingMethodController;
 use App\Http\Controllers\Vendor\Shipping\ShippingTypeController;
+use App\Http\Controllers\Vendor\ServiceAreaController;
 use App\Http\Controllers\Vendor\ShopController;
 use App\Http\Controllers\Vendor\SystemController;
 use App\Http\Controllers\Vendor\TransactionReportController;
@@ -322,6 +323,16 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::get('other-setup', 'getOtherSetupView')->name('other-setup');
                 });
 
+                Route::group(['prefix' => 'service-areas', 'as' => 'service-areas.'], function () {
+                    Route::controller(ServiceAreaController::class)->group(function () {
+                        Route::get('', 'index')->name('index');
+                        Route::post('update', 'update')->name('update');
+                        Route::get('get-cities/{countryId}', 'getCitiesByCountry')->name('get-cities');
+                        Route::get('get-areas/{cityId}', 'getAreasByCity')->name('get-areas');
+                    });
+                });
+
+                //Vendor custom payment methods disabled — vendors must use admin-defined withdrawal methods only -
                 Route::group(['prefix' => 'payment-information', 'as' => 'payment-information.'], function () {
                     Route::controller(VendorPaymentInfoController::class)->group(function () {
                         Route::get('', 'index')->name('index');

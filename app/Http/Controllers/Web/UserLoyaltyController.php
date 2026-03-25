@@ -131,7 +131,7 @@ class UserLoyaltyController extends Controller
         $this->loyaltyPointTransactionRepo->addLoyaltyPointTransaction(userId: $user['id'], reference: $walletTransaction['transaction_id'], amount: $request['point'], transactionType: 'point_to_wallet');
 
         try {
-            Mail::to($user['email'])->send(new AddFundToWallet($walletTransaction));
+            Mail::to($user['email'])->queue(new AddFundToWallet($walletTransaction));
         } catch (Exception $ex) {
         }
 

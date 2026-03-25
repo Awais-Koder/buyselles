@@ -6,15 +6,10 @@
     <div class="content container-fluid">
         <h1 class="mb-3 text-capitalize">{{ translate('withdraw') }}</h1>
 
-        <div class="d-flex gap-2 alert alert-soft-warning mb-3" role="alert">
+        <div class="d-flex gap-2 alert alert-soft-info mb-3" role="alert">
             <i class="fi fi-sr-info"></i>
             <p class="fs-12 mb-0 text-dark">
-                {{ translate('if_you_want_to_add_withdraw_details_you_can_go_to') }}
-                <a href="{{ route('vendor.shop.payment-information.index') }}" target="_blank"
-                    class="text-underline font-weight-bold">
-                    {{ translate('Payment_Options_page') }}
-                </a>
-                {{ translate('this_setup_will_help_to_easy_withdraw_request_send.') }}
+                {{ translate('select_a_withdrawal_method_from_the_available_options_and_fill_in_the_required_details_to_send_your_withdraw_request.') }}
             </p>
         </div>
 
@@ -89,8 +84,9 @@
         <div class="card">
             <div class="card-body">
                 <div class="inline-page-menu mb-4">
-                    @php $activeStatus = request('status', 'all');
-                         $count = $withdrawRequests->count();
+                    @php
+                        $activeStatus = request('status', 'all');
+                        $count = $withdrawRequests->count();
                     @endphp
 
                     <div class="inline-page-menu mb-4">
@@ -141,8 +137,7 @@
                             <form action="{{ route('vendor.business-settings.withdraw.index') }}" method="GET">
                                 <div class="input-group">
                                     <input type="text" name="search" class="form-control"
-                                        placeholder="{{ translate('Search_By_Amount') }}"
-                                           value="{{ request('search') }}">
+                                        placeholder="{{ translate('Search_By_Amount') }}" value="{{ request('search') }}">
                                     <div class="input-group-append">
                                         <button type="submit" class="input-group-text bg-light">
                                             <i class="fi fi-rr-search"></i>

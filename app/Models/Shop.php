@@ -53,6 +53,7 @@ class Shop extends Model
         'name',
         'slug',
         'address',
+        'location_area_id',
         'contact',
         'image',
         'image_storage_type',
@@ -96,6 +97,11 @@ class Shop extends Model
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'seller_id');
+    }
+
+    public function locationArea(): BelongsTo
+    {
+        return $this->belongsTo(LocationArea::class, 'location_area_id');
     }
 
     // old relation: product

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\DemoMaskingTrait;
 use App\Traits\StorageTrait;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -114,6 +115,17 @@ class Seller extends Authenticatable
             ->where(['coupon_bearer' => 'seller', 'status' => 1])
             ->whereDate('start_date', '<=', date('Y-m-d'))
             ->whereDate('expire_date', '>=', date('Y-m-d'));
+    }
+
+    public function serviceAreas(): BelongsToMany
+    {
+        return $this->belongsToMany(LocationArea::class, 'seller_service_areas', 'seller_id', 'area_id')
+            ->withTimestamps();
+    }
+
+    public function shippingRates(): HasMany
+    {
+        return $this->hasMany(VendorShippingRate::class, 'seller_id');
     }
 
     public function getImageFullUrlAttribute(): array

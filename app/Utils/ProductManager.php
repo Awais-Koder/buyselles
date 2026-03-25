@@ -19,6 +19,7 @@ use App\Models\ProductTag;
 use App\Models\PublishingHouse;
 use App\Models\RestockProduct;
 use App\Models\Review;
+use App\Models\SellerServiceArea;
 use App\Models\ShippingMethod;
 use App\Models\ShippingType;
 use App\Models\Shop;
@@ -192,15 +193,22 @@ class ProductManager
         $productListData = Product::active()->withSum('orderDetails', 'qty', function ($query) {
             $query->where('delivery_status', 'delivered');
         })
-            ->with(['seller.shop', 'category', 'reviews', 'rating', 'flashDealProducts.flashDeal',
+            ->with([
+                'seller.shop',
+                'category',
+                'reviews',
+                'rating',
+                'flashDealProducts.flashDeal',
                 'wishList' => function ($query) use ($user) {
                     return $query->where('customer_id', $user != 'offline' ? $user->id : '0');
                 },
                 'compareList' => function ($query) use ($user) {
                     return $query->where('user_id', $user != 'offline' ? $user->id : '0');
-                }, 'clearanceSale' => function ($query) {
+                },
+                'clearanceSale' => function ($query) {
                     return $query->active();
-                }])
+                },
+            ])
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
             }]);
@@ -253,15 +261,22 @@ class ProductManager
         $productListData = Product::active()->withSum('orderDetails', 'qty', function ($query) {
             $query->where('delivery_status', 'delivered');
         })
-            ->with(['seller.shop', 'category', 'reviews', 'rating', 'flashDealProducts.flashDeal',
+            ->with([
+                'seller.shop',
+                'category',
+                'reviews',
+                'rating',
+                'flashDealProducts.flashDeal',
                 'wishList' => function ($query) use ($user) {
                     return $query->where('customer_id', $user != 'offline' ? $user->id : '0');
                 },
                 'compareList' => function ($query) use ($user) {
                     return $query->where('user_id', $user != 'offline' ? $user->id : '0');
-                }, 'clearanceSale' => function ($query) {
+                },
+                'clearanceSale' => function ($query) {
                     return $query->active();
-                }])
+                },
+            ])
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
             }]);
@@ -951,7 +966,6 @@ class ProductManager
                 $delivery_cost = $CategoryShippingCost ?
                     ($CategoryShippingCost->multiply_qty != 0 ? ($CategoryShippingCost->cost * $quantity) : $CategoryShippingCost->cost)
                     : 0;
-
             } elseif ($shipping_type->shipping_type == 'product_wise') {
                 $delivery_cost = $product->multiply_qty != 0 ? ($product->shipping_cost * $quantity) : $product->shipping_cost;
             } elseif ($shipping_type->shipping_type == 'order_wise') {
@@ -1802,11 +1816,15 @@ class ProductManager
             ->when($request->sub_sub_category_id, fn ($query) => $query->where('sub_sub_category_id', $request->sub_sub_category_id))
             ->when($request->product_type, fn ($query) => $query->where('product_type', $request->product_type))
             ->when($request->publishing_house_id, function ($query) use ($request) {
-                $query->whereHas('digitalProductPublishingHouse', fn ($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
+                $query->whereHas(
+                    'digitalProductPublishingHouse',
+                    fn ($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
                 );
             })
             ->when($request->author_id, function ($query) use ($request) {
-                $query->whereHas('digitalProductAuthors', fn ($subQuery) => $subQuery->where('author_id', $request->author_id)
+                $query->whereHas(
+                    'digitalProductAuthors',
+                    fn ($subQuery) => $subQuery->where('author_id', $request->author_id)
                 );
             });
     }
@@ -2102,6 +2120,16 @@ class ProductManager
             ->when(in_array($request['product_type'], ['physical', 'digital']), function ($query) use ($request) {
                 return $query->where(['product_type' => $request['product_type']]);
             })
+            ->when($request['area_id'] ?? session('location_area_id'), function ($query, $areaId) {
+                $sellerIds = SellerServiceArea::where('area_id', $areaId)->pluck('seller_id');
+
+                return $query->where(function ($q) use ($sellerIds) {
+                    $q->where('added_by', 'admin')
+                        ->orWhere(function ($q2) use ($sellerIds) {
+                            $q2->where('added_by', 'seller')->whereIn('user_id', $sellerIds);
+                        });
+                });
+            })
             ->withCount(['reviews' => function ($query) {
                 $query->active();
             }])
@@ -2140,7 +2168,7 @@ class ProductManager
             })
             ->when(
                 ($request['data_from'] == 'category' && ($request['category_id'] || $request['sub_category_id'] || $request['sub_sub_category_id'])) ||
-                ($request->has('category_ids') && ! empty($request['category_ids']) && is_array($request['category_ids'])),
+                    ($request->has('category_ids') && ! empty($request['category_ids']) && is_array($request['category_ids'])),
                 function ($query) use ($request, $productAddedBy, $productUserID) {
                     return self::addAdditionalQueryForCategoryWithSubCategories(
                         request: $request,
@@ -2148,7 +2176,8 @@ class ProductManager
                         productAddedBy: $productAddedBy,
                         productUserID: $productUserID,
                     );
-                })
+                }
+            )
             ->when($request->has('publishing_house_id') && $request['publishing_house_id'] != '' && $request['publishing_house_id'] != 0, function ($query) use ($request) {
                 $digitalPublishingHouseIds = DigitalProductPublishingHouse::whereHas('product', function ($query) {
                     return $query->active();
@@ -2590,7 +2619,9 @@ class ProductManager
 
     public static function addAdditionalQueryForCategoryWithSubCategories(
         object|array $request,
-        object|array $query, mixed $productAddedBy, mixed $productUserID
+        object|array $query,
+        mixed $productAddedBy,
+        mixed $productUserID
     ) {
         if ($request->has('category_ids') && ! empty($request['category_ids']) && is_array($request['category_ids'])) {
             $getCategories = Category::whereIn('id', ($request['category_ids'] ?? [0]))->get();
@@ -2773,7 +2804,9 @@ class ProductManager
 
     public static function filterQueryForCategoryWithSubCategories(
         object|array $request,
-        object|array $query, mixed $productAddedBy = null, mixed $productUserID = null
+        object|array $query,
+        mixed $productAddedBy = null,
+        mixed $productUserID = null
     ) {
         if (isset($request['filter_category_ids']) && ! empty($request['filter_category_ids']) && is_array($request['filter_category_ids'])) {
             $getCategories = Category::whereIn('id', ($request['filter_category_ids'] ?? [0]))->get();

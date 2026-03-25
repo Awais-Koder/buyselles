@@ -50,12 +50,6 @@ class WithdrawController extends BaseController
         );
 
         $withdrawalMethods = $this->withdrawalMethodRepo->getListWhere(filters: ['is_active' => 1], dataLimit: 'all');
-        $vendorWithdrawMethods = $this->vendorWithdrawMethodInfoRepo->getListWhere(
-            orderBy: ['method_name' => 'asc'],
-            filters: ['user_id' => $vendorId, 'is_active' => 1],
-            relations: ['withdraw_method'],
-            dataLimit: 'all'
-        );
 
         updateSetupGuideCacheKey(key: 'withdraw_setup', panel: 'vendor');
 
@@ -63,7 +57,6 @@ class WithdrawController extends BaseController
             'vendorWallet' => $vendorWallet,
             'withdrawRequests' => $withdrawRequests,
             'withdrawalMethods' => $withdrawalMethods,
-            'vendorWithdrawMethods' => $vendorWithdrawMethods,
         ]);
     }
 
@@ -72,32 +65,14 @@ class WithdrawController extends BaseController
         $vendorId = auth('seller')->id();
         $vendorWallet = $this->vendorWalletRepo->getFirstWhere(params: ['seller_id' => $vendorId]);
 
-        if ($request['method_type'] == 'custom') {
-            $vendorWithdrawMethod = $this->vendorWithdrawMethodInfoRepo->getFirstWhere(
-                params: ['user_id' => $vendorId, 'id' => $request['method_id']],
-                relations: ['withdraw_method'],
-            );
-            $withdrawalMethod = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $vendorWithdrawMethod['withdraw_method_id']]);
+        $withdrawalMethod = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['method_id']]);
 
-            return response()->json([
-                'htmlView' => view('vendor-views.withdraw._withdraw-request-method-filed', [
-                    'method_type' => $request['method_type'],
-                    'vendorWallet' => $vendorWallet,
-                    'withdrawalMethod' => $withdrawalMethod,
-                    'vendorWithdrawMethod' => $vendorWithdrawMethod,
-                ])->render(),
-            ]);
-        } else {
-            $withdrawalMethod = $this->withdrawalMethodRepo->getFirstWhere(params: ['id' => $request['method_id']]);
-
-            return response()->json([
-                'htmlView' => view('vendor-views.withdraw._withdraw-request-method-filed', [
-                    'method_type' => $request['method_type'],
-                    'vendorWallet' => $vendorWallet,
-                    'withdrawalMethod' => $withdrawalMethod,
-                ])->render(),
-            ]);
-        }
+        return response()->json([
+            'htmlView' => view('vendor-views.withdraw._withdraw-request-method-filed', [
+                'vendorWallet' => $vendorWallet,
+                'withdrawalMethod' => $withdrawalMethod,
+            ])->render(),
+        ]);
     }
 
     /**
@@ -139,7 +114,7 @@ class WithdrawController extends BaseController
                 )
             );
             $this->withdrawRequestRepo->delete(['id' => $withdrawRequest['id']]);
-            ToastMagic::success(message: translate('withdraw_request_closed').'!');
+            ToastMagic::success(message: translate('withdraw_request_closed') . '!');
         } else {
             ToastMagic::error(message: translate('invalid_withdraw_request'));
         }

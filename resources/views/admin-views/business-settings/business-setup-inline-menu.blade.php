@@ -8,7 +8,7 @@
         </li>
         <li class="nav-item">
             <a class="nav-link {{ Request::is('admin/business-settings/website-setup') ? 'active' : '' }}"
-            href="{{ route('admin.business-settings.website-setup') }}">
+                href="{{ route('admin.business-settings.website-setup') }}">
                 {{ translate('Website_Setup') }}
             </a>
         </li>
@@ -44,7 +44,7 @@
         </li>
         <li class="nav-item">
             <a class="nav-link {{ Request::is('admin/business-settings/refund-setup') ? 'active' : '' }}"
-            href="{{ route('admin.business-settings.refund-setup') }}">
+                href="{{ route('admin.business-settings.refund-setup') }}">
                 {{ translate('Refund') }}
             </a>
         </li>
@@ -58,6 +58,12 @@
             <a class="nav-link {{ Request::is('admin/business-settings/delivery-zone') ? 'active' : '' }}"
                 href="{{ route('admin.business-settings.delivery-zone.index') }}">
                 {{ translate('Delivery_Zone') }}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ Request::is('admin/business-settings/location*') ? 'active' : '' }}"
+                href="{{ route('admin.business-settings.location.index') }}">
+                {{ translate('Location_Setup') }}
             </a>
         </li>
         <li class="nav-item">

@@ -1087,6 +1087,7 @@
                     Request::is('admin/business-settings/shipping-method/index') ||
                     Request::is('admin/business-settings/order-settings/index') ||
                     Request::is('admin/business-settings/invoice-settings') ||
+                    Request::is('admin/business-settings/location*') ||
                     Request::is('admin/business-settings/delivery-zone')
                         ? 'active'
                         : '' }}"

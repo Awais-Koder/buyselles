@@ -1839,4 +1839,51 @@ class WebController extends Controller
             'methodHtml' => view(VIEW_FILE_NAMES['pay_offline_method_list_partials'], compact('method', 'totalOfflineAmount'))->render(),
         ]);
     }
+
+    public function setLocation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'country_id' => 'nullable|integer',
+            'city_id' => 'nullable|integer',
+            'area_id' => 'nullable|integer',
+        ]);
+
+        if ($request['area_id']) {
+            $area = \App\Models\LocationArea::with('city.country')->where('is_active', true)->find($request['area_id']);
+            if ($area) {
+                session([
+                    'location_country_id' => $area->city->country_id,
+                    'location_city_id' => $area->city_id,
+                    'location_area_id' => $area->id,
+                    'location_label' => $area->name.', '.$area->city->name,
+                ]);
+            }
+        } else {
+            session()->forget(['location_country_id', 'location_city_id', 'location_area_id', 'location_label']);
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
+    public function getLocationCities(int $countryId): JsonResponse
+    {
+        $cities = \App\Models\LocationCity::where('country_id', $countryId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($cities);
+    }
+
+    public function getLocationAreas(int $cityId): JsonResponse
+    {
+        $areas = \App\Models\LocationArea::where('city_id', $cityId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($areas);
+    }
 }

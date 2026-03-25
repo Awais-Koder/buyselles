@@ -7,6 +7,32 @@
         <span class="__close-announcement web-announcement-slideUp">X</span>
     </div>
 @endif
+<style>
+    /* Auth: JS-controlled hover — disable CSS hover to prevent flicker */
+    @media (min-width: 768px) {
+        .navbar-expand-md .__auth-hover:hover>.dropdown-menu {
+            display: none !important;
+            animation: none !important;
+            -webkit-animation: none !important;
+        }
+
+        .navbar-expand-md .__auth-hover>.dropdown-menu.__hover-visible {
+            display: block !important;
+        }
+    }
+
+    /* Cart: JS controls hover — disable all CSS hover for cart */
+    @media (min-width: 768px) {
+        #cart_items .navbar-tool.dropdown:hover > .dropdown-menu {
+            display: none !important;
+            animation: none !important;
+            -webkit-animation: none !important;
+        }
+        #cart_items .navbar-tool.dropdown > .dropdown-menu.__cart-visible {
+            display: block !important;
+        }
+    }
+</style>
 <header class="rtl __inline-10">
     <div class="topbar">
         <div class="container">
@@ -205,9 +231,8 @@
                         </a>
                     </div>
                     @if (auth('customer')->check())
-                        <div class="dropdown">
-                            <a class="navbar-tool ml-3" type="button" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false">
+                        <div class="navbar-tool dropdown __auth-hover">
+                            <a class="navbar-tool ml-3" href="javascript:">
                                 <div class="navbar-tool-icon-box bg-secondary">
                                     <div class="navbar-tool-icon-box bg-secondary">
                                         <img class="img-profile rounded-circle __inline-14" alt=""
@@ -234,10 +259,10 @@
                             </div>
                         </div>
                     @else
-                        <div class="dropdown">
+                        <div
+                            class="navbar-tool dropdown __auth-hover {{ Session::get('direction') === 'rtl' ? 'mr-md-3' : 'ml-md-3' }}">
                             <a class="navbar-tool {{ Session::get('direction') === 'rtl' ? 'mr-md-3' : 'ml-md-3' }}"
-                                type="button" data-toggle="dropdown" aria-haspopup="true" href="#"
-                                rel="nofollow" aria-expanded="false">
+                                href="javascript:">
                                 <div class="navbar-tool-icon-box bg-secondary">
                                     <div class="navbar-tool-icon-box bg-secondary">
                                         <svg width="16" height="17" viewBox="0 0 16 17" fill="none"
@@ -246,7 +271,6 @@
                                                 d="M4.25 4.41675C4.25 6.48425 5.9325 8.16675 8 8.16675C10.0675 8.16675 11.75 6.48425 11.75 4.41675C11.75 2.34925 10.0675 0.666748 8 0.666748C5.9325 0.666748 4.25 2.34925 4.25 4.41675ZM14.6667 16.5001H15.5V15.6667C15.5 12.4509 12.8825 9.83341 9.66667 9.83341H6.33333C3.11667 9.83341 0.5 12.4509 0.5 15.6667V16.5001H14.6667Z"
                                                 fill="{{ $web_config['primary_color'] ?? '#1B7FED' }}" />
                                         </svg>
-
                                     </div>
                                 </div>
                             </a>
@@ -694,9 +718,54 @@
     <script>
         "use strict";
 
+        // Auth dropdown — JS-controlled hover, same pattern as cart
+        (function () {
+            var $authWrappers = $('.__auth-hover');
+            $authWrappers.each(function () {
+                var $wrapper = $(this);
+                var $menu = $wrapper.find('.dropdown-menu');
+                var hideTimer;
+                $wrapper.on('mouseenter', function () {
+                    clearTimeout(hideTimer);
+                    $menu.addClass('__hover-visible');
+                }).on('mouseleave', function () {
+                    hideTimer = setTimeout(function () { $menu.removeClass('__hover-visible'); }, 300);
+                });
+                $menu.on('mouseenter', function () {
+                    clearTimeout(hideTimer);
+                }).on('mouseleave', function () {
+                    hideTimer = setTimeout(function () { $menu.removeClass('__hover-visible'); }, 300);
+                });
+            });
+        })();
+
+        // Cart dropdown — fully JS-controlled hover, immune to CSS conflicts
+        (function () {
+            var $wrapper = $('#cart_items').find('.navbar-tool.dropdown');
+            if (!$wrapper.length) return;
+            var $menu = $wrapper.find('.dropdown-menu');
+            var hideTimer;
+
+            function openCart() {
+                clearTimeout(hideTimer);
+                $menu.addClass('__cart-visible');
+            }
+
+            function closeCart() {
+                hideTimer = setTimeout(function () {
+                    $menu.removeClass('__cart-visible');
+                }, 300);
+            }
+
+            $wrapper.on('mouseenter', openCart).on('mouseleave', closeCart);
+            $menu.on('mouseenter', function () { clearTimeout(hideTimer); }).on('mouseleave', closeCart);
+        })();
+
         $(".category-menu").find(".mega_menu").parents("li")
             .addClass("has-sub-item").find("> a")
             .append("<i class='czi-arrow-{{ Session::get('direction') === 'rtl' ? 'left' : 'right' }}'></i>");
+
+
 
         // Header location selector
         (function() {

@@ -162,6 +162,25 @@
                 channel.bind('chatting', function(data) {
                     showChatNotification(data.message || '{{ translate('New_Message') }}');
                 });
+
+                // --- Order status change notifications ---
+                var orderChannel = pusher.subscribe('private-admin.orders');
+                orderChannel.bind('order-status-changed', function(data) {
+                    var orderAlert = $('#order-status-notification');
+                    var orderAlertMsg = $('#order-status-notification-message');
+                    var orderAlertLink = $('#order-status-notification-link');
+                    orderAlertMsg.html(data.message || '{{ translate('Order_Status_Changed') }}');
+                    if (data.order_id) {
+                        orderAlertLink.attr('href', '{{ url('/admin/orders/details') }}/' + data.order_id);
+                    }
+                    orderAlert.addClass('active');
+                    if (typeof playAudio === 'function') {
+                        playAudio();
+                    }
+                    setTimeout(function() {
+                        orderAlert.removeClass('active');
+                    }, 6000);
+                });
             } catch (e) {
                 console.warn('Reverb connection failed, falling back to polling.', e);
             }

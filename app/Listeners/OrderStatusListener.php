@@ -2,17 +2,17 @@
 
 namespace App\Listeners;
 
+use App\Enums\EmailTemplateKey;
+use App\Events\OrderStatusBroadcastEvent;
 use App\Events\OrderStatusEvent;
-use App\Mail\OrderStatusChanged;
-use App\Models\Order;
 use App\Models\ShippingAddress;
+use App\Traits\EmailTemplateTrait;
 use App\Traits\PushNotificationTrait;
 use Exception;
-use Illuminate\Support\Facades\Mail;
 
 class OrderStatusListener
 {
-    use PushNotificationTrait;
+    use EmailTemplateTrait, PushNotificationTrait;
 
     /**
      * Create the event listener.
@@ -28,6 +28,7 @@ class OrderStatusListener
     public function handle(OrderStatusEvent $event): void
     {
         $this->sendNotification($event);
+        $this->broadcastStatusChange($event);
 
         if ($event->type === 'customer') {
             $this->sendStatusEmail($event);
@@ -42,20 +43,76 @@ class OrderStatusListener
         $this->sendOrderNotification(key: $key, type: $type, order: $order);
     }
 
+    private function broadcastStatusChange(OrderStatusEvent $event): void
+    {
+        try {
+            $order = $event->order;
+            $customerName = $order->is_guest
+                ? translate('Guest')
+                : trim(($order->customer->f_name ?? '').' '.($order->customer->l_name ?? ''));
+
+            event(new OrderStatusBroadcastEvent(
+                orderId: $order->id,
+                status: $event->key,
+                customerName: $customerName,
+                sellerId: $order->seller_id ? (int) $order->seller_id : null,
+                customerId: ! $order->is_guest ? (int) $order->customer_id : null,
+            ));
+        } catch (Exception $exception) {
+            // Broadcast failure should not block order flow
+        }
+    }
+
     private function sendStatusEmail(OrderStatusEvent $event): void
     {
-        $emailServicesSmtp = getWebConfig(name: 'mail_config');
-        if ($emailServicesSmtp['status'] == 0) {
-            $emailServicesSmtp = getWebConfig(name: 'mail_config_sendgrid');
-        }
+        $order = $event->order;
 
-        if ($emailServicesSmtp['status'] != 1) {
+        $templateMap = [
+            'confirmed' => EmailTemplateKey::ORDER_CONFIRMED,
+            'processing' => EmailTemplateKey::ORDER_PROCESSING,
+            'out_for_delivery' => EmailTemplateKey::ORDER_OUT_FOR_DELIVERY,
+            'delivered' => EmailTemplateKey::ORDER_DELIVERED,
+            'returned' => EmailTemplateKey::ORDER_RETURNED,
+            'failed' => EmailTemplateKey::ORDER_FAILED,
+            'canceled' => EmailTemplateKey::ORDER_CANCELED,
+        ];
+
+        $templateName = $templateMap[$event->key] ?? null;
+        if (! $templateName) {
             return;
         }
 
-        $order = $event->order;
-        $email = null;
+        $email = $this->resolveCustomerEmail($order);
+        if (! $email) {
+            return;
+        }
 
+        $customerName = $order->is_guest
+            ? translate('Valued_Customer')
+            : trim(($order->customer->f_name ?? '').' '.($order->customer->l_name ?? ''));
+
+        $data = [
+            'userName' => $customerName,
+            'userType' => 'customer',
+            'templateName' => $templateName,
+            'orderId' => $order->id,
+            'subject' => translate('order').' #'.$order->id.' - '.translate('status_update'),
+        ];
+
+        try {
+            $this->sendingMail(
+                sendMailTo: $email,
+                userType: 'customer',
+                templateName: $templateName,
+                data: $data,
+            );
+        } catch (Exception $exception) {
+            // Silently fail — email delivery should not block order flow
+        }
+    }
+
+    private function resolveCustomerEmail(mixed $order): ?string
+    {
         if ($order->is_guest) {
             $shippingAddress = is_string($order->shipping_address_data)
                 ? json_decode($order->shipping_address_data)
@@ -73,35 +130,10 @@ class OrderStatusListener
                 $address = ShippingAddress::find($order->shipping_address);
                 $email = $address->email ?? null;
             }
-        } else {
-            $customer = $order->customer ?? null;
-            $email = $customer->email ?? null;
+
+            return $email;
         }
 
-        if (! $email) {
-            return;
-        }
-
-        $statusMap = [
-            'order_pending_message' => 'pending',
-            'order_confirmation_message' => 'confirmed',
-            'order_processing_message' => 'processing',
-            'out_for_delivery_message' => 'out_for_delivery',
-            'order_delivered_message' => 'delivered',
-            'order_returned_message' => 'returned',
-            'order_failed_message' => 'failed',
-            'order_canceled' => 'canceled',
-        ];
-
-        $orderStatus = $statusMap[$event->key] ?? $event->key;
-
-        try {
-            Mail::to($email)->send(new OrderStatusChanged(
-                orderId: (int) $order->id,
-                orderStatus: $orderStatus
-            ));
-        } catch (Exception $exception) {
-            // Silently fail — email delivery should not block order flow
-        }
+        return $order->customer->email ?? null;
     }
 }

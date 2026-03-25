@@ -240,7 +240,7 @@
     })
     if (/MSIE \d|Trident.*rv:/.test(navigator.userAgent)) document.write(
         '<script src="{{ dynamicAsset(path: 'public/assets/back-end') }}/vendor/babel-polyfill/polyfill.min.js"><\/script>'
-        );
+    );
 </script>
 @if (env('APP_MODE') == 'demo')
     <script>
@@ -335,6 +335,25 @@
                 setTimeout(function() {
                     chattingNewNotificationAlert.removeClass('active');
                 }, 5000);
+            });
+
+            // --- Order status change notifications ---
+            var orderChannel = pusher.subscribe('private-seller.' + sellerId + '.orders');
+            orderChannel.bind('order-status-changed', function(data) {
+                var orderAlert = $('#order-status-notification');
+                var orderAlertMsg = $('#order-status-notification-message');
+                var orderAlertLink = $('#order-status-notification-link');
+                orderAlertMsg.html(data.message || '{{ translate('Order_Status_Changed') }}');
+                if (data.order_id) {
+                    orderAlertLink.attr('href', '{{ url('/vendor/orders/details') }}/' + data.order_id);
+                }
+                orderAlert.addClass('active');
+                if (typeof playAudio === 'function') {
+                    playAudio();
+                }
+                setTimeout(function() {
+                    orderAlert.removeClass('active');
+                }, 6000);
             });
         } catch (e) {
             console.warn('Reverb connection failed, polling fallback active.', e);

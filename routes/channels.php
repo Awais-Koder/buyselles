@@ -24,3 +24,18 @@ Broadcast::channel('admin.chat', function () {
 Broadcast::channel('seller.{sellerId}.chat', function ($seller, int $sellerId) {
     return (int) $seller->id === $sellerId;
 }, ['guards' => ['seller']]);
+
+// Admin order status channel — authenticated via admin guard
+Broadcast::channel('admin.orders', function () {
+    return auth('admin')->check();
+}, ['guards' => ['admin']]);
+
+// Vendor order status channel — authenticated via seller guard
+Broadcast::channel('seller.{sellerId}.orders', function ($seller, int $sellerId) {
+    return (int) $seller->id === $sellerId;
+}, ['guards' => ['seller']]);
+
+// Customer order status channel — authenticated via customer (web) guard
+Broadcast::channel('customer.{customerId}.orders', function ($user, int $customerId) {
+    return (int) $user->id === $customerId;
+});

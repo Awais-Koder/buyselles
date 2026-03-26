@@ -23,12 +23,13 @@
 
     /* Cart: JS controls hover — disable all CSS hover for cart */
     @media (min-width: 768px) {
-        #cart_items .navbar-tool.dropdown:hover > .dropdown-menu {
+        #cart_items .navbar-tool.dropdown:hover>.dropdown-menu {
             display: none !important;
             animation: none !important;
             -webkit-animation: none !important;
         }
-        #cart_items .navbar-tool.dropdown > .dropdown-menu.__cart-visible {
+
+        #cart_items .navbar-tool.dropdown>.dropdown-menu.__cart-visible {
             display: block !important;
         }
     }
@@ -68,7 +69,7 @@
                     </div>
                 @endif
 
-                @php($headerLocationCountries = \App\Models\LocationCountry::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']))
+                @php($headerLocationCountries = \App\Utils\LocationManager::getActiveCountries())
                 @if ($headerLocationCountries->count() > 0)
                     <div class="topbar-text dropdown disable-autohide mr-4">
                         <a class="topbar-link dropdown-toggle" href="#" data-toggle="dropdown"
@@ -719,28 +720,32 @@
         "use strict";
 
         // Auth dropdown — JS-controlled hover, same pattern as cart
-        (function () {
+        (function() {
             var $authWrappers = $('.__auth-hover');
-            $authWrappers.each(function () {
+            $authWrappers.each(function() {
                 var $wrapper = $(this);
                 var $menu = $wrapper.find('.dropdown-menu');
                 var hideTimer;
-                $wrapper.on('mouseenter', function () {
+                $wrapper.on('mouseenter', function() {
                     clearTimeout(hideTimer);
                     $menu.addClass('__hover-visible');
-                }).on('mouseleave', function () {
-                    hideTimer = setTimeout(function () { $menu.removeClass('__hover-visible'); }, 300);
+                }).on('mouseleave', function() {
+                    hideTimer = setTimeout(function() {
+                        $menu.removeClass('__hover-visible');
+                    }, 300);
                 });
-                $menu.on('mouseenter', function () {
+                $menu.on('mouseenter', function() {
                     clearTimeout(hideTimer);
-                }).on('mouseleave', function () {
-                    hideTimer = setTimeout(function () { $menu.removeClass('__hover-visible'); }, 300);
+                }).on('mouseleave', function() {
+                    hideTimer = setTimeout(function() {
+                        $menu.removeClass('__hover-visible');
+                    }, 300);
                 });
             });
         })();
 
         // Cart dropdown — fully JS-controlled hover, immune to CSS conflicts
-        (function () {
+        (function() {
             var $wrapper = $('#cart_items').find('.navbar-tool.dropdown');
             if (!$wrapper.length) return;
             var $menu = $wrapper.find('.dropdown-menu');
@@ -752,13 +757,15 @@
             }
 
             function closeCart() {
-                hideTimer = setTimeout(function () {
+                hideTimer = setTimeout(function() {
                     $menu.removeClass('__cart-visible');
                 }, 300);
             }
 
             $wrapper.on('mouseenter', openCart).on('mouseleave', closeCart);
-            $menu.on('mouseenter', function () { clearTimeout(hideTimer); }).on('mouseleave', closeCart);
+            $menu.on('mouseenter', function() {
+                clearTimeout(hideTimer);
+            }).on('mouseleave', closeCart);
         })();
 
         $(".category-menu").find(".mega_menu").parents("li")

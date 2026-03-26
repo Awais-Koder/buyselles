@@ -478,7 +478,7 @@ class CartManager
             'is_guest' => ($user == 'offline' ? 1 : 0),
         ];
 
-        $cartCheck = Cart::where(['customer_id' => $customerId, 'is_guest' => $isGuest, 'seller_id' => ($product->added_by == 'admin') ? 1 : $product->user_id, 'seller_is' => $product->added_by])->first();
+        $cartCheck = Cart::where(['customer_id' => $customerId, 'is_guest' => $isGuest, 'seller_id' => ($product->added_by == 'admin') ? 1 : $product->user_id, 'seller_is' => $product->added_by, 'product_type' => 'physical'])->first();
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
@@ -635,7 +635,7 @@ class CartManager
             'is_guest' => $isGuest,
         ];
 
-        $cartCheck = Cart::where(['customer_id' => $customerId, 'is_guest' => $isGuest, 'seller_id' => ($product->added_by == 'admin') ? 1 : $product->user_id, 'seller_is' => $product->added_by])->first();
+        $cartCheck = Cart::where(['customer_id' => $customerId, 'is_guest' => $isGuest, 'seller_id' => ($product->added_by == 'admin') ? 1 : $product->user_id, 'seller_is' => $product->added_by, 'product_type' => 'digital'])->first();
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {

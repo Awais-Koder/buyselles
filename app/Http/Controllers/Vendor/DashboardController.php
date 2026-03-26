@@ -269,6 +269,11 @@ class DashboardController extends BaseController
             filters: ['seller_is' => 'seller', 'seller_id' => auth('seller')->id(), 'checked' => 0],
             dataLimit: 'all'
         )->count();
+        $newDigitalOrder = $this->orderRepo->getListWhere(
+            filters: ['seller_is' => 'seller', 'seller_id' => auth('seller')->id(), 'checked' => 0, 'order_type' => 'digital'],
+            dataLimit: 'all'
+        )->count();
+        $newPhysicalOrder = $newOrder - $newDigitalOrder;
         $restockProductList = $this->restockProductRepo->getListWhere(filters: ['added_by' => 'seller', 'seller_id' => auth('seller')->id()], dataLimit: 'all')->groupBy('product_id');
         $restockProduct = [];
         if (count($restockProductList) == 1) {
@@ -276,7 +281,8 @@ class DashboardController extends BaseController
                 orderBy: ['updated_at' => 'desc'],
                 filters: ['added_by' => 'seller', 'seller_id' => auth('seller')->id()],
                 relations: ['product'],
-                dataLimit: 'all');
+                dataLimit: 'all'
+            );
             $firstProduct = $products->first();
 
             $count = $products?->sum('restock_product_customers_count') ?? 0;
@@ -295,9 +301,25 @@ class DashboardController extends BaseController
             ];
         }
 
+        $sellerId = (int) auth('seller')->id();
+        $pendingOrderCount = \App\Utils\VendorHeaderManager::getPendingOrderCount($sellerId);
+        $unreadMessageCount = \App\Utils\VendorHeaderManager::getUnreadMessageCount($sellerId);
+        $unreadMessageCustomerCount = \App\Utils\VendorHeaderManager::getUnreadMessageCustomerCount($sellerId);
+        $unreadMessageDeliveryCount = \App\Utils\VendorHeaderManager::getUnreadMessageDeliveryCount($sellerId);
+
         return response()->json([
             'success' => 1,
             'new_order_count' => $newOrder,
+            'new_digital_order_count' => $newDigitalOrder,
+            'new_physical_order_count' => $newPhysicalOrder,
+            'pending_order_count' => $pendingOrderCount,
+            'unread_message_count' => $unreadMessageCount,
+            'unread_message_customer_count' => $unreadMessageCustomerCount,
+            'unread_message_delivery_count' => $unreadMessageDeliveryCount,
+            'newMessagesExist' => $unreadMessageCount > 0 ? 1 : 0,
+            'message' => $unreadMessageCount > 0
+                ? translate('You_have').' '.$unreadMessageCount.' '.translate('new_message(s)')
+                : '',
             'restockProductCount' => $restockProductList->count(),
             'restockProduct' => $restockProduct,
         ]);

@@ -68,6 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'seller' => SellerMiddleware::class,
             'customer' => CustomerMiddleware::class,
             'module' => ModulePermissionMiddleware::class,
+            'vendor_module' => \App\Http\Middleware\VendorModulePermissionMiddleware::class,
             'installation-check' => InstallationMiddleware::class,
             'actch' => ActivationCheckMiddleware::class,
             'api_lang' => APILocalizationMiddleware::class,

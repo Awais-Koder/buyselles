@@ -122,6 +122,9 @@
                             @php($pendingOrderCount = \App\Models\Order::where('order_status', 'pending')->count())
                             <div class="position-relative lh-1 mt-1">
                                 <i class="fi fi-sr-shopping-cart fs-18"></i>
+                                <span id="physical-order-new-badge"
+                                    style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; background:#dc3545; border-radius:50%; border:2px solid #fff; z-index:1;"
+                                    title="{{ translate('new_physical_order') }}"></span>
                                 <span id="header-pending-order-badge"
                                     class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                                     style="{{ $pendingOrderCount > 0 ? '' : 'display:none;' }}">

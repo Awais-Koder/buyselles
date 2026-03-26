@@ -79,7 +79,7 @@ trait EmailTemplateTrait
             $data['send-mail'] = true;
             if ($template['status'] == 1) {
                 try {
-                    Mail::to($sendMailTo)->queue(new SendMail($data, $template, $socialMedia));
+                    Mail::to($sendMailTo)->queue(new SendMail($data, $template->toArray(), $socialMedia->toArray()));
                 } catch (Exception $exception) {
                 }
             }

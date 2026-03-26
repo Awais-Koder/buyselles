@@ -1322,6 +1322,14 @@ $(".check-order").on("click", function () {
     location.href = $("#get-orders-list-route").data("action");
 });
 
+$(".check-product").on("click", function () {
+    location.href = $("#get-pending-products-route").data("action");
+});
+
+$(".ignore-check-product").on("click", function () {
+    $("#pending-product-modal").appendTo("body").modal("hide");
+});
+
 $(".ignore-check-order").on("click", function () {
     $("#popup-modal").appendTo("body").modal("hide");
     let token = $('meta[name="_token"]').attr("content");
@@ -1817,10 +1825,44 @@ function getInitialDataForPanel() {
                     chattingNewNotificationAlert.removeClass('active')
                 }, 5000);
             }
-            if (response?.new_order_count > 0) {
+            if (response?.new_digital_order_count > 0) {
                 playAudio();
                 $("#popup-modal").appendTo("body").modal("show");
             }
+            if (response?.new_physical_order_count > 0) {
+                $("#physical-order-new-badge").show();
+            } else {
+                $("#physical-order-new-badge").hide();
+            }
+
+            // Update unread message count badges in real-time
+            var msgCount = response?.unread_message_count ?? 0;
+            if (msgCount > 0) {
+                $('#vendor-message-count-badge').text(msgCount).show();
+            } else {
+                $('#vendor-message-count-badge').hide();
+            }
+            var msgCustomer = response?.unread_message_customer_count ?? 0;
+            if (msgCustomer > 0) {
+                $('#vendor-message-customer-count').text(msgCustomer).show();
+            } else {
+                $('#vendor-message-customer-count').hide();
+            }
+            var msgDelivery = response?.unread_message_delivery_count ?? 0;
+            if (msgDelivery > 0) {
+                $('#vendor-message-delivery-count').text(msgDelivery).show();
+            } else {
+                $('#vendor-message-delivery-count').hide();
+            }
+
+            // Update pending order count badge (header cart icon + sidebar)
+            var pendingCount = response?.pending_order_count ?? 0;
+            if (pendingCount > 0) {
+                $('#vendor-pending-order-count-badge').text(pendingCount).show();
+            } else {
+                $('#vendor-pending-order-count-badge').hide();
+            }
+            $('#sidebar-pending-order-count').text(pendingCount);
 
             if (
                 document.cookie.indexOf(

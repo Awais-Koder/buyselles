@@ -39,9 +39,14 @@ function getInitialDataForPanel() {
         data: {},
         dataType: "json",
         success: function (response) {
-            if (response?.new_order_count > 0) {
+            if (response?.new_digital_order_count > 0) {
                 playAudio();
                 $("#popup-modal").appendTo("body").modal("show");
+            }
+            if (response?.new_physical_order_count > 0) {
+                $("#physical-order-new-badge").show();
+            } else {
+                $("#physical-order-new-badge").hide();
             }
 
             if (document.cookie.indexOf("6valley_restock_request_status=accepted") !== -1 || document.cookie.indexOf("6valley_restock_request_status=reject") !== -1) {
@@ -55,6 +60,18 @@ function getInitialDataForPanel() {
             // Real-time badge updates — pending orders
             updateBadge('#sidebar-pending-order-badge', response?.pending_order_count);
             updateBadge('#header-pending-order-badge', response?.pending_order_count);
+
+            // Real-time badge — pending vendor product requests
+            var pendingProductCount = response?.pending_product_count ?? 0;
+            updateBadge('#sidebar-pending-product-badge', pendingProductCount);
+            var lastSeenProductCount = parseInt(localStorage.getItem('bs_last_seen_pending_product_count') || '0', 10);
+            if (pendingProductCount > 0 && pendingProductCount > lastSeenProductCount) {
+                localStorage.setItem('bs_last_seen_pending_product_count', pendingProductCount);
+                $('#pending-product-modal').appendTo('body').modal('show');
+            }
+            if (pendingProductCount === 0) {
+                localStorage.removeItem('bs_last_seen_pending_product_count');
+            }
 
             // Real-time badge updates — unread chats & contacts
             updateBadge('#header-unread-chat-badge', response?.unread_chat_count);

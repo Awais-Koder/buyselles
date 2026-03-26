@@ -70,6 +70,13 @@ updateProceedButtonState();
 function checkoutFromPayment() {
     let checked_button_id = $('input[type="radio"]:checked').attr("id");
     $(".action-checkout-function").attr("disabled", true).addClass("disabled");
+    // Wallet payment: open the confirmation modal instead of submitting a form directly.
+    // The order is only placed when the user clicks Submit inside the modal.
+    if (checked_button_id === 'wallet_payment') {
+        $(".action-checkout-function").removeAttr("disabled").removeClass("disabled");
+        $('#wallet_submit_button').modal('show');
+        return;
+    }
     $("#" + checked_button_id + "_form").submit();
 }
 

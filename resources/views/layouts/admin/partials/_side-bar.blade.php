@@ -391,6 +391,9 @@
                             <span class="text-truncate max-w-180">
                                 {{ translate('vendor_Products') }}
                             </span>
+                            @php($sidebarPendingProductCount = getVendorProductsCount('new-product'))
+                            <span id="sidebar-pending-product-badge" class="badge badge-pill badge-danger ml-1"
+                                style="{{ $sidebarPendingProductCount > 0 ? '' : 'display:none;' }}">{{ $sidebarPendingProductCount > 99 ? '99+' : $sidebarPendingProductCount }}</span>
                             <i class="fi fi-sr-angle-down"></i>
                         </span>
                     </a>
@@ -974,6 +977,21 @@
                             </a>
                         </li>
                     </ul>
+                </li>
+
+                {{-- Vendor Permissions --}}
+                <li class="{{ Request::is('admin/vendor-permission*') ? 'sub-menu-opened' : '' }}">
+                    <a class="nav-link {{ Request::is('admin/vendor-permission*') ? 'active' : '' }}"
+                        href="{{ route('admin.vendor-permission.index') }}"
+                        title="{{ translate('vendor_permissions') }}">
+                        <i class="fi fi-sr-lock"></i>
+                        <span
+                            class="aside-mini-hidden-element flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span class="text-truncate max-w-180">
+                                {{ translate('vendor_permissions') }}
+                            </span>
+                        </span>
+                    </a>
                 </li>
 
                 <li class="{{ Request::is('admin/delivery-man*') ? 'sub-menu-opened' : '' }}">

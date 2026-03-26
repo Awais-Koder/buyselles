@@ -16,6 +16,8 @@
     data-action="{{ route('admin.deal.clearance-sale.multiple-clearance-product-details') }}"></span>
 <span id="get-clearance-vendor-add-route" data-action="{{ route('admin.deal.clearance-sale.vendor-add') }}"></span>
 <span id="get-orders-list-route" data-action="{{ route('admin.orders.list', ['status' => 'all']) }}"></span>
+<span id="get-pending-products-route"
+    data-action="{{ route('admin.products.list', ['vendor', 'request_status' => '0']) }}"></span>
 <span id="get-stock-limit-status"
     data-action="{{ route('admin.products.stock-limit-status', ['type' => 'in_house']) }}"></span>
 <span id="getAdminChattingNewNotificationCheckRoute"

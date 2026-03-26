@@ -95,6 +95,7 @@ use App\Http\Controllers\Admin\ThirdParty\SocialLoginSettingsController;
 use App\Http\Controllers\Admin\ThirdParty\SocialMediaChatController;
 use App\Http\Controllers\Admin\TransactionReportController;
 use App\Http\Controllers\Admin\Vendor\VendorController;
+use App\Http\Controllers\Admin\Vendor\VendorPermissionController;
 use App\Http\Controllers\Admin\Vendor\WithdrawalMethodController;
 use App\Http\Controllers\Admin\VendorProductSaleReportController;
 use App\Http\Controllers\FirebaseController;
@@ -468,6 +469,14 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('employee-role-status', 'updateStatus')->name('employee-role-status');
             Route::post('delete', 'delete')->name('delete');
             Route::get('export', 'exportList')->name('export');
+        });
+    });
+
+    Route::group(['prefix' => 'vendor-permission', 'as' => 'vendor-permission.', 'middleware' => ['module:user_section']], function () {
+        Route::controller(VendorPermissionController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('{sellerId}/edit', 'edit')->name('edit');
+            Route::post('update', 'update')->name('update');
         });
     });
 

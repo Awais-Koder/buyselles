@@ -1361,4 +1361,21 @@ enum GlobalConstant
         '3rd_party_setup' => '3rd_party_setup',
         'themes_and_addons' => 'themes_and_addons',
     ];
+
+    const VENDOR_MODULE_PERMISSION = [
+        'vendor_dashboard' => 'dashboard',
+        'vendor_products' => 'product_management',
+        'vendor_orders' => 'order_management',
+        'vendor_refund' => 'refund_management',
+        'vendor_customer' => 'customer_management',
+        'vendor_reviews' => 'reviews_and_ratings',
+        'vendor_coupon' => 'coupon_management',
+        'vendor_clearance_sale' => 'clearance_sale',
+        'vendor_messages' => 'messages',
+        'vendor_delivery_man' => 'delivery_man_management',
+        'vendor_wallet' => 'wallet_and_withdraw',
+        'vendor_reports' => 'reports_and_analytics',
+        'vendor_shop_settings' => 'shop_settings',
+        'vendor_business_settings' => 'business_settings',
+    ];
 }

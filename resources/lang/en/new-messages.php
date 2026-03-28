@@ -10621,4 +10621,5 @@ return [
 	"section." => "Section.",
 	"Keep_these_codes_safe._Each_code_is_unique_and_tied_to_your_order." => "Keep these codes safe. Each code is unique and tied to your order.",
 	"Print_Order" => "Print Order",
+	"You_can_also_retrieve_your_code(s)_anytime_from" => "You can also retrieve your code(s) anytime from",
 ];

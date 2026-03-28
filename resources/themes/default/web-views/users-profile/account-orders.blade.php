@@ -252,11 +252,7 @@
                             @if ($hasDigitalCodes)
                                 <p class="fs-13 text-muted text-center mb-0">
                                     <i class="fi fi-rr-info me-1"></i>
-                                    {{ translate('You can also retrieve your code(s) anytime from') }}
-                                    <a href="{{ route('account-oder') }}"
-                                        class="web-text-primary fw-semibold">{{ translate('Order Details') }} →
-                                        {{ translate('Digital Codes') }}</a>
-                                    {{ translate('section.') }}
+                                    {{ translate('You can also retrieve your code(s) anytime from Order Summary section.') }}
                                 </p>
                             @endif
 

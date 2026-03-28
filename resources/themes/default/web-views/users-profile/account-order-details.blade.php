@@ -4,15 +4,53 @@
 @section('title', translate('order_Details'))
 @push('css_or_js')
     <link rel="stylesheet" href="{{ theme_asset(path: 'public/assets/front-end/css/payment.css') }}">
+    <style>
+        @media print {
+
+            /* ── Print Digital Codes receipt ── */
+            body.printing-codes>*:not(#digitalCodesPrintReceipt) {
+                display: none !important;
+            }
+
+            body.printing-codes>#digitalCodesPrintReceipt {
+                display: block !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 80mm;
+                font-family: 'Courier New', monospace;
+                font-size: 9pt;
+                padding: 6mm;
+                z-index: 99999;
+            }
+
+            /* ── Print Order ── */
+            body.printing-order>*:not(#orderMainContent) {
+                display: none !important;
+            }
+
+            body.printing-order>#orderMainContent {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            body.printing-order #digitalCodesSection,
+            body.printing-order #digitalCodesPrintReceipt,
+            body.printing-order .btn {
+                display: none !important;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
     <div class="container pb-5 mb-2 mb-md-4 mt-3 rtl __inline-47 text-align-direction">
         <div class="row g-3">
             @include('web-views.partials._profile-aside')
-
-
-            <section class="col-lg-9">
+            <section class="col-lg-9" id="orderMainContent">
                 @include('web-views.users-profile.account-details.partial')
                 <?php $digitalProduct = false; ?>
                 @foreach ($order->details as $key => $detail)
@@ -75,9 +113,9 @@
                             $colClass = 'col-md-6';
                         }
                         ?>
+
                         @if ($order['order_type'] === 'default_type')
                             <div class="row g-3 mb-2">
-                                <!-- Order Edit -->
                                 <div class="{{ $showVerificationCode ? 'col-md-6' : 'col-md-12' }}">
                                     <div
                                         class="d-flex justify-content-between gap-2 flex-wrap align-items-center h-100 light-box rounded-8 p--20">
@@ -357,7 +395,6 @@
                                     ?>
 
 
-                                    @php($shipping = $order['shipping_address_data'] ?? null)
                                     @if ($hasShipping && !empty((array) $shipping))
                                         <div class="{{ $colClass }}">
                                             <div class="light-box rounded-8 p--20 h-100">
@@ -452,7 +489,7 @@
                                     <tbody>
                                         <?php $orderDetailsIndex = 1; ?>
                                         @foreach ($order->details as $key => $detail)
-                                            @php($product = $detail?->productAllStatus ?? json_decode($detail->product_details, true))
+                                            <?php $product = $detail?->productAllStatus ?? json_decode($detail->product_details, true); ?>
                                             @if ($product)
                                                 <tr>
                                                     <td class="align-middle">
@@ -609,8 +646,6 @@
                                                 <?php $orderDetailsIndex++; ?>
                                             @endif
                                         @endforeach
-
-
                                     </tbody>
                                 </table>
                             </div>
@@ -632,7 +667,8 @@
                                     </h6>
                                     <button type="button" onclick="printDigitalCodes()"
                                         class="btn btn-sm btn-outline-secondary">
-                                        <i class="fi fi-rr-print me-1"></i>{{ translate('Print') }}
+                                        <i class="fi fi-rr-print gap-2"
+                                            style="margin-right: 3px"></i>{{ translate('Print') }}
                                     </button>
                                 </div>
                                 <div class="card-body p-3" id="digitalCodesPrintArea">
@@ -678,24 +714,6 @@
                             </div>
                             {{-- Hidden print area --}}
                             <div id="digitalCodesPrintReceipt" style="display:none;">
-                                <style id="dcPrintStyle">
-                                    @media print {
-                                        body>*:not(#digitalCodesPrintReceipt) {
-                                            display: none !important;
-                                        }
-
-                                        #digitalCodesPrintReceipt {
-                                            display: block !important;
-                                            position: fixed;
-                                            top: 0;
-                                            left: 0;
-                                            width: 80mm;
-                                            font-family: 'Courier New', monospace;
-                                            font-size: 9pt;
-                                            padding: 6mm;
-                                        }
-                                    }
-                                </style>
                                 <div
                                     style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;">
                                     <div style="font-size:12pt;font-weight:bold;">
@@ -724,7 +742,7 @@
                                 </div>
                             </div>
                         @endif
-                        {{-- ─── End Digital Codes Section ────────────────────────────────── --}}
+                        {{-- ─── End Digital Codes Section ─────────────────────────────── --}}
 
                         @php($orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(order: $order))
                         <div class="row d-flex justify-content-end mt-2">
@@ -1122,14 +1140,16 @@
                                         </table>
 
 
-                                        @if ($order['order_status'] == 'pending')
-                                            <button
-                                                class="btn btn-soft-danger btn-soft-border w-100 btn-sm text-danger font-semi-bold text-capitalize mt-3 call-route-alert"
-                                                data-route="{{ route('order-cancel', [$order->id]) }}"
-                                                data-message="{{ translate('want_to_cancel_this_order?') }}">
-                                                {{ translate('cancel_order') }}
-                                            </button>
-                                        @endif
+                                        <div class="d-flex gap-2 mt-3">
+                                            @if ($order['order_status'] == 'pending')
+                                                <button
+                                                    class="btn btn-soft-danger btn-soft-border flex-fill btn-sm text-danger font-semi-bold text-capitalize call-route-alert"
+                                                    data-route="{{ route('order-cancel', [$order->id]) }}"
+                                                    data-message="{{ translate('want_to_cancel_this_order?') }}">
+                                                    {{ translate('cancel_order') }}
+                                                </button>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1228,8 +1248,6 @@
                                             <span class="font-weight-medium fs-12 "> {{ $order->payment_note }} </span>
                                         </div>
                                     @endif
-
-
                                 </div>
                             </div>
                         </div>
@@ -1285,7 +1303,8 @@
         data-good2="{{ translate('very_Good') }}"
         data-good2-message="{{ translate('this_delivery_service_is_very_good_I_am_highly_impressed') }}"
         data-excellent="{{ translate('excellent') }}"
-        data-excellent-message="{{ translate('best_delivery_service_highly_recommended') }}"></span>
+        data-excellent-message="{{ translate('best_delivery_service_highly_recommended') }}">
+    </span>
 @endsection
 
 
@@ -1309,9 +1328,59 @@
         });
 
         function printDigitalCodes() {
-            $('#digitalCodesPrintReceipt').show();
+            var receipt = document.getElementById('digitalCodesPrintReceipt');
+            if (!receipt) return;
+
+            // Remember original position so we can put it back after print
+            var originalParent = receipt.parentNode;
+            var originalNext = receipt.nextSibling;
+
+            // Move receipt to be a direct child of <body> so the CSS
+            // body.printing-codes > *:not(#digitalCodesPrintReceipt) works correctly
+            document.body.appendChild(receipt);
+            document.body.classList.add('printing-codes');
+            receipt.style.display = 'block';
+
             window.print();
-            $('#digitalCodesPrintReceipt').hide();
+
+            window.addEventListener('afterprint', function cleanup() {
+                document.body.classList.remove('printing-codes');
+                receipt.style.display = 'none';
+                // Move receipt back to its original DOM position
+                if (originalNext) {
+                    originalParent.insertBefore(receipt, originalNext);
+                } else {
+                    originalParent.appendChild(receipt);
+                }
+                window.removeEventListener('afterprint', cleanup);
+            });
+        }
+
+        function printOrder() {
+            var section = document.getElementById('orderMainContent');
+            if (!section) return;
+
+            // Remember original position so we can put it back after print
+            var originalParent = section.parentNode;
+            var originalNext = section.nextSibling;
+
+            // Move section to be a direct child of <body> so the CSS
+            // body.printing-order > *:not(#orderMainContent) works correctly
+            document.body.appendChild(section);
+            document.body.classList.add('printing-order');
+
+            window.print();
+
+            window.addEventListener('afterprint', function cleanup() {
+                document.body.classList.remove('printing-order');
+                // Move section back to its original DOM position
+                if (originalNext) {
+                    originalParent.insertBefore(section, originalNext);
+                } else {
+                    originalParent.appendChild(section);
+                }
+                window.removeEventListener('afterprint', cleanup);
+            });
         }
     </script>
 @endpush

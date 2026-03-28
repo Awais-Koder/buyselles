@@ -106,11 +106,6 @@ foreach ($order->details as $key => $detail) {
         @endif
         <button data-link="{{ route('account-order-details-reviews', ['id' => $order->id]) }}"
             class="get-view-by-onclick {{ Request::is('account-order-details-reviews') ? 'active' : '' }}">{{ translate('reviews') }}</button>
-        @php($hasDigitalProduct = $order->details->contains(fn($d) => ($d->productAllStatus?->product_type ?? (json_decode($d->product_details)?->product_type ?? '')) === 'digital'))
-        @if ($hasDigitalProduct)
-            <button data-link="{{ route('account-order-details-digital-codes', ['id' => $order->id]) }}"
-                class="get-view-by-onclick {{ Request::is('account-order-details-digital-codes') ? 'active' : '' }}">{{ translate('digital_codes') }}</button>
-        @endif
         <button data-link="{{ route('track-order.order-wise-result-view', ['order_id' => $order['id']]) }}"
             class="get-view-by-onclick {{ Request::is('track-order/order-wise-result-view*') ? 'active' : '' }}">{{ translate('track_order') }}</button>
     @endif

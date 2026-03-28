@@ -10,6 +10,7 @@ use App\Contracts\Repositories\ReviewRepositoryInterface;
 use App\Contracts\Repositories\SellerRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Http\Controllers\Controller;
+use App\Models\DigitalProductCode;
 use App\Models\Product;
 use App\Models\Review;
 use App\Repositories\DealOfTheDayRepository;
@@ -82,7 +83,9 @@ class ProductDetailsController extends Controller
             if (count(json_decode($product['variation'], true)) > 0) {
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
-            $firstVariationQuantity = $product['product_type'] == 'physical' ? $firstVariationQuantity : 999;
+            if ($product['product_type'] === 'digital') {
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+            }
 
             $rating = getRating(reviews: $product->reviews);
             $decimalPointSettings = getWebConfig('decimal_point_settings');
@@ -200,7 +203,9 @@ class ProductDetailsController extends Controller
             if (count(json_decode($product['variation'], true)) > 0) {
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
-            $firstVariationQuantity = $product['product_type'] == 'physical' ? $firstVariationQuantity : 999;
+            if ($product['product_type'] === 'digital') {
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+            }
 
             $decimalPointSettings = getWebConfig('decimal_point_settings');
             $moreProductFromSeller = $this->productRepo->getWebListWithScope(
@@ -208,6 +213,7 @@ class ProductDetailsController extends Controller
                 scope: 'active',
                 filters: ['added_by' => $product['added_by'] == 'admin' ? 'in_house' : $product['added_by'], 'seller_id' => $product['user_id']],
                 whereNotIn: ['id' => [$product['id']]],
+
                 dataLimit: 5,
                 offset: 1
             );
@@ -308,7 +314,9 @@ class ProductDetailsController extends Controller
             if (count(json_decode($product['variation'], true)) > 0) {
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
-            $firstVariationQuantity = $product['product_type'] == 'physical' ? $firstVariationQuantity : 999;
+            if ($product['product_type'] === 'digital') {
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+            }
 
             $decimalPointSettings = getWebConfig('decimal_point_settings');
             $moreProductFromSeller = $this->productRepo->getWebListWithScope(
@@ -316,6 +324,7 @@ class ProductDetailsController extends Controller
                 scope: 'active',
                 filters: ['added_by' => $product['added_by'] == 'admin' ? 'in_house' : $product['added_by'], 'seller_id' => $product['user_id'], 'customer_id' => Auth::guard('customer')->user()->id ?? 0],
                 whereNotIn: ['id' => [$product['id']]],
+
                 relations: ['wishList' => 'wishList'],
                 dataLimit: 5,
                 offset: 1

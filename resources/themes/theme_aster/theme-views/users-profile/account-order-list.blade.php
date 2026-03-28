@@ -298,67 +298,199 @@
     </main>
     <?php
     $orderSuccessIds = session('order_success_ids') ?? [];
-    if (!is_array($orderSuccessIds)) {
-        $orderSuccessIds = [];
-    }
+    if (!is_array($orderSuccessIds)) { $orderSuccessIds = []; }
     $isPlural = count($orderSuccessIds) > 1;
     session()->forget('order_success_ids');
+    $successDigitalCodes = [];
+    if (!empty($orderSuccessIds)) {
+        $successDigitalCodes = \App\Models\DigitalProductCode::whereIn('order_id', $orderSuccessIds)
+            ->where('status', 'sold')
+            ->with('product')
+            ->get()
+            ->map(fn($c) => [
+                'orderId'     => $c->order_id,
+                'productName' => $c->product?->name ?? translate('Digital_Product'),
+                'code'        => $c->decryptCode(),
+                'serial'      => $c->serial_number,
+                'expiry'      => $c->expiry_date?->format('Y-m-d'),
+            ])->all();
+    }
+    $hasDigitalCodes = !empty($successDigitalCodes);
     ?>
     @if($orderSuccessIds && auth('customer')->check())
-        <div class="modal fade" id="order_successfully" tabindex="-1">
-            <div class="modal-dialog modal--md modal-dialog-centered">
+        <div class="modal fade" id="order_successfully" tabindex="-1"
+             data-bs-backdrop="{{ $hasDigitalCodes ? 'static' : 'true' }}"
+             data-bs-keyboard="{{ $hasDigitalCodes ? 'false' : 'true' }}">
+            <div class="modal-dialog modal-dialog-centered {{ $hasDigitalCodes ? 'modal-lg' : 'modal--md' }}">
                 <div class="modal-content">
-                    <div class="modal-body rtl">
-                        <div class="d-flex justify-content-end pb-2">
-                            <button class="btn-close outside opacity-100 mt-lg-0 mt-3 shadow top-0-lg" type="button"
-                                    data-bs-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="text-center pb-3 pt-4 mt-xl-2">
-                            <div class="mb-20">
-                                <img width="56" height="56" class=""
-                                     src="{{theme_asset(path: "/assets/img/icons/check-fill.png")}}" alt="">
+                    <div class="modal-body">
+                        <div class="pt-4 px-sm-3 pb-3">
+                            <div class="text-center mb-3">
+                                <img width="56" height="56"
+                                     src="{{theme_asset(path: '/assets/img/icons/check-fill.png')}}" alt="">
                             </div>
-                            <h6 class="mb-3 fs-18 fw-semibold">{{translate('Thank You For Your Purchase!')}}</h6>
-                            <p class="fs-14 title-semidark mb-30">
-                                {{ translate('We have received your order and will ship it shortly.') }} {{ translate('Your Order ID' . ($isPlural ? 's' : '')) }}
-                                {{ implode(', ', $orderSuccessIds) }}
+                            <h6 class="mb-2 fs-18 fw-semibold text-center">{{translate('Thank You For Your Purchase!')}}</h6>
+                            <p class="fs-14 title-semidark mb-2 text-center">
+                                {{ translate('We have received your order and will ship it shortly.') }}
+                                {{ translate('Your Order ID' . ($isPlural ? 's' : '')) }}
+                                <strong>#{{ implode(', #', $orderSuccessIds) }}</strong> —
                                 {{ translate('keep it handy for tracking.') }}
                             </p>
-                            <div class="max-w-290 mx-auto">
-                                <a href="{{ route('home') }}"
-                                   class="btn min-h-45 w-100 py-2 fs-14 btn-primary text-capitalize px-4 rounded-10">
+
+                            @if($hasDigitalCodes)
+                                <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:.84rem;">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    <strong>{{ translate('Important') }}:</strong>
+                                    {{ translate('Copy or print your codes below. They are also sent to your email.') }}
+                                </div>
+                                @foreach($successDigitalCodes as $idx => $item)
+                                    <div class="border rounded p-3 mb-2 bg-light">
+                                        <p class="text-muted mb-1 fw-semibold" style="font-size:.8rem;">
+                                            {{ $item['productName'] }}
+                                            @if($item['orderId'])
+                                                &mdash; <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
+                                            @endif
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <code class="fs-5 fw-bold bg-white px-3 py-2 rounded border flex-grow-1 text-center"
+                                                  id="aster-success-code-{{ $idx }}"
+                                                  style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
+                                                {{ $item['code'] }}
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-primary success-copy-btn"
+                                                    data-target="aster-success-code-{{ $idx }}">
+                                                <i class="bi bi-clipboard"></i> {{ translate('Copy') }}
+                                            </button>
+                                        </div>
+                                        @if(!empty($item['serial']) || !empty($item['expiry']))
+                                            <p class="text-muted mb-0 mt-1" style="font-size:.75rem;">
+                                                @if(!empty($item['serial'])) <strong>S/N:</strong> {{ $item['serial'] }} @endif
+                                                @if(!empty($item['expiry'])) &nbsp;<strong>Exp:</strong> {{ $item['expiry'] }} @endif
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                <div class="form-check p-3 border rounded mt-2" style="background:#fffde7;">
+                                    <input class="form-check-input" type="checkbox" id="asterSuccessConfirm">
+                                    <label class="form-check-label fw-semibold" for="asterSuccessConfirm" style="cursor:pointer;">
+                                        <i class="bi bi-shield-check me-1 text-success"></i>
+                                        {{ translate('I confirm I have successfully copied / saved my code(s)') }}
+                                    </label>
+                                </div>
+                            @endif
+
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+                                @if($hasDigitalCodes)
+                                    <button type="button" id="asterSuccessPrintBtn" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-printer me-1"></i>{{ translate('Print Receipt') }}
+                                    </button>
+                                @endif
+                                <a href="{{ route('home') }}" class="btn btn-primary px-4 rounded-10">
                                     {{ translate('Explore More Items') }}
                                 </a>
+                                @if($hasDigitalCodes)
+                                    <button type="button" id="asterSuccessCloseBtn"
+                                            class="btn btn-outline-secondary px-4 rounded-10 disabled" disabled
+                                            data-bs-dismiss="modal">
+                                        {{ translate('Close') }}
+                                    </button>
+                                @else
+                                    <button type="button" id="modal-close-btn"
+                                            class="btn btn-outline-secondary px-4 rounded-10"
+                                            data-bs-dismiss="modal">
+                                        {{ translate('Close') }}
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        @if($hasDigitalCodes)
+        <div id="asterSuccessPrintReceipt" style="display:none;">
+            <style>@media print {
+                body > *:not(#asterSuccessPrintReceipt) { display:none!important; }
+                #asterSuccessPrintReceipt { display:block!important; position:fixed; top:0; left:0; width:80mm;
+                    font-family:'Courier New',monospace; font-size:9pt; padding:6mm; }
+            }</style>
+            <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;">
+                <div style="font-size:12pt;font-weight:bold;">{{ getWebConfig(name: 'company_name') }}</div>
+            </div>
+            <div style="font-size:8pt;margin-bottom:5px;">
+                <div><strong>{{ translate('Date') }}:</strong> {{ now()->format('d/m/Y H:i') }}</div>
+                <div><strong>{{ translate('Order') }}:</strong> #{{ implode(', #', $orderSuccessIds) }}</div>
+            </div>
+            <div style="border-top:1px dashed #000;padding-top:5px;">
+                @foreach($successDigitalCodes as $item)
+                    <div style="margin-bottom:7px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
+                        <div style="font-size:8pt;color:#555;">{{ $item['productName'] }}</div>
+                        <div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">{{ $item['code'] }}</div>
+                        @if(!empty($item['serial'])) <div style="font-size:7pt;">S/N: {{ $item['serial'] }}</div> @endif
+                        @if(!empty($item['expiry'])) <div style="font-size:7pt;">Exp: {{ $item['expiry'] }}</div> @endif
+                    </div>
+                @endforeach
+            </div>
+            <div style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">
+                {{ translate('Thank You For Your Purchase!') }}<br>{{ getWebConfig(name: 'company_name') }}
+            </div>
+        </div>
+        @endif
     @endif
 @endsection
 @push('script')
     <script src="{{ dynamicAsset(path: 'public/assets/front-end/js/payment.js') }}"></script>
     @if($orderSuccessIds)
         <script>
+        (function () {
             document.addEventListener('DOMContentLoaded', function () {
-                const modalEl = document.getElementById('order_successfully');
-                const orderModal = new bootstrap.Modal(modalEl, {
-                    backdrop: 'static',
-                    keyboard: false
-                });
+                var hasDigCodes = {{ $hasDigitalCodes ? 'true' : 'false' }};
+                var modalEl = document.getElementById('order_successfully');
+                var orderModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
                 orderModal.show();
-                const closeBtn = document.getElementById('modal-close-btn');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', function () {
-                        setTimeout(() => {
-                            orderModal.hide();
-                        }, 600);
+
+                // Copy buttons
+                document.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.success-copy-btn');
+                    if (!btn) return;
+                    var text = document.getElementById(btn.getAttribute('data-target')).innerText.trim();
+                    var orig = btn.innerHTML;
+                    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.resolve())
+                        .then(function () {
+                            btn.innerHTML = '<i class="bi bi-check"></i> {{ translate("Copied!") }}';
+                            setTimeout(function () { btn.innerHTML = orig; }, 2000);
+                        });
+                });
+
+                // Confirmation checkbox
+                var confirmCb  = document.getElementById('asterSuccessConfirm');
+                var closeBtn   = document.getElementById('asterSuccessCloseBtn');
+                if (confirmCb && closeBtn) {
+                    confirmCb.addEventListener('change', function () {
+                        if (this.checked) {
+                            closeBtn.classList.remove('disabled');
+                            closeBtn.removeAttribute('disabled');
+                            closeBtn.textContent = '{{ translate("Close") }}';
+                        } else {
+                            closeBtn.classList.add('disabled');
+                            closeBtn.setAttribute('disabled', 'disabled');
+                        }
+                    });
+                }
+
+                // Print button
+                var printBtn = document.getElementById('asterSuccessPrintBtn');
+                if (printBtn) {
+                    printBtn.addEventListener('click', function () {
+                        var el = document.getElementById('asterSuccessPrintReceipt');
+                        el.style.display = 'block';
+                        window.print();
+                        el.style.display = 'none';
                     });
                 }
             });
+        }());
         </script>
     @endif
 @endpush

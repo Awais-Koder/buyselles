@@ -3,7 +3,19 @@
 @section('title', translate('order_Complete'))
 
 @section('content')
-    <div class="container mt-5 mb-5 rtl __inline-53 text-align-direction">
+    @php
+        $hasDigitalCodes = !empty($digitalCodes) && count($digitalCodes) > 0;
+        $orderIdsStr     = isset($order_ids) && count($order_ids) > 0
+            ? '#' . implode(', #', $order_ids)
+            : '';
+        $shopName  = getWebConfig(name: 'company_name') ?? 'Buyselles';
+        $shopPhone = getWebConfig(name: 'company_phone') ?? '';
+    @endphp
+
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- Success banner card — stays below the modal for reference      --}}
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    <div class="container mt-5 mb-4 rtl __inline-53 text-align-direction">
         <div class="row d-flex justify-content-center">
             <div class="col-md-10 col-lg-10">
                 <div class="card">
@@ -21,14 +33,10 @@
                                 @endif
                             </h6>
 
-                            @if (isset($order_ids) && count($order_ids) > 0)
+                            @if ($orderIdsStr)
                                 <p class="text-center fs-12">
-                                    {{ translate('your_payment_has_been_successfully_processed_and_your_order') }} -
-                                    <span class="fw-bold text-primary">
-                                        @foreach ($order_ids as $key => $order)
-                                            {{ $order }}
-                                        @endforeach
-                                    </span>
+                                    {{ translate('your_payment_has_been_successfully_processed_and_your_order') }}
+                                    <span class="fw-bold text-primary">{{ $orderIdsStr }}</span>
                                     {{ translate('has_been_placed.') }}
                                 </p>
                             @else
@@ -39,8 +47,25 @@
                             @endif
 
                             <div class="row mt-4">
-                                <div class="col-12 text-center">
-                                    <a href="{{ route('track-order.index') }}" class="btn btn--primary mb-3 text-center">
+                                @if ($hasDigitalCodes)
+                                    <div class="col-12 text-center mb-2">
+                                        <button type="button" class="btn btn--primary"
+                                            data-bs-toggle="modal" data-bs-target="#orderSuccessModal">
+                                            <i class="fa fa-key me-1"></i>
+                                            {{ translate('View_Your_Codes_&_Receipt') }}
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="col-12 text-center mb-2">
+                                        <button type="button" class="btn btn--primary"
+                                            data-bs-toggle="modal" data-bs-target="#orderSuccessModal">
+                                            <i class="fa fa-receipt me-1"></i>
+                                            {{ translate('View_Order_Receipt') }}
+                                        </button>
+                                    </div>
+                                @endif
+                                <div class="col-12 text-center mb-2">
+                                    <a href="{{ route('track-order.index') }}" class="btn btn-outline-primary">
                                         {{ translate('track_Order') }}
                                     </a>
                                 </div>
@@ -58,33 +83,36 @@
     </div>
 
     {{-- ═══════════════════════════════════════════════════════════════ --}}
-    {{-- Digital Codes Section                                          --}}
+    {{-- Digital Codes Card (always visible below for reference)        --}}
     {{-- ═══════════════════════════════════════════════════════════════ --}}
-    @if (!empty($digitalCodes) && count($digitalCodes) > 0)
+    @if ($hasDigitalCodes)
         <div class="container mb-5 rtl __inline-53 text-align-direction">
             <div class="row d-flex justify-content-center">
                 <div class="col-md-10 col-lg-10">
                     <div class="card border-success">
-                        <div class="card-header bg-success text-white">
-                            <h6 class="mb-0">
-                                <i class="fa fa-key me-2"></i>
-                                {{ translate('Your_Digital_Codes') }}
-                            </h6>
-                            <small>{{ translate('Codes_have_been_emailed_to_you_too._Keep_them_safe.') }}</small>
+                        <div class="card-header bg-success text-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0">
+                                    <i class="fa fa-key me-2"></i>
+                                    {{ translate('Your_Digital_Codes') }}
+                                </h6>
+                                <small>{{ translate('Codes_have_been_emailed_to_you_too._Keep_them_safe.') }}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-light"
+                                data-bs-toggle="modal" data-bs-target="#orderSuccessModal">
+                                <i class="fa fa-print me-1"></i> {{ translate('Print_Receipt') }}
+                            </button>
                         </div>
                         <div class="card-body">
-
                             @foreach ($digitalCodes as $item)
                                 <div class="border rounded p-3 mb-3">
                                     <p class="fw-bold mb-1 text-muted" style="font-size:0.85rem;">
                                         {{ $item['productName'] }}
                                         @if ($item['orderId'])
                                             &nbsp;&mdash;&nbsp;
-                                            <span class="text-secondary">{{ translate('Order') }}
-                                                #{{ $item['orderId'] }}</span>
+                                            <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
                                         @endif
                                     </p>
-
                                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                                         <code class="fs-5 fw-bold text-dark bg-light px-3 py-2 rounded border"
                                             id="code-{{ $loop->index }}"
@@ -92,47 +120,24 @@
                                             {{ $item['code'] }}
                                         </code>
                                         <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            onclick="copyCode('code-{{ $loop->index }}', this)"
+                                            onclick="copyCodeById('code-{{ $loop->index }}', this)"
                                             title="{{ translate('Copy_Code') }}">
                                             <i class="fa fa-copy"></i> {{ translate('Copy') }}
                                         </button>
                                     </div>
-
                                     @if (!empty($item['serial']) || !empty($item['expiry']))
                                         <p class="text-muted mb-0" style="font-size:0.78rem;">
                                             @if (!empty($item['serial']))
                                                 <strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
                                             @endif
                                             @if (!empty($item['expiry']))
-                                                &nbsp;&nbsp;
-                                                <strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                                                &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
                                             @endif
                                         </p>
                                     @endif
                                 </div>
                             @endforeach
-
-                            {{-- Action buttons --}}
-                            <div class="mt-3 d-flex flex-wrap gap-2">
-                                <button type="button" id="printThermalReceiptBtn"
-                                    class="btn btn--primary d-flex align-items-center gap-1">
-                                    <i class="fa fa-print"></i>
-                                    <span>{{ translate('Print_Receipt') }}</span>
-                                </button>
-                            </div>
-
-                            {{-- Hidden data for thermal receipt printing --}}
-                            <script type="application/json" id="thermalReceiptData">
-                                @json([
-                                    'shopName'     => getWebConfig(name: 'company_name') ?? 'Buyselles',
-                                    'shopPhone'    => getWebConfig(name: 'company_phone') ?? '',
-                                    'orderIds'     => $order_ids ?? [],
-                                    'orderDate'    => now()->format('Y-m-d H:i'),
-                                    'codes'        => collect($digitalCodes)->toArray(),
-                                ])
-                            </script>
-
-                            <p class="text-danger mt-3 mb-0" style="font-size:0.8rem;">
+                            <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;">
                                 <i class="fa fa-exclamation-triangle"></i>
                                 {{ translate('Warning:_Do_not_share_your_codes_with_anyone.') }}
                             </p>
@@ -142,31 +147,286 @@
             </div>
         </div>
     @endif
+
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- Purchase Success Modal (auto-opens on page load)               --}}
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="orderSuccessModal" tabindex="-1"
+        aria-labelledby="orderSuccessModalLabel"
+        data-bs-backdrop="{{ $hasDigitalCodes ? 'static' : 'true' }}"
+        data-bs-keyboard="{{ $hasDigitalCodes ? 'false' : 'true' }}"
+        aria-modal="true" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable {{ $hasDigitalCodes ? 'modal-lg' : 'modal-md' }}">
+            <div class="modal-content border-0 shadow">
+
+                {{-- Header --}}
+                <div class="modal-header border-0 p-0">
+                    <div class="w-100 text-center py-4 px-3"
+                        style="background:linear-gradient(135deg,#063c93 0%,#0f9d58 100%);">
+                        <div style="font-size:46px;line-height:1;" class="mb-2">🎉</div>
+                        <h5 class="text-white fw-bold mb-1" id="orderSuccessModalLabel">
+                            {{ translate('Thank_You_For_Your_Purchase') }}!
+                        </h5>
+                        @if ($orderIdsStr)
+                            <p class="text-white mb-0" style="font-size:0.82rem; opacity:0.9;">
+                                {{ translate('Order_ID') }}: <strong>{{ $orderIdsStr }}</strong>
+                                &nbsp;&bull;&nbsp; {{ now()->format('d M Y, H:i') }}
+                            </p>
+                        @endif
+                        <p class="mb-0 mt-1" style="font-size:0.78rem; opacity:0.75; color:#fff;">
+                            {{ translate('We_have_received_your_order_and_will_process_it_shortly.') }}
+                            @if ($orderIdsStr)
+                                {{ translate('Keep_your_Order_ID_handy_for_tracking.') }}
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Body --}}
+                <div class="modal-body pt-3 pb-2">
+                    @if ($hasDigitalCodes)
+                        <div class="alert alert-warning py-2 px-3 fs-13 mb-3">
+                            <i class="fa fa-exclamation-triangle me-1"></i>
+                            <strong>{{ translate('Important') }}:</strong>
+                            {{ translate('Copy_or_print_your_codes_below._They_are_also_sent_to_your_email.') }}
+                        </div>
+
+                        @foreach ($digitalCodes as $idx => $item)
+                            <div class="border rounded p-3 mb-3 bg-light">
+                                <p class="text-muted mb-1 fw-semibold" style="font-size:0.8rem;">
+                                    <i class="fa fa-box me-1"></i>
+                                    {{ $item['productName'] }}
+                                    @if ($item['orderId'])
+                                        &mdash; <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
+                                    @endif
+                                </p>
+                                <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                    <code class="fs-4 fw-bold text-dark bg-white px-3 py-2 rounded border flex-grow-1 text-center"
+                                        id="modal-code-{{ $idx }}"
+                                        style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
+                                        {{ $item['code'] }}
+                                    </code>
+                                    <button type="button" class="btn btn-sm btn-outline-primary modal-copy-btn"
+                                        data-target="modal-code-{{ $idx }}"
+                                        title="{{ translate('Copy_Code') }}">
+                                        <i class="fa fa-copy"></i> {{ translate('Copy') }}
+                                    </button>
+                                </div>
+                                @if (!empty($item['serial']) || !empty($item['expiry']))
+                                    <p class="text-muted mb-0 mt-1" style="font-size:0.76rem;">
+                                        @if (!empty($item['serial']))
+                                            <strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
+                                        @endif
+                                        @if (!empty($item['expiry']))
+                                            &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                                        @endif
+                                    </p>
+                                @endif
+                            </div>
+                        @endforeach
+
+                        {{-- Confirmation checkbox — required before close --}}
+                        <div class="form-check p-3 border rounded mt-2" style="background:#fffde7;">
+                            <input class="form-check-input" type="checkbox" id="confirmCodesDownloaded" value="1">
+                            <label class="form-check-label fw-semibold" for="confirmCodesDownloaded" style="cursor:pointer;">
+                                <i class="fa fa-shield-alt me-1 text-success"></i>
+                                {{ translate('I_confirm_I_have_successfully_copied_/_saved_my_code(s)') }}
+                            </label>
+                        </div>
+                    @else
+                        {{-- Physical / no-codes order --}}
+                        <div class="text-center py-3">
+                            <i class="fa fa-check-circle text-success" style="font-size:42px;"></i>
+                            <p class="mt-3 text-muted" style="font-size:0.9rem;">
+                                {{ translate('Your_order_is_confirmed._You_will_receive_an_email_with_tracking_details.') }}
+                            </p>
+                            @if ($orderIdsStr)
+                                <div class="alert alert-light border mt-3" style="font-size:0.87rem;">
+                                    <strong>{{ translate('Order_ID') }}:</strong>
+                                    <span class="text-primary fw-bold">{{ $orderIdsStr }}</span>
+                                    <br>
+                                    <small class="text-muted">{{ now()->format('d M Y, H:i') }}</small>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer border-0 pt-1 flex-wrap gap-2">
+                    <button type="button" id="modalPrintBtn"
+                        class="btn btn-outline-secondary">
+                        <i class="fa fa-print me-1"></i>
+                        {{ translate('Print_Receipt') }}
+                    </button>
+                    @if (!$hasDigitalCodes)
+                        <a href="{{ route('track-order.index') }}" class="btn btn-outline-primary">
+                            <i class="fa fa-map-marker me-1"></i> {{ translate('Track_Order') }}
+                        </a>
+                    @endif
+                    <button type="button" id="modalCloseBtn"
+                        class="btn btn--primary {{ $hasDigitalCodes ? 'disabled' : '' }}"
+                        data-bs-dismiss="modal"
+                        @if($hasDigitalCodes) disabled @endif>
+                        @if($hasDigitalCodes)
+                            {{ translate('Close_(save_codes_first)') }}
+                        @else
+                            {{ translate('Close') }}
+                        @endif
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    {{-- Hidden printable receipt (rendered by window.print())          --}}
+    {{-- ═══════════════════════════════════════════════════════════════ --}}
+    <div id="printableReceipt" style="display:none;">
+        <style id="printReceiptStyle">
+            @media print {
+                body > *:not(#printableReceipt) { display: none !important; }
+                #printableReceipt {
+                    display: block !important;
+                    position: fixed;
+                    top: 0; left: 0;
+                    width: 80mm;
+                    font-family: 'Courier New', monospace;
+                    font-size: 9pt;
+                    color: #000;
+                    background: #fff;
+                    padding: 6mm;
+                }
+            }
+        </style>
+        <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;">
+            <div style="font-size:13pt;font-weight:bold;letter-spacing:1px;">{{ $shopName }}</div>
+            @if ($shopPhone)
+                <div style="font-size:8pt;">{{ $shopPhone }}</div>
+            @endif
+        </div>
+        <div style="font-size:8pt;margin-bottom:5px;">
+            <div><strong>{{ translate('Date') }}:</strong> {{ now()->format('d/m/Y H:i') }}</div>
+            @if ($orderIdsStr)
+                <div><strong>{{ translate('Order') }}:</strong> {{ $orderIdsStr }}</div>
+            @endif
+        </div>
+        @if ($hasDigitalCodes)
+            <div style="border-top:1px dashed #000;padding-top:5px;margin-top:3px;">
+                <div style="text-align:center;font-weight:bold;font-size:9pt;margin-bottom:4px;">
+                    ── {{ translate('Digital_Codes') }} ──
+                </div>
+                @foreach ($digitalCodes as $item)
+                    <div style="margin-bottom:8px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
+                        <div style="font-size:8pt;color:#555;">{{ $item['productName'] }}</div>
+                        <div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
+                            {{ $item['code'] }}
+                        </div>
+                        @if (!empty($item['serial']))
+                            <div style="font-size:7pt;">S/N: {{ $item['serial'] }}</div>
+                        @endif
+                        @if (!empty($item['expiry']))
+                            <div style="font-size:7pt;">Exp: {{ $item['expiry'] }}</div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+        <div style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">
+            {{ translate('Thank_You_For_Your_Purchase') }}!<br>{{ $shopName }}
+        </div>
+    </div>
+
 @endsection
 
 @push('script')
-    <script>
-        function copyCode(elementId, btn) {
-            var text = document.getElementById(elementId).innerText.trim();
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(function() {
-                    btn.innerHTML = '<i class="fa fa-check"></i> {{ translate('Copied!') }}';
-                    setTimeout(function() {
-                        btn.innerHTML = '<i class="fa fa-copy"></i> {{ translate('Copy') }}';
-                    }, 2000);
-                });
-            } else {
-                var ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                btn.innerHTML = '<i class="fa fa-check"></i> {{ translate('Copied!') }}';
-                setTimeout(function() {
-                    btn.innerHTML = '<i class="fa fa-copy"></i> {{ translate('Copy') }}';
-                }, 2000);
-            }
+<script>
+(function () {
+    'use strict';
+
+    var hasDigitalCodes = {{ $hasDigitalCodes ? 'true' : 'false' }};
+
+    // ── Auto-open modal on page load ──────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        var modalEl = document.getElementById('orderSuccessModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            var bsModal = new bootstrap.Modal(modalEl, {
+                backdrop: hasDigitalCodes ? 'static' : true,
+                keyboard: !hasDigitalCodes
+            });
+            bsModal.show();
         }
-    </script>
+    });
+
+    // ── Copy buttons inside modal ────────────────────────────────
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.modal-copy-btn');
+        if (!btn) return;
+        var targetId = btn.getAttribute('data-target');
+        var text = document.getElementById(targetId).innerText.trim();
+        var original = btn.innerHTML;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+        (navigator.clipboard
+            ? navigator.clipboard.writeText(text)
+            : Promise.resolve(legacyCopy(text))
+        ).then(function () {
+            btn.innerHTML = '<i class="fa fa-check"></i> {{ translate("Copied!") }}';
+            setTimeout(function () { btn.innerHTML = original; }, 2000);
+        }).catch(function () {
+            btn.innerHTML = original;
+        });
+    });
+
+    function legacyCopy(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    }
+
+    // ── Confirmation checkbox enables close button ───────────────
+    document.addEventListener('change', function (e) {
+        if (e.target.id !== 'confirmCodesDownloaded') return;
+        var closeBtn = document.getElementById('modalCloseBtn');
+        if (!closeBtn) return;
+        if (e.target.checked) {
+            closeBtn.classList.remove('disabled');
+            closeBtn.removeAttribute('disabled');
+            closeBtn.textContent = '{{ translate("Close") }}';
+        } else {
+            closeBtn.classList.add('disabled');
+            closeBtn.setAttribute('disabled', 'disabled');
+            closeBtn.textContent = '{{ translate("Close_(save_codes_first)") }}';
+        }
+    });
+
+    // ── Print Receipt button ──────────────────────────────────────
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('#modalPrintBtn')) {
+            var el = document.getElementById('printableReceipt');
+            el.style.display = 'block';
+            window.print();
+            el.style.display = 'none';
+        }
+    });
+
+    // ── Inline card copy function (backward compat) ───────────────
+    window.copyCodeById = function (elementId, btn) {
+        var text = document.getElementById(elementId).innerText.trim();
+        var original = btn.innerHTML;
+        (navigator.clipboard
+            ? navigator.clipboard.writeText(text)
+            : Promise.resolve(legacyCopy(text))
+        ).then(function () {
+            btn.innerHTML = '<i class="fa fa-check"></i> {{ translate("Copied!") }}';
+            setTimeout(function () { btn.innerHTML = original; }, 2000);
+        });
+    };
+}());
+</script>
 @endpush

@@ -283,7 +283,7 @@ class Product extends Model
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
         } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-' . $this->id, 3600, function () {
+            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
                 return $this?->seller?->shop?->temporary_close ?? 0;
             });
         }
@@ -343,6 +343,16 @@ class Product extends Model
     public function digitalVariation(): HasMany
     {
         return $this->hasMany(DigitalProductVariation::class, 'product_id');
+    }
+
+    public function digitalProductCodes(): HasMany
+    {
+        return $this->hasMany(DigitalProductCode::class, 'product_id');
+    }
+
+    public function availableDigitalProductCodes(): HasMany
+    {
+        return $this->hasMany(DigitalProductCode::class, 'product_id')->where('status', 'available');
     }
 
     public function tags(): BelongsToMany

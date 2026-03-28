@@ -102,6 +102,11 @@ class OrderManager
                         'is_stock_decreased' => 0,
                         'delivery_status' => $status,
                     ]);
+                } else {
+                    // Stock already restored; just sync the delivery status
+                    OrderDetail::where(['id' => $detail['id']])->update([
+                        'delivery_status' => $status,
+                    ]);
                 }
             }
         } else {
@@ -123,6 +128,12 @@ class OrderManager
                     ]);
                     OrderDetail::where(['id' => $detail['id']])->update([
                         'is_stock_decreased' => 1,
+                        'delivery_status' => $status,
+                    ]);
+                } else {
+                    // Stock already decreased at order placement (COD and all payment methods);
+                    // just sync the delivery status on order details
+                    OrderDetail::where(['id' => $detail['id']])->update([
                         'delivery_status' => $status,
                     ]);
                 }
@@ -1528,19 +1539,22 @@ class OrderManager
                 ],
             ];
 
-            $orderPlacedMailEvents[] = [
-                'email' => $vendor['email'],
-                'data' => [
-                    'subject' => translate('new_order_received'),
-                    'title' => translate('new_order_received'),
-                    'userType' => $vendorType == 'admin' ? 'admin' : 'vendor',
-                    'templateName' => 'order-received',
-                    'order' => $order,
-                    'orderId' => $order['id'],
-                    'vendorName' => $vendor?->f_name,
-                    'adminName' => $vendor?->name,
-                ],
-            ];
+            $hasPhysicalProduct = $order->details->contains('product_type', 'physical');
+            if ($vendorType != 'admin' || $hasPhysicalProduct) {
+                $orderPlacedMailEvents[] = [
+                    'email' => $vendor['email'],
+                    'data' => [
+                        'subject' => translate('new_order_received'),
+                        'title' => translate('new_order_received'),
+                        'userType' => $vendorType == 'admin' ? 'admin' : 'vendor',
+                        'templateName' => 'order-received',
+                        'order' => $order,
+                        'orderId' => $order['id'],
+                        'vendorName' => $vendor?->f_name,
+                        'adminName' => $vendor?->name,
+                    ],
+                ];
+            }
         }
 
         return $orderPlacedMailEvents;

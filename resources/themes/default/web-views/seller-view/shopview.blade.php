@@ -1,30 +1,53 @@
 @extends('layouts.front-end.app')
 
-@section('title',translate('shop_Page'))
+@section('title', translate('shop_Page'))
 
 @push('css_or_js')
-    @if($shopInfoArray['author_type'] != "admin")
-        <meta property="og:image" content="{{ $shopInfoArray['image_full_url']['path'] }}"/>
-        <meta property="og:title" content="{{ $shopInfoArray['name'] }} "/>
-        <meta property="og:url" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}">
+    @if ($shopInfoArray['author_type'] != 'admin')
+        <meta property="og:image" content="{{ $shopInfoArray['image_full_url']['path'] }}" />
+        <meta property="og:title" content="{{ $shopInfoArray['name'] }} " />
+        <meta property="og:url" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}">
     @else
-        <meta property="og:image" content="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}"/>
-        <meta property="og:title" content="{{ $shopInfoArray['name'] }} "/>
-        <meta property="og:url" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}">
+        <meta property="og:image"
+            content="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}" />
+        <meta property="og:title" content="{{ $shopInfoArray['name'] }} " />
+        <meta property="og:url" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}">
     @endif
 
-    @if($shopInfoArray['author_type'] != "admin")
-        <meta property="twitter:card" content="{{ $shopInfoArray['image_full_url']['path'] }}"/>
-        <meta property="twitter:title" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}"/>
-        <meta property="twitter:url" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}">
+    @if ($shopInfoArray['author_type'] != 'admin')
+        <meta property="twitter:card" content="{{ $shopInfoArray['image_full_url']['path'] }}" />
+        <meta property="twitter:title" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}" />
+        <meta property="twitter:url" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}">
     @else
-        <meta property="twitter:card" content="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}"/>
-        <meta property="twitter:title" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}"/>
-        <meta property="twitter:url" content="{{ route('vendor-shop',['slug' => $shopInfoArray['slug']]) }}">
+        <meta property="twitter:card"
+            content="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}" />
+        <meta property="twitter:title" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}" />
+        <meta property="twitter:url" content="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}">
     @endif
 
     <meta property="og:description" content="{{ $web_config['meta_description'] }}">
     <meta property="twitter:description" content="{{ $web_config['meta_description'] }}">
+    <style>
+        .sub-cat-chip:hover {
+            background-color: var(--primary-clr) !important;
+            color: #fff !important;
+            border-color: var(--primary-clr) !important;
+        }
+
+        .sub-cat-chip:hover span {
+            color: #fff !important;
+        }
+
+        .sub-category-strip::-webkit-scrollbar,
+        .sub-category-strip>div::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .sub-category-strip>div::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -33,15 +56,17 @@
     <div class="container py-4 __inline-67">
         <div class="rtl">
             <div class="bg-white __shop-banner-main">
-                @if($shopInfoArray['id'] != 0)
+                @if ($shopInfoArray['id'] != 0)
                     <img class="__shop-page-banner" alt=""
-                         src="{{ getStorageImages(path: $shopInfoArray['banner_full_url'], type: 'wide-banner') }}">
+                        src="{{ getStorageImages(path: $shopInfoArray['banner_full_url'], type: 'wide-banner') }}">
                 @else
-                    @php($banner=getInHouseShopConfig(key: 'banner_full_url'))
+                    @php($banner = getInHouseShopConfig(key: 'banner_full_url'))
                     <img class="__shop-page-banner" alt=""
-                         src="{{ getStorageImages(path: $banner, type: 'wide-banner') }}">
+                        src="{{ getStorageImages(path: $banner, type: 'wide-banner') }}">
                 @endif
-                @include('web-views.seller-view.shop-info-card', ['displayClass' => 'd-none d-md-block max-width-500px'])
+                @include('web-views.seller-view.shop-info-card', [
+                    'displayClass' => 'd-none d-md-block max-width-500px',
+                ])
 
             </div>
         </div>
@@ -56,19 +81,39 @@
 
             @csrf
             @include('web-views.products.partials._product-list-header', [
-                    'pageProductsCount' => $products->total(),
-                    'searchBarSection' => true,
-                    'sortBySection' => true,
-                    'showProductsFilter' => true,
-                    'shopViewPageHeader' => true,
+                'pageProductsCount' => $products->total(),
+                'searchBarSection' => true,
+                'sortBySection' => true,
+                'showProductsFilter' => true,
+                'shopViewPageHeader' => true,
             ])
+
+            {{-- Sub-category horizontal strip --}}
+            @if (isset($subCategories) && $subCategories->isNotEmpty())
+                <div class="sub-category-strip py-2 mt-2">
+                    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+                        @foreach ($subCategories as $sub)
+                            <a href="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug'], $subCatParam => $sub->id, 'data_from' => 'category', 'offer_type' => $data['offer_type'] ?? '', 'page' => 1]) }}"
+                                class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
+                                style="min-width: fit-content; transition: all .2s;">
+                                <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                    alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
+                                    style="object-fit: contain;">
+                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div class="py-3 mb-2 mb-md-4 rtl __inline-35" dir="{{ session('direction') }}">
                 <div class="row">
-                    <aside class="col-lg-3 hidden-xs col-md-3 col-sm-4 SearchParameters __search-sidebar" id="SearchParameters">
+                    <aside class="col-lg-3 hidden-xs col-md-3 col-sm-4 SearchParameters __search-sidebar"
+                        id="SearchParameters">
                         <div class="cz-sidebar __inline-35 p-4 overflow-hidden" id="shop-sidebar">
                             <div class="cz-sidebar-header p-0">
-                                <button class="close ms-auto fs-18-mobile" type="button" data-dismiss="sidebar" aria-label="Close">
+                                <button class="close ms-auto fs-18-mobile" type="button" data-dismiss="sidebar"
+                                    aria-label="Close">
                                     <i class="tio-clear"></i>
                                 </button>
                             </div>
@@ -119,32 +164,32 @@
 
     </div>
 
-    <span id="shop-sort-by-filter-url" data-url="{{url('/')}}/shopView/{{$shopInfoArray['slug']}}"></span>
+    <span id="shop-sort-by-filter-url" data-url="{{ url('/') }}/shopView/{{ $shopInfoArray['slug'] }}"></span>
 
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
-         aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-faded-info">
-                    <h5 class="modal-title" id="exampleModalLongTitle">{{translate('Send_Message_to_vendor')}}</h5>
+                    <h5 class="modal-title" id="exampleModalLongTitle">{{ translate('Send_Message_to_vendor') }}</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{route('messages')}}" method="post" id="shop-view-chat-form">
+                    <form action="{{ route('messages') }}" method="post" id="shop-view-chat-form">
                         @csrf
-                        <input value="{{$shopInfoArray['seller_id']}}" name="vendor_id" hidden>
+                        <input value="{{ $shopInfoArray['seller_id'] }}" name="vendor_id" hidden>
                         <textarea name="message" class="form-control min-height-100px max-height-200px" required
-                                  placeholder="{{ translate('Write_here') }}..."></textarea>
+                            placeholder="{{ translate('Write_here') }}..."></textarea>
                         <br>
                         <div class="justify-content-end gap-2 d-flex flex-wrap">
-                            <a href="{{route('chat', ['type' => 'vendor'])}}"
-                               class="btn btn-soft-primary bg--secondary border">
-                                {{translate('go_to_chatbox')}}
+                            <a href="{{ route('chat', ['type' => 'vendor']) }}"
+                                class="btn btn-soft-primary bg--secondary border">
+                                {{ translate('go_to_chatbox') }}
                             </a>
                             <button class="btn btn--primary text-white">
-                                {{translate('send')}}
+                                {{ translate('send') }}
                             </button>
                         </div>
                     </form>
@@ -154,31 +199,21 @@
         </div>
     </div>
 
-    <span id="products-search-data-backup"
-          data-page="{{ request('page') ?? 1 }}"
-          data-url="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}"
-          data-brand="{{ $data['brand_id'] ?? '' }}"
-          data-category="{{ $data['category_id'] ?? '' }}"
-          data-name="{{ request('search') ?? request('name') }}"
-          data-from="{{ request('data_from') }}"
-          data-offer-type = "{{ request('offer_type') }}"
-          data-product-check="clearance_sale"
-          data-sort="{{ request('sort_by') }}"
-          data-product-type="{{ request('product_type') ?? 'all' }}"
-          data-message="{{ translate('items_found') }}"
-          data-publishing-house-id="{{ request('publishing_house_id') }}"
-          data-author-id="{{ request('author_id') }}"
-          data-offer="{{ request('offer_type') ?? '' }}"
-    ></span>
+    <span id="products-search-data-backup" data-page="{{ request('page') ?? 1 }}"
+        data-url="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug']]) }}"
+        data-brand="{{ $data['brand_id'] ?? '' }}" data-category="{{ $data['category_id'] ?? '' }}"
+        data-name="{{ request('search') ?? request('name') }}" data-from="{{ request('data_from') }}"
+        data-offer-type = "{{ request('offer_type') }}" data-product-check="clearance_sale"
+        data-sort="{{ request('sort_by') }}" data-product-type="{{ request('product_type') ?? 'all' }}"
+        data-message="{{ translate('items_found') }}" data-publishing-house-id="{{ request('publishing_house_id') }}"
+        data-author-id="{{ request('author_id') }}" data-offer="{{ request('offer_type') ?? '' }}"></span>
 
 @endsection
 @push('script')
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/product-list-filter.js') }}"></script>
     <script>
-        $('.close-icon').on('click', function () {
+        $('.close-icon').on('click', function() {
             $("#shop-sidebar").toggleClass("show active");
         });
     </script>
 @endpush
-
-

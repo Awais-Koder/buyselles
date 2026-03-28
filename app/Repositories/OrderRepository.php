@@ -425,11 +425,16 @@ class OrderRepository implements OrderRepositoryInterface
                             'variation' => json_encode($variations),
                             'current_stock' => $product['current_stock'] + $detail['qty'],
                         ]);
-                        $this->orderDetail->where(['id' => $detail['id']])->update([
-                            'is_stock_decreased' => 0,
-                            'delivery_status' => $status,
-                        ]);
                     }
+                    $this->orderDetail->where(['id' => $detail['id']])->update([
+                        'is_stock_decreased' => 0,
+                        'delivery_status' => $status,
+                    ]);
+                } else {
+                    // Stock already restored; just sync the delivery status
+                    $this->orderDetail->where(['id' => $detail['id']])->update([
+                        'delivery_status' => $status,
+                    ]);
                 }
             }
         } else {
@@ -452,6 +457,12 @@ class OrderRepository implements OrderRepositoryInterface
                     }
                     $this->orderDetail->where(['id' => $detail['id']])->update([
                         'is_stock_decreased' => 1,
+                        'delivery_status' => $status,
+                    ]);
+                } else {
+                    // Stock already decreased at order placement (COD and all payment methods);
+                    // just sync the delivery status on order details
+                    $this->orderDetail->where(['id' => $detail['id']])->update([
                         'delivery_status' => $status,
                     ]);
                 }
@@ -512,7 +523,6 @@ class OrderRepository implements OrderRepositoryInterface
                 $payerId = 1;
                 $paymentReceiverId = $order['seller_id'];
                 $paidTo = 'seller';
-
             } elseif ($order->coupon_discount_bearer == 'seller') {
                 $paidBy = 'seller';
                 $payerId = $order['seller_id'];
@@ -574,7 +584,6 @@ class OrderRepository implements OrderRepositoryInterface
                 $payerId = 1;
                 $paymentReceiverId = $order->seller_id;
                 $paidTo = 'seller';
-
             } elseif ($order->free_delivery_bearer == 'seller' && $order->shipping_responsibility == 'inhouse_shipping') {
                 $sellerWallet->delivery_charge_earned -= $order->extra_discount;
                 $sellerWallet->total_earning -= $order->extra_discount;
@@ -616,7 +625,8 @@ class OrderRepository implements OrderRepositoryInterface
         }
         // free delivery over amount transaction end
 
-        if ($order['seller_is'] == 'seller' &&
+        if (
+            $order['seller_is'] == 'seller' &&
             $shippingModel == 'sellerwise_shipping'
         ) {
             $editHistoryAmount = $this->orderEditHistory->where([

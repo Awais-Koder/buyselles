@@ -20,14 +20,13 @@
                         @php
                             $currentOrder = request('order_by');
                         @endphp
-                        <select name="filter" id="orderFilter"
-                                class="bg-transparent outline-0 fs-14 w-auto border-0 p-0">
-                            <option
-                                value="{{ route('account-oder', ['order_by' => 'desc']) }}" {{ $currentOrder === 'desc' ? 'selected' : '' }}>
+                        <select name="filter" id="orderFilter" class="bg-transparent outline-0 fs-14 w-auto border-0 p-0">
+                            <option value="{{ route('account-oder', ['order_by' => 'desc']) }}"
+                                {{ $currentOrder === 'desc' ? 'selected' : '' }}>
                                 {{ translate('sort_by_latest') }}
                             </option>
-                            <option
-                                value="{{ route('account-oder', ['order_by' => 'asc']) }}" {{ $currentOrder === 'asc' ? 'selected' : '' }}>
+                            <option value="{{ route('account-oder', ['order_by' => 'asc']) }}"
+                                {{ $currentOrder === 'asc' ? 'selected' : '' }}>
                                 {{ translate('sort_by_oldest') }}
                             </option>
                         </select>
@@ -36,84 +35,93 @@
 
                 <div class="card __card d-flex web-direction customer-profile-orders h-100-44">
                     <div class="card-body">
-                        @if($orders->count()>0)
+                        @if ($orders->count() > 0)
                             <div class="row g-3">
-                                @foreach($orders as $order)
+                                @foreach ($orders as $order)
                                     <div class="col-md-6">
                                         <div class="cus-shadow rounded-8 p-xl-3 p-2">
                                             <div class="media-order">
-                                                <a href="{{ route('account-order-details', ['id'=>$order->id]) }}"
-                                                   class="d-block position-relative w-70px border rounded h-70px min-w-60px">
-                                                    @if($order->seller_is == 'seller')
+                                                <a href="{{ route('account-order-details', ['id' => $order->id]) }}"
+                                                    class="d-block position-relative w-70px border rounded h-70px min-w-60px">
+                                                    @if ($order->seller_is == 'seller')
                                                         <img alt="{{ translate('shop') }}"
-                                                             src="{{ getStorageImages(path: $order?->seller?->shop->image_full_url, type: 'shop') }}"
-                                                             class="w-100 h-100">
+                                                            src="{{ getStorageImages(path: $order?->seller?->shop->image_full_url, type: 'shop') }}"
+                                                            class="w-100 h-100">
                                                     @elseif($order->seller_is == 'admin')
                                                         <img alt="{{ translate('shop') }}"
-                                                             src="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}"
-                                                             class="w-100 h-100">
+                                                            src="{{ getStorageImages(path: getInHouseShopConfig(key: 'image_full_url'), type: 'shop') }}"
+                                                            class="w-100 h-100">
                                                     @endif
                                                 </a>
                                                 <div class="cont w-auto text-start flex-grow-1">
-                                                    <div
-                                                        class="d-flex align-items-center justify-content-between gap-2">
+                                                    <div class="d-flex align-items-center justify-content-between gap-2">
                                                         <div class="d-flex align-items-center gap-1 flex-wrap">
                                                             <h6 class="mb-0">
-                                                                <a href="{{ route('account-order-details', ['id'=>$order->id]) }}"
-                                                                   class="fs-14 font-semibold min-w-110 line--limit-1">
-                                                                    {{ translate('order') }} #{{$order['id']}}
+                                                                <a href="{{ route('account-order-details', ['id' => $order->id]) }}"
+                                                                    class="fs-14 font-semibold min-w-110 line--limit-1">
+                                                                    {{ translate('order') }} #{{ $order['id'] }}
                                                                 </a>
                                                             </h6>
                                                             <div>
-                                                                @if($order->edited_status == 1)
+                                                                @if ($order->edited_status == 1)
                                                                     <span class="edit-text title-semidark fs-14">
-                                                                    {{ (translate('Edited')) }}
-                                                                        @if($order?->latestEditHistory?->order_due_payment_status == 'unpaid' && $order?->latestEditHistory?->order_due_payment_method != "offline_payment" && $order?->latestEditHistory?->order_due_payment_method != "cash_on_delivery" && $order?->latestEditHistory?->order_due_amount > 0)
+                                                                        {{ translate('Edited') }}
+                                                                        @if (
+                                                                            $order?->latestEditHistory?->order_due_payment_status == 'unpaid' &&
+                                                                                $order?->latestEditHistory?->order_due_payment_method != 'offline_payment' &&
+                                                                                $order?->latestEditHistory?->order_due_payment_method != 'cash_on_delivery' &&
+                                                                                $order?->latestEditHistory?->order_due_amount > 0)
                                                                             <span data-toggle="tooltip"
-                                                                                  data-title="{{ translate('You will pay due the amount ')}}">
-                                                                         <i class="fi fi-sr-usd-circle text-danger"></i>
-                                                                        </span>
+                                                                                data-title="{{ translate('You will pay due the amount ') }}">
+                                                                                <i
+                                                                                    class="fi fi-sr-usd-circle text-danger"></i>
+                                                                            </span>
                                                                         @endif
 
-                                                                        @if($order?->latestEditHistory?->order_return_payment_status == 'pending' && $order?->latestEditHistory?->order_return_amount > 0)
+                                                                        @if (
+                                                                            $order?->latestEditHistory?->order_return_payment_status == 'pending' &&
+                                                                                $order?->latestEditHistory?->order_return_amount > 0)
                                                                             <span data-toggle="tooltip"
-                                                                                  data-title="{{ translate('Admin return the excess amount to you')}}">
-                                                                            <i class="fi fi-sr-usd-circle text-danger"></i>
-                                                                        </span>
+                                                                                data-title="{{ translate('Admin return the excess amount to you') }}">
+                                                                                <i
+                                                                                    class="fi fi-sr-usd-circle text-danger"></i>
+                                                                            </span>
                                                                         @endif
-                                                                </span>
+                                                                    </span>
                                                                 @endif
 
-                                                                @if($order['order_status']=='failed' || $order['order_status']=='canceled')
+                                                                @if ($order['order_status'] == 'failed' || $order['order_status'] == 'canceled')
                                                                     <span
                                                                         class="status-badge rounded-pill __badge badge-soft-danger fs-12 font-semibold text-capitalize">
-                                                                    {{ translate($order['order_status'] =='failed' ? 'failed_to_deliver' : $order['order_status']) }}
-                                                                </span>
-                                                                @elseif($order['order_status']=='confirmed' || $order['order_status']=='processing' || $order['order_status']=='delivered')
+                                                                        {{ translate($order['order_status'] == 'failed' ? 'failed_to_deliver' : $order['order_status']) }}
+                                                                    </span>
+                                                                @elseif(
+                                                                    $order['order_status'] == 'confirmed' ||
+                                                                        $order['order_status'] == 'processing' ||
+                                                                        $order['order_status'] == 'delivered')
                                                                     <span
                                                                         class="status-badge rounded-pill __badge badge-soft-success fs-12 font-semibold text-capitalize">
-                                                                    {{ translate($order['order_status']=='processing' ? 'packaging' : $order['order_status']) }}
-                                                                </span>
+                                                                        {{ translate($order['order_status'] == 'processing' ? 'packaging' : $order['order_status']) }}
+                                                                    </span>
                                                                 @else
                                                                     <span
                                                                         class="status-badge rounded-pill __badge badge-soft-primary fs-12 font-semibold text-capitalize">
-                                                                    {{ translate($order['order_status']) }}
-                                                                </span>
+                                                                        {{ translate($order['order_status']) }}
+                                                                    </span>
                                                                 @endif
                                                             </div>
                                                         </div>
                                                         <div class="btn-group myorder-dropdown">
                                                             <button class="btn p-0 bg-transparent m-0 outline-0"
-                                                                    type="button" data-toggle="dropdown"
-                                                                    aria-expanded="false">
+                                                                type="button" data-toggle="dropdown" aria-expanded="false">
                                                                 <i class="fi fi-rr-menu-dots-vertical fs-14"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-right p-2">
                                                                 <li>
                                                                     <div class="dropdown-item w-100">
                                                                         <a class="d-flex align-items-center justify-content-between w-100 fs-14 gap-2"
-                                                                           href="{{route('generate-invoice',[$order->id]) }}"
-                                                                           title="{{ translate('download_invoice') }}">
+                                                                            href="{{ route('generate-invoice', [$order->id]) }}"
+                                                                            title="{{ translate('download_invoice') }}">
                                                                             {{ translate('Download Invoice') }} <i
                                                                                 class="fi fi-rr-download web-text-primary"></i>
                                                                         </a>
@@ -122,14 +130,19 @@
                                                                 <li>
                                                                     <div class="dropdown-item w-100">
                                                                         <a class="d-flex align-items-center justify-content-between w-100 fs-14 gap-2"
-                                                                           href="{{ route('account-order-details', ['id'=>$order->id]) }}"
-                                                                           title="{{ translate('view_order_details') }}">
+                                                                            href="{{ route('account-order-details', ['id' => $order->id]) }}"
+                                                                            title="{{ translate('view_order_details') }}">
                                                                             {{ translate('View Order Details') }} <i
                                                                                 class="fa fa-eye web-text-primary"></i>
                                                                         </a>
                                                                     </div>
                                                                 </li>
-                                                                @if($order->edited_status == 1 && $order?->latestEditHistory?->order_due_payment_status == 'unpaid' && $order?->latestEditHistory?->order_due_payment_method != "offline_payment" && $order?->latestEditHistory?->order_due_payment_method != "cash_on_delivery" && $order?->latestEditHistory?->order_due_amount > 0)
+                                                                @if (
+                                                                    $order->edited_status == 1 &&
+                                                                        $order?->latestEditHistory?->order_due_payment_status == 'unpaid' &&
+                                                                        $order?->latestEditHistory?->order_due_payment_method != 'offline_payment' &&
+                                                                        $order?->latestEditHistory?->order_due_payment_method != 'cash_on_delivery' &&
+                                                                        $order?->latestEditHistory?->order_due_amount > 0)
                                                                     <li>
                                                                         <button
                                                                             class="dropdown-item d-flex align-items-center justify-content-between fs-14 gap-2"
@@ -154,11 +167,11 @@
                                                     <div
                                                         class="d-flex align-items-center justify-content-between gap-1 flex-wrap mt-1">
                                                         <div class="text-secondary-50 fs-12 font-weight-normal">
-                                                            {{date('d M, Y h:i A',strtotime($order['created_at'])) }}
+                                                            {{ date('d M, Y h:i A', strtotime($order['created_at'])) }}
                                                         </div>
                                                         <div class="web-text-primary fs-16 font-bold">
                                                             @php($orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(order: $order))
-                                                            {{ webCurrencyConverter(amount:  $orderTotalPriceSummary['totalAmount']) }}
+                                                            {{ webCurrencyConverter(amount: $orderTotalPriceSummary['totalAmount']) }}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -170,16 +183,16 @@
                         @else
                             <div class="d-flex justify-content-center align-items-center h-100">
                                 <div class="d-flex flex-column justify-content-center align-items-center gap-3">
-                                    <img
-                                        src="{{ theme_asset(path: 'public/assets/front-end/img/empty-icons/empty-orders.svg') }}"
+                                    <img src="{{ theme_asset(path: 'public/assets/front-end/img/empty-icons/empty-orders.svg') }}"
                                         alt="" width="100">
-                                    <h5 class="text-muted fs-14 font-semi-bold text-center">{{ translate('You_have_not_any_order_yet') }}
+                                    <h5 class="text-muted fs-14 font-semi-bold text-center">
+                                        {{ translate('You_have_not_any_order_yet') }}
                                         !</h5>
                                 </div>
                             </div>
                         @endif
                         <div class="card-footer border-0">
-                            {{$orders->links() }}
+                            {{ $orders->links() }}
                         </div>
                     </div>
                 </div>
@@ -195,50 +208,201 @@
     }
     $isPlural = count($orderSuccessIds) > 1;
     session()->forget('order_success_ids');
+    $successDigitalCodes = [];
+    if (!empty($orderSuccessIds)) {
+        $successDigitalCodes = \App\Models\DigitalProductCode::whereIn('order_id', $orderSuccessIds)
+            ->where('status', 'sold')
+            ->with('product')
+            ->get()
+            ->map(
+                fn($c) => [
+                    'orderId' => $c->order_id,
+                    'productName' => $c->product?->name ?? translate('Digital_Product'),
+                    'code' => $c->decryptCode(),
+                    'serial' => $c->serial_number,
+                    'expiry' => $c->expiry_date?->format('Y-m-d'),
+                ],
+            )
+            ->all();
+    }
+    $hasDigitalCodes = !empty($successDigitalCodes);
     ?>
-    @if($orderSuccessIds && auth('customer')->check())
+    @if ($orderSuccessIds && auth('customer')->check())
         <div class="modal fade" id="order_successfully" aria-labelledby="order_successfully" tabindex="-1"
-             aria-hidden="true">
-            <div class="modal-dialog modal--md modal-dialog-centered">
+            aria-hidden="true" data-backdrop="{{ $hasDigitalCodes ? 'static' : 'false' }}"
+            data-keyboard="{{ $hasDigitalCodes ? 'false' : 'true' }}">
+            <div class="modal-dialog modal-dialog-centered {{ $hasDigitalCodes ? 'modal-lg' : 'modal--md' }}">
                 <div class="modal-content">
                     <div class="modal-body rtl">
-                        <div class="d-flex justify-content-end pb-2">
-                            <button class="close close-quick-view-modal ps-2 pe-1 z-index-99" type="button"
-                                    data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="text-center px-sm-3 pb-2 pt-4 mt-xl-1">
-                            <div class="mb-20">
-                                <img width="56" height="56" class=""
-                                     src="{{theme_asset(path: "public/assets/front-end/img/icons/checked-circle.png")}}"
-                                     alt="">
+                        {{-- Header --}}
+                        <div class="px-sm-3 pb-2 pt-4 mt-xl-1">
+                            <div class="text-center mb-3">
+                                <img width="56" height="56"
+                                    src="{{ theme_asset(path: 'public/assets/front-end/img/icons/checked-circle.png') }}"
+                                    alt="">
                             </div>
-                            <h6 class="mb-3 fs-18 fw-semibold">{{translate('Thank You For Your Purchase!')}}</h6>
-                            <p class="fs-14 title-semidark mb-30">
+                            <h6 class="mb-2 fs-18 fw-semibold text-center">{{ translate('Thank You For Your Purchase!') }}
+                            </h6>
+                            <p class="fs-14 title-semidark mb-2 text-center">
                                 {{ translate('We have received your order and will ship it shortly.') }}
                                 {{ translate('Your Order ID' . ($isPlural ? 's' : '')) }}
-                                {{ implode(', ', $orderSuccessIds) }}
+                                <strong>#{{ implode(', #', $orderSuccessIds) }}</strong> —
                                 {{ translate('keep it handy for tracking.') }}
                             </p>
-                            <a href="{{ route('home') }}"
-                               class="btn btn--primary font-bold px-4 font-weight-normal rounded-10">
-                                {{ translate('Explore More Items') }}
-                            </a>
+                            @if ($hasDigitalCodes)
+                                <p class="fs-13 text-muted text-center mb-0">
+                                    <i class="fi fi-rr-info me-1"></i>
+                                    {{ translate('You can also retrieve your code(s) anytime from') }}
+                                    <a href="{{ route('account-oder') }}"
+                                        class="web-text-primary fw-semibold">{{ translate('Order Details') }} →
+                                        {{ translate('Digital Codes') }}</a>
+                                    {{ translate('section.') }}
+                                </p>
+                            @endif
+
+                            {{-- Digital Codes Section --}}
+                            @if ($hasDigitalCodes)
+                                <div class="alert alert-warning py-2 px-3 fs-13 my-3">
+                                    <i class="fa fa-exclamation-triangle me-1"></i>
+                                    <strong>{{ translate('Important') }}:</strong>
+                                    {{ translate('Copy or print your codes below. They are also sent to your email.') }}
+                                </div>
+                                @foreach ($successDigitalCodes as $idx => $item)
+                                    <div class="border rounded p-3 mb-2 bg-light">
+                                        <p class="text-muted mb-1 fw-semibold" style="font-size:.8rem;">
+                                            <i class="fi fi-rr-box me-1"></i>
+                                            {{ $item['productName'] }}
+                                            @if ($item['orderId'])
+                                                &mdash; <span class="text-secondary">{{ translate('Order') }}
+                                                    #{{ $item['orderId'] }}</span>
+                                            @endif
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                            <code
+                                                class="fs-5 fw-bold bg-white px-3 py-2 rounded border flex-grow-1 text-center"
+                                                id="success-code-{{ $idx }}"
+                                                style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
+                                                {{ $item['code'] }}
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-primary success-copy-btn"
+                                                data-target="success-code-{{ $idx }}">
+                                                <i class="fi fi-rr-copy"></i> {{ translate('Copy') }}
+                                            </button>
+                                        </div>
+                                        @if (!empty($item['serial']) || !empty($item['expiry']))
+                                            <p class="text-muted mb-0 mt-1" style="font-size:.75rem;">
+                                                @if (!empty($item['serial']))
+                                                    <strong>S/N:</strong> {{ $item['serial'] }}
+                                                @endif
+                                                @if (!empty($item['expiry']))
+                                                    &nbsp;<strong>Exp:</strong> {{ $item['expiry'] }}
+                                                @endif
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                {{-- Confirmation checkbox --}}
+                                <div class="d-flex align-items-start gap-2 p-3 border rounded mt-2" dir="ltr"
+                                    style="background:#fffde7;direction:ltr;text-align:left;">
+                                    <input class="form-check-input flex-shrink-0 mt-1" type="checkbox"
+                                        id="successConfirmCodes" style="margin-left:7px;">
+                                    <label class="fw-semibold mb-0" for="successConfirmCodes"
+                                        style="cursor:pointer;line-height:1.4;margin-left:30px;">
+                                        <i class="fi fi-rr-shield-check me-1 text-success"></i>
+                                        {{ translate('I confirm I have successfully copied / saved my code(s)') }}
+                                    </label>
+                                </div>
+                            @endif
+
+                            {{-- Footer buttons --}}
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mt-3 pb-2">
+                                @if ($hasDigitalCodes)
+                                    <button type="button" id="successPrintBtn" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fi fi-rr-print"
+                                            style="margin-right: 3px"></i>{{ translate('Print Receipt') }}
+                                    </button>
+                                @endif
+                                <a href="{{ route('home') }}"
+                                    class="btn btn--primary font-bold px-4 font-weight-normal rounded-10">
+                                    {{ translate('Explore More Items') }}
+                                </a>
+                                @if ($hasDigitalCodes)
+                                    <button type="button" id="successModalCloseBtn"
+                                        class="btn btn-outline-secondary px-4 rounded-10 disabled" disabled
+                                        data-dismiss="modal">
+                                        {{ translate('Close') }}
+                                    </button>
+                                @else
+                                    <button type="button" id="modal-close-btn"
+                                        class="btn btn-outline-secondary px-4 rounded-10" data-dismiss="modal">
+                                        {{ translate('Close') }}
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    @endif
 
-    @if($orders->count()> 0)
-        @foreach($orders as $order)
-            @include('web-views.partials._choose-payment-method-order-details',[
+        {{-- Hidden printable receipt --}}
+        @if ($hasDigitalCodes)
+            <div id="successPrintableReceipt" style="display:none;">
+                <style>
+                    @media print {
+                        body>*:not(#successPrintableReceipt) {
+                            display: none !important;
+                        }
+
+                        #successPrintableReceipt {
+                            display: block !important;
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 80mm;
+                            font-family: 'Courier New', monospace;
+                            font-size: 9pt;
+                            padding: 6mm;
+                        }
+                    }
+                </style>
+                <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;">
+                    <div style="font-size:12pt;font-weight:bold;">{{ getWebConfig(name: 'company_name') }}</div>
+                </div>
+                <div style="font-size:8pt;margin-bottom:5px;">
+                    <div><strong>{{ translate('Date') }}:</strong> {{ now()->format('d/m/Y H:i') }}</div>
+                    <div><strong>{{ translate('Order') }}:</strong> #{{ implode(', #', $orderSuccessIds) }}</div>
+                </div>
+                <div style="border-top:1px dashed #000;padding-top:5px;">
+                    @foreach ($successDigitalCodes as $item)
+                        <div style="margin-bottom:7px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
+                            <div style="font-size:8pt;color:#555;">{{ $item['productName'] }}</div>
+                            <div
+                                style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
+                                {{ $item['code'] }}</div>
+                            @if (!empty($item['serial']))
+                                <div style="font-size:7pt;">S/N: {{ $item['serial'] }}</div>
+                            @endif
+                            @if (!empty($item['expiry']))
+                                <div style="font-size:7pt;">Exp: {{ $item['expiry'] }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+                <div style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">
+                    {{ translate('Thank You For Your Purchase!') }}<br>{{ getWebConfig(name: 'company_name') }}
+                </div>
+            </div>
+        @endif
+    @endif {{-- end $orderSuccessIds --}}
+
+    @if ($orders->count() > 0)
+        @foreach ($orders as $order)
+            @include('web-views.partials._choose-payment-method-order-details', [
                 'order' => $order,
                 'orderDueAmount' => $order?->latestEditHistory?->order_due_amount ?? 0,
                 'paymentGatewayList' => $paymentGatewayList,
-             ])
+            ])
         @endforeach
     @endif
 
@@ -246,27 +410,227 @@
 
 @push('script')
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/payment.js') }}"></script>
-    @if($orderSuccessIds)
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const modalEl = document.getElementById('order_successfully');
-                const orderModal = new bootstrap.Modal(modalEl, {
-                    backdrop: 'static',
-                    keyboard: false
-                });
-                orderModal.show();
-                document.getElementById('modal-close-btn').addEventListener('click', function () {
-                    setTimeout(() => {
-                        orderModal.hide();
-                    }, 600);
-                });
-            });
-        </script>
-    @endif
+    <?php
+    $jsOrderData = $orderSuccessIds
+        ? [
+            'orderIds' => $orderSuccessIds,
+            'isPlural' => $isPlural,
+            'hasDigitalCodes' => $hasDigitalCodes,
+            'codes' => $successDigitalCodes,
+        ]
+        : null;
+    ?>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        (function() {
+            var LS_KEY = 'bk_order_success';
+
+            // PHP injects fresh data only on first load after checkout
+            var phpData = @json($jsOrderData);
+
+            function esc(str) {
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g,
+                    '&quot;');
+            }
+
+            function buildCodesHtml(data) {
+                if (!data.hasDigitalCodes || !data.codes || !data.codes.length) return '';
+                var h = '';
+                h += '<div class="alert alert-warning py-2 px-3 fs-13 my-3">' +
+                    '<i class="fa fa-exclamation-triangle me-1"></i>' +
+                    '<strong>{{ addslashes(translate('Important')) }}:</strong> ' +
+                    '{{ addslashes(translate('Copy or print your codes below. They are also sent to your email.')) }}' +
+                    '</div>';
+                data.codes.forEach(function(item, idx) {
+                    h += '<div class="border rounded p-3 mb-2 bg-light">';
+                    h += '<p class="text-muted mb-1 fw-semibold" style="font-size:.8rem;"><i class="fi fi-rr-box me-1"></i>' +
+                        esc(item.productName);
+                    if (item.orderId) h +=
+                        ' &mdash; <span class="text-secondary">{{ addslashes(translate('Order')) }} #' + item
+                        .orderId + '</span>';
+                    h += '</p>';
+                    h += '<div class="d-flex align-items-center gap-2 flex-wrap mt-1">';
+                    h += '<code class="fs-5 fw-bold bg-white px-3 py-2 rounded border flex-grow-1 text-center" id="success-code-' +
+                        idx +
+                        '" style="letter-spacing:4px;font-family:\'Courier New\',monospace;word-break:break-all;">' +
+                        esc(item.code) + '</code>';
+                    h += '<button type="button" class="btn btn-sm btn-outline-primary success-copy-btn" data-target="success-code-' +
+                        idx + '"><i class="fi fi-rr-copy"></i> {{ addslashes(translate('Copy')) }}</button>';
+                    h += '</div>';
+                    if (item.serial || item.expiry) {
+                        h += '<p class="text-muted mb-0 mt-1" style="font-size:.75rem;">';
+                        if (item.serial) h += '<strong>S/N:</strong> ' + esc(item.serial) + ' ';
+                        if (item.expiry) h += '&nbsp;<strong>Exp:</strong> ' + esc(item.expiry);
+                        h += '</p>';
+                    }
+                    h += '</div>';
+                });
+                h += '<div class="d-flex align-items-start gap-2 p-3 border rounded mt-2" dir="ltr" style="background:#fffde7;direction:ltr;text-align:left;">' +
+                    '<input class="form-check-input flex-shrink-0 mt-1" type="checkbox" id="successConfirmCodes" style="min-width:18px;min-height:18px;">' +
+                    '<label class="fw-semibold mb-0" for="successConfirmCodes" style="cursor:pointer;line-height:1.4;">' +
+                    '<i class="fi fi-rr-shield-check me-1 text-success"></i>' +
+                    '{{ addslashes(translate('I confirm I have successfully copied / saved my code(s)')) }}' +
+                    '</label></div>';
+                return h;
+            }
+
+            function buildPrintReceiptHtml(data) {
+                if (!data.hasDigitalCodes || !data.codes || !data.codes.length) return '';
+                var orderStr = data.orderIds.map(function(id) {
+                    return '#' + id;
+                }).join(', ');
+                var rows = '';
+                data.codes.forEach(function(item) {
+                    rows += '<div style="margin-bottom:7px;padding-bottom:5px;border-bottom:1px dotted #ccc;">';
+                    rows += '<div style="font-size:8pt;color:#555;">' + esc(item.productName) + '</div>';
+                    rows +=
+                        '<div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">' +
+                        esc(item.code) + '</div>';
+                    if (item.serial) rows += '<div style="font-size:7pt;">S/N: ' + esc(item.serial) + '</div>';
+                    if (item.expiry) rows += '<div style="font-size:7pt;">Exp: ' + esc(item.expiry) + '</div>';
+                    rows += '</div>';
+                });
+                return '<div id="successPrintableReceipt" style="display:none;"><style>@media print{body>*:not(#successPrintableReceipt){display:none!important;}#successPrintableReceipt{display:block!important;position:fixed;top:0;left:0;width:80mm;font-family:\'Courier New\',monospace;font-size:9pt;padding:6mm;}}</style>' +
+                    '<div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;"><div style="font-size:12pt;font-weight:bold;">{{ addslashes(getWebConfig(name: 'company_name')) }}</div></div>' +
+                    '<div style="font-size:8pt;margin-bottom:5px;"><div><strong>{{ addslashes(translate('Date')) }}:</strong> {{ now()->format('d/m/Y H:i') }}</div><div><strong>{{ addslashes(translate('Order')) }}:</strong> ' +
+                    orderStr + '</div></div>' +
+                    '<div style="border-top:1px dashed #000;padding-top:5px;">' + rows + '</div>' +
+                    '<div style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">{{ addslashes(translate('Thank You For Your Purchase!')) }}<br>{{ addslashes(getWebConfig(name: 'company_name')) }}</div>' +
+                    '</div>';
+            }
+
+            function buildModalHtml(data) {
+                var orderIdsStr = data.orderIds.map(function(id) {
+                    return '#' + id;
+                }).join(', #');
+                var codesHtml = buildCodesHtml(data);
+                var printHtml = buildPrintReceiptHtml(data);
+                var footerHtml = '';
+                if (data.hasDigitalCodes) {
+                    footerHtml +=
+                        '<button type="button" id="successPrintBtn" class="btn btn-sm btn-outline-secondary"><i class="fi fi-rr-print me-1"></i>{{ addslashes(translate('Print Receipt')) }}</button>';
+                }
+                footerHtml +=
+                    '<a href="{{ route('home') }}" class="btn btn--primary font-bold px-4 font-weight-normal rounded-10">{{ addslashes(translate('Explore More Items')) }}</a>';
+                if (data.hasDigitalCodes) {
+                    footerHtml +=
+                        '<button type="button" id="successModalCloseBtn" class="btn btn-outline-secondary px-4 rounded-10 disabled" disabled data-dismiss="modal">{{ addslashes(translate('Close')) }}</button>';
+                } else {
+                    footerHtml +=
+                        '<button type="button" id="modal-close-btn" class="btn btn-outline-secondary px-4 rounded-10" data-dismiss="modal">{{ addslashes(translate('Close')) }}</button>';
+                }
+                return '<div class="modal fade" id="order_successfully" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">' +
+                    '<div class="modal-dialog modal-dialog-centered ' + (data.hasDigitalCodes ? 'modal-lg' :
+                        'modal--md') + '">' +
+                    '<div class="modal-content"><div class="modal-body rtl"><div class="px-sm-3 pb-2 pt-4 mt-xl-1">' +
+                    '<div class="text-center mb-3"><img width="56" height="56" src="{{ theme_asset(path: 'public/assets/front-end/img/icons/checked-circle.png') }}" alt=""></div>' +
+                    '<h6 class="mb-2 fs-18 fw-semibold text-center">{{ addslashes(translate('Thank You For Your Purchase!')) }}</h6>' +
+                    '<p class="fs-14 title-semidark mb-2 text-center">{{ addslashes(translate('We have received your order and will ship it shortly.')) }} {{ addslashes(translate('Your Order ID')) }}' +
+                    (data.isPlural ? 's' : '') + ' <strong>' + orderIdsStr +
+                    '</strong> &mdash; {{ addslashes(translate('keep it handy for tracking.')) }}</p>' +
+                    codesHtml +
+                    '<div class="d-flex flex-wrap gap-2 justify-content-center mt-3 pb-2">' + footerHtml + '</div>' +
+                    '</div></div></div></div></div>' +
+                    printHtml;
+            }
+
+            function attachModalEvents(data) {
+                var $modal = $('#order_successfully');
+
+                // Copy buttons
+                $(document).on('click', '.success-copy-btn', function() {
+                    var $btn = $(this);
+                    var text = $('#' + $btn.data('target')).text().trim();
+                    var orig = $btn.html();
+                    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.resolve())
+                    .then(function() {
+                        $btn.html(
+                            '<i class="fi fi-rr-check"></i> {{ addslashes(translate('Copied!')) }}'
+                        );
+                        setTimeout(function() {
+                            $btn.html(orig);
+                        }, 2000);
+                    });
+                });
+
+                // Confirmation checkbox enables close
+                $(document).on('change', '#successConfirmCodes', function() {
+                    var $closeBtn = $('#successModalCloseBtn');
+                    if (this.checked) {
+                        $closeBtn.removeClass('disabled').removeAttr('disabled').html(
+                            '{{ addslashes(translate('Close')) }}');
+                    } else {
+                        $closeBtn.addClass('disabled').attr('disabled', 'disabled');
+                    }
+                });
+
+                // Digital close — clear localStorage then hide
+                $(document).on('click', '#successModalCloseBtn', function() {
+                    localStorage.removeItem(LS_KEY);
+                    $modal.modal('hide');
+                });
+
+                // Non-digital close
+                $(document).on('click', '#modal-close-btn', function() {
+                    localStorage.removeItem(LS_KEY);
+                    $modal.modal('hide');
+                });
+
+                // Print
+                $(document).on('click', '#successPrintBtn', function() {
+                    var $el = $('#successPrintableReceipt');
+                    $el.show();
+                    window.print();
+                    $el.hide();
+                });
+
+                // Remove localStorage on non-digital dismiss
+                $modal.on('hide.bs.modal', function() {
+                    if (!data.hasDigitalCodes) {
+                        localStorage.removeItem(LS_KEY);
+                    }
+                });
+            }
+
+            $(document).ready(function() {
+                var data = null;
+
+                if (phpData) {
+                    // Fresh data from checkout — save to localStorage for refresh resilience
+                    data = phpData;
+                    try {
+                        localStorage.setItem(LS_KEY, JSON.stringify(phpData));
+                    } catch (e) {}
+                } else {
+                    // No PHP data — check if user hasn't confirmed yet
+                    try {
+                        data = JSON.parse(localStorage.getItem(LS_KEY));
+                    } catch (e) {
+                        data = null;
+                    }
+                    if (data) {
+                        // PHP-rendered modal is absent; build it dynamically
+                        if (!document.getElementById('order_successfully')) {
+                            $('body').append(buildModalHtml(data));
+                        }
+                    }
+                }
+
+                if (!data) return;
+
+                var backdrop = data.hasDigitalCodes ? 'static' : false;
+                $('#order_successfully').modal({
+                    backdrop: backdrop,
+                    keyboard: !data.hasDigitalCodes,
+                    show: true
+                });
+                attachModalEvents(data);
+            });
+        }());
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
             const filterSelect = document.getElementById('orderFilter');
-            filterSelect.addEventListener('change', function () {
+            filterSelect.addEventListener('change', function() {
                 const url = this.value;
                 if (url) {
                     window.location.href = url;

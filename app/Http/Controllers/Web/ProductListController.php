@@ -74,13 +74,19 @@ class ProductListController extends Controller
         $dataForm = 'category';
         $request->merge(['data_from' => $dataForm]);
 
+        $subCategories = collect();
+
         if ($category['position'] == 0) {
+            $subCategories = $category->childes()->orderBy('priority')->get();
             $request->merge(['category_id' => $category['id']]);
         } elseif ($category['position'] == 1) {
+            $subCategories = $category->childes()->orderBy('priority')->get();
             $request->merge(['sub_category_id' => $category['id']]);
         } elseif ($category['position'] == 2) {
             $request->merge(['sub_sub_category_id' => $category['id']]);
         }
+
+        $request->merge(['_sub_categories' => $subCategories]);
 
         return self::getProductsListPage(
             request: $request,
@@ -224,6 +230,8 @@ class ProductListController extends Controller
             ], 200);
         }
 
+        $subCategories = $request['_sub_categories'] ?? collect();
+
         return view(VIEW_FILE_NAMES['products_view_page'], [
             'pageTitleContent' => $pageTitle ?? translate('products'),
             'products' => $products,
@@ -231,6 +239,7 @@ class ProductListController extends Controller
             'activeBrands' => $activeBrands,
             'categories' => $categories,
             'robotsMetaContentData' => $metaData,
+            'subCategories' => $subCategories,
         ]);
     }
 

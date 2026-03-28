@@ -75,7 +75,6 @@ class OrderController extends Controller
         $getTrackOrderHistory = OrderManager::getTrackOrderStatusHistory(orderId: $orderId, isOrderOnlyDigital: $isOrderOnlyDigital);
 
         return response()->json($getTrackOrderHistory, 200);
-
     }
 
     public function order_cancel(Request $request)
@@ -270,7 +269,6 @@ class OrderController extends Controller
                     return response()->json(['message' => translate('address_not_found')], 200);
                 } elseif ($countryRestrictStatus && ! self::delivery_country_exist_check($billingAddress->country)) {
                     return response()->json(['message' => translate('Delivery_unavailable_for_this_country')], 403);
-
                 } elseif ($zipRestrictStatus && ! self::delivery_zipcode_exist_check($billingAddress->zip)) {
                     return response()->json(['message' => translate('Delivery_unavailable_for_this_zip_code_area')], 403);
                 }
@@ -341,7 +339,7 @@ class OrderController extends Controller
         $paymentAmount = collect($vendorWiseCartList)->sum('order_amount_with_tax');
 
         $user = Helpers::getCustomerInformation($request);
-        if ($paymentAmount > $user->wallet_balance) {
+        if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {
             return response()->json(['message' => 'inefficient balance in your wallet to pay for this order'], 403);
         } else {
             $physical_product = false;
@@ -362,7 +360,6 @@ class OrderController extends Controller
                         return response()->json(['message' => translate('address_not_found')], 403);
                     } elseif ($country_restrict_status && ! self::delivery_country_exist_check($shipping_address->country)) {
                         return response()->json(['message' => translate('Delivery_unavailable_for_this_country')], 403);
-
                     } elseif ($zip_restrict_status && ! self::delivery_zipcode_exist_check($shipping_address->zip)) {
                         return response()->json(['message' => translate('Delivery_unavailable_for_this_zip_code_area')], 403);
                     }
@@ -692,7 +689,6 @@ class OrderController extends Controller
                 'sms_config_status' => $smsConfigStatus,
             ], 403);
         }
-
     }
 
     public function digital_product_download_otp_verify(Request $request)
@@ -723,7 +719,6 @@ class OrderController extends Controller
                     'message' => translate('file_not_found'),
                 ]);
             }
-
         } else {
             return response()->json([
                 'message' => translate('The_OTP_is_incorrect'),
@@ -761,7 +756,6 @@ class OrderController extends Controller
                     $guest_phone = $order_details_data->order->billing_address_data ? $order_details_data->order->billing_address_data->phone : null;
                 }
             } catch (\Throwable $th) {
-
             }
 
             $emailServices_smtp = getWebConfig(name: 'mail_config');
@@ -809,7 +803,6 @@ class OrderController extends Controller
                 'new_time' => $otp_interval_time,
                 'message' => 'OTP sent successfully',
             ]);
-
         }
     }
 
@@ -868,7 +861,6 @@ class OrderController extends Controller
                     $query->where('customer_id', auth('customer')->id());
                 })->first();
             }
-
         } else {
             $user_id = User::where('phone', $request['phone_number'])->first();
             if ($order && $order->is_guest) {

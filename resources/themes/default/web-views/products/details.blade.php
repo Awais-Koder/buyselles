@@ -499,6 +499,14 @@
                                                             {{ translate('Request_Restock') }}
                                                         </button>
                                                     </div>
+                                                @elseif ($product['product_type'] == 'digital')
+                                                    <div class="product-out-of-stock-section collapse"
+                                                        {!! $firstVariationQuantity <= 0 ? 'style="display: block;"' : '' !!}>
+                                                        <button class="btn btn-secondary fw-semibold" type="button" disabled>
+                                                            <i class="tio-clear-circle-outlined me-1"></i>
+                                                            {{ translate('Out_of_Stock') }}
+                                                        </button>
+                                                    </div>
                                                 @endif
                                                 <button type="button" data-product-id="{{ $product['id'] }}"
                                                     class="btn __text-18px border product-action-add-wishlist">

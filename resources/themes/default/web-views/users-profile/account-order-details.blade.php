@@ -616,6 +616,116 @@
                             </div>
                         </div>
 
+                        {{-- ─── Digital Codes Section ─────────────────────────────────────── --}}
+                        @php
+                            $soldCodes = \App\Models\DigitalProductCode::where('order_id', $order->id)
+                                ->where('status', 'sold')
+                                ->with('product')
+                                ->get();
+                        @endphp
+                        @if ($soldCodes->isNotEmpty())
+                            <div class="card __card mt-3" id="digitalCodesSection">
+                                <div class="card-header d-flex align-items-center justify-content-between gap-2 py-2">
+                                    <h6 class="mb-0 fs-14 fw-semibold">
+                                        <i class="fi fi-rr-key me-2 web-text-primary"></i>
+                                        {{ translate('Digital Codes') }}
+                                    </h6>
+                                    <button type="button" onclick="printDigitalCodes()"
+                                        class="btn btn-sm btn-outline-secondary">
+                                        <i class="fi fi-rr-print me-1"></i>{{ translate('Print') }}
+                                    </button>
+                                </div>
+                                <div class="card-body p-3" id="digitalCodesPrintArea">
+                                    <div class="alert alert-info py-2 px-3 fs-13 mb-3">
+                                        <i class="fi fi-rr-shield-check me-1"></i>
+                                        {{ translate('Keep these codes safe. Each code is unique and tied to your order.') }}
+                                    </div>
+                                    @foreach ($soldCodes as $idx => $dc)
+                                        <div class="border rounded p-3 mb-2 bg-light">
+                                            <p class="text-muted mb-1 fw-semibold fs-13">
+                                                <i class="fi fi-rr-box me-1"></i>
+                                                {{ $dc->product?->name ?? translate('Digital Product') }}
+                                                <span class="text-secondary ms-2">{{ translate('Order') }}
+                                                    #{{ $order->id }}</span>
+                                            </p>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <code
+                                                    class="fw-bold bg-white px-3 py-2 rounded border flex-grow-1 text-center fs-5"
+                                                    id="detail-code-{{ $idx }}"
+                                                    style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
+                                                    {{ $dc->decryptCode() }}
+                                                </code>
+                                                <button type="button"
+                                                    class="btn btn-sm btn-outline-primary detail-copy-btn"
+                                                    data-target="detail-code-{{ $idx }}">
+                                                    <i class="fi fi-rr-copy"></i> {{ translate('Copy') }}
+                                                </button>
+                                            </div>
+                                            @if (!empty($dc->serial_number) || !empty($dc->expiry_date))
+                                                <p class="text-muted mb-0 mt-1 fs-12">
+                                                    @if (!empty($dc->serial_number))
+                                                        <strong>S/N:</strong> {{ $dc->serial_number }}
+                                                    @endif
+                                                    @if (!empty($dc->expiry_date))
+                                                        &nbsp;<strong>{{ translate('Exp') }}:</strong>
+                                                        {{ $dc->expiry_date->format('Y-m-d') }}
+                                                    @endif
+                                                </p>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            {{-- Hidden print area --}}
+                            <div id="digitalCodesPrintReceipt" style="display:none;">
+                                <style id="dcPrintStyle">
+                                    @media print {
+                                        body>*:not(#digitalCodesPrintReceipt) {
+                                            display: none !important;
+                                        }
+
+                                        #digitalCodesPrintReceipt {
+                                            display: block !important;
+                                            position: fixed;
+                                            top: 0;
+                                            left: 0;
+                                            width: 80mm;
+                                            font-family: 'Courier New', monospace;
+                                            font-size: 9pt;
+                                            padding: 6mm;
+                                        }
+                                    }
+                                </style>
+                                <div
+                                    style="text-align:center;border-bottom:1px dashed #000;padding-bottom:5px;margin-bottom:5px;">
+                                    <div style="font-size:12pt;font-weight:bold;">
+                                        {{ getWebConfig(name: 'company_name') }}</div>
+                                    <div style="font-size:8pt;">{{ translate('Order') }} #{{ $order->id }}</div>
+                                </div>
+                                @foreach ($soldCodes as $dc)
+                                    <div style="margin-bottom:7px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
+                                        <div style="font-size:8pt;color:#555;">
+                                            {{ $dc->product?->name ?? translate('Digital Product') }}</div>
+                                        <div
+                                            style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
+                                            {{ $dc->decryptCode() }}</div>
+                                        @if (!empty($dc->serial_number))
+                                            <div style="font-size:7pt;">S/N: {{ $dc->serial_number }}</div>
+                                        @endif
+                                        @if (!empty($dc->expiry_date))
+                                            <div style="font-size:7pt;">Exp: {{ $dc->expiry_date->format('Y-m-d') }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                <div
+                                    style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">
+                                    {{ translate('Thank You For Your Purchase!') }}
+                                </div>
+                            </div>
+                        @endif
+                        {{-- ─── End Digital Codes Section ────────────────────────────────── --}}
+
                         @php($orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(order: $order))
                         <div class="row d-flex justify-content-end mt-2">
                             <div class="col-md-8 col-lg-5">
@@ -1184,4 +1294,24 @@
 @push('script')
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/spartan-multi-image-picker.js') }}"></script>
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/payment.js') }}"></script>
+    <script>
+        $(document).on('click', '.detail-copy-btn', function() {
+            var $btn = $(this);
+            var text = $('#' + $btn.data('target')).text().trim();
+            var orig = $btn.html();
+            (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.resolve())
+            .then(function() {
+                $btn.html('<i class="fi fi-rr-check"></i> {{ translate('Copied!') }}');
+                setTimeout(function() {
+                    $btn.html(orig);
+                }, 2000);
+            });
+        });
+
+        function printDigitalCodes() {
+            $('#digitalCodesPrintReceipt').show();
+            window.print();
+            $('#digitalCodesPrintReceipt').hide();
+        }
+    </script>
 @endpush

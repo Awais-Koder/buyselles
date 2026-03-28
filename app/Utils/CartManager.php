@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartShipping;
 use App\Models\CategoryShippingCost;
 use App\Models\Color;
+use App\Models\DigitalProductCode;
 use App\Models\DigitalProductVariation;
 use App\Models\Product;
 use App\Models\ShippingMethod;
@@ -881,8 +882,15 @@ class CartManager
                             }
                         }
                     }
-                } elseif (($product['product_type'] == 'physical') && $product['current_stock'] < $cart->quantity) {
+                } elseif ($product['product_type'] == 'physical' && $product['current_stock'] < $cart->quantity) {
                     $status = false;
+                } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] == 'ready_after_sell') {
+                    $availableCodes = DigitalProductCode::where('product_id', $product['id'])
+                        ->where('status', 'available')
+                        ->count();
+                    if ($availableCodes < $cart->quantity) {
+                        $status = false;
+                    }
                 }
             } else {
                 $status = false;

@@ -256,6 +256,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
 
                 // Super-admin PIN decrypt (never shown in list — on-demand only)
                 Route::get('code/{id}/decrypt', 'decryptCode')->name('decrypt-code');
+                Route::get('sold-codes', 'soldCodes')->name('sold-codes');
             });
     });
 

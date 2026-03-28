@@ -286,7 +286,8 @@ trait OrderEditManager
             $variationData[] = $var;
         }
         Product::where('id', $product['id'])->update([
-            'variation' => json_encode($variationData), 'current_stock' => $mode === 'increment' ? $product['current_stock'] + $qty : $product['current_stock'] - $qty,
+            'variation' => json_encode($variationData),
+            'current_stock' => $mode === 'increment' ? $product['current_stock'] + $qty : $product['current_stock'] - $qty,
         ]);
     }
 
@@ -695,7 +696,7 @@ trait OrderEditManager
 
     public function payEditOrderDueByCustomerWallet(object|array $order, object|array $customer): array
     {
-        if (($customer['wallet_balance'] ?? 0) < $order['edit_due_amount']) {
+        if (round($customer['wallet_balance'] ?? 0, 4) < round($order['edit_due_amount'], 4)) {
             return [
                 'status' => false,
                 'message' => translate('Insufficient_Wallet_Balance'),

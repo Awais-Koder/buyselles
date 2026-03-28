@@ -11,6 +11,27 @@
     <meta property="twitter:title" content="Products of {{ $web_config['company_name'] }}" />
     <meta property="twitter:url" content="{{ env('APP_URL') }}">
     <meta property="twitter:description" content="{{ $web_config['meta_description'] }}">
+    <style>
+        .sub-cat-chip:hover {
+            background-color: var(--primary-clr) !important;
+            color: #fff !important;
+            border-color: var(--primary-clr) !important;
+        }
+
+        .sub-cat-chip:hover span {
+            color: #fff !important;
+        }
+
+        .sub-category-strip::-webkit-scrollbar,
+        .sub-category-strip>div::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .sub-category-strip>div::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -30,6 +51,24 @@
                 'sortBySection' => true,
                 'showProductsFilter' => true,
             ])
+
+            {{-- Sub-category horizontal strip --}}
+            @if (isset($subCategories) && $subCategories->isNotEmpty())
+                <div class="sub-category-strip py-2 mt-2">
+                    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+                        @foreach ($subCategories as $sub)
+                            <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
+                                style="min-width: fit-content; transition: all .2s;">
+                                <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                    alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
+                                    style="object-fit: contain;">
+                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div class="py-3 mb-2 mb-md-4 rtl __inline-35" dir="{{ session('direction') }}">
                 <div class="row">

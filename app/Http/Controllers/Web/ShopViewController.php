@@ -58,7 +58,6 @@ class ShopViewController extends Controller
             'image_full_url' => $shop->image_full_url,
             'minimum_order_amount' => $shop['author_type'] == 'admin' ? getWebConfig(name: 'minimum_order_amount') : $shop->seller->minimum_order_amount,
         ];
-
     }
 
     public function seller_shop(Request $request, $slug): View|JsonResponse|Redirector|RedirectResponse
@@ -109,6 +108,22 @@ class ShopViewController extends Controller
         }
         $data = self::getProductListRequestData(request: $request);
 
+        $subCategories = collect();
+        $subCatParam = 'sub_category_id';
+        if ($request->has('category_id') && $request['category_id']) {
+            $selectedCategory = Category::find($request['category_id']);
+            if ($selectedCategory) {
+                $subCategories = $selectedCategory->childes()->orderBy('priority')->get();
+                $subCatParam = 'sub_category_id';
+            }
+        } elseif ($request->has('sub_category_id') && $request['sub_category_id']) {
+            $selectedCategory = Category::find($request['sub_category_id']);
+            if ($selectedCategory) {
+                $subCategories = $selectedCategory->childes()->orderBy('priority')->get();
+                $subCatParam = 'sub_sub_category_id';
+            }
+        }
+
         return view(VIEW_FILE_NAMES['shop_view_page'], [
             'products' => $products,
             'categories' => $categories,
@@ -120,6 +135,8 @@ class ShopViewController extends Controller
             'stockClearanceProducts' => $stockClearanceProducts,
             'stockClearanceSetup' => $stockClearanceSetup,
             'data' => $data,
+            'subCategories' => $subCategories,
+            'subCatParam' => $subCatParam,
         ]);
     }
 
@@ -190,7 +207,8 @@ class ShopViewController extends Controller
             },
             'compareList' => function ($query) {
                 return $query->where('user_id', Auth::guard('customer')->user()->id ?? 0);
-            }, 'clearanceSale' => function ($query) {
+            },
+            'clearanceSale' => function ($query) {
                 return $query->active();
             },
         ])->when($shop['author_type'] == 'admin', function ($query) {
@@ -223,7 +241,6 @@ class ShopViewController extends Controller
                 $totalOrder = 0;
                 $products_for_review = 0;
             }
-
         }
 
         $featuredProductsList = ProductManager::getPriorityWiseFeaturedProductsQuery(query: $featuredProductQuery, dataLimit: 'all');

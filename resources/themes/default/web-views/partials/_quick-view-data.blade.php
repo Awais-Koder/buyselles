@@ -425,6 +425,14 @@
                                 </div>
                             </button>
                         </div>
+                    @elseif(($product['product_type'] == 'digital'))
+                        <div
+                            class="product-out-of-stock-section collapse" {!! $firstVariationQuantity <= 0 ? 'style="display: block;"' : '' !!}>
+                            <button class="btn btn-secondary fw-semibold" type="button" disabled>
+                                <i class="tio-clear-circle-outlined me-1"></i>
+                                {{ translate('Out_of_Stock') }}
+                            </button>
+                        </div>
                     @endif
 
                    <div>

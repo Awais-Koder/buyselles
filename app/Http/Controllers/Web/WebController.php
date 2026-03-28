@@ -895,7 +895,7 @@ class WebController extends Controller
         $paymentAmount = collect($vendorWiseCartList)->sum('order_amount_with_tax');
 
         $user = Helpers::getCustomerInformation($request);
-        if ($paymentAmount > $user->wallet_balance) {
+        if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {
             Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order').'!!');
 
             return back();
@@ -1112,7 +1112,9 @@ class WebController extends Controller
         if (count(json_decode($product['variation'], true)) > 0) {
             $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
         }
-        $firstVariationQuantity = $product['product_type'] == 'physical' ? $firstVariationQuantity : 999;
+        if ($product['product_type'] === 'digital') {
+            $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+        }
 
         return response()->json([
             'success' => 1,

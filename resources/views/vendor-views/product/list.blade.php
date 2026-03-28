@@ -174,7 +174,23 @@
                                                         </span>
                                                     @endif
                                                 @else
-                                                    <span>-</span>
+                                                    @if ($product['product_type'] === 'digital')
+                                                        <?php $codeCount = $product->available_digital_product_codes_count ?? 0; ?>
+                                                        <span>{{ $codeCount }}</span>
+                                                        @if ($codeCount <= 0)
+                                                            <span class="text-danger-dark fs-18" data-toggle="tooltip"
+                                                                data-placement="right" title="{{ translate('No_Codes_Available') }}">
+                                                                <i class="fi fi-sr-exclamation"></i>
+                                                            </span>
+                                                        @elseif ($codeCount <= 20)
+                                                            <span class="text-warning-dark fs-18" data-toggle="tooltip"
+                                                                data-placement="right" title="{{ translate('Low_Stock') }}">
+                                                                <i class="fi fi-sr-exclamation"></i>
+                                                            </span>
+                                                        @endif
+                                                    @else
+                                                        <span>-</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>
@@ -238,7 +254,7 @@
                                                         <a class="btn btn-outline-secondary btn-sm square-btn"
                                                             title="{{ translate('View Codes') }}"
                                                             href="{{ route('vendor.products.digital-code-import.product-codes', $product['id']) }}">
-                                                            <i class="tio-format-list-bulleted"></i>
+                                                            <i class="fi fi-sr-list"></i>
                                                         </a>
                                                     @endif
                                                     <a class="btn btn-outline--success icon-btn square-btn"

@@ -366,10 +366,17 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ Request::is('admin/products/digital-code-import*') ? 'active' : '' }}"
+                            <a class="nav-link {{ Request::is('admin/products/digital-code-import*') && !Request::is('admin/products/digital-code-import/sold-codes') ? 'active' : '' }}"
                                 href="{{ route('admin.products.digital-code-import.index') }}"
                                 title="{{ translate('Digital_Code_Import') }}">
                                 <span class="text-truncate">{{ translate('Digital_Code_Import') }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::is('admin/products/digital-code-import/sold-codes*') ? 'active' : '' }}"
+                                href="{{ route('admin.products.digital-code-import.sold-codes') }}"
+                                title="{{ translate('Sold_Codes') }}">
+                                <span class="text-truncate">{{ translate('Sold_Codes') }}</span>
                             </a>
                         </li>
                         <li class="nav-item">

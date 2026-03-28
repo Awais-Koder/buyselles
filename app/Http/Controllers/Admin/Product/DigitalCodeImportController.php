@@ -240,6 +240,38 @@ class DigitalCodeImportController extends BaseController
             ->with('import_summary', $summary);
     }
 
+    // ── Sold Code Tracking ────────────────────────────────────────────────────
+
+    /**
+     * Show all sold digital codes with customer, vendor, product, and order links.
+     */
+    public function soldCodes(Request $request): View
+    {
+        $search = $request->get('search');
+
+        $codes = DigitalProductCode::sold()
+            ->with([
+                'product',
+                'order',
+                'order.customer',
+                'order.seller',
+                'order.seller.shop',
+            ])
+            ->when($search, function ($query) use ($search): void {
+                $query->whereHas('product', function ($q) use ($search): void {
+                    $q->where('name', 'like', "%{$search}%");
+                })->orWhereHas('order.customer', function ($q) use ($search): void {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })->orWhere('order_id', $search);
+            })
+            ->latest('assigned_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin-views.digital-product-code.sold-codes', compact('codes', 'search'));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function parseDate(string $raw): ?string

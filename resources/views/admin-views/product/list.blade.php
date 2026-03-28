@@ -171,7 +171,23 @@
                                                         </span>
                                                     @endif
                                                 @else
-                                                    <span>-</span>
+                                                    @if ($product['product_type'] === 'digital')
+                                                        <?php $codeCount = $product->available_digital_product_codes_count ?? 0; ?>
+                                                        <span>{{ $codeCount }}</span>
+                                                        @if ($codeCount <= 0)
+                                                            <span class="text-danger-dark fs-18" data-bs-toggle="tooltip"
+                                                                title="{{ translate('No_Codes_Available') }}">
+                                                                <i class="fi fi-sr-exclamation"></i>
+                                                            </span>
+                                                        @elseif ($codeCount <= 20)
+                                                            <span class="text-warning-dark fs-18" data-bs-toggle="tooltip"
+                                                                title="{{ translate('Low_Stock') }}">
+                                                                <i class="fi fi-sr-exclamation"></i>
+                                                            </span>
+                                                        @endif
+                                                    @else
+                                                        <span>-</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>

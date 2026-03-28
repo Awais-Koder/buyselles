@@ -130,6 +130,7 @@ class ProductController extends BaseController
                     return $query->where('is_active', 1);
                 });
             }],
+            withCount: ['availableDigitalProductCodes'],
             dataLimit: $paginationLimit
         );
 
@@ -254,7 +255,7 @@ class ProductController extends BaseController
 
         $product = $this->productRepo->getFirstWhereWithoutGlobalScope(params: ['id' => $id], relations: ['digitalVariation', 'translations', 'seoInfo', 'digitalProductAuthors.author', 'digitalProductPublishingHouse.publishingHouse']);
         if (! $product) {
-            ToastMagic::error(translate('product_not_found') . '!');
+            ToastMagic::error(translate('product_not_found').'!');
 
             return redirect()->route('admin.products.list', ['in_house']);
         }
@@ -385,7 +386,7 @@ class ProductController extends BaseController
 
                     $fileItem = null;
                     if ($request['digital_product_type'] == 'ready_product') {
-                        $fileItem = $request->file('digital_files.' . $uniqueKey);
+                        $fileItem = $request->file('digital_files.'.$uniqueKey);
                     }
                     $uploadedFile = '';
                     if ($fileItem) {
@@ -393,9 +394,9 @@ class ProductController extends BaseController
                     }
                     $this->digitalProductVariationRepo->add(data: [
                         'product_id' => $product['id'],
-                        'variant_key' => $request->input('digital_product_variant_key.' . $uniqueKey),
-                        'sku' => $request->input('digital_product_sku.' . $uniqueKey),
-                        'price' => currencyConverter(amount: $request->input('digital_product_price.' . $uniqueKey)),
+                        'variant_key' => $request->input('digital_product_variant_key.'.$uniqueKey),
+                        'sku' => $request->input('digital_product_sku.'.$uniqueKey),
+                        'price' => currencyConverter(amount: $request->input('digital_product_price.'.$uniqueKey)),
                         'file' => $uploadedFile,
                     ]);
                 }
@@ -414,7 +415,7 @@ class ProductController extends BaseController
 
                     $fileItem = null;
                     if ($request['digital_product_type'] == 'ready_product') {
-                        $fileItem = $request->file('digital_files.' . $uniqueKey);
+                        $fileItem = $request->file('digital_files.'.$uniqueKey);
                     }
                     $uploadedFile = $variation['file'] ?? '';
                     $variation = $this->digitalProductVariationRepo->getFirstWhere(params: ['product_id' => $product['id'], 'variant_key' => $variation['variant_key']]);
@@ -422,9 +423,9 @@ class ProductController extends BaseController
                         $uploadedFile = $this->fileUpload(dir: 'product/digital-product/', format: $fileItem->getClientOriginalExtension(), file: $fileItem);
                     }
                     $this->digitalProductVariationRepo->updateByParams(params: ['product_id' => $product['id'], 'variant_key' => $variation['variant_key']], data: [
-                        'variant_key' => $request->input('digital_product_variant_key.' . $uniqueKey),
-                        'sku' => $request->input('digital_product_sku.' . $uniqueKey),
-                        'price' => currencyConverter(amount: $request->input('digital_product_price.' . $uniqueKey)),
+                        'variant_key' => $request->input('digital_product_variant_key.'.$uniqueKey),
+                        'sku' => $request->input('digital_product_sku.'.$uniqueKey),
+                        'price' => currencyConverter(amount: $request->input('digital_product_price.'.$uniqueKey)),
                         'file' => $uploadedFile,
                     ]);
                 }
@@ -448,7 +449,7 @@ class ProductController extends BaseController
     {
         $productActive = $this->productRepo->getFirstWhere(params: ['id' => $id], relations: ['digitalVariation', 'seoInfo']);
         if (! $productActive) {
-            ToastMagic::error(translate('product_not_found') . '!');
+            ToastMagic::error(translate('product_not_found').'!');
 
             return redirect()->route('admin.products.list', ['in_house']);
         }
@@ -510,7 +511,7 @@ class ProductController extends BaseController
     {
         $variation = $this->digitalProductVariationRepo->getFirstWhere(params: ['product_id' => $request['product_id'], 'variant_key' => $request['variant_key']]);
         if ($variation) {
-            $this->deleteFile(filePath: '/product/digital-product/' . $variation['file']);
+            $this->deleteFile(filePath: '/product/digital-product/'.$variation['file']);
             $this->digitalProductVariationRepo->updateByParams(params: ['id' => $variation['id']], data: ['file' => null]);
 
             return response()->json([
@@ -557,13 +558,13 @@ class ProductController extends BaseController
         return response()->json([
             'status' => $success,
             'data' => $data,
-            'message' => $success ? translate('status_updated_successfully') : translate('status_updated_failed') . ' ' . translate('Product_must_be_approved'),
+            'message' => $success ? translate('status_updated_successfully') : translate('status_updated_failed').' '.translate('Product_must_be_approved'),
         ], 200);
     }
 
     public function deleteImage(Request $request, ProductService $service): RedirectResponse
     {
-        $this->deleteFile(filePath: '/product/' . $request['image']);
+        $this->deleteFile(filePath: '/product/'.$request['image']);
         $product = $this->productRepo->getFirstWhere(params: ['id' => $request['id']]);
 
         if (count(json_decode($product['images'])) < 2) {
@@ -657,7 +658,7 @@ class ProductController extends BaseController
             'productWiseTax' => $productWiseTax,
         ];
 
-        return Excel::download(new ProductListExport($data), ucwords($request['type']) . '-' . 'product-list.xlsx');
+        return Excel::download(new ProductListExport($data), ucwords($request['type']).'-'.'product-list.xlsx');
     }
 
     public function getBarcodeView(Request $request, string|int $id): View|RedirectResponse
@@ -761,9 +762,9 @@ class ProductController extends BaseController
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = currencyConverter(amount: abs($request['price_' . str_replace('.', '_', $str)]));
-                $item['sku'] = $request['sku_' . str_replace('.', '_', $str)];
-                $item['qty'] = abs($request['qty_' . str_replace('.', '_', $str)]);
+                $item['price'] = currencyConverter(amount: abs($request['price_'.str_replace('.', '_', $str)]));
+                $item['sku'] = $request['sku_'.str_replace('.', '_', $str)];
+                $item['qty'] = abs($request['qty_'.str_replace('.', '_', $str)]);
                 $variations[] = $item;
             }
         }
@@ -879,7 +880,7 @@ class ProductController extends BaseController
             ProductRequestStatusUpdateEvent::dispatch('product_request_rejected_message', 'seller', $vendor['app_language'] ?? getDefaultLanguage(), $vendor['cm_firebase_token']);
         }
 
-        return response()->json(['message' => translate('product_request_denied') . '.']);
+        return response()->json(['message' => translate('product_request_denied').'.']);
     }
 
     public function approveStatus(Request $request): JsonResponse
@@ -894,7 +895,7 @@ class ProductController extends BaseController
             ProductRequestStatusUpdateEvent::dispatch('product_request_approved_message', 'seller', $vendor['app_language'] ?? getDefaultLanguage(), $vendor['cm_firebase_token']);
         }
 
-        return response()->json(['message' => translate('product_request_approved') . '.']);
+        return response()->json(['message' => translate('product_request_approved').'.']);
     }
 
     public function getSearchedProductsView(Request $request): JsonResponse

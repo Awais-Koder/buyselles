@@ -340,6 +340,15 @@ class ProductRepository implements ProductRepositoryInterface
                     return $query->active();
                 }]);
             })
+            ->when(! empty($withCount), function ($query) use ($withCount) {
+                // Apply all plain (non-reviews) withCount relations generically
+                $generic = array_filter($withCount, fn ($v, $k) => $k !== 'reviews', ARRAY_FILTER_USE_BOTH);
+                if (! empty($generic)) {
+                    return $query->withCount(array_values($generic));
+                }
+
+                return $query;
+            })
             ->when($withSum, function ($query) use ($withSum) {
                 foreach ($withSum as $sum) {
                     return $query->withSum($sum['relation'], $sum['column'], function ($query) use ($sum) {
@@ -376,7 +385,8 @@ class ProductRepository implements ProductRepositoryInterface
             })->when(isset($filters['sub_sub_category_id']), function ($query) use ($filters) {
                 return $query->where(['sub_sub_category_id' => $filters['sub_sub_category_id']]);
             })
-            ->when(isset($filters['filter_category_ids']) && ! empty($filters['filter_category_ids']) && is_array($filters['filter_category_ids']) && count($filters['filter_category_ids']) > 0,
+            ->when(
+                isset($filters['filter_category_ids']) && ! empty($filters['filter_category_ids']) && is_array($filters['filter_category_ids']) && count($filters['filter_category_ids']) > 0,
                 function ($query) use ($filters) {
                     return \App\Utils\ProductManager::filterQueryForCategoryWithSubCategories(
                         request: $filters,

@@ -10613,4 +10613,7 @@ return [
     'sub_category_name_is_required' => 'Sub category name is required',
     'sub_sub_category_name_is_required' => 'Sub sub category name is required',
     'Edit_Sub_Sub_Category' => 'Edit Sub Sub Category',
+    'Download_the_Excel_template._Add_one_digital_code_(PIN)_per_row._You_can_restock_existing_in-house_products_or_create_new_ones_in_the_same_file.' => 'Download the Excel template. Add one digital code (PIN) per row. You can restock existing in-house products or create new ones in the same file.',
+    'The_unit_price_field_is_required.' => 'The unit price field is required.',
+    'code(s)_imported_successfully' => 'Code(s) imported successfully',
 ];

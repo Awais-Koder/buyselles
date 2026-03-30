@@ -18,6 +18,10 @@ class DigitalProductCodeService
      * The code is AES-256-CBC encrypted before storage.
      * A SHA-256 hash of the normalised plain code is stored for duplicate detection.
      *
+     * Duplicate detection is **vendor-specific**: the same code may exist across
+     * different vendors, but a single vendor cannot upload the same code twice.
+     * Admin-uploaded codes (seller_id = null) are checked globally.
+     *
      * Returns null (without throwing) when a duplicate is detected so callers can
      * gracefully count skipped rows.
      */
@@ -30,9 +34,20 @@ class DigitalProductCodeService
         $normalised = strtolower(trim($plainCode));
         $hash = hash('sha256', $normalised);
 
-        // ── Duplicate detection ──────────────────────────────────────────────
-        // 1. Global PIN duplicate (by hash — works without decrypting AES data)
-        if (DigitalProductCode::where('code_hash', $hash)->exists()) {
+        // Resolve seller_id from the product
+        $product = Product::select('id', 'added_by', 'user_id')->find($productId);
+        $sellerId = ($product && $product->added_by === 'seller') ? (int) $product->user_id : null;
+
+        // ── Duplicate detection (vendor-specific) ────────────────────────────
+        // Same vendor (or same admin scope) must NOT have duplicate codes.
+        // Different vendors ARE allowed to have the same code.
+        $duplicateQuery = DigitalProductCode::where('code_hash', $hash);
+        if ($sellerId !== null) {
+            $duplicateQuery->where('seller_id', $sellerId);
+        } else {
+            $duplicateQuery->whereNull('seller_id');
+        }
+        if ($duplicateQuery->exists()) {
             return null;
         }
 
@@ -48,14 +63,23 @@ class DigitalProductCodeService
         }
         // ────────────────────────────────────────────────────────────────────
 
-        $record = DigitalProductCode::create([
-            'product_id' => $productId,
-            'code' => Crypt::encryptString(trim($plainCode)),
-            'code_hash' => $hash,
-            'serial_number' => $serialNumber ? trim($serialNumber) : null,
-            'expiry_date' => $expiryDate ?: null,
-            'status' => 'available',
-        ]);
+        try {
+            $record = DigitalProductCode::create([
+                'product_id' => $productId,
+                'seller_id' => $sellerId,
+                'code' => Crypt::encryptString(trim($plainCode)),
+                'code_hash' => $hash,
+                'serial_number' => $serialNumber ? trim($serialNumber) : null,
+                'expiry_date' => $expiryDate ?: null,
+                'status' => 'available',
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Catch race-condition duplicate (concurrent insert between the EXISTS check and CREATE)
+            if ($e->errorInfo[1] === 1062) {
+                return null;
+            }
+            throw $e;
+        }
 
         $this->syncStock($productId);
 
@@ -121,6 +145,7 @@ class DigitalProductCodeService
             $record = DigitalProductCode::query()
                 ->where('product_id', $productId)
                 ->where('status', 'available')
+                ->where('is_active', true)
                 ->where(function ($q): void {
                     $q->whereNull('expiry_date')
                         ->orWhereDate('expiry_date', '>=', now()->toDateString());
@@ -212,6 +237,7 @@ class DigitalProductCodeService
                     $record = DigitalProductCode::query()
                         ->where('product_id', $productId)
                         ->where('status', 'available')
+                        ->where('is_active', true)
                         ->where(function ($q): void {
                             $q->whereNull('expiry_date')
                                 ->orWhereDate('expiry_date', '>=', now()->toDateString());
@@ -268,13 +294,14 @@ class DigitalProductCodeService
     }
 
     /**
-     * Sync the product's current_stock to match available, non-expired codes.
+     * Sync the product's current_stock to match available, non-expired, active codes.
      */
     public function syncStock(int $productId): void
     {
         $available = DigitalProductCode::query()
             ->where('product_id', $productId)
             ->where('status', 'available')
+            ->where('is_active', true)
             ->where(function ($q): void {
                 $q->whereNull('expiry_date')
                     ->orWhereDate('expiry_date', '>=', now()->toDateString());
@@ -404,5 +431,57 @@ class DigitalProductCodeService
             'sold' => (int) ($stats['sold'] ?? 0),
             'total' => array_sum($stats),
         ];
+    }
+
+    /**
+     * Toggle the is_active flag on a digital code.
+     * Only codes with status 'available' or 'expired' can be toggled.
+     * Reserved/sold codes cannot be deactivated.
+     *
+     * After toggling, stock is re-synced to exclude inactive codes.
+     */
+    public function toggleActive(int $codeId, ?int $sellerId = null): DigitalProductCode
+    {
+        $query = DigitalProductCode::where('id', $codeId);
+        if ($sellerId !== null) {
+            $query->where('seller_id', $sellerId);
+        }
+
+        $code = $query->firstOrFail();
+
+        if (in_array($code->status, ['reserved', 'sold'])) {
+            throw new \RuntimeException(translate('Cannot_toggle_a_code_that_is_reserved_or_sold.'));
+        }
+
+        $code->update(['is_active' => ! $code->is_active]);
+
+        $this->syncStock($code->product_id);
+
+        return $code->fresh();
+    }
+
+    /**
+     * Delete a digital code from the pool.
+     * Only codes with status 'available' or 'expired' can be deleted.
+     * Reserved/sold codes cannot be deleted (they are tied to orders).
+     *
+     * After deletion, stock is re-synced.
+     */
+    public function deleteCode(int $codeId, ?int $sellerId = null): void
+    {
+        $query = DigitalProductCode::where('id', $codeId);
+        if ($sellerId !== null) {
+            $query->where('seller_id', $sellerId);
+        }
+
+        $code = $query->firstOrFail();
+
+        if (in_array($code->status, ['reserved', 'sold'])) {
+            throw new \RuntimeException(translate('Cannot_delete_a_code_that_is_reserved_or_sold.'));
+        }
+
+        $productId = $code->product_id;
+        $code->delete();
+        $this->syncStock($productId);
     }
 }

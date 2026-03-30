@@ -30,16 +30,12 @@ class Helpers
         $user = null;
         if (auth('customer')->check()) {
             $user = auth('customer')->user();
-
         } elseif (is_object($request) && method_exists($request, 'user')) {
             $user = $request->user() ?? $request->user;
-
         } elseif (isset($request['payment_request_from']) && in_array($request['payment_request_from'], ['app']) && ! isset($request->user)) {
             $user = $request['is_guest'] ? 'offline' : User::find($request['customer_id']);
-
         } elseif (session()->has('customer_id') && ! session('is_guest')) {
             $user = User::find(session('customer_id'));
-
         } elseif (isset($request->user)) {
             $user = $request->user;
         } elseif (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app' && isset($request->customer_id) && $request->is_guest != 1) {
@@ -265,8 +261,19 @@ class Helpers
     public static function getDefaultPaymentGateways(): array
     {
         return [
-            'ssl_commerz', 'paypal', 'stripe', 'razor_pay', 'paystack', 'senang_pay', 'paymob_accept',
-            'flutterwave', 'paytm', 'paytabs', 'liqpay', 'mercadopago', 'bkash',
+            'ssl_commerz',
+            'paypal',
+            'stripe',
+            'razor_pay',
+            'paystack',
+            'senang_pay',
+            'paymob_accept',
+            'flutterwave',
+            'paytm',
+            'paytabs',
+            'liqpay',
+            'mercadopago',
+            'bkash',
         ];
     }
 
@@ -469,7 +476,8 @@ class Helpers
     {
         $key = BusinessSetting::where(['type' => 'push_notification_key'])->first()->value;
         $url = 'https://fcm.googleapis.com/fcm/send';
-        $header = ['authorization: key='.$key.'',
+        $header = [
+            'authorization: key='.$key.'',
             'content-type: application/json',
         ];
 
@@ -616,7 +624,7 @@ class Helpers
         return $formattedValue;
     }
 
-    public static function sales_commission_before_order($cart_group_id, $coupon_discount): int|string
+    public static function sales_commission_before_order($cart_group_id, $coupon_discount): float
     {
         $carts = CartManager::getCartListQuery(groupId: $cart_group_id);
         $cart_summery = OrderManager::getOrderSummaryBeforePlaceOrder($carts, $coupon_discount);
@@ -624,20 +632,13 @@ class Helpers
         return self::seller_sales_commission($carts[0]['seller_is'], $carts[0]['seller_id'], $cart_summery['order_total']);
     }
 
-    public static function seller_sales_commission($seller_is, $seller_id, $order_total): int|string
+    /**
+     * Calculate admin commission deducted from vendor earnings.
+     * Supports both 'percent' and 'flat' types via CommissionService.
+     */
+    public static function seller_sales_commission(string $sellerIs, ?int $sellerId, float $orderTotal): float
     {
-        $commissionAmount = 0;
-        if ($seller_is == 'seller') {
-            $seller = Seller::find($seller_id);
-            if (isset($seller) && $seller['sales_commission_percentage'] !== null) {
-                $commission = $seller['sales_commission_percentage'];
-            } else {
-                $commission = getWebConfig(name: 'sales_commission');
-            }
-            $commissionAmount = number_format(($order_total / 100) * $commission, 2);
-        }
-
-        return $commissionAmount;
+        return app(\App\Services\CommissionService::class)->calculate($sellerIs, $sellerId, $orderTotal);
     }
 
     public static function set_symbol($amount): string

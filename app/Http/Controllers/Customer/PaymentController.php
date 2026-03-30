@@ -259,7 +259,6 @@ class PaymentController extends Controller
                 return redirect(url('/'));
             }
         }
-
     }
 
     public function getCustomerPaymentRequest(Request $request, $orderAdditionalData = []): mixed
@@ -327,7 +326,9 @@ class PaymentController extends Controller
             'coupon_code' => $couponCode,
             'requestObj' => $request,
         ]);
-        $paymentAmount = collect($vendorWiseCartList)->sum('order_amount_with_tax');
+        $vendorCollection = collect($vendorWiseCartList);
+        $paymentAmount = $vendorCollection->sum('order_amount_with_tax')
+            + $vendorCollection->sum('customer_service_fee');
 
         if ($customer == 'offline') {
             $address = ShippingAddress::where(['customer_id' => $request['customer_id'], 'is_guest' => 1])->latest()->first();

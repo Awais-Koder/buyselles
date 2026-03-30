@@ -36,8 +36,9 @@
         {{-- Import summary (shown right after upload) --}}
         @if (session('import_summary'))
             @php $summary = session('import_summary'); @endphp
-            <div class="alert alert-{{ $summary['processed'] > 0 ? 'success' : 'warning' }} alert-dismissible fade show"
+            <div class="alert alert-{{ $summary['processed'] > 0 ? 'success' : 'warning' }} alert-dismissible fade show pe-5"
                 role="alert">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 <strong><i class="fi fi-sr-check me-1"></i>{{ translate('Import Complete') }}</strong>
                 <div class="mt-1">
                     <div><strong>{{ $summary['processed'] }}</strong> {{ translate('code(s) imported successfully') }}
@@ -53,7 +54,6 @@
                             {{ translate('blank/example row(s) skipped') }}</div>
                     @endif
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
@@ -83,6 +83,12 @@
                 <div class="card text-center py-3">
                     <div class="h3 mb-1 text-success">{{ $stats['available'] }}</div>
                     <div class="small text-muted">{{ translate('Available') }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2">
+                <div class="card text-center py-3">
+                    <div class="h3 mb-1 text-dark">{{ $stats['inactive'] }}</div>
+                    <div class="small text-muted">{{ translate('Inactive') }}</div>
                 </div>
             </div>
             <div class="col-6 col-md-3 col-lg-2">
@@ -130,7 +136,9 @@
                                 <th>{{ translate('PIN / Code') }}</th>
                                 <th>{{ translate('Expiry Date') }}</th>
                                 <th class="text-center">{{ translate('Status') }}</th>
+                                <th class="text-center">{{ translate('Active') }}</th>
                                 <th>{{ translate('Added') }}</th>
+                                <th class="text-center">{{ translate('Action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -194,13 +202,38 @@
                                             <span class="badge bg-secondary">{{ ucfirst($code->status) }}</span>
                                         @endif
                                     </td>
+                                    <td class="text-center">
+                                        @if (in_array($code->status, ['available', 'expired']))
+                                            <label class="switcher mx-auto">
+                                                <input type="checkbox" class="switcher_input toggle-code-status"
+                                                    data-code-id="{{ $code->id }}"
+                                                    {{ $code->is_active ? 'checked' : '' }}>
+                                                <span class="switcher_control"></span>
+                                            </label>
+                                        @else
+                                            <span class="text-muted small"
+                                                title="{{ translate('Cannot_toggle_reserved_or_sold_codes') }}">—</span>
+                                        @endif
+                                    </td>
                                     <td class="text-muted small">
                                         {{ $code->created_at->format('Y-m-d') }}
+                                    </td>
+                                    <td class="text-center">
+                                        @if (in_array($code->status, ['available', 'expired']))
+                                            <button type="button" class="btn btn-outline-danger btn-sm delete-code-btn"
+                                                data-code-id="{{ $code->id }}"
+                                                title="{{ translate('Delete this code') }}">
+                                                <i class="fi fi-rr-trash"></i>
+                                            </button>
+                                        @else
+                                            <span class="text-muted small"
+                                                title="{{ translate('Cannot_delete_reserved_or_sold_codes') }}">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center py-5 text-muted">
+                                    <td colspan="8" class="text-center py-5 text-muted">
                                         <i class="fi fi-sr-inbox-in fs-2 d-block mb-2"></i>
                                         {{ translate('No codes in the pool yet.') }}
                                         <br>
@@ -319,5 +352,95 @@
                 });
             })();
         @endif
+
+        // ── Toggle Active / Inactive ──
+        document.querySelectorAll('.toggle-code-status').forEach(function(toggle) {
+            toggle.addEventListener('change', function() {
+                const codeId = this.dataset.codeId;
+                const checkbox = this;
+                const url = '{{ route('admin.products.digital-code-import.toggle-code-status', ':id') }}'
+                    .replace(':id', codeId);
+
+                fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute('content') ?? '',
+                        },
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            toastr.success(data.message);
+                        } else {
+                            checkbox.checked = !checkbox.checked;
+                            toastr.error(data.message ||
+                                '{{ addslashes(translate('Toggle failed')) }}');
+                        }
+                    })
+                    .catch(() => {
+                        checkbox.checked = !checkbox.checked;
+                        toastr.error(
+                            '{{ addslashes(translate('Network error. Please try again.')) }}');
+                    });
+            });
+        });
+
+        // ── Delete Code ──
+        document.querySelectorAll('.delete-code-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const codeId = this.dataset.codeId;
+                const row = this.closest('tr');
+
+                const getText = document.getElementById('get-confirm-and-cancel-button-text-for-delete');
+                Swal.fire({
+                    title: getText?.dataset.sure || '{{ addslashes(translate('are_you_sure')) }}?',
+                    text: getText?.dataset.text ||
+                        '{{ addslashes(translate('you_will_not_be_able_to_revert_this')) }}!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    cancelButtonText: getText?.dataset.cancel ||
+                        '{{ addslashes(translate('cancel')) }}',
+                    confirmButtonText: getText?.dataset.confirm ||
+                        '{{ addslashes(translate('yes_delete_it')) }}',
+                    reverseButtons: true,
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    const url =
+                        '{{ route('admin.products.digital-code-import.delete-code', ':id') }}'
+                        .replace(
+                            ':id', codeId);
+
+                    fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector(
+                                        'meta[name="csrf-token"]')
+                                    ?.getAttribute('content') ?? '',
+                            },
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                row.remove();
+                                toastr.success(data.message);
+                            } else {
+                                toastr.error(data.message ||
+                                    '{{ addslashes(translate('Delete failed')) }}');
+                            }
+                        })
+                        .catch(() => {
+                            toastr.error(
+                                '{{ addslashes(translate('Network error. Please try again.')) }}'
+                            );
+                        });
+                });
+            });
+        });
     </script>
 @endpush

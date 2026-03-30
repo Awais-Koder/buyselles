@@ -464,13 +464,13 @@ function shareOnSocialMedia() {
             "https://" + social + encodeURIComponent(url),
             "Popup",
             "toolbar=0,status=0,width=" +
-                width +
-                ",height=" +
-                height +
-                ",left=" +
-                left +
-                ",top=" +
-                top
+            width +
+            ",height=" +
+            height +
+            ",left=" +
+            left +
+            ",top=" +
+            top
         );
     });
 }
@@ -608,10 +608,10 @@ function addToCart(formSelector, redirectToCheckout = false, url = null) {
         $.post({
             url: formActionUrl,
             data: $(formSelector).serializeArray().concat({
-                    name: "buy_now",
-                    value: redirectToCheckout ? 1 : 0,
-                }),
-            beforeSend: function () {},
+                name: "buy_now",
+                value: redirectToCheckout ? 1 : 0,
+            }),
+            beforeSend: function () { },
             success: function (response) {
                 if (response.status === 2) {
                     hideProductDetailsStickySection()
@@ -657,7 +657,7 @@ function addToCart(formSelector, redirectToCheckout = false, url = null) {
                     return false;
                 }
             },
-            complete: function () {},
+            complete: function () { },
         });
     } else if (parseInt($(formSelector).find("input[name=quantity]").val()) === 0) {
         toastr.warning($(formSelector).data("outofstock"), {
@@ -718,7 +718,7 @@ $('.add-all-to-cart').on('click', function (e) {
 });
 
 $('.add-to-cart-from-wishlist').on('click', function (e) {
-   e.preventDefault();
+    e.preventDefault();
     let actionUrl = $(this).data('action');
     let id = $(this).data('id');
     let quantity = $(this).data('quantity');
@@ -742,7 +742,7 @@ $('.add-to-cart-from-wishlist').on('click', function (e) {
             updateNavCart();
             if (response.status) {
                 toastr.success(response.message);
-            }else{
+            } else {
                 toastr.error(response.message);
             }
         },
@@ -864,8 +864,8 @@ function updateCartQuantity(cartId, productId, action, event) {
                     let cartQuantityMinus = $(`.cart_quantity__minus${cartId}`);
                     parseInt(response["qty"]) <= 1
                         ? cartQuantityMinus.html(
-                              '<i class="bi bi-trash3-fill text-danger fs-10"></i>'
-                          )
+                            '<i class="bi bi-trash3-fill text-danger fs-10"></i>'
+                        )
                         : cartQuantityMinus.html('<i class="bi bi-dash"></i>');
 
                     cartQuantityMinus.val(response["qty"]);
@@ -924,7 +924,7 @@ function getUpdateProductAddUpdateCartBtn(response) {
             actionAddToCartBtn.html(actionAddToCartBtn.data("add"));
             $('.product-exist-in-cart-list[name="key"]').val("");
         }
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function cartItemRemoveFunction(removeUrl, token, cartId, segment) {
@@ -975,7 +975,7 @@ function getVariantPrice(formSelector = ".add-to-cart-details-form") {
             url: $("#route-cart-variant-price").data("url"),
             data: $(formSelector).serializeArray(),
             success: function (response) {
-                updateProductDetailsTopSection(".add-to-cart-details-form",response);
+                updateProductDetailsTopSection(".add-to-cart-details-form", response);
                 updateProductDetailsBottomSection('.add-to-cart-sticky-form', response);
                 if (formSelector === '.add-to-cart-sticky-form' || checkFirstTimeVariant) {
                     checkFirstTimeVariant = false;
@@ -1021,6 +1021,15 @@ function updateProductDetailsTopSection(formSelector, response) {
             productRestockRequestButton.attr('disabled', true);
         } else {
             productRestockRequestButton.html(productRestockRequestButton.data('default'));
+        }
+    }
+    if (response?.product_type?.toString() === 'digital') {
+        if (response?.quantity <= 0) {
+            $(".add-to-cart-details-form").find(".product-out-of-stock-section").show();
+            $(".add-to-cart-details-form").find(".product-add-and-buy-section").hide().removeClass('d-flex');
+        } else {
+            $(".add-to-cart-details-form").find(".product-out-of-stock-section").hide();
+            $(".add-to-cart-details-form").find(".product-add-and-buy-section").show().addClass('d-flex');
         }
     }
 
@@ -1104,8 +1113,17 @@ function updateProductDetailsBottomSection(formSelector, response) {
             productRestockRequestButton.html(productRestockRequestButton.data("default"));
         }
     }
+    if (response?.product_type?.toString() === "digital") {
+        if (response?.quantity <= 0) {
+            $(".add-to-cart-sticky-form .product-out-of-stock-section").show();
+            $(".add-to-cart-sticky-form .product-add-and-buy-section").hide().removeClass("d-flex");
+        } else {
+            $(".add-to-cart-sticky-form .product-out-of-stock-section").hide();
+            $(".add-to-cart-sticky-form .product-add-and-buy-section").show().addClass("d-flex");
+        }
+    }
 }
-document.addEventListener('change', function(e){
+document.addEventListener('change', function (e) {
     const t = e.target;
     if (t.matches('input[type="radio"][name="color"], input[type="radio"][name^="choice_"]')) {
         const val = (t.value || '').toLowerCase();
@@ -1120,7 +1138,7 @@ document.addEventListener('change', function(e){
         }
         let match = Array.from(document.querySelectorAll(selector)).find(i => (i.value || '').toLowerCase() === val);
         if (!match && name === "color" && !isSticky) {
-            const code = val.replace('#','');
+            const code = val.replace('#', '');
             match = document.querySelector('input[id^="sticky-"][id$="-color-' + code + '"]');
         }
         if (match) match.checked = true;
@@ -1242,8 +1260,8 @@ $("#see-more").on("click", function () {
             showMoreContent.removeClass("active");
             seeMoreReviewInProductDetails === 2
                 ? seeMoreDetails.html(
-                      $("#all-msg-container").data("afterextend")
-                  )
+                    $("#all-msg-container").data("afterextend")
+                )
                 : console.log(seeMoreReviewInProductDetails);
         } else {
             seeMoreDetails
@@ -1325,7 +1343,7 @@ $(".product-view-option input[name=product_view]").on("change", function () {
         data: {
             value: $(this).val(),
         },
-        success: function (response) {},
+        success: function (response) { },
     });
 });
 
@@ -1345,7 +1363,7 @@ $("#max_price, #min_price").on("keyup", function () {
             "inline-size":
                 ((filter_rangeOne.val() - filter_rangeTwo.val()) /
                     priceRangeMax.attr("max")) *
-                    100 +
+                100 +
                 "%",
             "inset-inline-start":
                 (filter_rangeTwo.val() / priceRangeMax.attr("max")) * 100 + "%",
@@ -1355,7 +1373,7 @@ $("#max_price, #min_price").on("keyup", function () {
             "inline-size":
                 ((filter_rangeTwo.val() - filter_rangeOne.val()) /
                     priceRangeMax.attr("max")) *
-                    100 +
+                100 +
                 "%",
             "inset-inline-start":
                 (filter_rangeOne.val() / priceRangeMax.attr("max")) * 100 + "%",
@@ -1432,8 +1450,8 @@ $(".order-again").on("click", function () {
             if (response.status === 1) {
                 updateNavCart();
                 if (response.errors && response.errors.length > 0) {
-                    response.errors.forEach(function(error) {
-                        toastr.warning(error,{
+                    response.errors.forEach(function (error) {
+                        toastr.warning(error, {
                             closeButton: true,
                             progressBar: true,
                             timeOut: 2000
@@ -1660,7 +1678,7 @@ $(".digital-product-download").on("click", function () {
                 toastr.error(data.message);
             }
         },
-        error: function () {},
+        error: function () { },
         complete: function () {
             $("#loading").removeClass("d-grid");
         },

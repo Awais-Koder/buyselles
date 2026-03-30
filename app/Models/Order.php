@@ -30,6 +30,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float $bring_change_amount
  * @property string $bring_change_amount_currency
  * @property float $admin_commission
+ * @property string $commission_type
+ * @property float $customer_service_fee
+ * @property string $customer_service_fee_type
  * @property bool $is_pause
  * @property string $cause
  * @property string $shipping_address
@@ -128,6 +131,9 @@ class Order extends Model
         'delivery_service_name',
         'third_party_delivery_tracking_id',
         'edited_status',
+        'commission_type',
+        'customer_service_fee',
+        'customer_service_fee_type',
         'updated_at',
     ];
 
@@ -151,6 +157,9 @@ class Order extends Model
         'bring_change_amount' => 'float',
         'bring_change_amount_currency' => 'string',
         'admin_commission' => 'float',
+        'commission_type' => 'string',
+        'customer_service_fee' => 'float',
+        'customer_service_fee_type' => 'string',
         'is_pause' => 'boolean',
         'cause' => 'string',
         'shipping_address' => 'string',

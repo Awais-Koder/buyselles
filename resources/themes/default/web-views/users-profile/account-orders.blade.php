@@ -233,6 +233,10 @@
             data-keyboard="{{ $hasDigitalCodes ? 'false' : 'true' }}">
             <div class="modal-dialog modal-dialog-centered {{ $hasDigitalCodes ? 'modal-lg' : 'modal--md' }}">
                 <div class="modal-content">
+                    <button type="button" class="close position-absolute" data-dismiss="modal" aria-label="Close"
+                        style="top: 10px; right: 10px; z-index: 1; font-size: 1.5rem; opacity: 0.7;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                     <div class="modal-body rtl">
                         {{-- Header --}}
                         <div class="px-sm-3 pb-2 pt-4 mt-xl-1">
@@ -298,18 +302,7 @@
                                     </div>
                                 @endforeach
                                 {{-- Confirmation checkbox --}}
-                                <div class="d-flex align-items-start gap-2 p-3 border rounded mt-2" dir="ltr"
-                                    style="background:#fffde7;direction:ltr;text-align:left;">
-                                    <input class="form-check-input flex-shrink-0 mt-1" type="checkbox"
-                                        id="successConfirmCodes" style="margin-left:7px;">
-                                    <label class="fw-semibold mb-0" for="successConfirmCodes"
-                                        style="cursor:pointer;line-height:1.4;margin-left:30px;">
-                                        <i class="fi fi-rr-shield-check me-1 text-success"></i>
-                                        {{ translate('I confirm I have successfully copied / saved my code(s)') }}
-                                    </label>
-                                </div>
                             @endif
-
                             {{-- Footer buttons --}}
                             <div class="d-flex flex-wrap gap-2 justify-content-center mt-3 pb-2">
                                 @if ($hasDigitalCodes)
@@ -322,18 +315,10 @@
                                     class="btn btn--primary font-bold px-4 font-weight-normal rounded-10">
                                     {{ translate('Explore More Items') }}
                                 </a>
-                                @if ($hasDigitalCodes)
-                                    <button type="button" id="successModalCloseBtn"
-                                        class="btn btn-outline-secondary px-4 rounded-10 disabled" disabled
-                                        data-dismiss="modal">
-                                        {{ translate('Close') }}
-                                    </button>
-                                @else
-                                    <button type="button" id="modal-close-btn"
-                                        class="btn btn-outline-secondary px-4 rounded-10" data-dismiss="modal">
-                                        {{ translate('Close') }}
-                                    </button>
-                                @endif
+                                <button type="button" class="btn btn-outline-secondary px-4 rounded-10"
+                                    data-dismiss="modal">
+                                    {{ translate('Close') }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -460,12 +445,6 @@
                     }
                     h += '</div>';
                 });
-                h += '<div class="d-flex align-items-start gap-2 p-3 border rounded mt-2" dir="ltr" style="background:#fffde7;direction:ltr;text-align:left;">' +
-                    '<input class="form-check-input flex-shrink-0 mt-1" type="checkbox" id="successConfirmCodes" style="min-width:18px;min-height:18px;">' +
-                    '<label class="fw-semibold mb-0" for="successConfirmCodes" style="cursor:pointer;line-height:1.4;">' +
-                    '<i class="fi fi-rr-shield-check me-1 text-success"></i>' +
-                    '{{ addslashes(translate('I confirm I have successfully copied / saved my code(s)')) }}' +
-                    '</label></div>';
                 return h;
             }
 
@@ -507,13 +486,8 @@
                 }
                 footerHtml +=
                     '<a href="{{ route('home') }}" class="btn btn--primary font-bold px-4 font-weight-normal rounded-10">{{ addslashes(translate('Explore More Items')) }}</a>';
-                if (data.hasDigitalCodes) {
-                    footerHtml +=
-                        '<button type="button" id="successModalCloseBtn" class="btn btn-outline-secondary px-4 rounded-10 disabled" disabled data-dismiss="modal">{{ addslashes(translate('Close')) }}</button>';
-                } else {
-                    footerHtml +=
-                        '<button type="button" id="modal-close-btn" class="btn btn-outline-secondary px-4 rounded-10" data-dismiss="modal">{{ addslashes(translate('Close')) }}</button>';
-                }
+                footerHtml +=
+                    '<button type="button" class="btn btn-outline-secondary px-4 rounded-10" data-dismiss="modal">{{ addslashes(translate('Close')) }}</button>';
                 return '<div class="modal fade" id="order_successfully" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">' +
                     '<div class="modal-dialog modal-dialog-centered ' + (data.hasDigitalCodes ? 'modal-lg' :
                         'modal--md') + '">' +
@@ -548,27 +522,9 @@
                     });
                 });
 
-                // Confirmation checkbox enables close
-                $(document).on('change', '#successConfirmCodes', function() {
-                    var $closeBtn = $('#successModalCloseBtn');
-                    if (this.checked) {
-                        $closeBtn.removeClass('disabled').removeAttr('disabled').html(
-                            '{{ addslashes(translate('Close')) }}');
-                    } else {
-                        $closeBtn.addClass('disabled').attr('disabled', 'disabled');
-                    }
-                });
-
-                // Digital close — clear localStorage then hide
-                $(document).on('click', '#successModalCloseBtn', function() {
+                // Close modal and clear localStorage
+                $modal.on('hide.bs.modal', function() {
                     localStorage.removeItem(LS_KEY);
-                    $modal.modal('hide');
-                });
-
-                // Non-digital close
-                $(document).on('click', '#modal-close-btn', function() {
-                    localStorage.removeItem(LS_KEY);
-                    $modal.modal('hide');
                 });
 
                 // Print
@@ -579,12 +535,6 @@
                     $el.hide();
                 });
 
-                // Remove localStorage on non-digital dismiss
-                $modal.on('hide.bs.modal', function() {
-                    if (!data.hasDigitalCodes) {
-                        localStorage.removeItem(LS_KEY);
-                    }
-                });
             }
 
             $(document).ready(function() {

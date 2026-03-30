@@ -56,8 +56,15 @@ class ProductDetailsController extends Controller
     {
         $product = $this->productRepo->getWebFirstWhereActive(
             params: ['slug' => $slug, 'customer_id' => Auth::guard('customer')->user()->id ?? 0],
-            relations: ['seoInfo', 'digitalVariation' => 'digitalVariation', 'reviews', 'seller.shop', 'digitalProductAuthors.author',
-                'digitalProductPublishingHouse.publishingHouse', 'clearanceSale' => 'clearanceSale']
+            relations: [
+                'seoInfo',
+                'digitalVariation' => 'digitalVariation',
+                'reviews',
+                'seller.shop',
+                'digitalProductAuthors.author',
+                'digitalProductPublishingHouse.publishingHouse',
+                'clearanceSale' => 'clearanceSale'
+            ]
         );
 
         if ($product) {
@@ -76,7 +83,8 @@ class ProductDetailsController extends Controller
                 orderBy: ['id' => 'desc'],
                 filters: ['product_id' => $product['id']],
                 relations: ['reply'],
-                dataLimit: 2, offset: 1
+                dataLimit: 2,
+                offset: 1
             );
 
             $firstVariationQuantity = $product['current_stock'];
@@ -84,7 +92,7 @@ class ProductDetailsController extends Controller
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
             if ($product['product_type'] === 'digital') {
-                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->where('is_active', true)->count();
             }
 
             $rating = getRating(reviews: $product->reviews);
@@ -131,8 +139,30 @@ class ProductDetailsController extends Controller
 
             $previewFileInfo = getFileInfoFromURL(url: $product?->preview_file_full_url['path']);
 
-            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'initialProductConfig', 'initialProductQuantity', 'initialProductPrice', 'countWishlist', 'countOrder', 'relatedProducts',
-                'dealOfTheDay', 'currentDate', 'overallRating', 'wishlistStatus', 'productReviews', 'rating', 'totalReviews', 'productsForReview', 'moreProductFromSeller', 'decimalPointSettings', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
+            return view(VIEW_FILE_NAMES['products_details'], compact(
+                'product',
+                'initialProductConfig',
+                'initialProductQuantity',
+                'initialProductPrice',
+                'countWishlist',
+                'countOrder',
+                'relatedProducts',
+                'dealOfTheDay',
+                'currentDate',
+                'overallRating',
+                'wishlistStatus',
+                'productReviews',
+                'rating',
+                'totalReviews',
+                'productsForReview',
+                'moreProductFromSeller',
+                'decimalPointSettings',
+                'previewFileInfo',
+                'productAuthorsInfo',
+                'productPublishingHouseInfo',
+                'firstVariationQuantity',
+                'productDetailsMeta'
+            ));
         }
 
         Toastr::error(translate('not_found'));
@@ -196,7 +226,8 @@ class ProductDetailsController extends Controller
                 orderBy: ['id' => 'desc'],
                 filters: ['product_id' => $product['id']],
                 relations: ['reply'],
-                dataLimit: 2, offset: 1
+                dataLimit: 2,
+                offset: 1
             );
 
             $firstVariationQuantity = $product['current_stock'];
@@ -204,7 +235,7 @@ class ProductDetailsController extends Controller
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
             if ($product['product_type'] === 'digital') {
-                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->where('is_active', true)->count();
             }
 
             $decimalPointSettings = getWebConfig('decimal_point_settings');
@@ -251,15 +282,36 @@ class ProductDetailsController extends Controller
             $positiveReview = $ratingCount != 0 ? ($vendorRattingStatusPositive * 100) / $ratingCount : 0;
             $previewFileInfo = getFileInfoFromURL(url: $product?->preview_file_full_url['path']);
 
-            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'wishlistStatus', 'initialProductConfig', 'countWishlist',
-                'countOrder', 'relatedProducts', 'dealOfTheDay', 'currentDate', 'overallRating', 'decimalPointSettings', 'moreProductFromSeller', 'productsForReview', 'totalReviews', 'rating', 'productReviews',
-                'avgRating', 'compareList', 'positiveReview', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
+            return view(VIEW_FILE_NAMES['products_details'], compact(
+                'product',
+                'wishlistStatus',
+                'initialProductConfig',
+                'countWishlist',
+                'countOrder',
+                'relatedProducts',
+                'dealOfTheDay',
+                'currentDate',
+                'overallRating',
+                'decimalPointSettings',
+                'moreProductFromSeller',
+                'productsForReview',
+                'totalReviews',
+                'rating',
+                'productReviews',
+                'avgRating',
+                'compareList',
+                'positiveReview',
+                'previewFileInfo',
+                'productAuthorsInfo',
+                'productPublishingHouseInfo',
+                'firstVariationQuantity',
+                'productDetailsMeta'
+            ));
         }
 
         Toastr::error(translate('not_found'));
 
         return back();
-
     }
 
     public function getThemeFashion($slug): View|RedirectResponse
@@ -307,7 +359,8 @@ class ProductDetailsController extends Controller
                 orderBy: ['id' => 'desc'],
                 filters: ['product_id' => $product['id']],
                 relations: ['reply'],
-                dataLimit: 2, offset: 1
+                dataLimit: 2,
+                offset: 1
             );
 
             $firstVariationQuantity = $product['current_stock'];
@@ -315,7 +368,7 @@ class ProductDetailsController extends Controller
                 $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
             }
             if ($product['product_type'] === 'digital') {
-                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->count();
+                $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->where('is_active', true)->count();
             }
 
             $decimalPointSettings = getWebConfig('decimal_point_settings');
@@ -435,9 +488,35 @@ class ProductDetailsController extends Controller
 
             $previewFileInfo = getFileInfoFromURL(url: $product?->preview_file_full_url['path']);
 
-            return view(VIEW_FILE_NAMES['products_details'], compact('product', 'wishlistStatus', 'countWishlist',
-                'relatedProducts', 'currentDate', 'rattingStatus', 'productsLatest',
-                'positiveReview', 'overallRating', 'decimalPointSettings', 'moreProductFromSeller', 'productsForReview', 'productsCount', 'totalReviews', 'rating', 'productReviews', 'avgRating', 'topRatedShops', 'newSellers', 'deliveryInfo', 'productsTopRated', 'productsThisStoreTopRated', 'previewFileInfo', 'productAuthorsInfo', 'productPublishingHouseInfo', 'firstVariationQuantity', 'productDetailsMeta'));
+            return view(VIEW_FILE_NAMES['products_details'], compact(
+                'product',
+                'wishlistStatus',
+                'countWishlist',
+                'relatedProducts',
+                'currentDate',
+                'rattingStatus',
+                'productsLatest',
+                'positiveReview',
+                'overallRating',
+                'decimalPointSettings',
+                'moreProductFromSeller',
+                'productsForReview',
+                'productsCount',
+                'totalReviews',
+                'rating',
+                'productReviews',
+                'avgRating',
+                'topRatedShops',
+                'newSellers',
+                'deliveryInfo',
+                'productsTopRated',
+                'productsThisStoreTopRated',
+                'previewFileInfo',
+                'productAuthorsInfo',
+                'productPublishingHouseInfo',
+                'firstVariationQuantity',
+                'productDetailsMeta'
+            ));
         }
 
         Toastr::error(translate('not_found'));

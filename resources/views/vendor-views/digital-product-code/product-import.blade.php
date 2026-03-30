@@ -93,7 +93,7 @@
                         <div class="mt-auto">
                             <a href="{{ route('vendor.products.digital-code-import.product-template', $product->id) }}"
                                 class="btn btn-outline-primary w-100">
-                                <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                                <i class="fi fi-rr-download me-2"></i>
                                 {{ translate('Download Excel Template') }}
                             </a>
                         </div>
@@ -133,18 +133,18 @@
                             </div>
 
                             <div class="alert alert-info py-2 small mb-3">
-                                <i class="bi bi-info-circle-fill me-1"></i>
+                                <i class="fi fi-sr-info me-1"></i>
                                 {{ translate('The file is processed immediately. Results appear on the next page.') }}
                             </div>
 
                             <div class="alert alert-warning py-2 small mb-3">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <i class="fi fi-sr-triangle-warning me-1"></i>
                                 {{ translate('Codes are added to the pool. Existing codes are NOT removed.') }}
                             </div>
 
                             <button type="submit" class="btn btn-success w-100" id="submitBtn">
                                 <span class="normal-state">
-                                    <i class="bi bi-upload me-2"></i>
+                                    <i class="fi fi-sr-inbox-in me-2"></i>
                                     {{ translate('Upload & Import Now') }}
                                 </span>
                                 <span class="loading-state d-none">

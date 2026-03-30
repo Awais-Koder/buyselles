@@ -163,6 +163,11 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                         Route::get('{productId}/codes/import', 'productImportForm')->name('product-import');
                         Route::post('{productId}/codes/import', 'productImportUpload')->name('product-import-upload');
                         Route::get('{productId}/codes/template', 'productTemplate')->name('product-template');
+
+                        // Code status toggle, decrypt & delete
+                        Route::post('code/{id}/toggle-status', 'toggleCodeStatus')->name('toggle-code-status');
+                        Route::get('code/{id}/decrypt', 'decryptCode')->name('decrypt-code');
+                        Route::delete('code/{id}', 'deleteCode')->name('delete-code');
                     });
             });
 

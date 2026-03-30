@@ -2101,6 +2101,15 @@ function updateProductDetailsBottomSection(formSelector, response) {
             );
         }
     }
+    if (response?.product_type?.toString() === "digital") {
+        if (response?.quantity <= 0) {
+            $(formSelector).find(".product-out-of-stock-section").show();
+            $(formSelector).find(".product-add-and-buy-section").hide().removeClass("d-flex");
+        } else {
+            $(formSelector).find(".product-out-of-stock-section").hide();
+            $(formSelector).find(".product-add-and-buy-section").show().addClass("d-flex");
+        }
+    }
 }
 
 function updateProductDetailsTopSection(formSelector, response) {
@@ -2125,6 +2134,15 @@ function updateProductDetailsTopSection(formSelector, response) {
             productRestockRequestButton.attr("disabled", true);
         } else {
             productRestockRequestButton.html(productRestockRequestButton.data("default"));
+        }
+    }
+    if (response?.product_type?.toString() === "digital") {
+        if (response?.quantity <= 0) {
+            $(formSelector).find(".product-out-of-stock-section").show();
+            $(formSelector).find(".product-add-and-buy-section").hide().removeClass("d-flex");
+        } else {
+            $(formSelector).find(".product-out-of-stock-section").hide();
+            $(formSelector).find(".product-add-and-buy-section").show().addClass("d-flex");
         }
     }
 

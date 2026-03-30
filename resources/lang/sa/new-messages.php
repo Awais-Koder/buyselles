@@ -11939,4 +11939,5 @@ return [
     'App_Deep_Link_Setup' => 'App Deep Link Setup',
     'Language_field_is_required' => 'Language field is required',
     'want_to_remove_country_name?' => 'Want to remove country name ',
+    'Order_Status_Changed' => 'Order Status Changed',
 ];

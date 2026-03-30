@@ -478,6 +478,7 @@ class OrderRepository implements OrderRepositoryInterface
         $orderSummary = getOrderSummary(order: $order);
         $orderAmount = $orderSummary['subtotal'] - $orderSummary['total_discount_on_product'] - $order['discount_amount'];
         $commission = $order['admin_commission'];
+        $serviceFee = (float) ($order['customer_service_fee'] ?? 0);
         $shippingModel = $order->shipping_responsibility;
 
         $adminWallet = $this->adminWallet->where('admin_id', 1)->first();
@@ -655,7 +656,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'order_id' => $order['id'],
                 'order_amount' => $order['order_amount'],
                 'seller_amount' => $orderAmount - $commission,
-                'admin_commission' => $commission,
+                'admin_commission' => $commission + $serviceFee,
                 'received_by' => $receivedBy,
                 'status' => 'disburse',
                 'delivery_charge' => $order['shipping_cost'] - ($order['is_shipping_free'] ? $order['extra_discount'] : 0),
@@ -668,7 +669,7 @@ class OrderRepository implements OrderRepositoryInterface
             $this->orderTransaction->create($transaction);
 
             $wallet = $this->adminWallet->where('admin_id', 1)->first();
-            $wallet->commission_earned += $commission;
+            $wallet->commission_earned += $commission + $serviceFee;
             if ($shippingModel == 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
@@ -712,7 +713,7 @@ class OrderRepository implements OrderRepositoryInterface
             $transaction->save();
 
             $wallet = $this->adminWallet->where('admin_id', 1)->first();
-            $wallet->commission_earned += $commission;
+            $wallet->commission_earned += $commission + $serviceFee;
 
             $currentOrderAmount = $order['order_amount'];
             if (

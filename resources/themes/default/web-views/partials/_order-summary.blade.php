@@ -104,6 +104,8 @@
             
             $totalAmount = $subTotal + ($totalTax['item_tax'] + $totalTax['shipping_cost_tax']) + $totalShippingCost - $coupon_dis - $totalDiscountOnProduct;
             $referralAmount = \App\Utils\CustomerManager::getReferralDiscountAmount(user: auth('customer')->check() ? auth('customer')->user() : null, couponDiscount: $coupon_dis);
+            $serviceFee = app(\App\Services\CustomerServiceFeeService::class)->calculate($totalAmount);
+            $totalAmount += $serviceFee;
             ?>
 
             @if ($referralAmount > 0)
@@ -149,6 +151,16 @@
             @endif
 
             <hr class="my-3">
+
+            @if ($serviceFee > 0)
+                <div class="d-flex justify-content-between">
+                    <span class="cart_title">{{ translate('service_fee') }}</span>
+                    <span class="cart_value">
+                        + {{ webCurrencyConverter(amount: $serviceFee) }}
+                    </span>
+                </div>
+            @endif
+
             <div class="d-flex justify-content-between">
                 <span class="cart_title text-primary font-weight-bold">
                     {{ translate('total') }}
@@ -251,7 +263,7 @@
     <div class="d-flex justify-content-center align-items-center fs-14 mb-2">
         <div class="product-description-label fw-semibold text-capitalize">{{ translate('total_price') }} :</div>
         &nbsp; <strong class="text-base">
-            {{ webCurrencyConverter(amount: $subTotal + ($totalTax['item_tax'] + $totalTax['shipping_cost_tax']) + $totalShippingCost - $coupon_dis - $totalDiscountOnProduct) }}
+            {{ webCurrencyConverter(amount: $totalAmount - $referralAmount) }}
         </strong>
     </div>
 

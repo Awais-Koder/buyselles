@@ -352,7 +352,9 @@ class Product extends Model
 
     public function availableDigitalProductCodes(): HasMany
     {
-        return $this->hasMany(DigitalProductCode::class, 'product_id')->where('status', 'available');
+        return $this->hasMany(DigitalProductCode::class, 'product_id')
+            ->where('status', 'available')
+            ->where('is_active', true);
     }
 
     public function tags(): BelongsToMany

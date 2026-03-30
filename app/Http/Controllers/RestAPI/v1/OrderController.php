@@ -336,7 +336,9 @@ class OrderController extends Controller
             'coupon_code' => $request['coupon_code'] ?? '',
             'requestObj' => $request,
         ]);
-        $paymentAmount = collect($vendorWiseCartList)->sum('order_amount_with_tax');
+        $vendorCollection = collect($vendorWiseCartList);
+        $paymentAmount = $vendorCollection->sum('order_amount_with_tax')
+            + $vendorCollection->sum('customer_service_fee');
 
         $user = Helpers::getCustomerInformation($request);
         if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {

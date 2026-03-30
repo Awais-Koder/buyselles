@@ -71,6 +71,7 @@ class DigitalCodeImportController extends BaseController
 
         $stats = [
             'available' => DigitalProductCode::where('product_id', $productId)->available()->count(),
+            'inactive' => DigitalProductCode::where('product_id', $productId)->where('is_active', false)->count(),
             'reserved' => DigitalProductCode::where('product_id', $productId)->where('status', 'reserved')->count(),
             'sold' => DigitalProductCode::where('product_id', $productId)->where('status', 'sold')->count(),
             'expired' => DigitalProductCode::where('product_id', $productId)->where('status', 'expired')->count(),
@@ -288,6 +289,45 @@ class DigitalCodeImportController extends BaseController
             return Carbon::parse($raw)->toDateString();
         } catch (\Throwable) {
             return null;
+        }
+    }
+
+    /**
+     * Toggle the active/inactive status of a digital code.
+     * Admin can toggle any code regardless of vendor ownership.
+     */
+    public function toggleCodeStatus(int $id, DigitalProductCodeService $service): JsonResponse
+    {
+        try {
+            $code = $service->toggleActive($id);
+
+            return response()->json([
+                'success' => true,
+                'is_active' => $code->is_active,
+                'message' => $code->is_active
+                    ? translate('Code_activated_successfully')
+                    : translate('Code_deactivated_successfully'),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Delete a digital code from the pool.
+     * Admin can delete any code regardless of vendor ownership.
+     */
+    public function deleteCode(int $id, DigitalProductCodeService $service): JsonResponse
+    {
+        try {
+            $service->deleteCode($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => translate('Code_deleted_successfully'),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 }

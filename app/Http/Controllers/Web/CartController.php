@@ -60,7 +60,7 @@ class CartController extends Controller
 
         foreach (json_decode(Product::find($request->id)->choice_options) as $key => $choice) {
             if ($string != null) {
-                $string .= '-'.str_replace(' ', '', $request[$choice->name]);
+                $string .= '-' . str_replace(' ', '', $request[$choice->name]);
             } else {
                 $string .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -145,10 +145,10 @@ class CartController extends Controller
 
         return [
             'price' => webCurrencyConverter($price * $requestQuantity),
-            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value').'%',
+            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value') . '%',
             'discount_type' => $discountType,
             'discount_amount' => $discount,
-            'quantity' => $product['product_type'] == 'physical' ? $quantity : 100,
+            'quantity' => $product['product_type'] == 'physical' ? $quantity : ($product['digital_product_type'] === 'ready_product' ? $product['current_stock'] : 100),
             'delivery_cost' => isset($deliveryInfo['delivery_cost']) ? webCurrencyConverter($deliveryInfo['delivery_cost']) : 0,
             'unit_price' => webCurrencyConverter($price), // fashion theme
             'total_unit_price' => webCurrencyConverter($unit_price), // fashion theme
@@ -193,7 +193,6 @@ class CartController extends Controller
         }
 
         return response()->json($cart);
-
     }
 
     public function addAllToCartFromWishtList(Request $request): JsonResponse
@@ -339,7 +338,7 @@ class CartController extends Controller
         $vacationStatus = checkVendorAbility(type: $vendorType, status: 'vacation_status', vendor: $vendorInfo);
 
         if ($temporaryClose || $vacationStatus) {
-            $message = translate('this_shop_is_temporary_closed_or_on_vacation.').' '.translate('you_cannot_add_product_to_cart_from_this_shop_for_now');
+            $message = translate('this_shop_is_temporary_closed_or_on_vacation.') . ' ' . translate('you_cannot_add_product_to_cart_from_this_shop_for_now');
             if (auth('customer')->check()) {
                 return response()->json(['status' => 0, 'message' => $message], 200);
             } else {
@@ -415,7 +414,7 @@ class CartController extends Controller
             $choices[$choice->name] = $request[$choice->name];
             $variations[$choice->title] = $request[$choice->name];
             if ($str != null) {
-                $str .= '-'.str_replace(' ', '', $request[$choice->name]);
+                $str .= '-' . str_replace(' ', '', $request[$choice->name]);
             } else {
                 $str .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -460,7 +459,7 @@ class CartController extends Controller
                         if (json_decode($product->variation)[$i]->qty < $request['quantity']) {
                             return [
                                 'status' => 0,
-                                'message' => translate('out_of_stock').'!',
+                                'message' => translate('out_of_stock') . '!',
                             ];
                         }
                     }
@@ -476,7 +475,7 @@ class CartController extends Controller
 
             return [
                 'status' => 1,
-                'message' => translate('successfully_added').'!',
+                'message' => translate('successfully_added') . '!',
                 'price' => webCurrencyConverter($price),
                 'discount' => webCurrencyConverter($discount * $request['quantity']),
                 'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),
@@ -484,13 +483,17 @@ class CartController extends Controller
         } else {
             return [
                 'status' => 0,
-                'message' => translate('already_added').'!',
+                'message' => translate('already_added') . '!',
             ];
         }
     }
 
     public function addToCartDigitalProduct($request, $product): array
     {
+        if ($product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request['quantity']) {
+            return ['status' => 0, 'message' => translate('out_of_stock!')];
+        }
+
         $price = $product->unit_price;
         $digitalVariation = DigitalProductVariation::where(['product_id' => $product['id'], 'variant_key' => $request['variant_key']])->first();
         if ($request['variant_key'] && $digitalVariation) {
@@ -555,7 +558,7 @@ class CartController extends Controller
 
             return [
                 'status' => 1,
-                'message' => translate('successfully_added').'!',
+                'message' => translate('successfully_added') . '!',
                 'price' => webCurrencyConverter($price),
                 'discount' => webCurrencyConverter($getProductDiscount),
                 'data' => view(VIEW_FILE_NAMES['products_cart_details_partials'], compact('request'))->render(),

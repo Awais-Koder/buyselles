@@ -256,6 +256,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
 
                 // Super-admin PIN decrypt (never shown in list — on-demand only)
                 Route::get('code/{id}/decrypt', 'decryptCode')->name('decrypt-code');
+
+                // Code status toggle & delete
+                Route::post('code/{id}/toggle-status', 'toggleCodeStatus')->name('toggle-code-status');
+                Route::delete('code/{id}', 'deleteCode')->name('delete-code');
+
                 Route::get('sold-codes', 'soldCodes')->name('sold-codes');
             });
     });

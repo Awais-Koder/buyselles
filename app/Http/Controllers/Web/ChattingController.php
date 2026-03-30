@@ -197,7 +197,7 @@ class ChattingController extends BaseController
         }
         $allChattingUsers?->map(function ($chatting, $index) use ($customerId) {
             $filterColumn = ! is_null($chatting?->admin_id) ? 'admin_id' : (! is_null($chatting?->seller_id) ? 'seller_id' : 'delivery_man_id');
-            $filterId = $chatting?->admin_id ?? ($chatting?->seller_id ? $chatting->shop->id : $chatting->deliveryMan->id);
+            $filterId = ! is_null($chatting?->admin_id) ? $chatting->admin_id : (! is_null($chatting?->seller_id) ? $chatting->seller_id : $chatting?->deliveryMan?->id);
             $filter = [
                 'user_id' => $customerId,
                 $filterColumn => $filterId,
@@ -215,18 +215,26 @@ class ChattingController extends BaseController
             }
         });
         $lastChatUser = null;
+        $lastChatQueryId = null;
         foreach ($allChattingUsers as $key => $value) {
-            $lastChatUser = (! is_null($value->admin_id) ? ['id' => 0] : (! is_null($value->seller_id) ? $value->shop : $value->deliveryMan));
             if (! is_null($value->admin_id)) {
+                $lastChatUser = ['id' => 0];
+                $lastChatQueryId = 0;
                 $columnName = 'admin_id';
                 $type = 'admin';
                 $relation = ['admin'];
+            } elseif (! is_null($value->seller_id)) {
+                $lastChatUser = $value->shop;
+                $lastChatQueryId = $value->seller_id;
+            } else {
+                $lastChatUser = $value->deliveryMan;
+                $lastChatQueryId = $value->deliveryMan?->id;
             }
             break;
         }
         if ($lastChatUser) {
-            $this->updateAllUnseenMessageStatus(requestColumn: $columnName, requestId: $lastChatUser['id']);
-            $chattingMessages = $this->getMessage(requestColumn: $columnName, requestId: $lastChatUser['id'], whereNotNull: ['user_id', $columnName], relation: $relation);
+            $this->updateAllUnseenMessageStatus(requestColumn: $columnName, requestId: $lastChatQueryId);
+            $chattingMessages = $this->getMessage(requestColumn: $columnName, requestId: $lastChatQueryId, whereNotNull: ['user_id', $columnName], relation: $relation);
         } else {
             $chattingMessages = [];
         }

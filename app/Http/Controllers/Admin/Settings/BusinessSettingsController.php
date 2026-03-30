@@ -148,6 +148,11 @@ class BusinessSettingsController extends BaseController
 
         $this->businessSettingRepo->updateOrInsert(type: 'business_mode', value: $request['business_mode']);
         $this->businessSettingRepo->updateOrInsert(type: 'sales_commission', value: $request->get('sales_commission', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'sales_commission_type', value: $request->get('sales_commission_type', 'percent'));
+
+        $this->businessSettingRepo->updateOrInsert(type: 'customer_service_fee_status', value: $request->get('customer_service_fee_status', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'customer_service_fee', value: $request->get('customer_service_fee', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'customer_service_fee_type', value: $request->get('customer_service_fee_type', 'percent'));
 
         $this->businessSettingRepo->updateOrInsert(type: 'company_copyright_text', value: $request['company_copyright_text']);
         $this->businessSettingRepo->updateOrInsert(type: 'cookie_setting', value: json_encode([
@@ -193,7 +198,8 @@ class BusinessSettingsController extends BaseController
         if (env('APP_MODE') == 'demo') {
             if ($request->ajax()) {
                 return response()->json([
-                    'message' => translate('you_can_not_update_this_on_demo_mode'), 401,
+                    'message' => translate('you_can_not_update_this_on_demo_mode'),
+                    401,
                 ]);
             } else {
                 ToastMagic::error(translate('you_can_not_update_this_on_demo_mode'));
@@ -500,8 +506,12 @@ class BusinessSettingsController extends BaseController
 
     public function updateAnnouncement(Request $request): RedirectResponse
     {
-        $value = json_encode(['status' => $request['announcement_status'], 'color' => $request['announcement_color'],
-            'text_color' => $request['text_color'], 'announcement' => $request['announcement'], ]);
+        $value = json_encode([
+            'status' => $request['announcement_status'],
+            'color' => $request['announcement_color'],
+            'text_color' => $request['text_color'],
+            'announcement' => $request['announcement'],
+        ]);
         $this->businessSettingRepo->updateOrInsert(type: 'announcement', value: $value);
         ToastMagic::success(translate('announcement_updated_successfully'));
 

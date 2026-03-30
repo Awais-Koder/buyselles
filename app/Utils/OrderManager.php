@@ -147,6 +147,7 @@ class OrderManager
         $order_summary = OrderManager::getOrderTotalAndSubTotalAmountSummary($order);
         $order_amount = $order_summary['subtotal'] - $order_summary['total_discount_on_product'] - $order['discount_amount'];
         $commission = $order['admin_commission'];
+        $serviceFee = (float) ($order['customer_service_fee'] ?? 0);
         $shipping_model = $order->shipping_responsibility;
 
         OrderManager::getCheckOrCreateAdminWallet();
@@ -284,7 +285,7 @@ class OrderManager
                 'order_id' => $order['id'],
                 'order_amount' => $order['order_amount'],
                 'seller_amount' => $order_amount - $commission,
-                'admin_commission' => $commission,
+                'admin_commission' => $commission + $serviceFee,
                 'received_by' => $received_by,
                 'status' => 'disburse',
                 'delivery_charge' => $order['shipping_cost'] - ($order['is_shipping_free'] ? $order['extra_discount'] : 0),
@@ -296,7 +297,7 @@ class OrderManager
             ]);
 
             $wallet = AdminWallet::where('admin_id', 1)->first();
-            $wallet->commission_earned += $commission;
+            $wallet->commission_earned += $commission + $serviceFee;
             if ($shipping_model === 'inhouse_shipping' && ! $order['is_shipping_free']) {
                 $wallet->delivery_charge_earned += $order['shipping_cost'];
             }
@@ -342,7 +343,7 @@ class OrderManager
             }
 
             $wallet = AdminWallet::where('admin_id', 1)->first();
-            $wallet->commission_earned += $commission;
+            $wallet->commission_earned += $commission + $serviceFee;
 
             $currentOrderAmount = $order['order_amount'];
             if (
@@ -946,6 +947,12 @@ class OrderManager
             }
             $vendorWiseCart['total_tax_amount'] = $vendorWiseCartAppliedTax;
             $vendorWiseCart['order_amount_with_tax'] = $vendorWiseCart['order_amount'] + $vendorWiseCartAppliedTax;
+
+            // Calculate customer service fee for this vendor group so payment flows can include it
+            $feeService = app(\App\Services\CustomerServiceFeeService::class);
+            $orderAmountForFee = $vendorWiseCart['order_amount_with_tax'] - ($vendorWiseCart['refer_and_earn_discount'] ?? 0);
+            $vendorWiseCart['customer_service_fee'] = $feeService->calculate((float) $orderAmountForFee);
+
             $modifiedVendorWiseCartList[] = $vendorWiseCart;
         }
 
@@ -955,7 +962,23 @@ class OrderManager
     public static function getOrderAddData(int $orderId, string $orderGroupId, object|array $customerData = [], object|array $cartData = [], object|array $orderData = [], object|array $totalTax = []): array
     {
         $taxConfig = self::getTaxSystemType();
-        $adminCommission = (float) str_replace(',', '', Helpers::sales_commission_before_order($cartData['cart_group_id'], $cartData['coupon_discount']));
+
+        /** @var \App\Services\CommissionService $commissionService */
+        $commissionService = app(\App\Services\CommissionService::class);
+        $adminCommission = $commissionService->calculate(
+            (string) ($cartData['seller_is'] ?? 'admin'),
+            isset($cartData['seller_id']) ? (int) $cartData['seller_id'] : null,
+            (float) ($cartData['order_amount_with_tax'] ?? 0)
+        );
+        [, $commissionType] = $commissionService->resolveRateAndType(
+            isset($cartData['seller_id']) ? (int) $cartData['seller_id'] : null
+        );
+
+        /** @var \App\Services\CustomerServiceFeeService $feeService */
+        $feeService = app(\App\Services\CustomerServiceFeeService::class);
+        $orderAmountForFee = $cartData['order_amount_with_tax'] - $cartData['refer_and_earn_discount'];
+        $customerServiceFee = $feeService->calculate((float) $orderAmountForFee);
+        $customerServiceFeeType = $feeService->getType();
 
         return [
             'id' => $orderId,
@@ -976,14 +999,17 @@ class OrderManager
             'discount_type' => $cartData['discount_type'],
             'coupon_code' => $cartData['coupon_code'],
             'coupon_discount_bearer' => $cartData['coupon_bearer'],
-            'order_amount' => $cartData['order_amount_with_tax'] - $cartData['refer_and_earn_discount'],
-            'init_order_amount' => $cartData['order_amount_with_tax'] - $cartData['refer_and_earn_discount'],
+            'order_amount' => $orderAmountForFee + $customerServiceFee,
+            'init_order_amount' => $orderAmountForFee + $customerServiceFee,
             'total_tax_amount' => $cartData['total_tax_amount'],
             'tax_type' => $taxConfig['SystemTaxVatType'],
             'tax_model' => $taxConfig['is_included'] ? 'include' : 'exclude',
             'bring_change_amount' => $orderData['payment_method'] == 'cash_on_delivery' ? $orderData['bring_change_amount'] ?? 0 : null,
             'bring_change_amount_currency' => $orderData['bring_change_amount_currency'] ?? null,
             'admin_commission' => $adminCommission,
+            'commission_type' => $commissionType,
+            'customer_service_fee' => $customerServiceFee,
+            'customer_service_fee_type' => $customerServiceFeeType,
             'shipping_address' => $cartData['shipping_address_id'],
             'shipping_address_data' => ShippingAddress::find($cartData['shipping_address_id']),
             'billing_address' => getWebConfig('billing_input_by_customer') ? $cartData['billing_address_id'] : null,
@@ -1315,6 +1341,26 @@ class OrderManager
                 }
             }
 
+            // ── Auto-deliver fully-digital orders that are already paid ──
+            $isFullyDigital = collect($vendorWiseCart['cart_list'])->every(
+                fn ($item) => ($item->product_type ?? $item->product?->product_type ?? '') === 'digital'
+            );
+            if ($isFullyDigital && ($data['payment_status'] ?? '') === 'paid') {
+                Order::where('id', $order_id)->update([
+                    'order_status' => 'delivered',
+                    'payment_status' => 'paid',
+                ]);
+                OrderDetail::where('order_id', $order_id)->update([
+                    'delivery_status' => 'delivered',
+                    'payment_status' => 'paid',
+                ]);
+                self::add_order_status_history($order_id, $getCustomerInfo['customer_id'], 'delivered', 'admin');
+
+                // Settle wallets immediately for digital delivered orders
+                $order->refresh();
+                OrderManager::getWalletManageOnOrderStatusChange($order, 'admin');
+            }
+
             $orderPlacedNotificationEvents[] = OrderManager::getGenerateOrderNotificationInfo(
                 vendorType: $vendorWiseCart['seller_is'],
                 vendorId: $vendorWiseCart['seller_id'],
@@ -1427,6 +1473,8 @@ class OrderManager
         if ($ordersData['payment_method'] != 'cash_on_delivery' && $ordersData['payment_method'] != 'offline_payment') {
             $orderSummary = OrderManager::getOrderTotalAndSubTotalAmountSummary($order);
             $orderAmount = $orderSummary['subtotal'] + $orderSummary['total_tax'] - $orderSummary['total_discount_on_product'] - $order['discount'];
+            $vendorCommission = (float) ($ordersData['admin_commission'] ?? 0);
+            $serviceFee = (float) ($ordersData['customer_service_fee'] ?? 0);
 
             $shop = Shop::when($order['seller_is'] == 'admin', function ($query) {
                 return $query->where(['author_type' => 'admin']);
@@ -1441,9 +1489,9 @@ class OrderManager
                 'shop_id' => $shop['id'],
                 'seller_is' => $order['seller_is'],
                 'order_id' => $order['id'],
-                'order_amount' => $orderAmount,
-                'seller_amount' => $orderAmount - $ordersData['admin_commission'],
-                'admin_commission' => $ordersData['admin_commission'],
+                'order_amount' => $order['order_amount'],
+                'seller_amount' => $orderAmount - $vendorCommission,
+                'admin_commission' => $vendorCommission + $serviceFee,
                 'received_by' => 'admin',
                 'status' => 'hold',
                 'delivery_charge' => $order['shipping_cost'] - $order['extra_discount'],

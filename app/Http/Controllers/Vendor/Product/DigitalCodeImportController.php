@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Services\DigitalProductCodeService;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -71,7 +72,8 @@ class DigitalCodeImportController extends Controller
             ->paginate(50);
 
         $stats = [
-            'available' => DigitalProductCode::where('product_id', $productId)->where('status', 'available')->count(),
+            'available' => DigitalProductCode::where('product_id', $productId)->where('status', 'available')->where('is_active', true)->count(),
+            'inactive' => DigitalProductCode::where('product_id', $productId)->where('is_active', false)->count(),
             'reserved' => DigitalProductCode::where('product_id', $productId)->where('status', 'reserved')->count(),
             'sold' => DigitalProductCode::where('product_id', $productId)->where('status', 'sold')->count(),
             'expired' => DigitalProductCode::where('product_id', $productId)->where('status', 'expired')->count(),
@@ -84,7 +86,10 @@ class DigitalCodeImportController extends Controller
             ->where('expiry_date', '>', now())
             ->count();
 
-        return view('vendor-views.digital-product-code.product-codes', compact('product', 'codes', 'stats', 'expiringCount'));
+        // Vendors can always view their own codes
+        $canViewPin = true;
+
+        return view('vendor-views.digital-product-code.product-codes', compact('product', 'codes', 'stats', 'expiringCount', 'canViewPin'));
     }
 
     public function productImportForm(int $productId): View
@@ -179,5 +184,71 @@ class DigitalCodeImportController extends Controller
                 'duplicates' => $duplicates,
                 'skipped' => $skipped,
             ]);
+    }
+
+    /**
+     * Toggle the active/inactive status of a digital code.
+     * Only the owning vendor can toggle their own codes.
+     */
+    public function toggleCodeStatus(int $id, DigitalProductCodeService $service): JsonResponse
+    {
+        $sellerId = (int) auth('seller')->id();
+
+        try {
+            $code = $service->toggleActive($id, $sellerId);
+
+            return response()->json([
+                'success' => true,
+                'is_active' => $code->is_active,
+                'message' => $code->is_active
+                    ? translate('Code_activated_successfully')
+                    : translate('Code_deactivated_successfully'),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * Decrypt and return the plain-text PIN for a single code record.
+     * Only the owning vendor can decrypt their own codes.
+     */
+    public function decryptCode(int $id): JsonResponse
+    {
+        $sellerId = (int) auth('seller')->id();
+
+        $code = DigitalProductCode::where('seller_id', $sellerId)->findOrFail($id);
+
+        try {
+            $plain = $code->decryptCode();
+        } catch (\Exception) {
+            return response()->json(['error' => translate('decryption_failed_code_may_be_corrupted')], 500);
+        }
+
+        return response()->json([
+            'id' => $code->id,
+            'pin' => $plain,
+            'serial' => $code->serial_number,
+        ]);
+    }
+
+    /**
+     * Delete a digital code from the pool.
+     * Only the owning vendor can delete their own codes.
+     */
+    public function deleteCode(int $id, DigitalProductCodeService $service): JsonResponse
+    {
+        $sellerId = (int) auth('seller')->id();
+
+        try {
+            $service->deleteCode($id, $sellerId);
+
+            return response()->json([
+                'success' => true,
+                'message' => translate('Code_deleted_successfully'),
+            ]);
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 }

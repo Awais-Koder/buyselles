@@ -38,31 +38,32 @@
                         @endif
 
                         @if ($businessSetting['maintenance_mode'] && count($maintenanceSystemSetup) > 0)
-                                <?php
-                                $businessMode = getWebConfig(name: 'business_mode');
-                                $totalSystemInMaintenance = 0;
-                                if (array_key_exists('user_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['user_app']) {
-                                    $totalSystemInMaintenance++;
-                                }
-                                if (array_key_exists('user_website', $maintenanceSystemSetup) && $maintenanceSystemSetup['user_website']) {
-                                    $totalSystemInMaintenance++;
-                                }
-                                if ($businessMode == 'multi' && array_key_exists('vendor_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['vendor_app']) {
-                                    $totalSystemInMaintenance++;
-                                }
-                                if ($businessMode == 'multi' && array_key_exists('vendor_panel', $maintenanceSystemSetup) && $maintenanceSystemSetup['vendor_panel']) {
-                                    $totalSystemInMaintenance++;
-                                }
-                                if (array_key_exists('deliveryman_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['deliveryman_app']) {
-                                    $totalSystemInMaintenance++;
-                                }
-                                ?>
+                            <?php
+                            $businessMode = getWebConfig(name: 'business_mode');
+                            $totalSystemInMaintenance = 0;
+                            if (array_key_exists('user_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['user_app']) {
+                                $totalSystemInMaintenance++;
+                            }
+                            if (array_key_exists('user_website', $maintenanceSystemSetup) && $maintenanceSystemSetup['user_website']) {
+                                $totalSystemInMaintenance++;
+                            }
+                            if ($businessMode == 'multi' && array_key_exists('vendor_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['vendor_app']) {
+                                $totalSystemInMaintenance++;
+                            }
+                            if ($businessMode == 'multi' && array_key_exists('vendor_panel', $maintenanceSystemSetup) && $maintenanceSystemSetup['vendor_panel']) {
+                                $totalSystemInMaintenance++;
+                            }
+                            if (array_key_exists('deliveryman_app', $maintenanceSystemSetup) && $maintenanceSystemSetup['deliveryman_app']) {
+                                $totalSystemInMaintenance++;
+                            }
+                            ?>
 
                             <div class="d-flex flex-wrap gap-3 mt-3 align-items-center">
                                 <h5 class="mb-0">
                                     {{ translate('maintenance_mode_is_activated_for_the_selected_systems') }}
                                 </h5>
-                                <ul class="selected-systems d-flex gap-4 flex-wrap bg-soft-dark px-lg-5 px-3 py-1 mb-0 rounded">
+                                <ul
+                                    class="selected-systems d-flex gap-4 flex-wrap bg-soft-dark px-lg-5 px-3 py-1 mb-0 rounded">
                                     @if (
                                         ($businessMode == 'multi' && $totalSystemInMaintenance == 5) ||
                                             ($businessMode == 'single' && $totalSystemInMaintenance == 3))
@@ -86,21 +87,16 @@
                                 class="d-flex justify-content-between align-items-center gap-3 border rounded px-20 py-3 user-select-none">
                                 <span class="fw-medium text-dark">{{ translate('Maintenance_Mode') }}</span>
                                 <label class="switcher">
-                                    @if(!$businessSetting['maintenance_mode'])
-                                        <input type="checkbox"
-                                               id="maintenanceModeSwitch"
-                                               data-status="off"
-                                               class="switcher_input maintenance-mode-show"
-                                               data-warning="{{ translate('do_you_want_to_turn_off_the_maintenance_mode') }}?"
-                                               data-route="{{ route('admin.business-settings.maintenance-mode') }}"
-                                        >
+                                    @if (!$businessSetting['maintenance_mode'])
+                                        <input type="checkbox" id="maintenanceModeSwitch" data-status="off"
+                                            class="switcher_input maintenance-mode-show"
+                                            data-warning="{{ translate('do_you_want_to_turn_off_the_maintenance_mode') }}?"
+                                            data-route="{{ route('admin.business-settings.maintenance-mode') }}">
                                     @else
-                                        <input type="checkbox"
-                                               data-status="on"
-                                               class="switcher_input"
-                                               data-warning="{{ translate('do_you_want_to_turn_off_the_maintenance_mode') }}?"
-                                               data-route="{{ route('admin.business-settings.maintenance-mode') }}"
-                                               id="maintenanceModeSwitch" checked>
+                                        <input type="checkbox" data-status="on" class="switcher_input"
+                                            data-warning="{{ translate('do_you_want_to_turn_off_the_maintenance_mode') }}?"
+                                            data-route="{{ route('admin.business-settings.maintenance-mode') }}"
+                                            id="maintenanceModeSwitch" checked>
                                     @endif
 
                                     <span class="switcher_control"></span>
@@ -112,7 +108,10 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.business-settings.web-config.update') }}" method="POST" enctype="multipart/form-data" class="get-checked-required-field form-advance-inputs-validation form-advance-file-validation form-advance-validation non-ajax-form-validate" novalidate>
+        <form action="{{ route('admin.business-settings.web-config.update') }}" method="POST"
+            enctype="multipart/form-data"
+            class="get-checked-required-field form-advance-inputs-validation form-advance-file-validation form-advance-validation non-ajax-form-validate"
+            novalidate>
             @csrf
 
             <div class="card mb-3 mb-sm-4">
@@ -131,7 +130,10 @@
                                         <label class="form-label" for="">{{ translate('Company_Name') }}
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" name="company_name" class="form-control" placeholder="{{ translate('type_your_company_name') }}" value="{{ $businessSetting['company_name'] }}" required="" data-required-msg="{{ translate('company_name_is_required') }}">
+                                        <input type="text" name="company_name" class="form-control"
+                                            placeholder="{{ translate('type_your_company_name') }}"
+                                            value="{{ $businessSetting['company_name'] }}" required=""
+                                            data-required-msg="{{ translate('company_name_is_required') }}">
                                     </div>
                                 </div>
                                 <div class="col-xl-6 col-md-6">
@@ -139,7 +141,10 @@
                                         <label class="form-label" for="">{{ translate('Email') }}
                                             <span class="text-danger">*</span>
                                         </label>
-                                        <input type="email" name="company_email" class="form-control" placeholder="{{ translate('Type_your_email') }}" value="{{ $businessSetting['company_email'] }}" required="" data-required-msg="{{ translate('company_email_is_required') }}">
+                                        <input type="email" name="company_email" class="form-control"
+                                            placeholder="{{ translate('Type_your_email') }}"
+                                            value="{{ $businessSetting['company_email'] }}" required=""
+                                            data-required-msg="{{ translate('company_email_is_required') }}">
                                     </div>
                                 </div>
                                 <div class="col-xl-6 col-md-6">
@@ -178,7 +183,7 @@
                                             <span class="text-danger">*</span>
                                         </label>
                                         <select class="custom-select" name="timezone"
-                                                data-placeholder="{{ translate('Select_from_dropdown') }}">
+                                            data-placeholder="{{ translate('Select_from_dropdown') }}">
                                             <option></option>
                                             @foreach (App\Enums\GlobalConstant::TIMEZONE_ARRAY as $timeZoneArray)
                                                 <option value="{{ $timeZoneArray['value'] }}"
@@ -195,14 +200,16 @@
                                             {{ translate('pagination') }}
                                             <span class="text-danger">*</span>
                                             <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="right"
-                                                  aria-label="{{ translate('this_number_indicates_how_much_data_will_be_shown_in_the_list_or_table') }}"
-                                                  data-bs-title="{{ translate('this_number_indicates_how_much_data_will_be_shown_in_the_list_or_table') }}">
+                                                aria-label="{{ translate('this_number_indicates_how_much_data_will_be_shown_in_the_list_or_table') }}"
+                                                data-bs-title="{{ translate('this_number_indicates_how_much_data_will_be_shown_in_the_list_or_table') }}">
                                                 <i class="fi fi-sr-info"></i>
                                             </span>
                                         </label>
                                         <input type="text" name="pagination_limit" class="form-control"
-                                               placeholder="{{ '25' }}" id="pagination_limit" data-required-msg="{{ translate('pagination_limit_field_is_required') }}"
-                                               value="{{ $businessSetting['pagination_limit'] }}" required step="1" min="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                            placeholder="{{ '25' }}" id="pagination_limit"
+                                            data-required-msg="{{ translate('pagination_limit_field_is_required') }}"
+                                            value="{{ $businessSetting['pagination_limit'] }}" required step="1"
+                                            min="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                     </div>
                                 </div>
                                 <div class="col-12">
@@ -210,11 +217,13 @@
                                         <label class="form-label" for="">{{ translate('Address') }}
                                             <span class="text-danger">*</span>
                                             <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="right"
-                                                aria-label="Enter your address" data-bs-title="{{ translate('enter_your_business_address,_or_simply_tap_the_map_to_pinpoint_your_location._the_address_field_will_automatically_update.') }}">
+                                                aria-label="Enter your address"
+                                                data-bs-title="{{ translate('enter_your_business_address,_or_simply_tap_the_map_to_pinpoint_your_location._the_address_field_will_automatically_update.') }}">
                                                 <i class="fi fi-sr-info"></i>
                                             </span>
                                         </label>
-                                        <textarea class="form-control" name="shop_address" id="shop-address" rows="1" data-required-msg="{{ translate('shop_address_is_required') }}"
+                                        <textarea class="form-control" name="shop_address" id="shop-address" rows="1"
+                                            data-required-msg="{{ translate('shop_address_is_required') }}"
                                             placeholder="{{ translate('Ex : House#38, Road#04, Demo City') }}" required>{{ $businessSetting['shop_address'] }}</textarea>
                                     </div>
                                 </div>
@@ -230,14 +239,18 @@
                                 <div class="latitude-longitude-container">
                                     <span class="latitude-longitude-item">
                                         <span>{{ 'Lat' }} :</span>
-                                         <span id="get-default-latitude" data-latitude="{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}">{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}</span>
+                                        <span id="get-default-latitude"
+                                            data-latitude="{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}">{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}</span>
                                     </span>
                                     <span class="latitude-longitude-item">
                                         <span>{{ 'Long' }} : </span>
-                                        <span id="get-default-longitude" data-longitude="{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}">{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}</span>
+                                        <span id="get-default-longitude"
+                                            data-longitude="{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}">{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}</span>
                                     </span>
-                                    <input type="hidden" id="latitude" name="latitude" value="{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}">
-                                    <input type="hidden" id="longitude" name="longitude" value="{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}">
+                                    <input type="hidden" id="latitude" name="latitude"
+                                        value="{{ $businessSetting['default_location']['lat'] ?? '-33.8688' }}">
+                                    <input type="hidden" id="longitude" name="longitude"
+                                        value="{{ $businessSetting['default_location']['lng'] ?? '151.2195' }}">
                                 </div>
                             </div>
                         </div>
@@ -275,8 +288,9 @@
                             </div>
                             <div class="card-body">
                                 <div class="p-12 p-sm-20 bg-section rounded">
-                                    @if(!$businessSetting['gateway_currency_support'])
-                                        <div class="bg-danger bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-2 align-items-center mb-3">
+                                    @if (!$businessSetting['gateway_currency_support'])
+                                        <div
+                                            class="bg-danger bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-2 align-items-center mb-3">
                                             <i class="fi fi-sr-triangle-warning text-danger"></i>
                                             <span>
                                                 {{ translate('currently_no_payment_gateway_supported_for_' . $systemCurrency->name . ' currency.') }}
@@ -289,7 +303,8 @@
                                         <div class="col-xl-4 col-md-6">
                                             <div class="form-group">
                                                 <label class="form-label"
-                                                    for="">{{ translate('Select_Currency') }}  <span class="text-danger">*</span></label>
+                                                    for="">{{ translate('Select_Currency') }} <span
+                                                        class="text-danger">*</span></label>
                                                 <select name="currency_id" class="custom-select"
                                                     data-placeholder="{{ translate('Select_from_dropdown') }}">
                                                     <option></option>
@@ -313,12 +328,13 @@
                                                     <div class="row">
                                                         <div class="col-6">
                                                             <div class="form-check d-flex align-items-center gap-1">
-                                                                <input class="form-check-input radio--input m-0" type="radio"
-                                                                       name="currency_symbol_position" id="currency_position_left"
-                                                                       value="left"
+                                                                <input class="form-check-input radio--input m-0"
+                                                                    type="radio" name="currency_symbol_position"
+                                                                    id="currency_position_left" value="left"
                                                                     {{ $businessSetting['currency_symbol_position'] == 'left' ? 'checked' : '' }}>
 
-                                                                <label class="form-check-label" for="currency_position_left">
+                                                                <label class="form-check-label"
+                                                                    for="currency_position_left">
                                                                     ({{ getCurrencySymbol(currencyCode: getCurrencyCode(type: 'default')) }})
                                                                     {{ translate('left') }}
                                                                 </label>
@@ -326,11 +342,12 @@
                                                         </div>
                                                         <div class="col-6">
                                                             <div class="form-check d-flex align-items-center gap-1">
-                                                                <input class="form-check-input radio--input m-0" type="radio"
-                                                                       name="currency_symbol_position" id="currency_position_right"
-                                                                       value="right"
+                                                                <input class="form-check-input radio--input m-0"
+                                                                    type="radio" name="currency_symbol_position"
+                                                                    id="currency_position_right" value="right"
                                                                     {{ $businessSetting['currency_symbol_position'] == 'right' ? 'checked' : '' }}>
-                                                                <label class="form-check-label" for="currency_position_right">
+                                                                <label class="form-check-label"
+                                                                    for="currency_position_right">
                                                                     ({{ getCurrencySymbol(currencyCode: getCurrencyCode(type: 'default')) }})
                                                                     {{ translate('right') }}
                                                                 </label>
@@ -345,7 +362,8 @@
                                         <div class="col-xl-4 col-md-6">
                                             <div class="form-group">
                                                 <label class="form-label"
-                                                    for="">{{ translate('Digit_After_Decimal_Point') }} <span class="text-danger">*</span>
+                                                    for="">{{ translate('Digit_After_Decimal_Point') }} <span
+                                                        class="text-danger">*</span>
                                                     <span class="tooltip-icon" data-bs-toggle="tooltip"
                                                         data-bs-placement="right"
                                                         aria-label="{{ translate('Enter_digit_after_decimal_point') }}"
@@ -354,7 +372,8 @@
                                                     </span>
                                                 </label>
                                                 <input type="number"
-                                                    value="{{ $businessSetting['decimal_point_settings'] }}" required data-required-msg="{{ translate('decimal_point_settings_is_required') }}"
+                                                    value="{{ $businessSetting['decimal_point_settings'] }}" required
+                                                    data-required-msg="{{ translate('decimal_point_settings_is_required') }}"
                                                     name="decimal_point_settings" class="form-control" min="0"
                                                     placeholder="{{ translate('ex: 2') }}">
 
@@ -365,7 +384,7 @@
                                         class="bg-info bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-2 align-items-center">
                                         <i class="fi fi-sr-lightbulb-on text-info"></i>
                                         <span>
-                                           {{ translate('you_can_also_set_up_your_default_and_multiple_currency_from') }}
+                                            {{ translate('you_can_also_set_up_your_default_and_multiple_currency_from') }}
                                             <a href="{{ route('admin.system-setup.currency.view') }}" target="_blank"
                                                 class="text-decoration-underline fw-semibold">
                                                 {{ translate('Currency_Setup') }}
@@ -387,7 +406,8 @@
                                 <div class="p-12 p-sm-20 bg-section rounded">
                                     <div class="form-group mb-20">
                                         <label class="form-label mb-3"
-                                            for="">{{ translate('Select_Business_Model') }} <span class="text-danger">*</span>
+                                            for="">{{ translate('Select_Business_Model') }} <span
+                                                class="text-danger">*</span>
                                             <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="right"
                                                 aria-label="{{ translate('to_activate_the_preferred_business_model_for_the_system,_please_select_the_given_option_below') }}"
                                                 data-bs-title="{{ translate('to_activate_the_preferred_business_model_for_the_system,_please_select_the_given_option_below') }}">
@@ -399,8 +419,8 @@
                                                 <div class="col-xl-6 col-md-6">
                                                     <div class="form-check d-flex gap-3">
                                                         <input class="form-check-input radio--input radio--input_lg"
-                                                            type="radio" name="business_mode" id="business-mode-single-vendor"
-                                                            value="single"
+                                                            type="radio" name="business_mode"
+                                                            id="business-mode-single-vendor" value="single"
                                                             {{ $businessSetting['business_mode'] == 'single' ? 'checked' : '' }}>
                                                         <div class="flex-grow-1">
                                                             <label for="business-mode-single-vendor"
@@ -417,7 +437,9 @@
 
                                                                     {{ translate('you_can_change_setup_of_your_shop_from_here') }}
                                                                     <br>
-                                                                    <a href="{{ route('admin.business-settings.inhouse-shop') }}" target="_blank" class="text-decoration-underline fw-semibold">
+                                                                    <a href="{{ route('admin.business-settings.inhouse-shop') }}"
+                                                                        target="_blank"
+                                                                        class="text-decoration-underline fw-semibold">
                                                                         {{ translate('In_house_Shop_Settings') }}
                                                                     </a>
                                                                 </span>
@@ -446,7 +468,8 @@
                                                                 <span>
                                                                     {{ translate('after_turn_on_you_can_setup_more_setting_for_other_vendors_from_vendors_settings') }}.
                                                                     <br>
-                                                                    <a href="{{ route('admin.business-settings.vendor-settings.index') }}" target="_blank"
+                                                                    <a href="{{ route('admin.business-settings.vendor-settings.index') }}"
+                                                                        target="_blank"
                                                                         class="text-decoration-underline fw-semibold">
                                                                         {{ translate('Vendor_Settings') }}
                                                                     </a>
@@ -458,19 +481,79 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="form-group business-mode-multi-vendor-commission {{ $businessSetting['business_mode'] == 'single' ? 'd-none' : '' }}">
-                                        <label class="form-label mb-3"
-                                            for="">{{ translate('default_commission') }}
+                                    <div
+                                        class="form-group business-mode-multi-vendor-commission {{ $businessSetting['business_mode'] == 'single' ? 'd-none' : '' }}">
+                                        <label class="form-label mb-2">
+                                            {{ translate('Vendor_Commission_(deducted_from_vendor_earnings)') }}
                                             <span class="text-danger">*</span>
                                             <span class="tooltip-icon" data-bs-toggle="tooltip" data-bs-placement="right"
-                                                aria-label="{{ translate('Enter_default_commission') }}"
-                                                data-bs-title="{{ translate('Enter_default_commission') }}">
+                                                data-bs-title="{{ translate('Commission_deducted_from_vendor_payout._Not_visible_to_customers.') }}">
                                                 <i class="fi fi-sr-info"></i>
                                             </span>
                                         </label>
-                                        @php($commission=getWebConfig('sales_commission'))
-                                        <input type="number" class="form-control" name="sales_commission" value="{{ $commission ?? 0 }}" min="0" max="100"
-                                            placeholder="{{ translate('ex: 2') }}" required="" step="any" data-required-msg="{{ translate('sales_commission_is_required') }}">
+
+                                        <div class="input-group">
+                                            <select name="sales_commission_type" class="form-control"
+                                                style="max-width:120px;">
+                                                <option value="percent"
+                                                    {{ (getWebConfig('sales_commission_type') ?? 'percent') === 'percent' ? 'selected' : '' }}>
+                                                    {{ translate('Percent') }} (%)
+                                                </option>
+                                                <option value="flat"
+                                                    {{ (getWebConfig('sales_commission_type') ?? 'percent') === 'flat' ? 'selected' : '' }}>
+                                                    {{ translate('Flat') }} ($)
+                                                </option>
+                                            </select>
+                                            <input type="number" class="form-control" name="sales_commission"
+                                                value="{{ getWebConfig('sales_commission') ?? 0 }}" min="0"
+                                                step="any" required placeholder="{{ translate('e.g._5') }}"
+                                                data-required-msg="{{ translate('sales_commission_is_required') }}">
+                                        </div>
+                                        <small
+                                            class="text-muted">{{ translate('Percent:_deducts_X%_of_order_total._Flat:_deducts_fixed_amount_per_order.') }}</small>
+                                    </div>
+
+                                    {{-- Customer-facing Service Fee --}}
+                                    <div class="form-group mt-4 pt-3 border-top">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <label class="form-label mb-0">
+                                                {{ translate('Customer_Service_Fee_(shown_at_checkout_as_"Service_Fee")') }}
+                                                <span class="tooltip-icon" data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    data-bs-title="{{ translate('Added_on_top_of_order_total_and_visible_to_the_customer_at_checkout.') }}">
+                                                    <i class="fi fi-sr-info"></i>
+                                                </span>
+                                            </label>
+                                            <label class="switcher mb-0">
+                                                <input type="checkbox" name="customer_service_fee_status" value="1"
+                                                    {{ getWebConfig('customer_service_fee_status') ? 'checked' : '' }}
+                                                    id="customerServiceFeeToggle">
+                                                <span class="switcher_control"></span>
+                                            </label>
+                                        </div>
+
+                                        <div id="customerServiceFeeFields"
+                                            class="{{ getWebConfig('customer_service_fee_status') ? '' : 'd-none' }}">
+                                            <div class="input-group">
+                                                <select name="customer_service_fee_type" class="form-control"
+                                                    style="max-width:120px;">
+                                                    <option value="percent"
+                                                        {{ (getWebConfig('customer_service_fee_type') ?? 'percent') === 'percent' ? 'selected' : '' }}>
+                                                        {{ translate('Percent') }} (%)
+                                                    </option>
+                                                    <option value="flat"
+                                                        {{ (getWebConfig('customer_service_fee_type') ?? 'percent') === 'flat' ? 'selected' : '' }}>
+                                                        {{ translate('Flat') }} ($)
+                                                    </option>
+                                                </select>
+                                                <input type="number" class="form-control" name="customer_service_fee"
+                                                    value="{{ getWebConfig('customer_service_fee') ?? 0 }}"
+                                                    min="0" step="any"
+                                                    placeholder="{{ translate('e.g._2') }}">
+                                            </div>
+                                            <small
+                                                class="text-muted">{{ translate('Percent:_charges_X%_of_order_total._Flat:_charges_fixed_amount_per_order.') }}</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -490,23 +573,27 @@
                                             <div class="row g-4">
                                                 <div class="col-xl-4 col-md-6">
                                                     <div class="form-check d-flex gap-3">
-                                                        <input class="form-check-input checkbox--input" type="checkbox" name="cash_on_delivery"
-                                                            id="cash_on_delivery" value="1" {{ $cashOnDelivery['status'] == 1 ? 'checked' : '' }}>
+                                                        <input class="form-check-input checkbox--input" type="checkbox"
+                                                            name="cash_on_delivery" id="cash_on_delivery" value="1"
+                                                            {{ $cashOnDelivery['status'] == 1 ? 'checked' : '' }}>
                                                         <div class="flex-grow-1">
                                                             <label for="cash_on_delivery"
                                                                 class="form-label text-dark fw-semibold mb-1 user-select-none">
                                                                 {{ translate('cash_on_delivery') }}
                                                             </label>
                                                             <p class="fs-12 mb-0">
-                                                                {{ translate('enabling_cash_on_delivery') }} ({{ translate('COD') }}) {{ translate('will_make_it_available_as_a_payment_option_for_customers_during_the_checkout_process') }}
+                                                                {{ translate('enabling_cash_on_delivery') }}
+                                                                ({{ translate('COD') }})
+                                                                {{ translate('will_make_it_available_as_a_payment_option_for_customers_during_the_checkout_process') }}
                                                             </p>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div class="col-xl-4 col-md-6">
                                                     <div class="form-check d-flex gap-3">
-                                                        <input class="form-check-input checkbox--input" type="checkbox" name="digital_payment"
-                                                            id="digital_payment" value="1"  {{ $digitalPayment['status'] ? 'checked' : '' }}>
+                                                        <input class="form-check-input checkbox--input" type="checkbox"
+                                                            name="digital_payment" id="digital_payment" value="1"
+                                                            {{ $digitalPayment['status'] ? 'checked' : '' }}>
                                                         <div class="flex-grow-1">
                                                             <label for="digital_payment"
                                                                 class="form-label text-dark fw-semibold mb-1 user-select-none d-flex gap-1 align-items-center">
@@ -514,7 +601,8 @@
                                                             </label>
                                                             <p class="fs-12 mb-0">
                                                                 {{ translate('enabling_digital_payment_will_make_it_available_as_a_payment_option_for_customers_during_the_checkout_process') }}.
-                                                                <a href="{{ route('admin.third-party.payment-method.index') }}" target="_blank"
+                                                                <a href="{{ route('admin.third-party.payment-method.index') }}"
+                                                                    target="_blank"
                                                                     class="text-decoration-underline fw-semibold">{{ translate('Digital_payment_methods') }}</a>
                                                             </p>
                                                         </div>
@@ -522,8 +610,9 @@
                                                 </div>
                                                 <div class="col-xl-4 col-md-6">
                                                     <div class="form-check d-flex gap-3">
-                                                        <input class="form-check-input checkbox--input" type="checkbox" name="offline_payment"
-                                                            id="offline_payment" value="1" {{ $offlinePayment['status'] == 1 ? 'checked' : '' }}>
+                                                        <input class="form-check-input checkbox--input" type="checkbox"
+                                                            name="offline_payment" id="offline_payment" value="1"
+                                                            {{ $offlinePayment['status'] == 1 ? 'checked' : '' }}>
                                                         <div class="flex-grow-1">
                                                             <label for="offline_payment"
                                                                 class="form-label text-dark fw-semibold mb-1 user-select-none">
@@ -531,7 +620,8 @@
                                                             </label>
                                                             <p class="fs-12 mb-0">
                                                                 {{ translate('enabling_offline_payment_will_make_it_available_as_a_payment_option_for_customers_during_the_checkout_process') }}.
-                                                                <a href="{{ route('admin.third-party.offline-payment-method.index') }}" target="_blank"
+                                                                <a href="{{ route('admin.third-party.offline-payment-method.index') }}"
+                                                                    target="_blank"
                                                                     class="text-decoration-underline fw-semibold">{{ translate('Offline_payment_methods') }}</a>
                                                             </p>
                                                         </div>
@@ -568,7 +658,9 @@
                                                         <i class="fi fi-sr-info"></i>
                                                     </span>
                                                 </label>
-                                                <textarea class="form-control" name="company_copyright_text" rows="2" placeholder="{{ translate('Type_about_the_description') }}" data-maxlength="100" required data-required-msg="{{ translate('company_copyright_text_is_required') }}">{{ $businessSetting['company_copyright_text'] }}</textarea>
+                                                <textarea class="form-control" name="company_copyright_text" rows="2"
+                                                    placeholder="{{ translate('Type_about_the_description') }}" data-maxlength="100" required
+                                                    data-required-msg="{{ translate('company_copyright_text_is_required') }}">{{ $businessSetting['company_copyright_text'] }}</textarea>
                                                 <div class="d-flex justify-content-end">
                                                     <span class="text-body-light"></span>
                                                 </div>
@@ -578,19 +670,18 @@
                                             <div class="form-group">
                                                 <div class="float-end">
                                                     <label class="switcher" for="cookie-setting-status">
-                                                        <input
-                                                            class="switcher_input custom-modal-plugin"
-                                                            type="checkbox" value="1" name="cookie_status"
+                                                        <input class="switcher_input custom-modal-plugin" type="checkbox"
+                                                            value="1" name="cookie_status"
                                                             id="cookie-setting-status"
-                                                            {{ isset($cookieSetting) && $cookieSetting['status'] == 1 ? 'checked':'' }}
+                                                            {{ isset($cookieSetting) && $cookieSetting['status'] == 1 ? 'checked' : '' }}
                                                             data-modal-type="input-change"
                                                             data-modal-form="#smtp-mail-config-form"
                                                             data-on-image="{{ dynamicAsset(path: 'public/assets/new/back-end/img/modal/cookie-on.png') }}"
                                                             data-off-image="{{ dynamicAsset(path: 'public/assets/new/back-end/img/modal/cookie-off.png') }}"
-                                                            data-on-title="{{ translate('by_Turning_ON_Cookie_Settings')}}"
-                                                            data-off-title="{{ translate('by_Turning_OFF_Cookie_Settings')}}"
-                                                            data-on-message="<p>{{ translate('if_you_disable_it_customers_cannot_see_Cookie_Settings_in_frontend')}}</p>"
-                                                            data-off-message="<p>{{ translate('if_you_enable_it_customers_will_see_Cookie_Settings_in_frontend')}}</p>">
+                                                            data-on-title="{{ translate('by_Turning_ON_Cookie_Settings') }}"
+                                                            data-off-title="{{ translate('by_Turning_OFF_Cookie_Settings') }}"
+                                                            data-on-message="<p>{{ translate('if_you_disable_it_customers_cannot_see_Cookie_Settings_in_frontend') }}</p>"
+                                                            data-off-message="<p>{{ translate('if_you_enable_it_customers_will_see_Cookie_Settings_in_frontend') }}</p>">
                                                         <span class="switcher_control"></span>
                                                     </label>
                                                 </div>
@@ -606,7 +697,8 @@
                                                         <i class="fi fi-sr-info"></i>
                                                     </span>
                                                 </label>
-                                                <textarea class="form-control" name="cookie_text" rows="2" placeholder="{{ translate('type_about_the_description') }}" data-maxlength="100">{{ isset($cookieSetting) ? $cookieSetting['cookie_text'] : ''}}</textarea>
+                                                <textarea class="form-control" name="cookie_text" rows="2"
+                                                    placeholder="{{ translate('type_about_the_description') }}" data-maxlength="100">{{ isset($cookieSetting) ? $cookieSetting['cookie_text'] : '' }}</textarea>
                                                 <div class="d-flex justify-content-end">
                                                     <span class="text-body-light">{{ '0/100' }}</span>
                                                 </div>
@@ -622,8 +714,10 @@
             </div>
 
             <div class="d-flex justify-content-end trans3 mt-4">
-                <div class="d-flex justify-content-sm-end justify-content-center gap-3 flex-grow-1 flex-grow-sm-0 bg-white action-btn-wrapper trans3">
-                    <button type="reset" class="btn btn-secondary px-3 px-sm-4 w-120">{{ translate('reset') }}</button>
+                <div
+                    class="d-flex justify-content-sm-end justify-content-center gap-3 flex-grow-1 flex-grow-sm-0 bg-white action-btn-wrapper trans3">
+                    <button type="reset"
+                        class="btn btn-secondary px-3 px-sm-4 w-120">{{ translate('reset') }}</button>
                     <button type="submit" class="btn btn-primary px-3 px-sm-4">
                         <i class="fi fi-sr-disk"></i>
                         {{ translate('save_information') }}
@@ -632,20 +726,36 @@
             </div>
         </form>
 
-        @include("admin-views.business-settings.partials._maintenance-mode-modal")
+        @include('admin-views.business-settings.partials._maintenance-mode-modal')
 
     </div>
 
-    @include("layouts.admin.partials.offcanvas._general-setup")
+    @include('layouts.admin.partials.offcanvas._general-setup')
 @endsection
 
 @push('script')
-    @if(getWebConfig('map_api_status') == 1)
-        <script src="https://maps.googleapis.com/maps/api/js?key={{ getWebConfig('map_api_key') }}&callback=googleMapInitialize&loading=async&libraries=places&v=3.56"
-            defer>
-        </script>
+    @if (getWebConfig('map_api_status') == 1)
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key={{ getWebConfig('map_api_key') }}&callback=googleMapInitialize&loading=async&libraries=places&v=3.56"
+            defer></script>
     @endif
-    <script src="{{ dynamicAsset(path: 'public/assets/backend/admin/js/business-settings/maintenance-mode-setting.js') }}"></script>
-    <script src="{{ dynamicAsset(path: 'public/assets/backend/admin/js/business-settings/business-general-setting.js') }}"></script>
+    <script
+        src="{{ dynamicAsset(path: 'public/assets/backend/admin/js/business-settings/maintenance-mode-setting.js') }}">
+    </script>
+    <script
+        src="{{ dynamicAsset(path: 'public/assets/backend/admin/js/business-settings/business-general-setting.js') }}">
+    </script>
     <script src="{{ dynamicAsset(path: 'public/assets/backend/admin/js/business-settings/general-page.js') }}"></script>
+    <script>
+        "use strict";
+        $(document).ready(function() {
+            $('#customerServiceFeeToggle').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#customerServiceFeeFields').removeClass('d-none');
+                } else {
+                    $('#customerServiceFeeFields').addClass('d-none');
+                }
+            });
+        });
+    </script>
 @endpush

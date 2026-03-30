@@ -814,6 +814,118 @@ Only `app/Jobs/SendEmailJob.php` exists. All new jobs go in `app/Jobs/`.
 6. `BusinessSetting` model is the key-value config store — use for feature flags/settings
 7. Use `app/Http/Middleware/` for new middleware and register in `bootstrap/app.php`
 
+### UI / Frontend Conventions
+
+#### Icons — Flaticon (`fi`) only, NOT Bootstrap Icons (`bi`)
+
+Both admin and vendor panels use **Flaticon** as the icon library. **Never** use Bootstrap Icons (`bi bi-*`).
+
+| Style | Class prefix | Usage |
+|---|---|---|
+| Regular (outline) | `fi fi-rr-*` | Default for body text, tables, buttons |
+| Solid (filled) | `fi fi-sr-*` | Emphasis, alerts, status indicators |
+
+**Common icon mapping (Bootstrap → Flaticon):**
+
+| Concept | ❌ Wrong (Bootstrap) | ✅ Correct (Flaticon) |
+|---|---|---|
+| Upload | `bi bi-upload` | `fi fi-sr-inbox-in` |
+| Download | `bi bi-download` | `fi fi-rr-download` |
+| Delete / Trash | `bi bi-trash` | `fi fi-rr-trash` |
+| Lock | `bi bi-lock-fill` | `fi fi-rr-lock` or `fi fi-sr-lock` |
+| Warning | `bi bi-exclamation-triangle-fill` | `fi fi-sr-triangle-warning` |
+| Info | `bi bi-info-circle-fill` | `fi fi-sr-info` |
+| Check / Success | `bi bi-check-circle-fill` | `fi fi-sr-check` |
+| Close / Error | `bi bi-x-circle-fill` | `fi fi-sr-cross` |
+| Table / List | `bi bi-table` | `fi fi-rr-list` |
+| Inbox / Empty | `bi bi-inbox` | `fi fi-sr-inbox-in` |
+
+#### Delete / Destructive Confirmation — SweetAlert2 (`Swal.fire`), NOT native `confirm()`
+
+**Never** use `window.confirm()` or `confirm()` for delete actions. The platform uses **SweetAlert2** with pre-translated text stored in hidden `<span>` elements.
+
+**Admin panel pattern:**
+```javascript
+const getText = document.getElementById('get-confirm-and-cancel-button-text-for-delete');
+Swal.fire({
+    title: getText?.dataset.sure || 'Are you sure?',
+    text: getText?.dataset.text || 'You will not be able to revert this!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    cancelButtonText: getText?.dataset.cancel || 'Cancel',
+    confirmButtonText: getText?.dataset.confirm || 'Yes, delete it!',
+    reverseButtons: true,
+}).then((result) => {
+    if (result.isConfirmed) {
+        // proceed with delete
+    }
+});
+```
+
+**Vendor panel pattern:**
+```javascript
+const getText = document.getElementById('get-sweet-alert-messages');
+Swal.fire({
+    title: getText?.dataset.areYouSure || 'Are you sure?',
+    text: 'This action cannot be undone',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    cancelButtonText: getText?.dataset.cancel || 'Cancel',
+    confirmButtonText: getText?.dataset.confirm || 'Confirm',
+    reverseButtons: true,
+}).then((result) => {
+    if (result.isConfirmed) {
+        // proceed with delete
+    }
+});
+```
+
+These hidden `<span>` elements are included via layout partials:
+- Admin: `layouts/admin/partials/_translator-for-js.blade.php` → `#get-confirm-and-cancel-button-text-for-delete`
+- Vendor: `layouts/vendor/partials/_translator-for-js.blade.php` → `#get-sweet-alert-messages`
+
 ---
 
-*Last updated: Codebase fully read March 19, 2026. 6valley installed and operational.*
+## 💰 Commission & Customer Service Fee Architecture
+
+### Vendor Commission (admin earns from vendor sales)
+- Configured in admin panel → Business Settings → "Vendor Commission"
+- Type: `percent` or `flat` — stored in `business_settings` key `sales_commission_type`
+- Value stored in `business_settings` key `sales_commission`
+- Per-vendor override: `sellers.sales_commission_percentage` (always percent, legacy)
+- Calculated via `App\Services\CommissionService::calculate(sellerIs, sellerId, orderTotal)`
+- Stored on `orders.admin_commission` at order placement
+- Stored type on `orders.commission_type`
+- Deducted from **vendor** payout — customer never sees this
+
+### Customer Service Fee (customer pays on top of order total)
+- Configured in admin panel → Business Settings → "Customer Service Fee"
+- Enable/disable: `business_settings` key `customer_service_fee_status`
+- Type: `percent` or `flat` — stored in `business_settings` key `customer_service_fee_type`
+- Value stored in `business_settings` key `customer_service_fee`
+- Calculated via `App\Services\CustomerServiceFeeService::calculate(orderTotal)`
+- Stored on `orders.customer_service_fee` and `orders.customer_service_fee_type`
+- Added **on top** of `order_amount` at placement — customer sees and pays the full amount
+- Goes 100% to **admin** wallet as `commission_earned` on order delivery
+
+### Wallet Settlement Flow (in `OrderManager::getWalletManageOnOrderStatusChange`)
+- `$order_amount` = subtotal − discount (vendor portion, no service fee)
+- `$commission` = `orders.admin_commission` (vendor commission only)
+- `$serviceFee` = `orders.customer_service_fee`
+- Admin `commission_earned` += `$commission + $serviceFee`
+- Seller `total_earning` += `$order_amount − $commission` (no service fee credit to vendor)
+- Transaction `admin_commission` = `$commission + $serviceFee`
+- Transaction `seller_amount` = `$order_amount − $commission`
+
+### Important Rules
+- **Never** write service fee calculation logic in blade files — always call `CustomerServiceFeeService`
+- **Never** credit `$serviceFee` to vendor wallets — it belongs to admin only
+- Checkout display uses `$serviceFee` from `CustomerServiceFeeService::calculate()` in `_order-summary.blade.php`
+
+---
+
+*Last updated: March 29, 2026. Commission + Service Fee system implemented.*

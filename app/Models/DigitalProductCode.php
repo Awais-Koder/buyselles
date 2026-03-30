@@ -13,10 +13,13 @@ use Illuminate\Support\Facades\Crypt;
  *
  * @property int $id
  * @property int $product_id
+ * @property int|null $seller_id
  * @property string $code AES-256-CBC encrypted at rest
+ * @property string|null $code_hash SHA-256 hash for duplicate detection
  * @property string|null $serial_number Optional serial/reference number (plain text)
  * @property Carbon|null $expiry_date Code expiry date
  * @property string $status available | reserved | sold | failed | expired
+ * @property bool $is_active Whether the code is active (can be sold) or deactivated by vendor/admin
  * @property int|null $order_id
  * @property int|null $order_detail_id
  * @property Carbon|null $assigned_at
@@ -27,11 +30,13 @@ class DigitalProductCode extends Model
 {
     protected $fillable = [
         'product_id',
+        'seller_id',
         'code',
         'code_hash',
         'serial_number',
         'expiry_date',
         'status',
+        'is_active',
         'order_id',
         'order_detail_id',
         'assigned_at',
@@ -41,8 +46,10 @@ class DigitalProductCode extends Model
     {
         return [
             'product_id' => 'integer',
+            'seller_id' => 'integer',
             'order_id' => 'integer',
             'order_detail_id' => 'integer',
+            'is_active' => 'boolean',
             'expiry_date' => 'date',
             'assigned_at' => 'datetime',
             'created_at' => 'datetime',
@@ -55,6 +62,11 @@ class DigitalProductCode extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(Seller::class, 'seller_id');
     }
 
     public function order(): BelongsTo
@@ -89,15 +101,32 @@ class DigitalProductCode extends Model
     // ─── Scopes ──────────────────────────────────────────────────────────────
 
     /**
-     * Scope: only available (unassigned) codes that are not expired.
+     * Scope: only available (unassigned) codes that are not expired and are active.
      */
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('status', 'available')
+            ->where('is_active', true)
             ->where(function (Builder $q): void {
                 $q->whereNull('expiry_date')
                     ->orWhereDate('expiry_date', '>=', now()->toDateString());
             });
+    }
+
+    /**
+     * Scope: only active codes.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: only inactive (deactivated) codes.
+     */
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('is_active', false);
     }
 
     /**

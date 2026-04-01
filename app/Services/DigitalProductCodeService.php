@@ -204,7 +204,8 @@ class DigitalProductCodeService
 
     /**
      * Assign codes to all digital order details for a given Order when payment is confirmed.
-     * Idempotent — already-assigned details are skipped.
+     * Assigns exactly $detail->qty codes per detail so multi-quantity orders are fulfilled correctly.
+     * Idempotent — already-fully-assigned details are skipped.
      */
     public function assignCodesForOrder(Order $order): void
     {
@@ -213,11 +214,6 @@ class DigitalProductCodeService
         }
 
         foreach ($order->orderDetails as $detail) {
-            // Skip if already assigned
-            if (DigitalProductCode::query()->where('order_detail_id', $detail->id)->exists()) {
-                continue;
-            }
-
             $productDetails = json_decode($detail->product_details ?? '{}');
             $productType = $productDetails->product_type ?? null;
             $digitalType = $productDetails->digital_product_type ?? null;
@@ -231,48 +227,108 @@ class DigitalProductCodeService
                 continue;
             }
 
-            try {
-                DB::transaction(function () use ($productId, $detail, $order): void {
-                    /** @var DigitalProductCode|null $record */
-                    $record = DigitalProductCode::query()
-                        ->where('product_id', $productId)
-                        ->where('status', 'available')
-                        ->where('is_active', true)
-                        ->where(function ($q): void {
-                            $q->whereNull('expiry_date')
-                                ->orWhereDate('expiry_date', '>=', now()->toDateString());
-                        })
-                        ->lockForUpdate()
-                        ->first();
+            // How many codes are already assigned for this order detail?
+            $alreadyAssigned = DigitalProductCode::query()
+                ->where('order_detail_id', $detail->id)
+                ->where('status', 'sold')
+                ->count();
 
-                    if (! $record) {
-                        // No code available — leave for manual fulfilment / re-stock
-                        Log::warning('DigitalProductCodeService: No available code in pool', [
-                            'product_id' => $productId,
+            $needed = max(0, (int) $detail->qty - $alreadyAssigned);
+
+            if ($needed <= 0) {
+                continue; // Already fully assigned — idempotent
+            }
+
+            for ($i = 0; $i < $needed; $i++) {
+                try {
+                    DB::transaction(function () use ($productId, $detail, $order): void {
+                        /** @var DigitalProductCode|null $record */
+                        $record = DigitalProductCode::query()
+                            ->where('product_id', $productId)
+                            ->where('status', 'available')
+                            ->where('is_active', true)
+                            ->where(function ($q): void {
+                                $q->whereNull('expiry_date')
+                                    ->orWhereDate('expiry_date', '>=', now()->toDateString());
+                            })
+                            ->lockForUpdate()
+                            ->first();
+
+                        if (! $record) {
+                            // No code available — leave remaining units for manual fulfilment / re-stock
+                            Log::warning('DigitalProductCodeService: No available code in pool', [
+                                'product_id' => $productId,
+                                'order_id' => $order->id,
+                                'order_detail_id' => $detail->id,
+                            ]);
+
+                            return;
+                        }
+
+                        $record->update([
+                            'status' => 'sold',
                             'order_id' => $order->id,
                             'order_detail_id' => $detail->id,
+                            'assigned_at' => now(),
                         ]);
 
-                        return;
-                    }
-
-                    $record->update([
-                        'status' => 'sold',
+                        $this->syncStock($productId);
+                    });
+                } catch (\Throwable $e) {
+                    Log::error('DigitalProductCodeService: assignCodesForOrder failed', [
                         'order_id' => $order->id,
-                        'order_detail_id' => $detail->id,
-                        'assigned_at' => now(),
+                        'detail_id' => $detail->id,
+                        'error' => $e->getMessage(),
                     ]);
-
-                    $this->syncStock($productId);
-                });
-            } catch (\Throwable $e) {
-                Log::error('DigitalProductCodeService: assignCodesForOrder failed', [
-                    'order_id' => $order->id,
-                    'detail_id' => $detail->id,
-                    'error' => $e->getMessage(),
-                ]);
+                }
             }
         }
+    }
+
+    /**
+     * Validate that every digital "ready_product" item in the given carts has enough codes
+     * in the pool. Returns an array of human-readable error strings (empty = all OK).
+     *
+     * @param  \Illuminate\Support\Collection|\App\Models\Cart[]  $carts
+     * @return string[]
+     */
+    public function getDigitalStockErrors($carts): array
+    {
+        $errors = [];
+
+        foreach ($carts as $cart) {
+            if (
+                ($cart->product_type ?? null) !== 'digital' ||
+                ($cart->digital_product_type ?? null) !== 'ready_product'
+            ) {
+                continue;
+            }
+
+            $productId = $cart->product_id ?? null;
+            if (! $productId) {
+                continue;
+            }
+
+            $available = DigitalProductCode::query()
+                ->where('product_id', $productId)
+                ->where('status', 'available')
+                ->where('is_active', true)
+                ->where(function ($q): void {
+                    $q->whereNull('expiry_date')
+                        ->orWhereDate('expiry_date', '>=', now()->toDateString());
+                })
+                ->count();
+
+            $requested = (int) $cart->quantity;
+            if ($available < $requested) {
+                $productName = $cart->name ?? ($cart->product?->name ?? translate('Product'));
+                $errors[] = translate('Only').' '.$available.' '.translate('code(s)_available_for').
+                    ' "'.$productName.'". '.
+                    translate('Please_reduce_quantity_to').' '.$available.'.';
+            }
+        }
+
+        return $errors;
     }
 
     /**

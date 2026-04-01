@@ -6,7 +6,6 @@ use App\Models\Cart;
 use App\Models\CartShipping;
 use App\Models\CategoryShippingCost;
 use App\Models\Color;
-use App\Models\DigitalProductCode;
 use App\Models\DigitalProductVariation;
 use App\Models\Product;
 use App\Models\ShippingMethod;
@@ -400,7 +399,7 @@ class CartManager
         }
 
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity') . ' ' . $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         if ($user == 'offline') {
@@ -421,7 +420,7 @@ class CartManager
             $choices[$choice->name] = $request[$choice->name];
             $variations[$choice->title] = $request[$choice->name];
             if ($string != null) {
-                $string .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $string .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $string .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -483,7 +482,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request['id'], 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $string])->first();
@@ -512,7 +511,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
 
@@ -554,7 +553,7 @@ class CartManager
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
                     'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             } elseif ($product['product_type'] == 'physical' && ($shippingType == 'category_wise' || $shippingType == 'product_wise')) {
                 $cart->update([
@@ -569,7 +568,7 @@ class CartManager
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
                     'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
             $cart->update(['is_checked' => 1]);
@@ -583,7 +582,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -591,11 +590,19 @@ class CartManager
     public static function addToCartDigitalProduct($request, $product, $shippingType, $sellerShippingList): array
     {
         if ($product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request['quantity']) {
-            return ['status' => 0, 'message' => translate('out_of_stock!')];
+            $available = (int) $product['current_stock'];
+            if ($available <= 0) {
+                return ['status' => 0, 'message' => translate('out_of_stock!')];
+            }
+
+            return [
+                'status' => 0,
+                'message' => translate('Only').' '.$available.' '.translate('code(s)_in_stock').'. '.translate('You_can_purchase_up_to').' '.$available.'.',
+            ];
         }
 
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity') . ' ' . $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         $price = $product->unit_price;
@@ -644,7 +651,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request->id, 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $request['variant_key']])->first();
@@ -672,7 +679,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
         }
@@ -681,7 +688,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -891,11 +898,9 @@ class CartManager
                     }
                 } elseif ($product['product_type'] == 'physical' && $product['current_stock'] < $cart->quantity) {
                     $status = false;
-                } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] == 'ready_after_sell') {
-                    $availableCodes = DigitalProductCode::where('product_id', $product['id'])
-                        ->where('status', 'available')
-                        ->count();
-                    if ($availableCodes < $cart->quantity) {
+                } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+                    // For pool-based digital codes, current_stock is kept in sync with available codes
+                    if ($product['current_stock'] < $cart->quantity) {
                         $status = false;
                     }
                 }

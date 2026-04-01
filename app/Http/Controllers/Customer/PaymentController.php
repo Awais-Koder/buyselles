@@ -16,6 +16,7 @@ use App\Models\OrderEditHistory;
 use App\Models\ShippingAddress;
 use App\Models\ShippingType;
 use App\Models\User;
+use App\Services\DigitalProductCodeService;
 use App\Traits\OrderEditManager;
 use App\Traits\Payment;
 use App\Traits\PaymentGatewayTrait;
@@ -86,10 +87,25 @@ class PaymentController extends Controller
             return $query->active();
         })->whereIn('cart_group_id', $cartGroupIds)->where(['is_checked' => 1])->get();
         $productStockCheck = CartManager::product_stock_check($carts);
-        if (! $productStockCheck && in_array($request['payment_request_from'], ['app'])) {
-            return response()->json(['errors' => ['code' => 'product-stock', 'message' => 'The following items in your cart are currently out of stock']], 403);
-        } elseif (! $productStockCheck) {
-            Toastr::error(translate('the_following_items_in_your_cart_are_currently_out_of_stock'));
+        if (! $productStockCheck) {
+            // Collect specific digital stock error messages for a clear "only X available" UX
+            $digitalErrors = app(DigitalProductCodeService::class)->getDigitalStockErrors($carts);
+
+            if (in_array($request['payment_request_from'], ['app'])) {
+                $errorMsg = ! empty($digitalErrors)
+                    ? implode(' | ', $digitalErrors)
+                    : 'The following items in your cart are currently out of stock';
+
+                return response()->json(['errors' => ['code' => 'product-stock', 'message' => $errorMsg]], 403);
+            }
+
+            if (! empty($digitalErrors)) {
+                foreach ($digitalErrors as $digitalErrorMsg) {
+                    Toastr::warning($digitalErrorMsg);
+                }
+            } else {
+                Toastr::error(translate('the_following_items_in_your_cart_are_currently_out_of_stock'));
+            }
 
             return redirect()->route('shop-cart');
         }

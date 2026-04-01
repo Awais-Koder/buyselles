@@ -2158,6 +2158,7 @@ class OrderManager
 
         $isPhysicalProductExist = false;
         $productStockStatus = true;
+        $digitalStockErrors = [];
         foreach ($cartItemGroupIDs as $groupId) {
             $isPhysicalProductExist = false;
             $cartList = Cart::whereHas('product', function ($query) {
@@ -2170,6 +2171,12 @@ class OrderManager
                     $isPhysicalProductExist = true;
                     $response['physical_product_view'] = true;
                 }
+            }
+
+            // Collect specific digital stock errors for clear user-facing messages
+            $groupDigitalErrors = app(DigitalProductCodeService::class)->getDigitalStockErrors($cartList);
+            foreach ($groupDigitalErrors as $err) {
+                $digitalStockErrors[] = $err;
             }
 
             $cartList = Cart::whereHas('product', function ($query) {
@@ -2267,7 +2274,14 @@ class OrderManager
         }
 
         if (! $productStockStatus) {
-            $message[] = translate('Please_remove_this_unavailable_product_for_continue');
+            if (! empty($digitalStockErrors)) {
+                // Include specific per-product messages so the user knows exactly how many to reduce
+                foreach ($digitalStockErrors as $digitalError) {
+                    $message[] = $digitalError;
+                }
+            } else {
+                $message[] = translate('Please_remove_this_unavailable_product_for_continue');
+            }
             $response['status'] = 0;
             $response['redirect'] = route('shop-cart');
         }

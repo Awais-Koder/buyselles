@@ -6676,4 +6676,10 @@ return [
     'category  is required!' => 'Category is required!',
     'all_messages_are_in_translated' => 'All messages are in translated',
     'All_Messages_are_translated' => 'All Messages are translated',
+
+    // Digital product code quantity messages
+    'code(s)_in_stock' => 'code(s) in stock',
+    'You_can_purchase_up_to' => 'You can purchase up to',
+    'code(s)_available_for' => 'code(s) available for',
+    'Please_reduce_quantity_to' => 'Please reduce your quantity to',
 ];

@@ -15,6 +15,7 @@ use App\Models\Currency;
 use App\Models\DeliveryZipCode;
 use App\Models\DigitalProductCode;
 use App\Models\DigitalProductOtpVerification;
+use App\Models\LocationCity;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -162,7 +163,7 @@ class WebController extends Controller
             }])
                 ->withCount('brandProducts')
                 ->when($request->has('search'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request['search'] . '%');
+                    $query->where('name', 'LIKE', '%'.$request['search'].'%');
                 });
 
             return view(VIEW_FILE_NAMES['all_brands'], [
@@ -215,7 +216,7 @@ class WebController extends Controller
             ?? $this->robotsMetaContentRepo->getFirstWhere(['page_name' => 'default']);
 
         if (getWebConfig('business_mode') === 'single') {
-            Toastr::warning(translate('access_denied') . ' !!');
+            Toastr::warning(translate('access_denied').' !!');
 
             return back();
         }
@@ -225,22 +226,23 @@ class WebController extends Controller
 
         $shopQuery = Shop::active()
             ->applyNameFilter($request->shop_name)
+            ->when($request->store_country, fn ($q) => $q->where('store_country', $request->store_country))
             ->withCount(['products' => function ($query) {
                 return $query->active();
             }]);
 
         $vendorsList = $shopQuery
             ->with([
-                'seller' => fn($query) => $query->withCount('orders')
-                    ->with(['product.reviews' => fn($query) => $query->active()]),
+                'seller' => fn ($query) => $query->withCount('orders')
+                    ->with(['product.reviews' => fn ($query) => $query->active()]),
             ])
             ->get()
-            ->map(fn($shop) => $this->shopService::calculateReviews($shop));
+            ->map(fn ($shop) => $this->shopService::calculateReviews($shop));
 
         $inhouseShop = $this->shopService->getInhouseShopData($request);
         if ($inhouseShop) {
             $vendorsList = $vendorsList->reject(
-                fn($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
+                fn ($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
             )->prepend($inhouseShop);
         }
         $vendorsList = $this->shopService->applyOrdering($vendorsList, $request);
@@ -251,7 +253,31 @@ class WebController extends Controller
             'robotsMetaContentData' => $robotsMetaContentData,
             'activeBrands' => $activeBrands,
             'categories' => $categories,
+            'storeCountries' => Shop::active()->whereNotNull('store_country')->distinct()->pluck('store_country')->sort()->values(),
+            'selectedStoreCountry' => $request->store_country,
         ]);
+    }
+
+    public function getLocationCities(int|string $countryId): \Illuminate\Http\JsonResponse
+    {
+        $cities = LocationCity::where('country_id', $countryId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($cities);
+    }
+
+    public function getLocationAreas(int|string $cityId): \Illuminate\Http\JsonResponse
+    {
+        $areas = \App\Models\LocationArea::where('city_id', $cityId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($areas);
     }
 
     public function seller_profile($id)
@@ -726,7 +752,7 @@ class WebController extends Controller
                 if (empty($customerName) && $record->order) {
                     $order = $record->order;
                     if ($order->customer) {
-                        $customerName = $order->customer->name ?? $order->customer->f_name . ' ' . $order->customer->l_name;
+                        $customerName = $order->customer->name ?? $order->customer->f_name.' '.$order->customer->l_name;
                     } else {
                         $billingAddress = is_object($order->billing_address_data)
                             ? $order->billing_address_data
@@ -899,7 +925,7 @@ class WebController extends Controller
 
         $user = Helpers::getCustomerInformation($request);
         if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {
-            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order') . '!!');
+            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order').'!!');
 
             return back();
         } else {
@@ -939,7 +965,7 @@ class WebController extends Controller
                 OrderManager::generateReferBonusForFirstOrder(orderId: $order_id);
             }
 
-            CustomerManager::create_wallet_transaction($user->id, Convert::default($paymentAmount), 'order_place', 'order payment');
+            CustomerManager::create_wallet_transaction($user->id, Convert::default($paymentAmount), 'order_place', 'order payment', [], $order_ids);
         }
 
         if (session()->has('payment_mode') && session('payment_mode') == 'app') {
@@ -1354,7 +1380,7 @@ class WebController extends Controller
     public function deleteWishlist(Request $request): JsonResponse|RedirectResponse
     {
         $this->wishlist->where(['product_id' => $request['id'], 'customer_id' => auth('customer')->id()])->delete();
-        $data = translate('product_has_been_remove_from_wishlist') . '!';
+        $data = translate('product_has_been_remove_from_wishlist').'!';
         $wishlists = $this->wishlist->where('customer_id', auth('customer')->id())->paginate(15);
         $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
         session()->forget('wish_list');
@@ -1467,7 +1493,7 @@ class WebController extends Controller
             if ($orderDetailsData->order->payment_status !== 'paid') {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('Payment_must_be_confirmed_first') . ' !!',
+                    'message' => translate('Payment_must_be_confirmed_first').' !!',
                 ]);
             }
 
@@ -1517,7 +1543,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('order_Not_Found') . ' !',
+                'message' => translate('order_Not_Found').' !',
             ]);
         }
     }
@@ -1563,7 +1589,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('the_OTP_is_incorrect') . ' !',
+                'message' => translate('the_OTP_is_incorrect').' !',
             ]);
         }
     }
@@ -1578,7 +1604,7 @@ class WebController extends Controller
             return response()->json([
                 'status' => 0,
                 'time_count' => CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
-                'message' => translate('Please_try_again_after') . ' ' . CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
+                'message' => translate('Please_try_again_after').' '.CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
             ]);
         } else {
             $guestEmail = '';
@@ -1628,7 +1654,7 @@ class WebController extends Controller
                         'userType' => 'customer',
                         'templateName' => 'digital-product-otp',
                         'subject' => translate('verification_Code'),
-                        'title' => translate('verification_Code') . '!',
+                        'title' => translate('verification_Code').'!',
                         'verificationCode' => $token,
                     ];
                     event(new DigitalProductOtpVerificationEvent(email: $guestEmail, data: $data));
@@ -1716,7 +1742,7 @@ class WebController extends Controller
                             'userType' => 'customer',
                             'templateName' => 'digital-product-otp',
                             'subject' => translate('verification_Code'),
-                            'title' => translate('verification_Code') . '!',
+                            'title' => translate('verification_Code').'!',
                             'verificationCode' => $token,
                         ];
                         event(new DigitalProductOtpVerificationEvent(email: $customer['email'], data: $data));
@@ -1815,7 +1841,7 @@ class WebController extends Controller
         Session::put('product_view_style', $request['value']);
 
         return response()->json([
-            'message' => translate('View_style_updated') . '!',
+            'message' => translate('View_style_updated').'!',
         ]);
     }
 
@@ -1860,7 +1886,7 @@ class WebController extends Controller
                     'location_country_id' => $area->city->country_id,
                     'location_city_id' => $area->city_id,
                     'location_area_id' => $area->id,
-                    'location_label' => $area->name . ', ' . $area->city->name,
+                    'location_label' => $area->name.', '.$area->city->name,
                 ]);
             }
         } else {
@@ -1868,27 +1894,5 @@ class WebController extends Controller
         }
 
         return response()->json(['status' => 'success']);
-    }
-
-    public function getLocationCities(int $countryId): JsonResponse
-    {
-        $cities = \App\Models\LocationCity::where('country_id', $countryId)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        return response()->json($cities);
-    }
-
-    public function getLocationAreas(int $cityId): JsonResponse
-    {
-        $areas = \App\Models\LocationArea::where('city_id', $cityId)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        return response()->json($areas);
     }
 }

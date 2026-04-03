@@ -181,6 +181,8 @@
                         orderAlert.removeClass('active');
                     }, 6000);
                 });
+
+
             } catch (e) {
                 console.warn('Reverb connection failed, falling back to polling.', e);
             }
@@ -200,6 +202,58 @@
                     }
                 });
             }, 20000);
+        }
+
+        // --- Support ticket polling (always runs, independent of APP_MODE) ---
+        var realTimeRoute = $('#route-for-real-time-activities').data('route');
+        if (realTimeRoute) {
+            setInterval(function() {
+                $.get({
+                    url: realTimeRoute,
+                    dataType: 'json',
+                    success: function(response) {
+                        var openTicketCount = response.open_support_ticket_count;
+                        if (typeof openTicketCount === 'undefined') {
+                            return;
+                        }
+                        var prevTicketCount = parseInt(sessionStorage.getItem(
+                            'bs_prev_open_ticket_count') ?? '-1', 10);
+                        if (prevTicketCount === -1) {
+                            sessionStorage.setItem('bs_prev_open_ticket_count',
+                            openTicketCount);
+                            return;
+                        }
+                        if (openTicketCount > prevTicketCount) {
+                            sessionStorage.setItem('bs_prev_open_ticket_count',
+                            openTicketCount);
+                            var diff = openTicketCount - prevTicketCount;
+                            var ticketAlert = $('#support-ticket-notification');
+                            var ticketAlertLink = $('#support-ticket-notification-link');
+                            $('#support-ticket-notification-message').html(
+                                diff > 1 ? diff +
+                                ' {{ translate('New_Support_Tickets') }}' :
+                                '{{ translate('New_Support_Ticket') }}'
+                            );
+                            ticketAlertLink.attr('href',
+                                '{{ route('admin.support-ticket.view') }}');
+                            ticketAlert.addClass('active');
+                            if (typeof playAudio === 'function') {
+                                playAudio();
+                            }
+                            setTimeout(function() {
+                                ticketAlert.removeClass('active');
+                            }, 7000);
+                        } else {
+                            sessionStorage.setItem('bs_prev_open_ticket_count',
+                            openTicketCount);
+                        }
+                        // keep sidebar badge in sync
+                        if (typeof updateBadge === 'function') {
+                            updateBadge('#sidebar-support-ticket-badge', openTicketCount);
+                        }
+                    }
+                });
+            }, 30000);
         }
     }());
 </script>

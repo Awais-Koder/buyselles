@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $author_type
  * @property string $name
  * @property string $address
+ * @property int|null $location_area_id
+ * @property string|null $store_country
  * @property string $contact
  * @property string $image
  * @property string|null $bottom_banner
@@ -54,6 +56,7 @@ class Shop extends Model
         'slug',
         'address',
         'location_area_id',
+        'store_country',
         'contact',
         'image',
         'image_storage_type',

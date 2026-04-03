@@ -28,6 +28,7 @@ class VendorOtherSetupRequest extends FormRequest
     public function rules(): array
     {
         $data = [
+            'store_country' => 'nullable|string|max:10',
             'tax_identification_number' => 'nullable|string',
             'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:5120',
         ];

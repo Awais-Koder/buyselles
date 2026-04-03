@@ -335,6 +335,7 @@ class DashboardController extends BaseController
             'unread_chat_count' => $unreadChatCount,
             'unread_contact_count' => $unreadContactCount,
             'pending_product_count' => getVendorProductsCount('new-product'),
+            'open_support_ticket_count' => \App\Models\SupportTicket::where('status', 'open')->count(),
         ]);
     }
 }

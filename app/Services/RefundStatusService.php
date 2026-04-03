@@ -49,7 +49,7 @@ class RefundStatusService
 
             $walletAddRefund = getWebConfig(name: 'wallet_add_refund');
             if ($walletAddRefund == 1 && $request['payment_method'] == 'customer_wallet') {
-                $this->createWalletTransaction(user_id: $refund['customer_id'], amount: usdToDefaultCurrency(amount: $refund['amount']), transaction_type: 'order_refund', reference: 'order_refund');
+                $this->createWalletTransaction(user_id: $refund['customer_id'], amount: usdToDefaultCurrency(amount: $refund['amount']), transaction_type: 'order_refund', reference: 'order_refund', payment_data: [], order_ids: [$refund['order_id']]);
             }
         }
         $refundData['status'] = $request['refund_status'];

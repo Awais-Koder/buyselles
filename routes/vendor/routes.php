@@ -34,6 +34,7 @@ use App\Http\Controllers\Vendor\ReviewController;
 use App\Http\Controllers\Vendor\Shipping\CategoryShippingCostController;
 use App\Http\Controllers\Vendor\Shipping\ShippingMethodController;
 use App\Http\Controllers\Vendor\Shipping\ShippingTypeController;
+use App\Http\Controllers\Vendor\LocationController;
 use App\Http\Controllers\Vendor\ServiceAreaController;
 use App\Http\Controllers\Vendor\ShopController;
 use App\Http\Controllers\Vendor\SystemController;
@@ -334,6 +335,37 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                         Route::post('update', 'update')->name('update');
                         Route::get('get-cities/{countryId}', 'getCitiesByCountry')->name('get-cities');
                         Route::get('get-areas/{cityId}', 'getAreasByCity')->name('get-areas');
+                    });
+                });
+
+                Route::group(['prefix' => 'location', 'as' => 'location.'], function () {
+                    Route::controller(LocationController::class)->group(function () {
+                        // AJAX endpoints (product form dropdowns & quick-add)
+                        Route::get('countries', 'getProductFormCountries')->name('countries');
+                        Route::get('cities/{countryId}', 'getProductFormCities')->name('cities');
+                        Route::get('areas/{cityId}', 'getProductFormAreas')->name('areas');
+                        Route::post('quick-add-country', 'quickAddCountry')->name('quick-add-country');
+                        Route::post('quick-add-city', 'quickAddCity')->name('quick-add-city');
+                        Route::post('quick-add-area', 'quickAddArea')->name('quick-add-area');
+                        // All-active location dropdowns for product location tagging
+                        Route::get('all-cities/{countryId}', 'getCitiesByCountry')->name('all-cities');
+                        Route::get('all-areas/{cityId}', 'getAreasByCity')->name('all-areas');
+
+                        // Management pages (Manage Locations tab)
+                        Route::get('manage', 'countries')->name('manage');
+                        Route::post('add-country', 'addCountry')->name('add-country');
+                        Route::post('update-country/{id}', 'updateCountry')->name('update-country');
+                        Route::delete('delete-country', 'deleteCountry')->name('delete-country');
+
+                        Route::get('manage/{countryId}/cities', 'cities')->name('manage-cities');
+                        Route::post('add-city', 'addCity')->name('add-city');
+                        Route::post('update-city/{id}', 'updateCity')->name('update-city');
+                        Route::delete('delete-city', 'deleteCity')->name('delete-city');
+
+                        Route::get('manage/{cityId}/areas', 'areas')->name('manage-areas');
+                        Route::post('add-area', 'addArea')->name('add-area');
+                        Route::post('update-area/{id}', 'updateArea')->name('update-area');
+                        Route::delete('delete-area', 'deleteArea')->name('delete-area');
                     });
                 });
 

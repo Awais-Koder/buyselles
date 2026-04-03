@@ -234,7 +234,7 @@
             <div class="modal-dialog modal-dialog-centered {{ $hasDigitalCodes ? 'modal-lg' : 'modal--md' }}">
                 <div class="modal-content">
                     <button type="button" class="close position-absolute" data-dismiss="modal" aria-label="Close"
-                        style="top: 10px; right: 10px; z-index: 1; font-size: 1.5rem; opacity: 0.7;">
+                        style="top: 30px; right: 25px; z-index: 1; font-size: 1.5rem; opacity: 0.7;">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <div class="modal-body rtl">

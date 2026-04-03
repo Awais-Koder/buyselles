@@ -384,7 +384,7 @@ class OrderController extends Controller
                 'requestObj' => $request,
             ]);
 
-            CustomerManager::create_wallet_transaction($user->id, Convert::default($paymentAmount), 'order_place', 'order payment');
+            CustomerManager::create_wallet_transaction($user->id, Convert::default($paymentAmount), 'order_place', 'order payment', [], $orderIds);
 
             return response()->json([
                 'messages' => translate('order_placed_successfully'),

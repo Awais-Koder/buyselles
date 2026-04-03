@@ -30,6 +30,7 @@ use App\Exports\RestockProductListExport;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\ProductAddRequest;
 use App\Http\Requests\ProductUpdateRequest;
+use App\Models\LocationCountry;
 use App\Repositories\DigitalProductPublishingHouseRepository;
 use App\Repositories\TranslationRepository;
 use App\Services\DigitalProductCodeService;
@@ -216,8 +217,9 @@ class ProductController extends BaseController
         $digitalProductAuthors = $this->authorRepo->getListWhere(dataLimit: 'all');
         $publishingHouseList = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
         $aiRemainingCount = $this->AIUsageManagerService->getGenerateRemainingCount();
+        $activeCountries = LocationCountry::where('seller_id', auth('seller')->id())->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
 
-        return view('vendor-views.product.add-new', compact('languages', 'aiRemainingCount', 'categories', 'brands', 'brandSetting', 'digitalProductSetting', 'colors', 'attributes', 'languages', 'defaultLanguage', 'digitalProductFileTypes', 'digitalProductAuthors', 'publishingHouseList', 'productWiseTax', 'taxVats'));
+        return view('vendor-views.product.add-new', compact('languages', 'aiRemainingCount', 'categories', 'brands', 'brandSetting', 'digitalProductSetting', 'colors', 'attributes', 'languages', 'defaultLanguage', 'digitalProductFileTypes', 'digitalProductAuthors', 'publishingHouseList', 'productWiseTax', 'taxVats', 'activeCountries'));
     }
 
     public function add(ProductAddRequest $request, ProductService $service): JsonResponse|RedirectResponse
@@ -284,8 +286,15 @@ class ProductController extends BaseController
         $publishingHouseList = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
         $taxVatIds = $product?->taxVats?->pluck('tax_id')->toArray() ?? [];
         $aiRemainingCount = $this->AIUsageManagerService->getGenerateRemainingCount();
+        $activeCountries = LocationCountry::where('seller_id', auth('seller')->id())->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
+        $activeCities = $product->location_country_id
+            ? \App\Models\LocationCity::where('country_id', $product->location_country_id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
+            : collect();
+        $activeAreas = $product->location_city_id
+            ? \App\Models\LocationArea::where('city_id', $product->location_city_id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
+            : collect();
 
-        return view('vendor-views.product.edit', compact('product', 'categories', 'aiRemainingCount', 'brands', 'brandSetting', 'digitalProductSetting', 'colors', 'attributes', 'languages', 'defaultLanguage', 'digitalProductFileTypes', 'digitalProductAuthors', 'publishingHouseList', 'productAuthorIds', 'productPublishingHouseIds', 'productWiseTax', 'taxVats', 'taxVatIds'));
+        return view('vendor-views.product.edit', compact('product', 'categories', 'aiRemainingCount', 'brands', 'brandSetting', 'digitalProductSetting', 'colors', 'attributes', 'languages', 'defaultLanguage', 'digitalProductFileTypes', 'digitalProductAuthors', 'publishingHouseList', 'productAuthorIds', 'productPublishingHouseIds', 'productWiseTax', 'taxVats', 'taxVatIds', 'activeCountries', 'activeCities', 'activeAreas'));
     }
 
     public function update(ProductUpdateRequest $request, ProductService $service, string|int $id): JsonResponse|RedirectResponse

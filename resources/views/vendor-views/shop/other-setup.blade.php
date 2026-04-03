@@ -17,7 +17,9 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
 
         @include('vendor-views.shop.inline-menu')
 
-        <form action="{{ route('vendor.shop.update-other-settings') }}" method="post" enctype="multipart/form-data" class="form-advance-validation  form-advance-inputs-validation form-advance-file-validation non-ajax-form-validate" novalidate="novalidate">
+        <form action="{{ route('vendor.shop.update-other-settings') }}" method="post" enctype="multipart/form-data"
+            class="form-advance-validation  form-advance-inputs-validation form-advance-file-validation non-ajax-form-validate"
+            novalidate="novalidate">
             @csrf
             <div class="card card-body mb-3">
                 <div class="mb-4">
@@ -92,6 +94,31 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                                     {{ translate('set_the_stock_limit_for_the_reorder_level.') }}
                                 </small>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-body mb-3">
+                <div class="mb-4">
+                    <h3 class="mb-1">{{ translate('Store_Location') }}</h3>
+                    <p class="fs-12 mb-0">
+                        {{ translate('select_the_country_where_your_store_is_based') }}
+                    </p>
+                </div>
+                <div class="bg-light p-3 rounded">
+                    <div class="col-lg-4">
+                        <div class="form-group mb-0">
+                            <label class="form-label text-dark">{{ translate('Store_Country') }}</label>
+                            <select name="store_country" class="form-control js-select2-custom">
+                                <option value="">--- {{ translate('Select_Country') }} ---</option>
+                                @foreach (COUNTRIES as $country)
+                                    <option value="{{ $country['code'] }}"
+                                        {{ $shop?->store_country == $country['code'] ? 'selected' : '' }}>
+                                        {{ $country['name'] }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -179,16 +206,13 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                                         data-blank-thumbnail="{{ dynamicAsset(path: 'public/assets/back-end/img/file-placeholder.png') }}">
                                     </div>
 
-                                    <div class="document-existing-file"
-                                        data-file-url=""
-                                        data-file-name=""
+                                    <div class="document-existing-file" data-file-url="" data-file-name=""
                                         data-file-type="">
                                     </div>
-                                    <div class="document-upload-wrapper mw-100 doc-upload-wrapper"
-                                        {!! $certificatePathExist ? 'style="display: none"' : '' !!}>
+                                    <div class="document-upload-wrapper mw-100 doc-upload-wrapper" {!! $certificatePathExist ? 'style="display: none"' : '' !!}>
                                         <input type="file" name="tin_certificate" class="document_input"
-                                               data-max-size="{{ getFileUploadMaxSize(type: 'file') }}"
-                                               data-validation-error-msg="{{ translate('File_size_is_too_large_Maximum_').' '.getFileUploadMaxSize(type: 'file').' '.'MB' }}"
+                                            data-max-size="{{ getFileUploadMaxSize(type: 'file') }}"
+                                            data-validation-error-msg="{{ translate('File_size_is_too_large_Maximum_') . ' ' . getFileUploadMaxSize(type: 'file') . ' ' . 'MB' }}"
                                             accept=".pdf, .doc, .docx, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/pdf">
                                         <div class="textbox">
                                             <img class="svg"

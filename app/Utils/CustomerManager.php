@@ -33,7 +33,7 @@ class CustomerManager
     }
 
     /**create_wallet_transaction -> function on Customer trait -> createWalletTransaction*/
-    public static function create_wallet_transaction($user_id, float $amount, $transaction_type, $reference, $payment_data = [])
+    public static function create_wallet_transaction($user_id, float $amount, $transaction_type, $reference, $payment_data = [], $order_ids = null)
     {
         if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) {
             return false;
@@ -47,6 +47,7 @@ class CustomerManager
         $wallet_transaction->reference = $reference;
         $wallet_transaction->transaction_type = $transaction_type;
         $wallet_transaction->payment_method = isset($payment_data['payment_method']) ? $payment_data['payment_method'] : null;
+        $wallet_transaction->order_ids = $order_ids ? array_values(array_unique((array) $order_ids)) : null;
 
         $debit = 0.0;
         $credit = 0.0;

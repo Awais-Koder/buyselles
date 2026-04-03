@@ -157,6 +157,12 @@ class ShopController extends BaseController
             params: ['seller_id' => auth('seller')->id()],
             data: $this->vendorService->getUpdateBusinessTIN(request: $request)
         );
+        if ($request->has('store_country')) {
+            $this->shopRepo->updateWhere(
+                params: ['seller_id' => auth('seller')->id()],
+                data: ['store_country' => $request->input('store_country') ?: null]
+            );
+        }
         updateSetupGuideCacheKey(key: 'order_setup', panel: 'vendor');
         ToastMagic::success(translate('updated_successfully'));
 

@@ -130,6 +130,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::get('brands', 'getAllBrandsView')->name('brands');
         Route::get('vendors', 'getAllVendorsView')->name('vendors');
         Route::get('seller-profile/{id}', 'seller_profile')->name('seller-profile');
+        Route::get('location/cities/{countryId}', 'getLocationCities')->name('location.cities');
+        Route::get('location/areas/{cityId}', 'getLocationAreas')->name('location.areas');
     });
 
     Route::controller(PageController::class)->group(function () {

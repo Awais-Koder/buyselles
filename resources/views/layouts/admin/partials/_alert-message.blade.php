@@ -1,4 +1,24 @@
 <div class="alert--container active">
+    {{-- Support ticket notification --}}
+    <a href="javascript:" id="support-ticket-notification-link">
+        <div class="alert alert--message-2 alert-dismissible fade show" id="support-ticket-notification" role="alert">
+            <img width="28"
+                src="{{ dynamicAsset(path: 'public/assets/back-end/img/icons/chatting-notification.svg') }}"
+                onerror="this.src='{{ dynamicAsset(path: 'public/assets/back-end/img/info-2.png') }}'" alt="">
+            <div class="flex-grow-1">
+                <h3>{{ translate('Support_Ticket') }}</h3>
+                <span id="support-ticket-notification-message">
+                    {{ translate('New_Support_Ticket') }}
+                </span>
+            </div>
+            <button type="button"
+                class="btn p-0 m-0 border-0 fs-18 text-dark text-hover-primary shadow-none position-relative"
+                data-dismiss="alert" aria-label="Close">
+                <i class="fi fi-rr-cross-small"></i>
+            </button>
+        </div>
+    </a>
+
     {{-- Order status change notification --}}
     <a href="javascript:" id="order-status-notification-link">
         <div class="alert alert--message-2 alert-dismissible fade show" id="order-status-notification" role="alert">

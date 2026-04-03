@@ -186,7 +186,7 @@
             <div>
                 <div class="widget-title">
                     <a class="{{ Request::is('account-ticket*') || Request::is('support-ticket*') ? 'active-menu' : '' }}"
-                        href="{{ route('account-tickets') }}">
+                        href="{{ route('account-tickets') }}" style="position:relative">
                         <span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                 viewBox="0 0 20 20" fill="none">
@@ -198,8 +198,15 @@
                                     fill="currentColor" />
                             </svg>
                         </span>
-                        <span class="aside-link">
+                        <span class="aside-link d-flex align-items-center gap-2">
                             {{ translate('support_ticket') }}
+                            @auth('customer')
+                                @php($myOpenTickets = \App\Models\SupportTicket::where('customer_id', auth('customer')->id())->where('status', 'open')->count())
+                                @if ($myOpenTickets > 0)
+                                    <span class="badge badge-sm"
+                                        style="background:#dc3545;color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;">{{ $myOpenTickets }}</span>
+                                @endif
+                            @endauth
                         </span>
                     </a>
                 </div>

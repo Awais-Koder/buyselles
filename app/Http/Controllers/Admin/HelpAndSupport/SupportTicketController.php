@@ -6,6 +6,9 @@ use App\Contracts\Repositories\SupportTicketConvRepositoryInterface;
 use App\Contracts\Repositories\SupportTicketRepositoryInterface;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\SupportTicketRequest;
+use App\Jobs\SendEmailJob;
+use App\Mail\SupportTicketNotifyCustomerMail;
+use App\Models\SupportTicket;
 use App\Repositories\SupportTicketRepository;
 use App\Services\SupportTicketService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
@@ -71,6 +74,16 @@ class SupportTicketController extends BaseController
         $dataArray = $supportTicketService->getAddData(request: $request);
         $this->supportTicketConvRepo->add(data: $dataArray);
         $this->supportTicketRepo->update(id: $request['id'], data: ['status' => 'open']);
+
+        $ticket = SupportTicket::with('customer')->find($request['id']);
+        $customerEmail = $ticket?->customer?->email;
+        $emailConfig = getWebConfig(name: 'mail_config');
+        if (($emailConfig['status'] ?? 0) == 0) {
+            $emailConfig = getWebConfig(name: 'mail_config_sendgrid');
+        }
+        if (($emailConfig['status'] ?? 0) == 1 && $customerEmail) {
+            dispatch(new SendEmailJob($customerEmail, new SupportTicketNotifyCustomerMail((int) $request['id'])));
+        }
 
         return back();
     }

@@ -1,7 +1,8 @@
 @php use App\Utils\ProductManager; @endphp
 @extends('theme-views.layouts.app')
 
-@section('title', (request('filter') && request('filter') == 'top-vendors' ? translate('top_Stores') : translate('all_Stores')).' | '.$web_config['company_name'].' '.translate('ecommerce'))
+@section('title', (request('filter') && request('filter') == 'top-vendors' ? translate('top_Stores') :
+    translate('all_Stores')) . ' | ' . $web_config['company_name'] . ' ' . translate('ecommerce'))
 
 @section('content')
     <main class="main-content d-flex flex-column gap-3 py-3 mb-30">
@@ -11,29 +12,29 @@
                     <div class="row gy-2 align-items-center">
                         <div class="col-md-8">
                             <h3 class="mb-1 text-capitalize">
-                                {{ (request('filter') && request('filter') == 'top-vendors' ? translate('top_Stores') : translate('all_Stores')) }}
+                                {{ request('filter') && request('filter') == 'top-vendors' ? translate('top_Stores') : translate('all_Stores') }}
                             </h3>
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb fs-12 mb-0">
-                                    <li class="breadcrumb-item"><a href="{{route('home')}}">{{translate('home')}}</a>
+                                    <li class="breadcrumb-item"><a href="{{ route('home') }}">{{ translate('home') }}</a>
                                     </li>
                                     <li class="breadcrumb-item active" aria-current="page">
-                                        <a href="{{route('vendors')}}">{{translate('stores')}}</a></li>
+                                        <a href="{{ route('vendors') }}">{{ translate('stores') }}</a>
+                                    </li>
                                 </ol>
                             </nav>
                         </div>
                         <div class="col-md-4">
                             <div class="custom_search position-relative float-end">
                                 <form action="{{ route('vendors') }}" method="get">
-                                    @if(request('filter'))
+                                    @if (request('filter'))
                                         <input type="hidden" name="filter" value="{{ request('filter') }}">
                                     @endif
                                     <div class="d-flex">
                                         <div
                                             class="select-wrap focus-border border border-end-logical-0 d-flex align-items-center">
-                                            <input type="search"
-                                                   class="form-control border-0 focus-input search-bar-input"
-                                                   name="shop_name" placeholder="{{translate('shop_name')}}" required>
+                                            <input type="search" class="form-control border-0 focus-input search-bar-input"
+                                                name="shop_name" placeholder="{{ translate('shop_name') }}" required>
                                         </div>
                                         <button type="submit" class="btn btn-primary">
                                             <i class="bi bi-search"></i>
@@ -41,10 +42,45 @@
                                     </div>
                                 </form>
                                 <div
-                                    class="card search-card __inline-13 position-absolute z-999 bg-white top-100 start-0 search-result-box"></div>
+                                    class="card search-card __inline-13 position-absolute z-999 bg-white top-100 start-0 search-result-box">
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {{-- Store Country Filter --}}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form action="{{ route('vendors') }}" method="get" class="row g-2 align-items-end">
+                        @if (request('filter'))
+                            <input type="hidden" name="filter" value="{{ request('filter') }}">
+                        @endif
+                        @if (request('shop_name'))
+                            <input type="hidden" name="shop_name" value="{{ request('shop_name') }}">
+                        @endif
+                        <div class="col-md-6">
+                            <label class="form-label mb-1">{{ translate('Country') }}</label>
+                            <select name="store_country" id="vendor-filter-country" class="form-control form-control-sm"
+                                onchange="this.form.submit()">
+                                <option value="">--- {{ translate('All_Countries') }} ---</option>
+                                @foreach (COUNTRIES as $c)
+                                    @if ($storeCountries->contains($c['code']))
+                                        <option value="{{ $c['code'] }}"
+                                            {{ $selectedStoreCountry == $c['code'] ? 'selected' : '' }}>{{ $c['name'] }}
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex gap-2">
+                            @if ($selectedStoreCountry)
+                                <a href="{{ route('vendors', request()->except(['store_country'])) }}"
+                                    class="btn btn-outline-secondary btn-sm">{{ translate('Clear') }}</a>
+                            @endif
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -56,23 +92,23 @@
                             @php($startDate = date('Y-m-d', strtotime($vendor['vacation_start_date'])))
                             @php($endDate = date('Y-m-d', strtotime($vendor['vacation_end_date'])))
 
-                            <a href="{{route('vendor-shop',['slug' => $vendor['slug']])}}"
-                               class="store-item grid-center py-2">
+                            <a href="{{ route('vendor-shop', ['slug' => $vendor['slug']]) }}"
+                                class="store-item grid-center py-2">
                                 <div class="position-relative">
                                     <div class="avatar rounded-circle border" style="--size: 6.875rem">
                                         <img class="dark-support img-fit rounded-circle img-w-h-100"
-                                             src="{{ getStorageImages(path: $vendor->image_full_url, type:'shop') }}"
-                                             alt="{{ $vendor->name }}" loading="lazy">
+                                            src="{{ getStorageImages(path: $vendor->image_full_url, type: 'shop') }}"
+                                            alt="{{ $vendor->name }}" loading="lazy">
                                     </div>
 
                                     @php($vendorItemType = $vendor['id'] == 0 ? 'inhouse' : 'vendor')
-                                    @if(checkVendorAbility(type: $vendorItemType, status: 'temporary_close', vendor: $vendor))
+                                    @if (checkVendorAbility(type: $vendorItemType, status: 'temporary_close', vendor: $vendor))
                                         <span class="temporary-closed position-absolute rounded-circle">
-                                            <span class="px-1 text-center">{{translate('Temporary_OFF')}}</span>
+                                            <span class="px-1 text-center">{{ translate('Temporary_OFF') }}</span>
                                         </span>
                                     @elseif(checkVendorAbility(type: $vendorItemType, status: 'vacation_status', vendor: $vendor))
                                         <span class="temporary-closed position-absolute rounded-circle">
-                                            <span>{{translate('closed_Now')}}</span>
+                                            <span>{{ translate('closed_Now') }}</span>
                                         </span>
                                     @endif
                                 </div>
@@ -81,7 +117,8 @@
                                     <h6 class="text-truncate mx-auto text-center">
                                         {{ Str::limit($vendor->name, 14) }}
                                     </h6>
-                                    <p>{{ $vendor['products_count'] < 1000 ? $vendor['products_count'] : number_format($vendor['products_count']/1000 , 1).'K'}} {{translate('products')}}</p>
+                                    <p>{{ $vendor['products_count'] < 1000 ? $vendor['products_count'] : number_format($vendor['products_count'] / 1000, 1) . 'K' }}
+                                        {{ translate('products') }}</p>
                                 </div>
                             </a>
                         @endforeach
@@ -89,7 +126,8 @@
 
                     @if (count($vendorsList) == 0)
                         <div class="w-100 text-center pt-5">
-                            <img width="80" class="mb-3" src="{{ theme_asset('assets/img/empty-state/empty-vendor.svg') }}" alt="">
+                            <img width="80" class="mb-3"
+                                src="{{ theme_asset('assets/img/empty-state/empty-vendor.svg') }}" alt="">
                             <h5 class="text-center text-muted">{{ translate('there_is_no_vendor') }}.</h5>
                         </div>
                     @endif
@@ -100,4 +138,8 @@
             </div>
         </div>
     </main>
+
+    @push('script')
+    @endpush
+
 @endsection

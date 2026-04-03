@@ -12,6 +12,8 @@ use App\Enums\WebConfigKey;
 use App\Events\RefundEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\CustomerProfileUpdateRequest;
+use App\Jobs\SendEmailJob;
+use App\Mail\SupportTicketNotifyAdminMail;
 use App\Models\Coupon;
 use App\Models\DeliveryMan;
 use App\Models\DeliveryZipCode;
@@ -645,7 +647,19 @@ class UserProfileController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ];
-        DB::table('support_tickets')->insert($ticket);
+        $ticketId = DB::table('support_tickets')->insertGetId($ticket);
+
+        $emailConfig = getWebConfig(name: 'mail_config');
+        if (($emailConfig['status'] ?? 0) == 0) {
+            $emailConfig = getWebConfig(name: 'mail_config_sendgrid');
+        }
+        $adminEmail = getWebConfig(name: 'company_email');
+        if (($emailConfig['status'] ?? 0) == 1 && $adminEmail) {
+            dispatch(new SendEmailJob($adminEmail, new SupportTicketNotifyAdminMail($ticketId, true)));
+        }
+
+        Toastr::success(translate('Ticket_submitted_successfully'));
+        session()->flash('ticket_submitted', true);
 
         return back();
     }
@@ -701,6 +715,16 @@ class UserProfileController extends Controller
             'updated_at' => now(),
         ];
         SupportTicketConv::create($data);
+
+        $emailConfig = getWebConfig(name: 'mail_config');
+        if (($emailConfig['status'] ?? 0) == 0) {
+            $emailConfig = getWebConfig(name: 'mail_config_sendgrid');
+        }
+        $adminEmail = getWebConfig(name: 'company_email');
+        if (($emailConfig['status'] ?? 0) == 1 && $adminEmail) {
+            dispatch(new SendEmailJob($adminEmail, new SupportTicketNotifyAdminMail((int) $id, false)));
+        }
+
         Toastr::success(translate('message_send_successfully').'!');
 
         return back();

@@ -38,7 +38,7 @@ trait CustomerTrait
         return $loyaltyPoint;
     }
 
-    protected function createWalletTransaction($user_id, float $amount, $transaction_type, $reference, $payment_data = []): bool|WalletTransaction
+    protected function createWalletTransaction($user_id, float $amount, $transaction_type, $reference, $payment_data = [], $order_ids = null): bool|WalletTransaction
     {
         if (BusinessSetting::where('type', 'wallet_status')->first()->value != 1) {
             return false;
@@ -52,6 +52,7 @@ trait CustomerTrait
         $walletTransaction->reference = $reference;
         $walletTransaction->transaction_type = $transaction_type;
         $walletTransaction->payment_method = $payment_data['payment_method'] ?? null;
+        $walletTransaction->order_ids = $order_ids ? array_values(array_unique((array) $order_ids)) : null;
 
         $debit = 0.0;
         $credit = 0.0;

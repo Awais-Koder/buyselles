@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\AddFundBonusCategories;
+use App\Models\Order;
 use App\Models\WalletTransaction;
 use Brian2694\Toastr\Facades\Toastr;
 use Carbon\Carbon;
@@ -25,6 +26,18 @@ class UserWalletController extends Controller
             $walletTransactionList = $this->getWalletTransactionList(request: $request, types: $transactionTypes);
             $paymentGatewayList = payment_gateways();
             $addFundBonusList = $this->getAddFundBonusList();
+
+            $allOrderIds = $walletTransactionList->getCollection()
+                ->flatMap(fn ($t) => $t->order_ids ?? [])
+                ->unique()
+                ->values()
+                ->all();
+            $ordersMap = ! empty($allOrderIds)
+                ? Order::with(['orderDetails.product', 'seller.shop'])
+                    ->whereIn('id', $allOrderIds)
+                    ->get()
+                    ->keyBy('id')
+                : collect();
 
             $filterCount = count($request['types'] ?? []) + (int) ! empty($request['transaction_range']) + (int) ! empty($request['filter_by']);
 
@@ -52,8 +65,8 @@ class UserWalletController extends Controller
                 'filterCount' => $filterCount,
                 'filterBy' => $request['filter_by'] ?? '',
                 'transactionRange' => $request['transaction_range'] ?? '',
+                'ordersMap' => $ordersMap,
             ]);
-
         } else {
             Toastr::warning(translate('access_denied!'));
 

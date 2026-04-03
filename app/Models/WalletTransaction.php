@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $debit
  * @property float $admin_bonus
  * @property float $balance
+ * @property array|null $order_ids
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -35,6 +36,7 @@ class WalletTransaction extends Model
         'admin_bonus',
         'balance',
         'payment_method',
+        'order_ids',
         'created_at',
         'updated_at',
     ];
@@ -46,10 +48,22 @@ class WalletTransaction extends Model
         'admin_bonus' => 'float',
         'balance' => 'float',
         'reference' => 'string',
+        'order_ids' => 'array',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function relatedOrders()
+    {
+        if (empty($this->order_ids)) {
+            return collect();
+        }
+
+        return Order::with(['orderDetails.product', 'orderDetails.seller.shop'])
+            ->whereIn('id', $this->order_ids)
+            ->get();
     }
 }

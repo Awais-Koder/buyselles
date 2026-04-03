@@ -30,6 +30,11 @@ Broadcast::channel('admin.orders', function () {
     return auth('admin')->check();
 }, ['guards' => ['admin']]);
 
+// Admin support ticket channel — authenticated via admin guard
+Broadcast::channel('admin.support-tickets', function () {
+    return auth('admin')->check();
+}, ['guards' => ['admin']]);
+
 // Vendor order status channel — authenticated via seller guard
 Broadcast::channel('seller.{sellerId}.orders', function ($seller, int $sellerId) {
     return (int) $seller->id === $sellerId;

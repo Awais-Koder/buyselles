@@ -13,6 +13,8 @@ class SendEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 1;
+
     protected $mail_to;
 
     protected $data;
@@ -33,6 +35,10 @@ class SendEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Mail::to($this->mail_to)->send($this->data);
+        try {
+            Mail::to($this->mail_to)->send($this->data);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('SendEmailJob failed: '.$e->getMessage());
+        }
     }
 }

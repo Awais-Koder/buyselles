@@ -686,12 +686,12 @@
                         href="{{ route('admin.support-ticket.view') }}" title="{{ translate('support_Ticket') }}">
                         <i class="fi fi-sr-headphones"></i>
                         <span class="aside-mini-hidden-element text-truncate">
-                            <span class="position-relative">
+                            <span class="position-relative d-flex align-items-center gap-2">
                                 {{ translate('support_Ticket') }}
-                                @if (\App\Models\SupportTicket::where('status', 'open')->count() > 0)
-                                    <span
-                                        class="btn-status btn-xs-status btn-status-danger position-absolute top-0 menu-status"></span>
-                                @endif
+                                @php($openTicketCount = \App\Models\SupportTicket::where('status', 'open')->count())
+                                <span id="sidebar-support-ticket-badge"
+                                    class="badge badge-sm badge-danger rounded-pill"
+                                    style="font-size:11px;padding:2px 7px;{{ $openTicketCount > 0 ? '' : 'display:none;' }}">{{ $openTicketCount }}</span>
                             </span>
                         </span>
                     </a>

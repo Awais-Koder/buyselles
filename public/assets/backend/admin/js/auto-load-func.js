@@ -97,6 +97,26 @@ function getInitialDataForPanel() {
             updateOrderCount('#order-stats-canceled', response?.canceled_order_count);
             updateOrderCount('#order-stats-returned', response?.returned_order_count);
             updateOrderCount('#order-stats-failed', response?.failed_order_count);
+
+            // Real-time support ticket notification
+            var openTicketCount = response?.open_support_ticket_count ?? 0;
+            var prevTicketCount = parseInt(sessionStorage.getItem('bs_prev_open_ticket_count') ?? '-1', 10);
+            if (prevTicketCount === -1) {
+                // First poll — just initialise, no popup
+                sessionStorage.setItem('bs_prev_open_ticket_count', openTicketCount);
+            } else if (openTicketCount > prevTicketCount) {
+                sessionStorage.setItem('bs_prev_open_ticket_count', openTicketCount);
+                var ticketAlert = $('#support-ticket-notification');
+                var ticketAlertMsg = $('#support-ticket-notification-message');
+                var diff = openTicketCount - prevTicketCount;
+                ticketAlertMsg.html(diff > 1 ? diff + ' New Support Tickets' : 'New Support Ticket');
+                ticketAlert.addClass('active');
+                playAudio();
+                setTimeout(function () { ticketAlert.removeClass('active'); }, 7000);
+            } else {
+                sessionStorage.setItem('bs_prev_open_ticket_count', openTicketCount);
+            }
+            updateBadge('#sidebar-support-ticket-badge', openTicketCount);
         }
     });
 }
@@ -117,3 +137,19 @@ function updateOrderCount(selector, count) {
     var displayCount = (count !== undefined && count !== null) ? count : 0;
     $el.text(displayCount);
 }
+
+$(document).on("click", ".check-product", function () {
+    location.href = $("#get-pending-products-route").data("action");
+});
+
+$(document).on("click", ".ignore-check-product", function () {
+    $("#pending-product-modal").appendTo("body").modal("hide");
+});
+
+$(document).on("click", ".check-order", function () {
+    location.href = $("#get-orders-list-route").data("action");
+});
+
+$(document).on("click", ".ignore-check-order", function () {
+    $("#popup-modal").appendTo("body").modal("hide");
+});

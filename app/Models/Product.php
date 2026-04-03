@@ -62,6 +62,9 @@ use Modules\TaxModule\app\Models\Taxable;
  * @property string $meta_description
  * @property string $meta_image
  * @property int $is_shipping_cost_updated
+ * @property int|null $location_country_id
+ * @property int|null $location_city_id
+ * @property int|null $location_area_id
  */
 class Product extends Model
 {
@@ -118,8 +121,14 @@ class Product extends Model
         'meta_description',
         'meta_image',
         'digital_file_ready_storage_type',
+        'location_country_id',
+        'location_city_id',
+        'location_area_id',
         'is_shipping_cost_updated',
         'temp_shipping_cost',
+        'location_country_id',
+        'location_city_id',
+        'location_area_id',
     ];
 
     /**
@@ -171,6 +180,9 @@ class Product extends Model
         'meta_description' => 'string',
         'meta_image' => 'string',
         'is_shipping_cost_updated' => 'integer',
+        'location_country_id' => 'integer',
+        'location_city_id' => 'integer',
+        'location_area_id' => 'integer',
         'digital_product_file_types' => 'array',
         'digital_product_extensions' => 'array',
         'thumbnail_storage_type' => 'string',
@@ -275,6 +287,21 @@ class Product extends Model
     public function seller(): BelongsTo
     {
         return $this->belongsTo(Seller::class, 'user_id');
+    }
+
+    public function locationCountry(): BelongsTo
+    {
+        return $this->belongsTo(LocationCountry::class, 'location_country_id');
+    }
+
+    public function locationCity(): BelongsTo
+    {
+        return $this->belongsTo(LocationCity::class, 'location_city_id');
+    }
+
+    public function locationArea(): BelongsTo
+    {
+        return $this->belongsTo(LocationArea::class, 'location_area_id');
     }
 
     public function getIsShopTemporaryCloseAttribute($value): int

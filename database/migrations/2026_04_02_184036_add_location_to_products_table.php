@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->unsignedBigInteger('location_country_id')->nullable()->after('product_type');
-            $table->unsignedBigInteger('location_city_id')->nullable()->after('location_country_id');
-            $table->unsignedBigInteger('location_area_id')->nullable()->after('location_city_id');
+            if (! Schema::hasColumn('products', 'location_country_id')) {
+                $table->unsignedBigInteger('location_country_id')->nullable()->after('product_type');
+            }
+            if (! Schema::hasColumn('products', 'location_city_id')) {
+                $table->unsignedBigInteger('location_city_id')->nullable()->after('location_country_id');
+            }
+            if (! Schema::hasColumn('products', 'location_area_id')) {
+                $table->unsignedBigInteger('location_area_id')->nullable()->after('location_city_id');
+            }
         });
     }
 
@@ -23,8 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn(['location_country_id', 'location_city_id', 'location_area_id']);
-        });
+        // Columns are managed by 2026_04_02_183659_add_location_columns_to_products_table
     }
 };

@@ -205,6 +205,12 @@
                                     </small>
                                     {{ translate('dashboard') }}
                                 </div>
+                                @if (getWebConfig(name: 'wallet_status') == 1)
+                                    <span class="badge badge-soft-primary {{ Session::get('direction') === 'rtl' ? 'mr-2' : 'ml-2' }} px-2 py-1 fs-12" title="{{ translate('wallet_balance') }}">
+                                        <i class="tio-wallet-outlined"></i>
+                                        {{ webCurrencyConverter(amount: auth('customer')->user()->wallet_balance ?? 0) }}
+                                    </span>
+                                @endif
                             </a>
                             <div class="dropdown-menu dropdown-menu-{{ Session::get('direction') === 'rtl' ? 'left' : 'right' }}"
                                 aria-labelledby="dropdownMenuButton">

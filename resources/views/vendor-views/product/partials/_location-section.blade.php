@@ -13,7 +13,6 @@
     <h6 class="title-color mb-3">
         <i class="fi fi-rr-marker me-1"></i>
         {{ translate('Product_Location') }}
-        <small class="text-muted fs-12 fw-normal ms-1">{{ translate('(optional)') }}</small>
     </h6>
 </div>
 
@@ -21,13 +20,13 @@
 <div class="col-md-6 col-lg-4">
     <div class="form-group">
         <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="title-color mb-0">{{ translate('Country') }}</label>
+            <label class="title-color mb-0">{{ translate('Country') }} <span class="input-required-icon">*</span></label>
             <button type="button" class="btn btn-link p-0 fs-12 text-primary quick-add-location-btn" data-toggle="modal"
                 data-target="#quickAddLocationModal" data-type="country" title="{{ translate('Add_New_Country') }}">
                 <i class="fi fi-rr-plus"></i> {{ translate('Add_new') }}
             </button>
         </div>
-        <select name="location_country_id" id="product_location_country" class="form-control"
+        <select name="location_country_id" id="product_location_country" class="form-control" required
             data-selected="{{ $selectedCountryId }}"
             data-countries-route="{{ route('vendor.shop.location.countries') }}"
             data-cities-route="{{ route('vendor.shop.location.cities', ':id') }}"
@@ -41,7 +40,7 @@
 <div class="col-md-6 col-lg-4 physical_product_show">
     <div class="form-group">
         <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="title-color mb-0">{{ translate('City') }}</label>
+            <label class="title-color mb-0">{{ translate('City') }} <span class="input-required-icon">*</span></label>
             <button type="button" class="btn btn-link p-0 fs-12 text-primary quick-add-location-btn"
                 data-toggle="modal" data-target="#quickAddLocationModal" data-type="city"
                 title="{{ translate('Add_New_City') }}">
@@ -59,7 +58,7 @@
 <div class="col-md-6 col-lg-4 physical_product_show">
     <div class="form-group">
         <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="title-color mb-0">{{ translate('Area') }}</label>
+            <label class="title-color mb-0">{{ translate('Area') }} <span class="input-required-icon">*</span></label>
             <button type="button" class="btn btn-link p-0 fs-12 text-primary quick-add-location-btn"
                 data-toggle="modal" data-target="#quickAddLocationModal" data-type="area"
                 title="{{ translate('Add_New_Area') }}">

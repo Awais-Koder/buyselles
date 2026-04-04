@@ -89,6 +89,8 @@ function getProductTypeFunctionality() {
         $("#digital_product_type_show").hide();
         $("#digital-product-code-wrapper").hide();
         $(".physical_product_show").show();
+        $("#product_location_city").prop("required", true);
+        $("#product_location_area").prop("required", true);
         elementDigitalProductTypeByID.val(
             $("#digital_product_type option:first").val()
         );
@@ -101,6 +103,8 @@ function getProductTypeFunctionality() {
         $("#digital_product_type_show").show();
         $("#digital-product-code-wrapper").show();
         $(".physical_product_show").hide();
+        $("#product_location_city").prop("required", false);
+        $("#product_location_area").prop("required", false);
         $(".digital-product-sections-show").show();
         $(".digitalProductVariationSetupSection").show();
         $(".color_image_column").addClass("d-none");

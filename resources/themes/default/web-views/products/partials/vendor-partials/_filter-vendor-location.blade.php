@@ -18,7 +18,7 @@
     </div>
 
     <div class="d-flex gap-2">
-        <button id="store-country-apply" class="btn btn-primary btn-sm flex-grow-1">
+        <button id="store-country-apply" class="btn btn--primary btn-sm flex-grow-1">
             {{ translate('apply') }}
         </button>
         @if ($selectedStoreCountry ?? '')

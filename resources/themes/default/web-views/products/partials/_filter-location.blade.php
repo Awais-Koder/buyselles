@@ -36,7 +36,7 @@
         </div>
 
         <div class="d-flex gap-2">
-            <button type="button" id="prod-location-apply" class="btn btn-primary btn-sm flex-grow-1">
+            <button type="button" id="prod-location-apply" class="btn btn--primary btn-sm flex-grow-1">
                 {{ translate('apply') }}
             </button>
             @if ($locCountryId || $locCityId || $locAreaId)

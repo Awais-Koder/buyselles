@@ -15,30 +15,6 @@
                 <div class="card">
                     <div class="card-body">
 
-                        {{-- Wallet Balance Card --}}
-                        @if (getWebConfig(name: 'wallet_status') == 1)
-                            <div class="card btn--primary position-relative overflow-hidden mb-4">
-                                <div class="card-body z-2 py-3 px-4">
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                        <div class="text-white">
-                                            <p class="mb-0 fs-12 opacity-75">{{ translate('wallet') }}</p>
-                                            <h4 class="mb-0 text-white font-bold fs-22">
-                                                {{ webCurrencyConverter(amount: $customerDetail->wallet_balance ?? 0) }}
-                                            </h4>
-                                        </div>
-                                        <a href="{{ route('wallet') }}"
-                                            class="btn btn-light align-items-center fs-14 font-semi-bold py-2 px-4 d-flex gap-1">
-                                            <i class="tio-wallet-outlined text-primary"></i>
-                                            <span class="text-primary">{{ translate('my_wallet') }}</span>
-                                        </a>
-                                    </div>
-                                </div>
-                                <img class="wallet-card-bg z-1"
-                                    src="{{ theme_asset(path: 'public/assets/front-end/img/icons/wallet-card.png') }}"
-                                    alt="">
-                            </div>
-                        @endif
-
                         <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
                             <h5 class="font-bold m-0 fs-16">{{ translate('profile_Info') }}</h5>
                             <button class="profile-aside-btn btn btn--primary px-2 rounded px-2 py-1 d-lg-none">

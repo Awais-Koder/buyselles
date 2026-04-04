@@ -20,6 +20,9 @@ let productListPageData = {
     author_id: productListPageBackup.data('author-id'),
     publishing_house_id: productListPageBackup.data('publishing-house-id'),
     flash_deals_id: productListPageBackup.data('flash-deals-id'),
+    country_id: productListPageBackup.data('country-id'),
+    city_id: productListPageBackup.data('city-id'),
+    area_id: productListPageBackup.data('area-id'),
 };
 
 productListFilterForm.find('.product-list-filter-input').on('change keypress keyup', function () {

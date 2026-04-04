@@ -132,7 +132,10 @@
         data-product-type="{{ $data['product_type'] }}" data-min-price="{{ $data['min_price'] }}"
         data-max-price="{{ $data['max_price'] }}" data-message="{{ translate('items_found') }}"
         data-publishing-house-id="{{ request('publishing_house_id') }}" data-author-id="{{ request('author_id') }}"
-        data-offer="{{ request('offer_type') ?? '' }}"></span>
+        data-offer="{{ request('offer_type') ?? '' }}"
+        data-country-id="{{ request('country_id') }}"
+        data-city-id="{{ request('city_id') }}"
+        data-area-id="{{ request('area_id') }}"></span>
 @endsection
 
 @push('script')

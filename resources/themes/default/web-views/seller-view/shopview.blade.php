@@ -122,6 +122,7 @@
                                 <div class="d-flex gap-3 flex-column">
                                     <h5 class="fs-16 font-weight-bold m-0">{{ translate('Filter_By') }}</h5>
                                     <hr>
+                                    @include('web-views.products.partials._filter-location')
                                     @include('web-views.products.partials._filter-product-type')
                                     @include('web-views.products.partials._filter-product-sort')
                                     @include('web-views.products.partials._filter-product-price')
@@ -206,7 +207,8 @@
         data-offer-type = "{{ request('offer_type') }}" data-product-check="clearance_sale"
         data-sort="{{ request('sort_by') }}" data-product-type="{{ request('product_type') ?? 'all' }}"
         data-message="{{ translate('items_found') }}" data-publishing-house-id="{{ request('publishing_house_id') }}"
-        data-author-id="{{ request('author_id') }}" data-offer="{{ request('offer_type') ?? '' }}"></span>
+        data-author-id="{{ request('author_id') }}" data-offer="{{ request('offer_type') ?? '' }}"
+        data-country-id="{{ request('country_id') }}" data-city-id="{{ request('city_id') }}" data-area-id="{{ request('area_id') }}"></span>
 
 @endsection
 @push('script')

@@ -68,34 +68,10 @@
                             @include('web-views.products.partials.vendor-partials._filter-product-type')
 
                             {{-- Store Country Filter --}}
-                            <div class="vendor-location-filter">
-                                <h6 class="fw-bold mb-2">{{ translate('Filter_By_Location') }}</h6>
-                                <form action="{{ route('vendors') }}" method="get" id="vendor-location-filter-form">
-                                    @if (request('filter'))
-                                        <input type="hidden" name="filter" value="{{ request('filter') }}">
-                                    @endif
-                                    @if (request('shop_name'))
-                                        <input type="hidden" name="shop_name" value="{{ request('shop_name') }}">
-                                    @endif
-                                    <div class="mb-2">
-                                        <select name="store_country" id="vendor-filter-country"
-                                            class="form-control form-control-sm" onchange="this.form.submit()">
-                                            <option value="">--- {{ translate('All_Countries') }} ---</option>
-                                            @foreach (COUNTRIES as $c)
-                                                @if ($storeCountries->contains($c['code']))
-                                                    <option value="{{ $c['code'] }}"
-                                                        {{ $selectedStoreCountry == $c['code'] ? 'selected' : '' }}>
-                                                        {{ $c['name'] }}</option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    @if ($selectedStoreCountry)
-                                        <a href="{{ route('vendors', request()->except(['store_country'])) }}"
-                                            class="btn btn-outline-secondary btn-sm w-100 mt-1">{{ translate('Clear_Location') }}</a>
-                                    @endif
-                                </form>
-                            </div>
+                            @include('web-views.products.partials.vendor-partials._filter-vendor-location', [
+                                'storeCountries'        => $storeCountries,
+                                'selectedStoreCountry'  => $selectedStoreCountry,
+                            ])
                             @include(
                                 'web-views.products.partials.vendor-partials._filter-product-categories',
                                 [
@@ -215,6 +191,4 @@
             </section>
         </div>
     </div>
-    
-
 @endsection

@@ -10721,4 +10721,10 @@ return [
     'select_the_country_where_your_store_is_based' => 'Select the country where your store is based',
     'Store_Country' => 'Store Country',
     'Country_added_successfully' => 'Country added successfully',
+    'No_locations_have_been_configured_yet._Please_contact_the_admin.' => 'No locations have been configured yet. Please contact the admin.',
+    'this_country_already_exists' => 'This country already exists',
+    'all_areas' => 'All areas',
+    'Best_Selling_Products' => 'Best Selling Products',
+    'all_cities' => 'All cities',
+    'all_countries' => 'All countries',
 ];

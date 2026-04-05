@@ -266,6 +266,22 @@
                 @endif
 
                 <li class="nav-item">
+                    <a class="btn-icon" href="{{ route('admin.business-settings.location.city-requests') }}"
+                        data-bs-title="{{ translate('location_requests') }}" data-bs-toggle="tooltip">
+                        <div class="position-relative lh-1 mt-1">
+                            <i class="fi fi-sr-marker fs-18"></i>
+
+                            @php($pendingLocationRequests = \App\Models\CityRequest::where('status', 'pending')->count() + \App\Models\AreaRequest::where('status', 'pending')->count())
+                            <span id="header-location-request-badge"
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                style="{{ $pendingLocationRequests > 0 ? '' : 'display:none;' }}">
+                                {{ $pendingLocationRequests > 99 ? '99+' : $pendingLocationRequests }}
+                            </span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <div class="dropdown">
                         <a class="d-flex" href="javascript:" data-bs-toggle="dropdown">
                             <img class="rounded-circle border border-2 min-w-36 aspect-1" width="36"

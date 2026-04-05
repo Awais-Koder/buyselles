@@ -10787,4 +10787,10 @@ return [
 	"requested_area" => "Requested area",
 	"global" => "Global",
 	"if_the_area_you_need_is_not_listed_request_admin_to_add_it" => "If the area you need is not listed request admin to add it",
+	"Request_New_Area" => "Request New Area",
+	"requested_a_new_city" => "Requested a new city",
+	"Area_Request_Pending" => "Area Request Pending",
+	"New_Location_Request" => "New Location Request",
+	"new_city_request" => "New city request",
+	"New_Location_Requests" => "New Location Requests",
 ];

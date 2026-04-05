@@ -251,6 +251,40 @@
                         if (typeof updateBadge === 'function') {
                             updateBadge('#sidebar-support-ticket-badge', openTicketCount);
                         }
+
+                        // --- Location request (city/area) polling ---
+                        var locationRequestCount = response.pending_location_request_count;
+                        if (typeof locationRequestCount !== 'undefined') {
+                            var prevLocationCount = parseInt(sessionStorage.getItem(
+                                'bs_prev_location_request_count') ?? '-1', 10);
+                            if (prevLocationCount === -1) {
+                                sessionStorage.setItem('bs_prev_location_request_count',
+                                locationRequestCount);
+                            } else if (locationRequestCount > prevLocationCount) {
+                                sessionStorage.setItem('bs_prev_location_request_count',
+                                locationRequestCount);
+                                var locDiff = locationRequestCount - prevLocationCount;
+                                var locAlert = $('#location-request-notification');
+                                var locAlertLink = $('#location-request-notification-link');
+                                $('#location-request-notification-message').html(
+                                    locDiff > 1 ? locDiff +
+                                    ' {{ translate('New_Location_Requests') }}' :
+                                    '{{ translate('New_Location_Request') }}'
+                                );
+                                locAlertLink.attr('href',
+                                    '{{ route('admin.business-settings.location.city-requests') }}');
+                                locAlert.addClass('active');
+                                if (typeof playAudio === 'function') {
+                                    playAudio();
+                                }
+                                setTimeout(function() {
+                                    locAlert.removeClass('active');
+                                }, 7000);
+                            } else {
+                                sessionStorage.setItem('bs_prev_location_request_count',
+                                locationRequestCount);
+                            }
+                        }
                     }
                 });
             }, 30000);

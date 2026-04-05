@@ -127,6 +127,16 @@ class LocationController extends BaseController
             'status' => 'pending',
         ]);
 
+        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        Notification::create([
+            'sent_by' => 'system',
+            'sent_to' => 'admin',
+            'title' => translate('new_city_request'),
+            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'notification_count' => 1,
+            'status' => 1,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => translate('city_request_submitted_successfully'),

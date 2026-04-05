@@ -38,6 +38,26 @@
         </div>
     </a>
 
+    {{-- Location request notification (city/area) --}}
+    <a href="javascript:" id="location-request-notification-link">
+        <div class="alert alert--message-2 alert-dismissible fade show" id="location-request-notification" role="alert">
+            <img width="28"
+                src="{{ dynamicAsset(path: 'public/assets/back-end/img/icons/chatting-notification.svg') }}"
+                onerror="this.src='{{ dynamicAsset(path: 'public/assets/back-end/img/info-2.png') }}'" alt="">
+            <div class="flex-grow-1">
+                <h3>{{ translate('Location_Request') }}</h3>
+                <span id="location-request-notification-message">
+                    {{ translate('New_Location_Request') }}
+                </span>
+            </div>
+            <button type="button"
+                class="btn p-0 m-0 border-0 fs-18 text-dark text-hover-primary shadow-none position-relative"
+                data-dismiss="alert" aria-label="Close">
+                <i class="fi fi-rr-cross-small"></i>
+            </button>
+        </div>
+    </a>
+
     <a
         href="{{ route((is_null(auth('seller')->id()) ? 'admin' : 'vendor') . '.messages.index', ['type' => 'customer']) }}">
         <div class="alert alert--message-2 alert-dismissible fade show" id="chatting-new-notification-check"

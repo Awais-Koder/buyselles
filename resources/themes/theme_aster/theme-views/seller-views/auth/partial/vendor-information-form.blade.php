@@ -80,6 +80,32 @@
                                     required></textarea>
                             </div>
 
+                            {{-- Location: Country & City --}}
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group mb-4">
+                                        <label class="mb-2 text-capitalize" for="store_country_id">
+                                            {{ translate('store_country') }}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-control" name="store_country_id" id="reg_store_country_id" required>
+                                            <option value="">{{ translate('select_country') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group mb-4">
+                                        <label class="mb-2 text-capitalize" for="store_city_id">
+                                            {{ translate('store_city') }}
+                                        </label>
+                                        <select class="form-control" name="store_city_id" id="reg_store_city_id" disabled>
+                                            <option value="">{{ translate('select_city') }}</option>
+                                        </select>
+                                        <small class="text-muted">{{ translate('if_your_city_is_not_listed_you_can_request_it_after_registration_from_your_dashboard') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="border p-3 p-xl-4 rounded mb-4">
                                 <div class="d-flex flex-column gap-3 align-items-center">
                                     <div class="upload-file">
@@ -316,3 +342,42 @@
         </div>
     </div>
 </div>
+
+@push('script')
+<script>
+    (function() {
+        'use strict';
+
+        var countriesUrl = '{{ route('vendor.auth.registration.location-countries') }}';
+        var citiesUrlTemplate = '{{ route('vendor.auth.registration.location-cities', ':id') }}';
+
+        function loadRegistrationCountries() {
+            var $select = $('#reg_store_country_id');
+            $.getJSON(countriesUrl, function(data) {
+                $select.empty().append($('<option>', { value: '', text: '{{ translate('select_country') }}' }));
+                $.each(data, function(i, item) {
+                    $select.append($('<option>', { value: item.id, text: item.name }));
+                });
+            });
+        }
+
+        $(document).on('change', '#reg_store_country_id', function() {
+            var countryId = $(this).val();
+            var $citySelect = $('#reg_store_city_id');
+            $citySelect.html('<option value="">{{ translate('select_city') }}</option>').prop('disabled', true);
+            if (!countryId) return;
+
+            $citySelect.html('<option value="">{{ translate('Loading...') }}</option>');
+            $.getJSON(citiesUrlTemplate.replace(':id', countryId), function(data) {
+                $citySelect.empty().append($('<option>', { value: '', text: '{{ translate('select_city') }}' }));
+                $.each(data, function(i, item) {
+                    $citySelect.append($('<option>', { value: item.id, text: item.name }));
+                });
+                $citySelect.prop('disabled', false);
+            });
+        });
+
+        loadRegistrationCountries();
+    }());
+</script>
+@endpush

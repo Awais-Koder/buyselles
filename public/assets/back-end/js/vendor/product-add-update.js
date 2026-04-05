@@ -90,7 +90,7 @@ function getProductTypeFunctionality() {
         $("#digital-product-code-wrapper").hide();
         $(".physical_product_show").show();
         $("#product_location_city").prop("required", true);
-        $("#product_location_area").prop("required", true);
+        $("#product_location_area").prop("required", false);
         elementDigitalProductTypeByID.val(
             $("#digital_product_type option:first").val()
         );

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\BaseController;
+use App\Models\CityRequest;
 use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
+use App\Models\Product;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,7 +23,7 @@ class LocationController extends BaseController
         $searchValue = $request?->get('searchValue');
 
         $countries = LocationCountry::query()
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('cities')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -53,7 +55,7 @@ class LocationController extends BaseController
     public function updateCountry(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:100|unique:location_countries,name,'.$id,
+            'name' => 'required|string|max:100|unique:location_countries,name,' . $id,
             'code' => 'nullable|string|max:10',
         ]);
 
@@ -93,7 +95,7 @@ class LocationController extends BaseController
 
         $cities = LocationCity::query()
             ->where('country_id', $countryId)
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('areas')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -157,7 +159,7 @@ class LocationController extends BaseController
 
         $areas = LocationArea::query()
             ->where('city_id', $cityId)
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(getWebConfig(name: 'pagination_limit'));
@@ -240,5 +242,89 @@ class LocationController extends BaseController
             ->get(['id', 'name', 'cod_available']);
 
         return response()->json($areas);
+    }
+
+    public function getCountries(): JsonResponse
+    {
+        $countries = LocationCountry::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        return response()->json($countries);
+    }
+
+    // ----- City Request Management -----
+
+    public function cityRequests(Request $request): View
+    {
+        $searchValue = $request->get('searchValue');
+        $status = $request->get('status');
+
+        $cityRequests = CityRequest::query()
+            ->with(['seller', 'country', 'approvedCity'])
+            ->when($searchValue, fn($q) => $q->where('city_name', 'like', "%{$searchValue}%"))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->latest()
+            ->paginate(getWebConfig(name: 'pagination_limit'));
+
+        return view('admin-views.business-settings.location.city-requests', compact('cityRequests', 'searchValue', 'status'));
+    }
+
+    public function approveCityRequest(Request $request, int $id): RedirectResponse
+    {
+        $cityRequest = CityRequest::with('country')->findOrFail($id);
+
+        if ($cityRequest->status !== 'pending') {
+            ToastMagic::error(translate('this_request_has_already_been_processed'));
+
+            return back();
+        }
+
+        $city = LocationCity::create([
+            'country_id' => $cityRequest->country_id,
+            'name' => $cityRequest->city_name,
+            'is_active' => true,
+        ]);
+
+        $cityRequest->update([
+            'status' => 'approved',
+            'approved_city_id' => $city->id,
+        ]);
+
+        // Auto-attach the approved city to any products that were linked to this city request
+        Product::where('pending_city_request_id', $cityRequest->id)
+            ->update([
+                'location_city_id' => $city->id,
+                'pending_city_request_id' => null,
+            ]);
+
+        ToastMagic::success(translate('city_request_approved_and_city_created'));
+
+        return back();
+    }
+
+    public function rejectCityRequest(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'admin_note' => 'nullable|string|max:500',
+        ]);
+
+        $cityRequest = CityRequest::findOrFail($id);
+
+        if ($cityRequest->status !== 'pending') {
+            ToastMagic::error(translate('this_request_has_already_been_processed'));
+
+            return back();
+        }
+
+        $cityRequest->update([
+            'status' => 'rejected',
+            'admin_note' => $request->admin_note,
+        ]);
+
+        ToastMagic::success(translate('city_request_rejected'));
+
+        return back();
     }
 }

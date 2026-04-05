@@ -13,6 +13,8 @@ use App\Enums\SessionKey;
 use App\Events\VendorRegistrationEvent;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\VendorAddRequest;
+use App\Models\LocationCity;
+use App\Models\LocationCountry;
 use App\Repositories\VendorRegistrationReasonRepository;
 use App\Services\RecaptchaService;
 use App\Services\ShopService;
@@ -112,5 +114,19 @@ class RegisterController extends BaseController
         return response()->json(
             ['status' => 1, 'redirectRoute' => route('vendor.auth.login')]
         );
+    }
+
+    public function locationCountries(): JsonResponse
+    {
+        $countries = LocationCountry::where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+
+        return response()->json($countries);
+    }
+
+    public function locationCities(int $countryId): JsonResponse
+    {
+        $cities = LocationCity::where('country_id', $countryId)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+
+        return response()->json($cities);
     }
 }

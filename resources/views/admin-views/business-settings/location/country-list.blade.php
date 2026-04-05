@@ -56,7 +56,15 @@
                                     {{ $countries->total() }}
                                 </span>
                             </h3>
-                            <form action="{{ url()->current() }}" method="GET">
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ route('admin.business-settings.location.city-requests') }}" class="btn btn-outline-info btn-sm">
+                                    <i class="fi fi-rr-paper-plane"></i> {{ translate('City_Requests') }}
+                                    @php $pendingCount = \App\Models\CityRequest::where('status', 'pending')->count(); @endphp
+                                    @if($pendingCount > 0)
+                                        <span class="badge badge-danger ml-1">{{ $pendingCount }}</span>
+                                    @endif
+                                </a>
+                                <form action="{{ url()->current() }}" method="GET">
                                 <div class="input-group flex-grow-1 max-w-280">
                                     <input type="search" name="searchValue" class="form-control"
                                         placeholder="{{ translate('search_by_name') }}" value="{{ $searchValue }}">
@@ -65,6 +73,7 @@
                                     </div>
                                 </div>
                             </form>
+                            </div>
                         </div>
 
                         <div class="table-responsive">

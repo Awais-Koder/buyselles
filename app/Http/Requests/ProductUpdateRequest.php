@@ -60,8 +60,14 @@ class ProductUpdateRequest extends FormRequest
 
         if ($this->routeIs('vendor.*')) {
             $rules['location_country_id'] = 'required';
-            $rules['location_city_id'] = 'required_if:product_type,==,physical';
-            $rules['location_area_id'] = 'required_if:product_type,==,physical';
+            $rules['location_city_id'] = 'nullable';
+            $rules['location_area_id'] = 'nullable';
+            $rules['pending_city_request_id'] = 'nullable|integer';
+
+            // Digital products can be Global (value 0 → stored as null)
+            if ($this->input('product_type') === 'digital' && $this->input('location_country_id') == '0') {
+                $rules['location_country_id'] = 'required';
+            }
         }
 
         return $rules;
@@ -82,8 +88,6 @@ class ProductUpdateRequest extends FormRequest
             'shipping_cost.required_if' => translate('Shipping Cost is required!'),
             'video_url.url' => translate('please_provide_a_valid_video_url'),
             'location_country_id.required' => translate('country_is_required!'),
-            'location_city_id.required_if' => translate('city_is_required_for_physical_products!'),
-            'location_area_id.required_if' => translate('area_is_required_for_physical_products!'),
         ];
     }
 

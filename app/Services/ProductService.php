@@ -537,6 +537,15 @@ class ProductService
         $digitalFileOptions = $this->getDigitalVariationOptions(request: $request);
         $digitalFileCombinations = $this->getDigitalVariationCombinations(arrays: $digitalFileOptions);
 
+        \Log::info('=== LOCATION DEBUG (add) ===', [
+            'location_country_id' => $request['location_country_id'],
+            'location_city_id'    => $request['location_city_id'],
+            'location_area_id'    => $request['location_area_id'],
+            'product_type'        => $request['product_type'],
+            'all_location_input'  => $request->only(['location_country_id', 'location_city_id', 'location_area_id']),
+            'added_by'            => $addedBy,
+        ]);
+
         return [
             'added_by' => $addedBy,
             'user_id' => $addedBy == 'admin' ? auth('admin')->id() : auth('seller')->id(),
@@ -573,12 +582,13 @@ class ProductService
             'video_provider' => 'youtube',
             'video_url' => $request['video_url'],
             'status' => $addedBy == 'admin' ? 1 : 0,
-            'request_status' => $addedBy == 'admin' ? 1 : (getWebConfig(name: 'new_product_approval') == 1 ? 0 : 1),
+            'request_status' => $addedBy == 'admin' ? 1 : (($request['product_type'] === 'physical' && empty($request['location_city_id'])) || getWebConfig(name: 'new_product_approval') == 1 ? 0 : 1),
             'shipping_cost' => $request['product_type'] == 'physical' ? currencyConverter(amount: $request['shipping_cost']) : 0,
             'multiply_qty' => ($request['product_type'] == 'physical') ? ($request['multiply_qty'] == 'on' ? 1 : 0) : 0, // to be changed in form multiply_qty
             'location_country_id' => $request['location_country_id'] ?: null,
             'location_city_id' => $request['product_type'] == 'physical' ? ($request['location_city_id'] ?: null) : null,
             'location_area_id' => $request['product_type'] == 'physical' ? ($request['location_area_id'] ?: null) : null,
+            'pending_city_request_id' => ($request['product_type'] === 'physical' && empty($request['location_city_id'])) ? ($request['pending_city_request_id'] ?: null) : null,
             'color_image' => json_encode($processedImages['colored_image_names']),
             'images' => json_encode($processedImages['image_names']),
             'thumbnail' => $request->has('image') ? $this->upload(dir: 'product/thumbnail/', format: 'webp', image: $request['image']) : $request->existing_thumbnail,
@@ -593,6 +603,14 @@ class ProductService
 
     public function getUpdateProductData(object $request, object $product, string $updateBy): array
     {
+        \Log::info('=== LOCATION DEBUG (update) ===', [
+            'location_country_id' => $request['location_country_id'],
+            'location_city_id'    => $request['location_city_id'],
+            'location_area_id'    => $request['location_area_id'],
+            'product_type'        => $request['product_type'],
+            'all_location_input'  => $request->only(['location_country_id', 'location_city_id', 'location_area_id']),
+            'update_by'           => $updateBy,
+        ]);
         $storage = config('filesystems.disks.default') ?? 'public';
         $processedImages = $this->getProcessedUpdateImages(request: $request, product: $product);
         $combinations = $this->getCombinations($this->getOptions(request: $request));
@@ -696,6 +714,11 @@ class ProductService
                 'request_status' => 0,
             ];
         }
+        if ($updateBy == 'seller' && $product->request_status !== 2 && $request['product_type'] === 'physical' && empty($request['location_city_id'])) {
+            $dataArray += [
+                'request_status' => 0,
+            ];
+        }
         if ($updateBy == 'admin' && $product->added_by == 'seller' && ($product->request_status == 2 || $product->request_status == 0)) {
             $dataArray += [
                 'request_status' => 1,
@@ -706,6 +729,7 @@ class ProductService
             'location_country_id' => $request['location_country_id'] ?: null,
             'location_city_id' => $request['product_type'] == 'physical' ? ($request['location_city_id'] ?: null) : null,
             'location_area_id' => $request['product_type'] == 'physical' ? ($request['location_area_id'] ?: null) : null,
+            'pending_city_request_id' => ($request['product_type'] === 'physical' && empty($request['location_city_id'])) ? ($request['pending_city_request_id'] ?: null) : null,
         ];
 
         return $dataArray;

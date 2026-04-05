@@ -217,7 +217,7 @@ class ProductController extends BaseController
         $digitalProductAuthors = $this->authorRepo->getListWhere(dataLimit: 'all');
         $publishingHouseList = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
         $aiRemainingCount = $this->AIUsageManagerService->getGenerateRemainingCount();
-        $activeCountries = LocationCountry::where('seller_id', auth('seller')->id())->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
+        $activeCountries = LocationCountry::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
 
         return view('vendor-views.product.add-new', compact('languages', 'aiRemainingCount', 'categories', 'brands', 'brandSetting', 'digitalProductSetting', 'colors', 'attributes', 'languages', 'defaultLanguage', 'digitalProductFileTypes', 'digitalProductAuthors', 'publishingHouseList', 'productWiseTax', 'taxVats', 'activeCountries'));
     }
@@ -286,7 +286,7 @@ class ProductController extends BaseController
         $publishingHouseList = $this->publishingHouseRepo->getListWhere(dataLimit: 'all');
         $taxVatIds = $product?->taxVats?->pluck('tax_id')->toArray() ?? [];
         $aiRemainingCount = $this->AIUsageManagerService->getGenerateRemainingCount();
-        $activeCountries = LocationCountry::where('seller_id', auth('seller')->id())->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
+        $activeCountries = LocationCountry::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
         $activeCities = $product->location_country_id
             ? \App\Models\LocationCity::where('country_id', $product->location_country_id)->where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name'])
             : collect();

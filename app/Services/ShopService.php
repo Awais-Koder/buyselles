@@ -86,6 +86,8 @@ class ShopService
             'tin_expire_date' => $request['tin_expire_date'] ?? null,
             'tin_certificate' => $request->file('tin_certificate') ? $this->fileUpload(dir: 'shop/documents/', format: $request->file('tin_certificate')->getClientOriginalExtension(), file: $request->file('tin_certificate')) : null,
             'tin_certificate_storage_type' => $request->has('tin_certificate') ? $storage : null,
+            'store_country_id' => $request['store_country_id'] ?? null,
+            'store_city_id' => $request['store_city_id'] ?? null,
         ];
     }
 

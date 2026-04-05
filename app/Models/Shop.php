@@ -17,8 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $author_type
  * @property string $name
  * @property string $address
- * @property int|null $location_area_id
  * @property string|null $store_country
+ * @property int|null $store_country_id
+ * @property int|null $store_city_id
  * @property string $contact
  * @property string $image
  * @property string|null $bottom_banner
@@ -55,8 +56,9 @@ class Shop extends Model
         'name',
         'slug',
         'address',
-        'location_area_id',
         'store_country',
+        'store_country_id',
+        'store_city_id',
         'contact',
         'image',
         'image_storage_type',
@@ -102,9 +104,14 @@ class Shop extends Model
         return $this->belongsTo(Seller::class, 'seller_id');
     }
 
-    public function locationArea(): BelongsTo
+    public function locationCountry(): BelongsTo
     {
-        return $this->belongsTo(LocationArea::class, 'location_area_id');
+        return $this->belongsTo(LocationCountry::class, 'store_country_id');
+    }
+
+    public function locationCity(): BelongsTo
+    {
+        return $this->belongsTo(LocationCity::class, 'store_city_id');
     }
 
     // old relation: product

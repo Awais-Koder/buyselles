@@ -129,6 +129,7 @@ class Product extends Model
         'location_country_id',
         'location_city_id',
         'location_area_id',
+        'pending_city_request_id',
     ];
 
     /**
@@ -183,6 +184,7 @@ class Product extends Model
         'location_country_id' => 'integer',
         'location_city_id' => 'integer',
         'location_area_id' => 'integer',
+        'pending_city_request_id' => 'integer',
         'digital_product_file_types' => 'array',
         'digital_product_extensions' => 'array',
         'thumbnail_storage_type' => 'string',
@@ -304,13 +306,18 @@ class Product extends Model
         return $this->belongsTo(LocationArea::class, 'location_area_id');
     }
 
+    public function pendingCityRequest(): BelongsTo
+    {
+        return $this->belongsTo(CityRequest::class, 'pending_city_request_id');
+    }
+
     public function getIsShopTemporaryCloseAttribute($value): int
     {
         $inHouseTemporaryClose = Cache::get(IN_HOUSE_SHOP_TEMPORARY_CLOSE_STATUS) ?? 0;
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
         } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
+            return Cache::remember('product-shop-close-' . $this->id, 3600, function () {
                 return $this?->seller?->shop?->temporary_close ?? 0;
             });
         }

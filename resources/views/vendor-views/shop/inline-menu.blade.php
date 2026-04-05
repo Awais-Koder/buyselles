@@ -17,10 +17,5 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                 {{ translate('Other_Setup') }}
             </a>
         </li>
-        <li class="{{ Request::is('vendor/shop/service-areas*') ? 'active' : '' }}">
-            <a href="{{ route('vendor.shop.service-areas.index') }}">
-                {{ translate('Service_Areas') }}
-            </a>
-        </li>
     </ul>
 </div>

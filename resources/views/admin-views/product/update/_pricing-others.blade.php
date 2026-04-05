@@ -186,6 +186,8 @@
                                 </div>
                             </div>
                         </div>
+
+                        @include('admin-views.product.partials._location-section')
                     </div>
                 </div>
             </div>

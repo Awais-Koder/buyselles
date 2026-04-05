@@ -867,9 +867,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::group(['prefix' => 'email-templates', 'as' => 'email-templates.', 'middleware' => ['module:system_settings']], function () {
                 Route::controller(EmailTemplatesController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
-                    Route::get('/'.'/{type}'.'/{tab}', 'getView')->name('view');
-                    Route::post('update/{type}'.'/{tab}', 'update')->name('update');
-                    Route::post('update-status/{type}'.'/{tab}', 'updateStatus')->name('update-status');
+                    Route::get('/' . '/{type}' . '/{tab}', 'getView')->name('view');
+                    Route::post('update/{type}' . '/{tab}', 'update')->name('update');
+                    Route::post('update-status/{type}' . '/{tab}', 'updateStatus')->name('update-status');
                 });
             });
 
@@ -1033,8 +1033,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::controller(ShippingMethodController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
                     Route::post('index', 'add');
-                    Route::get('update'.'/{id}', 'getUpdateView')->name('update');
-                    Route::post('update'.'/{id}', 'update');
+                    Route::get('update' . '/{id}', 'getUpdateView')->name('update');
+                    Route::post('update' . '/{id}', 'update');
                     Route::post('update-status', 'updateStatus')->name('update-status');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('update-shipping-responsibility', 'updateShippingResponsibility')->name('update-shipping-responsibility');
@@ -1094,8 +1094,14 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                     Route::post('area-status', 'updateAreaStatus')->name('area-status');
 
                     // AJAX dropdowns
+                    Route::get('get-countries', 'getCountries')->name('get-countries');
                     Route::get('get-cities/{countryId}', 'getCitiesByCountry')->name('get-cities');
                     Route::get('get-areas/{cityId}', 'getAreasByCity')->name('get-areas');
+
+                    // City Requests from vendors
+                    Route::get('city-requests', 'cityRequests')->name('city-requests');
+                    Route::post('city-requests/{id}/approve', 'approveCityRequest')->name('approve-city-request');
+                    Route::post('city-requests/{id}/reject', 'rejectCityRequest')->name('reject-city-request');
                 });
             });
         });
@@ -1237,7 +1243,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('status/{id}', 'updateStatus')->name('status');
             Route::get('update/{id}', 'getUpdateResponse')->name('update');
             Route::post('feature-status-update', 'updateFeatureStatus')->name('feature-status-update');
-            Route::post('update'.'/{id}', 'update');
+            Route::post('update' . '/{id}', 'update');
             Route::post('delete', 'delete')->name('delete');
         });
     });

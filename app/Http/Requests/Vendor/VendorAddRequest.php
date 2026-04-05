@@ -45,6 +45,8 @@ class VendorAddRequest extends FormRequest
             'tax_identification_number' => 'nullable|string',
             'tin_expire_date' => 'nullable|date|after_or_equal:today',
             'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:5120',
+            'store_country_id' => 'required|exists:location_countries,id',
+            'store_city_id' => 'nullable|exists:location_cities,id',
         ];
     }
 
@@ -73,6 +75,9 @@ class VendorAddRequest extends FormRequest
             'tin_expire_date.after_or_equal' => translate('The_tin_expire_date_must_be_a_future_date'),
             'tin_certificate.mimes' => translate('The_tin_certificate_must_be_a_file_of_type_pdf_doc_docx_jpg'),
             'tin_certificate.max' => translate('The_tin_certificate_must_not_exceed_5MB'),
+            'store_country_id.required' => translate('The_store_country_field_is_required'),
+            'store_country_id.exists' => translate('The_selected_country_is_invalid'),
+            'store_city_id.exists' => translate('The_selected_city_is_invalid'),
         ];
     }
 
@@ -85,13 +90,15 @@ class VendorAddRequest extends FormRequest
                 $numericLength = strlen($numericPhoneValue);
                 if ($numericLength < 4) {
                     $validator->errors()->add(
-                        'phone.min', translate('The_phone_number_must_be_at_least_4_characters')
+                        'phone.min',
+                        translate('The_phone_number_must_be_at_least_4_characters')
                     );
                 }
 
                 if ($numericLength > 20) {
                     $validator->errors()->add(
-                        'phone.max', translate('The_phone_number_may_not_be_greater_than_20_characters')
+                        'phone.max',
+                        translate('The_phone_number_may_not_be_greater_than_20_characters')
                     );
                 }
             },

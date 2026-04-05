@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * Class LocationCountry
  *
  * @property int $id
- * @property int|null $seller_id
  * @property string $name
  * @property string|null $code
  * @property bool $is_active
@@ -24,7 +23,6 @@ class LocationCountry extends Model
     protected $table = 'location_countries';
 
     protected $fillable = [
-        'seller_id',
         'name',
         'code',
         'is_active',
@@ -33,7 +31,6 @@ class LocationCountry extends Model
 
     protected $casts = [
         'id' => 'integer',
-        'seller_id' => 'integer',
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
@@ -51,5 +48,10 @@ class LocationCountry extends Model
     public function areas(): HasManyThrough
     {
         return $this->hasManyThrough(LocationArea::class, LocationCity::class, 'country_id', 'city_id');
+    }
+
+    public function cityRequests(): HasMany
+    {
+        return $this->hasMany(CityRequest::class, 'country_id');
     }
 }

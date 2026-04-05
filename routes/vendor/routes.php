@@ -67,6 +67,8 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::post('add', 'add')->name('add');
                     Route::get('location-countries', 'locationCountries')->name('location-countries');
                     Route::get('location-cities/{countryId}', 'locationCities')->name('location-cities');
+                    Route::get('location-areas/{cityId}', 'locationAreas')->name('location-areas');
+                    Route::post('request-city', 'requestCity')->name('request-city');
                 });
             });
         });

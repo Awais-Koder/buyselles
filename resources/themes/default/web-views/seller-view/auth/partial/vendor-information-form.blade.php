@@ -70,6 +70,47 @@
                                     placeholder="{{ translate('shop_address') }}" required></textarea>
                             </div>
 
+                            {{-- Location: Country, City & Area --}}
+                            <div class="row">
+                                <div class="col-sm-6 col-lg-4">
+                                    <div class="form-group mb-4">
+                                        <label class="mb-2 text-capitalize" for="store_country_id">
+                                            {{ translate('store_country') }}
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-control" name="store_country_id" id="reg_store_country_id" required>
+                                            <option value="">{{ translate('select_country') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-lg-4">
+                                    <div class="form-group mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="mb-0 text-capitalize" for="store_city_id">
+                                                {{ translate('store_city') }}
+                                            </label>
+                                            <button type="button" class="btn btn-link p-0 fs-12 text-primary" data-toggle="modal"
+                                                data-target="#regRequestCityModal" title="{{ translate('Request_New_City') }}">
+                                                <i class="tio-send"></i> {{ translate('Request_city') }}
+                                            </button>
+                                        </div>
+                                        <select class="form-control" name="store_city_id" id="reg_store_city_id" disabled>
+                                            <option value="">{{ translate('select_city') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 col-lg-4">
+                                    <div class="form-group mb-4">
+                                        <label class="mb-2 text-capitalize" for="store_area_id">
+                                            {{ translate('store_area') }}
+                                        </label>
+                                        <select class="form-control" name="store_area_id" id="reg_store_area_id" disabled>
+                                            <option value="">{{ translate('select_area') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="border p-3 p-xl-4 rounded mb-4">
                                 <div class="d-flex flex-column gap-3 align-items-center">
                                     <div class="upload-file">
@@ -276,3 +317,170 @@
         </div>
     </div>
 </div>
+
+{{-- Request City Modal --}}
+<div class="modal fade" id="regRequestCityModal" tabindex="-1" aria-labelledby="regRequestCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="regRequestCityModalLabel">{{ translate('Request_New_City') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">{{ translate('if_the_city_you_need_is_not_listed_request_admin_to_add_it') }}</p>
+                <div class="form-group mb-3">
+                    <label class="mb-2">{{ translate('Country') }} <span class="text-danger">*</span></label>
+                    <select id="rc_reg_country_id" class="form-control">
+                        <option value="">{{ translate('select_country') }}</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="mb-2">{{ translate('City_Name') }} <span class="text-danger">*</span></label>
+                    <input type="text" id="rc_reg_city_name" class="form-control"
+                        placeholder="{{ translate('e.g._New_York') }}">
+                </div>
+                <div id="reg-request-city-feedback" class="mt-2 d-none">
+                    <span class="text-success" id="reg-request-city-success-msg"></span>
+                    <span class="text-danger" id="reg-request-city-error-msg"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="regRequestCitySaveBtn">
+                    <span>{{ translate('Submit_Request') }}</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('script')
+<script>
+    (function() {
+        'use strict';
+
+        var countriesUrl = '{{ route('vendor.auth.registration.location-countries') }}';
+        var citiesUrlTemplate = '{{ route('vendor.auth.registration.location-cities', ':id') }}';
+        var areasUrlTemplate = '{{ route('vendor.auth.registration.location-areas', ':id') }}';
+        var requestCityUrl = '{{ route('vendor.auth.registration.request-city') }}';
+
+        var allCountriesCache = [];
+
+        function loadRegistrationCountries() {
+            var $select = $('#reg_store_country_id');
+            $.getJSON(countriesUrl, function(data) {
+                allCountriesCache = data;
+                $select.empty().append($('<option>', { value: '', text: '{{ translate('select_country') }}' }));
+                $.each(data, function(i, item) {
+                    $select.append($('<option>', { value: item.id, text: item.name }));
+                });
+            });
+        }
+
+        $(document).on('change', '#reg_store_country_id', function() {
+            var countryId = $(this).val();
+            var $citySelect = $('#reg_store_city_id');
+            var $areaSelect = $('#reg_store_area_id');
+            $citySelect.html('<option value="">{{ translate('select_city') }}</option>').prop('disabled', true);
+            $areaSelect.html('<option value="">{{ translate('select_area') }}</option>').prop('disabled', true);
+            if (!countryId) return;
+
+            $citySelect.html('<option value="">{{ translate('Loading...') }}</option>');
+            $.getJSON(citiesUrlTemplate.replace(':id', countryId), function(data) {
+                $citySelect.empty().append($('<option>', { value: '', text: '{{ translate('select_city') }}' }));
+                $.each(data, function(i, item) {
+                    $citySelect.append($('<option>', { value: item.id, text: item.name }));
+                });
+                $citySelect.prop('disabled', false);
+            });
+        });
+
+        $(document).on('change', '#reg_store_city_id', function() {
+            var cityId = $(this).val();
+            var $areaSelect = $('#reg_store_area_id');
+            $areaSelect.html('<option value="">{{ translate('select_area') }}</option>').prop('disabled', true);
+            if (!cityId) return;
+
+            $areaSelect.html('<option value="">{{ translate('Loading...') }}</option>');
+            $.getJSON(areasUrlTemplate.replace(':id', cityId), function(data) {
+                $areaSelect.empty().append($('<option>', { value: '', text: '{{ translate('select_area') }}' }));
+                $.each(data, function(i, item) {
+                    $areaSelect.append($('<option>', { value: item.id, text: item.name }));
+                });
+                $areaSelect.prop('disabled', false);
+            });
+        });
+
+        // ── Request City Modal ───────────────────────────────────────────────
+        $('#regRequestCityModal').on('show.bs.modal', function() {
+            var $modalCountry = $('#rc_reg_country_id');
+            $modalCountry.empty().append($('<option>', { value: '', text: '{{ translate('select_country') }}' }));
+            $.each(allCountriesCache, function(i, item) {
+                $modalCountry.append($('<option>', {
+                    value: item.id,
+                    text: item.name,
+                    selected: (String(item.id) === String($('#reg_store_country_id').val()))
+                }));
+            });
+            $('#rc_reg_city_name').val('');
+            $('#reg-request-city-feedback').addClass('d-none');
+            $('#reg-request-city-success-msg, #reg-request-city-error-msg').text('');
+        });
+
+        $('#regRequestCitySaveBtn').on('click', function() {
+            var $btn = $(this);
+            var countryId = $('#rc_reg_country_id').val();
+            var cityName = $.trim($('#rc_reg_city_name').val());
+
+            $('#reg-request-city-feedback').addClass('d-none');
+            $('#reg-request-city-success-msg, #reg-request-city-error-msg').text('');
+
+            if (!countryId) {
+                $('#reg-request-city-error-msg').text('{{ translate('Please_select_a_country') }}');
+                $('#reg-request-city-feedback').removeClass('d-none');
+                return;
+            }
+            if (!cityName) {
+                $('#reg-request-city-error-msg').text('{{ translate('City_name_is_required') }}');
+                $('#reg-request-city-feedback').removeClass('d-none');
+                return;
+            }
+
+            $btn.find('.spinner-border').removeClass('d-none');
+            $btn.find('span:first').text('{{ translate('Submitting...') }}');
+
+            $.post(requestCityUrl, {
+                country_id: countryId,
+                city_name: cityName,
+                _token: '{{ csrf_token() }}'
+            })
+            .done(function(response) {
+                if (response.success) {
+                    $('#reg-request-city-success-msg').text(response.message);
+                    $('#reg-request-city-feedback').removeClass('d-none');
+                    setTimeout(function() {
+                        $('#regRequestCityModal').modal('hide');
+                    }, 1500);
+                } else {
+                    $('#reg-request-city-error-msg').text(response.message || '{{ translate('Something_went_wrong') }}');
+                    $('#reg-request-city-feedback').removeClass('d-none');
+                }
+            })
+            .fail(function(xhr) {
+                var errors = xhr.responseJSON && xhr.responseJSON.errors ?
+                    Object.values(xhr.responseJSON.errors).flat().join(' ') :
+                    '{{ translate('Something_went_wrong') }}';
+                $('#reg-request-city-error-msg').text(errors);
+                $('#reg-request-city-feedback').removeClass('d-none');
+            })
+            .always(function() {
+                $btn.find('.spinner-border').addClass('d-none');
+                $btn.find('span:first').text('{{ translate('Submit_Request') }}');
+            });
+        });
+
+        loadRegistrationCountries();
+    }());
+</script>
+@endpush

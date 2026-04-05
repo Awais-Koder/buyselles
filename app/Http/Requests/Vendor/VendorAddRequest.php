@@ -47,6 +47,7 @@ class VendorAddRequest extends FormRequest
             'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:5120',
             'store_country_id' => 'required|exists:location_countries,id',
             'store_city_id' => 'nullable|exists:location_cities,id',
+            'store_area_id' => 'nullable|exists:location_areas,id',
         ];
     }
 
@@ -61,15 +62,15 @@ class VendorAddRequest extends FormRequest
             'email.required' => translate('The_email_field_is_required'),
             'email.unique' => translate('The_email_has_already_been_taken'),
             'image.required' => translate('The_image_field_is_required'),
-            'image.mimes' => translate('The_image_type_must_be').'.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
+            'image.mimes' => translate('The_image_type_must_be') . '.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
             'password.required' => translate('The_password_field_is_required'),
             'password.same' => translate('The_password_and_confirm_password_must_match'),
-            'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter').','.translate('_one_lowercase_letter').','.translate('_one_digit_').','.translate('_one_special_character').','.translate('_and_no_spaces').'.',
+            'password.regex' => translate('The_password_must_be_at_least_8_characters_long_and_contain_at_least_one_uppercase_letter') . ',' . translate('_one_lowercase_letter') . ',' . translate('_one_digit_') . ',' . translate('_one_special_character') . ',' . translate('_and_no_spaces') . '.',
             'shop_name.required' => translate('The_shop_name_field_is_required'),
             'shop_address.required' => translate('The_shop_address_field_is_required'),
-            'logo.mimes' => translate('The_logo_type_must_be').'.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
-            'banner.mimes' => translate('The_banner_type_must_be').'.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
-            'bottom_banner.mimes' => translate('The_bottom_banner_type_must_be').'.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
+            'logo.mimes' => translate('The_logo_type_must_be') . '.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
+            'banner.mimes' => translate('The_banner_type_must_be') . '.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
+            'bottom_banner.mimes' => translate('The_bottom_banner_type_must_be') . '.jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff,.webp',
             'tax_identification_number.string' => translate('The_tin_identification_number_must_be_string'),
             'tin_expire_date.date' => translate('The_tin_expire_date_must_be_a_valid_date_format'),
             'tin_expire_date.after_or_equal' => translate('The_tin_expire_date_must_be_a_future_date'),
@@ -78,6 +79,7 @@ class VendorAddRequest extends FormRequest
             'store_country_id.required' => translate('The_store_country_field_is_required'),
             'store_country_id.exists' => translate('The_selected_country_is_invalid'),
             'store_city_id.exists' => translate('The_selected_city_is_invalid'),
+            'store_area_id.exists' => translate('The_selected_area_is_invalid'),
         ];
     }
 

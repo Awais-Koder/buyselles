@@ -73,7 +73,7 @@ class ShopService
         return [
             'seller_id' => $vendorId,
             'name' => $request['shop_name'],
-            'slug' => Str::slug($request['shop_name'], '-').'-'.Str::random(6),
+            'slug' => Str::slug($request['shop_name'], '-') . '-' . Str::random(6),
             'address' => $request['shop_address'],
             'contact' => $request['phone'],
             'image' => $this->upload(dir: 'shop/', format: 'webp', image: $request->file('logo')),
@@ -88,6 +88,7 @@ class ShopService
             'tin_certificate_storage_type' => $request->has('tin_certificate') ? $storage : null,
             'store_country_id' => $request['store_country_id'] ?? null,
             'store_city_id' => $request['store_city_id'] ?? null,
+            'store_area_id' => $request['store_area_id'] ?? null,
         ];
     }
 
@@ -134,7 +135,7 @@ class ShopService
 
         $reviewData = Review::active()->whereIn('product_id', $inhouseProducts->pluck('id'));
         $reviewCount = $reviewData->count();
-        $positive = $reviewData->pluck('rating')->filter(fn ($r) => $r >= 4)->count();
+        $positive = $reviewData->pluck('rating')->filter(fn($r) => $r >= 4)->count();
 
         $shop = getInHouseShopConfig();
         $shop->products_count = $inhouseProducts->count();

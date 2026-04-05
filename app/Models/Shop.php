@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $store_country
  * @property int|null $store_country_id
  * @property int|null $store_city_id
+ * @property int|null $store_area_id
  * @property string $contact
  * @property string $image
  * @property string|null $bottom_banner
@@ -59,6 +60,7 @@ class Shop extends Model
         'store_country',
         'store_country_id',
         'store_city_id',
+        'store_area_id',
         'contact',
         'image',
         'image_storage_type',
@@ -112,6 +114,11 @@ class Shop extends Model
     public function locationCity(): BelongsTo
     {
         return $this->belongsTo(LocationCity::class, 'store_city_id');
+    }
+
+    public function locationArea(): BelongsTo
+    {
+        return $this->belongsTo(LocationArea::class, 'store_area_id');
     }
 
     // old relation: product

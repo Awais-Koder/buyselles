@@ -13,6 +13,8 @@ use App\Enums\SessionKey;
 use App\Events\VendorRegistrationEvent;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\VendorAddRequest;
+use App\Models\CityRequest;
+use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
 use App\Repositories\VendorRegistrationReasonRepository;
@@ -51,7 +53,7 @@ class RegisterController extends BaseController
         $businessMode = getWebConfig(name: 'business_mode');
         $vendorRegistration = getWebConfig(name: 'seller_registration');
         if ((isset($businessMode) && $businessMode == 'single') || (isset($vendorRegistration) && $vendorRegistration == 0)) {
-            ToastMagic::warning(translate('access_denied').'!!');
+            ToastMagic::warning(translate('access_denied') . '!!');
 
             return redirect('/');
         }
@@ -128,5 +130,48 @@ class RegisterController extends BaseController
         $cities = LocationCity::where('country_id', $countryId)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
 
         return response()->json($cities);
+    }
+
+    public function locationAreas(int $cityId): JsonResponse
+    {
+        $areas = LocationArea::where('city_id', $cityId)->where('is_active', 1)->orderBy('name')->get(['id', 'name']);
+
+        return response()->json($areas);
+    }
+
+    public function requestCity(Request $request): JsonResponse
+    {
+        $request->validate([
+            'city_name' => ['required', 'string', 'max:191', function ($attribute, $value, $fail) use ($request) {
+                $exists = LocationCity::where('country_id', $request->integer('country_id'))
+                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($value)])
+                    ->exists();
+                if ($exists) {
+                    $fail(translate('this_city_already_exists'));
+                }
+
+                $pendingExists = CityRequest::where('country_id', $request->integer('country_id'))
+                    ->whereRaw('LOWER(city_name) = ?', [mb_strtolower($value)])
+                    ->where('status', 'pending')
+                    ->exists();
+                if ($pendingExists) {
+                    $fail(translate('a_request_for_this_city_is_already_pending'));
+                }
+            }],
+            'country_id' => ['required', 'integer', 'exists:location_countries,id'],
+        ]);
+
+        $cityRequest = CityRequest::create([
+            'seller_id' => null,
+            'country_id' => $request->integer('country_id'),
+            'city_name' => $request->input('city_name'),
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => translate('city_request_submitted_for_admin_approval'),
+            'city_request' => $cityRequest->only(['id', 'city_name', 'status']),
+        ]);
     }
 }

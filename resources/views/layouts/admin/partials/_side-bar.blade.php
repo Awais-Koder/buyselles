@@ -1122,6 +1122,10 @@
                         <span class="aside-mini-hidden-element text-truncate flex-grow-1">
                             {{ translate('Business_Setup') }}
                         </span>
+                        @php($pendingCityRequests = \App\Models\CityRequest::where('status', 'pending')->count())
+                        @if($pendingCityRequests > 0)
+                            <span class="badge badge-pill badge-danger ml-1">{{ $pendingCityRequests > 99 ? '99+' : $pendingCityRequests }}</span>
+                        @endif
                     </a>
                 </li>
 

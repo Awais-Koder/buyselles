@@ -107,18 +107,88 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                     </p>
                 </div>
                 <div class="bg-light p-3 rounded">
-                    <div class="col-lg-4">
-                        <div class="form-group mb-0">
-                            <label class="form-label text-dark">{{ translate('Store_Country') }}</label>
-                            <select name="store_country" class="form-control js-select2-custom">
-                                <option value="">--- {{ translate('Select_Country') }} ---</option>
-                                @foreach (COUNTRIES as $country)
-                                    <option value="{{ $country['code'] }}"
-                                        {{ $shop?->store_country == $country['code'] ? 'selected' : '' }}>
-                                        {{ $country['name'] }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <div class="row gy-3">
+                        {{-- Country --}}
+                        <div class="col-lg-4">
+                            <div class="form-group mb-0">
+                                <label class="form-label text-dark">{{ translate('Store_Country') }}</label>
+                                <select name="store_country_id" id="shop_store_country" class="form-control js-select2-custom">
+                                    <option value="">--- {{ translate('Select_Country') }} ---</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country->id }}"
+                                            {{ (int) ($shop?->store_country_id) === $country->id ? 'selected' : '' }}>
+                                            {{ $country->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- City --}}
+                        <div class="col-lg-4">
+                            <div class="form-group mb-0">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label text-dark mb-0">{{ translate('Store_City') }}</label>
+                                    <button type="button" class="btn btn-link p-0 fs-12 text-primary" data-toggle="modal"
+                                        data-target="#shopRequestCityModal" title="{{ translate('Request_New_City') }}">
+                                        <i class="fi fi-rr-paper-plane"></i> {{ translate('Request_city') }}
+                                    </button>
+                                </div>
+                                <select name="store_city_id" id="shop_store_city" class="form-control"
+                                    {{ empty($shop?->store_country_id) ? 'disabled' : '' }}>
+                                    <option value="">--- {{ translate('Select_City') }} ---</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {{-- Area --}}
+                        <div class="col-lg-4">
+                            <div class="form-group mb-0">
+                                <label class="form-label text-dark">{{ translate('Store_Area') }}</label>
+                                <select name="store_area_id" id="shop_store_area" class="form-control"
+                                    {{ empty($shop?->store_city_id) ? 'disabled' : '' }}>
+                                    <option value="">--- {{ translate('Select_Area') }} ---</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Request City Modal --}}
+            <div class="modal fade" id="shopRequestCityModal" tabindex="-1" role="dialog" aria-labelledby="shopRequestCityModalLabel">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="shopRequestCityModalLabel">{{ translate('Request_New_City') }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted mb-3">{{ translate('if_the_city_you_need_is_not_listed_request_admin_to_add_it') }}</p>
+                            <div class="form-group">
+                                <label class="title-color">{{ translate('Country') }} <span class="input-required-icon">*</span></label>
+                                <select id="shop_rc_country_id" class="form-control">
+                                    <option value="">{{ translate('Select_Country') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="title-color">{{ translate('City_Name') }} <span class="input-required-icon">*</span></label>
+                                <input type="text" id="shop_rc_city_name" class="form-control"
+                                    placeholder="{{ translate('e.g._New_York') }}">
+                            </div>
+                            <div id="shop-request-city-feedback" class="mt-2 d-none">
+                                <span class="text-success" id="shop-request-city-success-msg"></span>
+                                <span class="text-danger" id="shop-request-city-error-msg"></span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                            <button type="button" class="btn btn--primary" id="shopRequestCitySaveBtn">
+                                <span>{{ translate('Submit_Request') }}</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -276,4 +346,147 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
     <script src="{{ dynamicAsset(path: 'public/assets/back-end/js/file-upload/pdf.min.js') }}"></script>
     <script src="{{ dynamicAsset(path: 'public/assets/back-end/js/file-upload/pdf-worker.min.js') }}"></script>
     <script src="{{ dynamicAsset(path: 'public/assets/back-end/js/file-upload/multiple-document-upload.js') }}"></script>
+
+    <script>
+    (function() {
+        var citiesRoute   = '{{ route("vendor.shop.location.cities", ":id") }}';
+        var areasRoute    = '{{ route("vendor.shop.location.areas", ":id") }}';
+        var allCitiesRoute = '{{ route("vendor.shop.location.all-cities", ":id") }}';
+        var requestCityRoute = '{{ route("vendor.shop.location.quick-add-city-request") }}';
+        var csrfToken     = '{{ csrf_token() }}';
+
+        var preselectedCityId = '{{ $shop?->store_city_id ?? "" }}';
+        var preselectedAreaId = '{{ $shop?->store_area_id ?? "" }}';
+
+        // On page load: if country is already selected, load cities
+        var initialCountryId = $('#shop_store_country').val();
+        if (initialCountryId) {
+            loadCities(initialCountryId, preselectedCityId, function() {
+                if (preselectedCityId) {
+                    loadAreas(preselectedCityId, preselectedAreaId);
+                }
+            });
+        }
+
+        // Country change → load cities, reset area
+        $(document).on('change', '#shop_store_country', function() {
+            var countryId = $(this).val();
+            $('#shop_store_city').html('<option value="">--- {{ translate("Select_City") }} ---</option>').prop('disabled', true);
+            $('#shop_store_area').html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            if (countryId) {
+                loadCities(countryId);
+            }
+        });
+
+        // City change → load areas
+        $(document).on('change', '#shop_store_city', function() {
+            var cityId = $(this).val();
+            $('#shop_store_area').html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            if (cityId) {
+                loadAreas(cityId);
+            }
+        });
+
+        function loadCities(countryId, preselect, callback) {
+            $.get(citiesRoute.replace(':id', countryId), function(data) {
+                var $select = $('#shop_store_city');
+                $select.html('<option value="">--- {{ translate("Select_City") }} ---</option>');
+                $.each(data, function(i, city) {
+                    var selected = (preselect && preselect == city.id) ? ' selected' : '';
+                    $select.append('<option value="' + city.id + '"' + selected + '>' + city.name + '</option>');
+                });
+                $select.prop('disabled', false);
+                if (typeof callback === 'function') callback();
+            });
+        }
+
+        function loadAreas(cityId, preselect, callback) {
+            $.get(areasRoute.replace(':id', cityId), function(data) {
+                var $select = $('#shop_store_area');
+                $select.html('<option value="">--- {{ translate("Select_Area") }} ---</option>');
+                $.each(data, function(i, area) {
+                    var selected = (preselect && preselect == area.id) ? ' selected' : '';
+                    $select.append('<option value="' + area.id + '"' + selected + '>' + area.name + '</option>');
+                });
+                $select.prop('disabled', false);
+                if (typeof callback === 'function') callback();
+            });
+        }
+
+        // --- Request City Modal ---
+        $('#shopRequestCityModal').on('show.bs.modal', function() {
+            var $rcCountry = $('#shop_rc_country_id');
+            if ($rcCountry.find('option').length <= 1) {
+                $.get('{{ route("vendor.shop.location.countries") }}', function(data) {
+                    $rcCountry.html('<option value="">{{ translate("Select_Country") }}</option>');
+                    $.each(data, function(i, c) {
+                        $rcCountry.append('<option value="' + c.id + '">' + c.name + '</option>');
+                    });
+                    // Pre-select the currently chosen country
+                    var currentCountry = $('#shop_store_country').val();
+                    if (currentCountry) {
+                        $rcCountry.val(currentCountry);
+                    }
+                });
+            } else {
+                var currentCountry = $('#shop_store_country').val();
+                if (currentCountry) {
+                    $rcCountry.val(currentCountry);
+                }
+            }
+            // Reset form
+            $('#shop_rc_city_name').val('');
+            $('#shop-request-city-feedback').addClass('d-none');
+            $('#shop-request-city-success-msg').text('');
+            $('#shop-request-city-error-msg').text('');
+        });
+
+        $(document).on('click', '#shopRequestCitySaveBtn', function() {
+            var $btn = $(this);
+            var countryId = $('#shop_rc_country_id').val();
+            var cityName  = $('#shop_rc_city_name').val().trim();
+
+            if (!countryId || !cityName) {
+                $('#shop-request-city-feedback').removeClass('d-none');
+                $('#shop-request-city-error-msg').text('{{ translate("Please_select_country_and_enter_city_name") }}');
+                $('#shop-request-city-success-msg').text('');
+                return;
+            }
+
+            $btn.prop('disabled', true);
+            $btn.find('.spinner-border').removeClass('d-none');
+
+            $.ajax({
+                url: requestCityRoute,
+                type: 'POST',
+                data: {
+                    _token: csrfToken,
+                    country_id: countryId,
+                    city_name: cityName
+                },
+                success: function(response) {
+                    $('#shop-request-city-feedback').removeClass('d-none');
+                    $('#shop-request-city-success-msg').text(response.message || '{{ translate("City_request_submitted_successfully") }}');
+                    $('#shop-request-city-error-msg').text('');
+                    $('#shop_rc_city_name').val('');
+                    setTimeout(function() {
+                        $('#shopRequestCityModal').modal('hide');
+                    }, 1500);
+                },
+                error: function(xhr) {
+                    $('#shop-request-city-feedback').removeClass('d-none');
+                    var errMsg = (xhr.responseJSON && xhr.responseJSON.message)
+                        ? xhr.responseJSON.message
+                        : '{{ translate("Something_went_wrong") }}';
+                    $('#shop-request-city-error-msg').text(errMsg);
+                    $('#shop-request-city-success-msg').text('');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $btn.find('.spinner-border').addClass('d-none');
+                }
+            });
+        });
+    })();
+    </script>
 @endpush

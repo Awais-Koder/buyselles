@@ -10769,4 +10769,7 @@ return [
 	"city_requests" => "City requests",
 	"PDF,_DOC_,docx,_JPG_,jpeg_File_Size" => "PDF, DOC ,docx, JPG ,jpeg File Size",
 	"city_request_approved_and_city_created" => "City request approved and city created",
+	"City_request_submitted_successfully" => "City request submitted successfully",
+	"Please_select_country_and_enter_city_name" => "Please select country and enter city name",
+	"Store_Area" => "Store Area",
 ];

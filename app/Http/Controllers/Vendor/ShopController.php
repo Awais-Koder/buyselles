@@ -11,6 +11,7 @@ use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\ShopRequest;
 use App\Http\Requests\Vendor\ShopVacationRequest;
 use App\Http\Requests\Vendor\VendorOtherSetupRequest;
+use App\Models\LocationCountry;
 use App\Services\ShopService;
 use App\Services\VendorService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
@@ -130,6 +131,7 @@ class ShopController extends BaseController
         return view('vendor-views.shop.other-setup', [
             'shop' => $shop,
             'vendor' => $vendor,
+            'countries' => LocationCountry::where('is_active', 1)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -157,10 +159,14 @@ class ShopController extends BaseController
             params: ['seller_id' => auth('seller')->id()],
             data: $this->vendorService->getUpdateBusinessTIN(request: $request)
         );
-        if ($request->has('store_country')) {
+        if ($request->has('store_country_id')) {
             $this->shopRepo->updateWhere(
                 params: ['seller_id' => auth('seller')->id()],
-                data: ['store_country' => $request->input('store_country') ?: null]
+                data: [
+                    'store_country_id' => $request->input('store_country_id') ?: null,
+                    'store_city_id' => $request->input('store_city_id') ?: null,
+                    'store_area_id' => $request->input('store_area_id') ?: null,
+                ]
             );
         }
         updateSetupGuideCacheKey(key: 'order_setup', panel: 'vendor');

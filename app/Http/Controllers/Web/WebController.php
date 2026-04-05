@@ -16,6 +16,7 @@ use App\Models\DeliveryZipCode;
 use App\Models\DigitalProductCode;
 use App\Models\DigitalProductOtpVerification;
 use App\Models\LocationCity;
+use App\Models\LocationCountry;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -226,7 +227,9 @@ class WebController extends Controller
 
         $shopQuery = Shop::active()
             ->applyNameFilter($request->shop_name)
-            ->when($request->store_country, fn($q) => $q->where('store_country', $request->store_country))
+            ->when($request->store_country_id, fn($q) => $q->where('store_country_id', $request->store_country_id))
+            ->when($request->store_city_id, fn($q) => $q->where('store_city_id', $request->store_city_id))
+            ->when($request->store_area_id, fn($q) => $q->where('store_area_id', $request->store_area_id))
             ->withCount(['products' => function ($query) {
                 return $query->active();
             }]);
@@ -255,6 +258,10 @@ class WebController extends Controller
             'categories' => $categories,
             'storeCountries' => Shop::active()->whereNotNull('store_country')->distinct()->pluck('store_country')->sort()->values(),
             'selectedStoreCountry' => $request->store_country,
+            'countries' => LocationCountry::where('is_active', 1)->orderBy('name')->get(['id', 'name']),
+            'selectedCountryId' => $request->store_country_id,
+            'selectedCityId' => $request->store_city_id,
+            'selectedAreaId' => $request->store_area_id,
         ]);
     }
 

@@ -97,6 +97,9 @@
             "app/Utils/theme-helpers.php",
             "app/Utils/vendor-helpers.php"
         ],
+        "classmap": [
+            "database/seeds"
+        ],
         "psr-4": {
             "App\\": "app/",
             "Modules\\": "Modules/",
@@ -156,7 +159,9 @@
                     "name": "phonepe/phonepe-pg-php-sdk",
                     "version": "1.0.0",
                     "autoload": {
-                        "classmap": ["/"]
+                        "classmap": [
+                            "/"
+                        ]
                     }
                 }
             ]

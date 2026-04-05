@@ -10772,4 +10772,5 @@ return [
 	"City_request_submitted_successfully" => "City request submitted successfully",
 	"Please_select_country_and_enter_city_name" => "Please select country and enter city name",
 	"Store_Area" => "Store Area",
+	"Store_City" => "Store City",
 ];

@@ -144,7 +144,13 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                         {{-- Area --}}
                         <div class="col-lg-4">
                             <div class="form-group mb-0">
-                                <label class="form-label text-dark">{{ translate('Store_Area') }}</label>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label text-dark mb-0">{{ translate('Store_Area') }}</label>
+                                    <button type="button" class="btn btn-link p-0 fs-12 text-primary" data-toggle="modal"
+                                        data-target="#shopQuickAddAreaModal" title="{{ translate('Add_New_Area') }}">
+                                        <i class="fi fi-rr-plus"></i> {{ translate('Add_new') }}
+                                    </button>
+                                </div>
                                 <select name="store_area_id" id="shop_store_area" class="form-control"
                                     {{ empty($shop?->store_city_id) ? 'disabled' : '' }}>
                                     <option value="">--- {{ translate('Select_Area') }} ---</option>
@@ -187,6 +193,50 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Cancel') }}</button>
                             <button type="button" class="btn btn--primary" id="shopRequestCitySaveBtn">
                                 <span>{{ translate('Submit_Request') }}</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Quick Add Area Modal --}}
+            <div class="modal fade" id="shopQuickAddAreaModal" tabindex="-1" role="dialog" aria-labelledby="shopQuickAddAreaModalLabel">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="shopQuickAddAreaModalLabel">{{ translate('Add_New_Area') }}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="title-color">{{ translate('Country') }}</label>
+                                <select id="shop_qa_area_country_id" class="form-control">
+                                    <option value="">{{ translate('Select_Country') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="title-color">{{ translate('City') }}</label>
+                                <select id="shop_qa_area_city_id" class="form-control" disabled>
+                                    <option value="">{{ translate('Select_City') }}</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="title-color">{{ translate('Area_Name') }} <span class="input-required-icon">*</span></label>
+                                <input type="text" id="shop_qa_area_name" class="form-control"
+                                    placeholder="{{ translate('e.g._Manhattan') }}">
+                            </div>
+                            <div id="shop-quick-add-area-feedback" class="mt-2 d-none">
+                                <span class="text-success" id="shop-quick-add-area-success-msg"></span>
+                                <span class="text-danger" id="shop-quick-add-area-error-msg"></span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                            <button type="button" class="btn btn--primary" id="shopQuickAddAreaSaveBtn">
+                                <span>{{ translate('Save') }}</span>
                                 <span class="spinner-border spinner-border-sm d-none" role="status"></span>
                             </button>
                         </div>
@@ -353,6 +403,7 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
         var areasRoute    = '{{ route("vendor.shop.location.areas", ":id") }}';
         var allCitiesRoute = '{{ route("vendor.shop.location.all-cities", ":id") }}';
         var requestCityRoute = '{{ route("vendor.shop.location.quick-add-city-request") }}';
+        var quickAddAreaRoute = '{{ route("vendor.shop.location.quick-add-area") }}';
         var csrfToken     = '{{ csrf_token() }}';
 
         var preselectedCityId = '{{ $shop?->store_city_id ?? "" }}';
@@ -480,6 +531,125 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                         : '{{ translate("Something_went_wrong") }}';
                     $('#shop-request-city-error-msg').text(errMsg);
                     $('#shop-request-city-success-msg').text('');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false);
+                    $btn.find('.spinner-border').addClass('d-none');
+                }
+            });
+        });
+
+        // --- Quick Add Area Modal ---
+        $('#shopQuickAddAreaModal').on('show.bs.modal', function() {
+            var $qaCountry = $('#shop_qa_area_country_id');
+            // Populate countries from main dropdown
+            $qaCountry.html('<option value="">{{ translate("Select_Country") }}</option>');
+            $('#shop_store_country option').each(function() {
+                if ($(this).val()) {
+                    $qaCountry.append('<option value="' + $(this).val() + '">' + $(this).text() + '</option>');
+                }
+            });
+            // Pre-select current country
+            var currentCountry = $('#shop_store_country').val();
+            if (currentCountry) {
+                $qaCountry.val(currentCountry);
+                // Load cities for this country
+                var $qaCitySelect = $('#shop_qa_area_city_id');
+                $qaCitySelect.html('<option value="">{{ translate("Loading...") }}</option>').prop('disabled', true);
+                $.get(citiesRoute.replace(':id', currentCountry), function(data) {
+                    $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
+                    var currentCity = $('#shop_store_city').val();
+                    $.each(data, function(i, city) {
+                        var selected = (currentCity && currentCity == city.id) ? ' selected' : '';
+                        $qaCitySelect.append('<option value="' + city.id + '"' + selected + '>' + city.name + '</option>');
+                    });
+                    $qaCitySelect.prop('disabled', false);
+                });
+            }
+            // Reset form
+            $('#shop_qa_area_name').val('');
+            $('#shop-quick-add-area-feedback').addClass('d-none');
+            $('#shop-quick-add-area-success-msg').text('');
+            $('#shop-quick-add-area-error-msg').text('');
+        });
+
+        // Country change inside area modal → load cities
+        $(document).on('change', '#shop_qa_area_country_id', function() {
+            var countryId = $(this).val();
+            var $qaCitySelect = $('#shop_qa_area_city_id');
+            $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>').prop('disabled', true);
+            if (countryId) {
+                $.get(citiesRoute.replace(':id', countryId), function(data) {
+                    $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
+                    $.each(data, function(i, city) {
+                        $qaCitySelect.append('<option value="' + city.id + '">' + city.name + '</option>');
+                    });
+                    $qaCitySelect.prop('disabled', false);
+                });
+            }
+        });
+
+        $(document).on('click', '#shopQuickAddAreaSaveBtn', function() {
+            var $btn = $(this);
+            var cityId = $('#shop_qa_area_city_id').val();
+            var areaName = $('#shop_qa_area_name').val().trim();
+
+            $('#shop-quick-add-area-feedback').addClass('d-none');
+            $('#shop-quick-add-area-success-msg').text('');
+            $('#shop-quick-add-area-error-msg').text('');
+
+            if (!cityId) {
+                $('#shop-quick-add-area-error-msg').text('{{ translate("Please_select_a_city") }}');
+                $('#shop-quick-add-area-feedback').removeClass('d-none');
+                return;
+            }
+            if (!areaName) {
+                $('#shop-quick-add-area-error-msg').text('{{ translate("Area_name_is_required") }}');
+                $('#shop-quick-add-area-feedback').removeClass('d-none');
+                return;
+            }
+
+            $btn.prop('disabled', true);
+            $btn.find('.spinner-border').removeClass('d-none');
+
+            $.ajax({
+                url: quickAddAreaRoute,
+                type: 'POST',
+                data: {
+                    _token: csrfToken,
+                    city_id: cityId,
+                    name: areaName
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#shop-quick-add-area-feedback').removeClass('d-none');
+                        $('#shop-quick-add-area-success-msg').text(response.message || '{{ translate("Area_added_successfully") }}');
+                        $('#shop-quick-add-area-error-msg').text('');
+                        // Reload areas in main form if same city is selected
+                        if (String($('#shop_store_city').val()) === String(cityId)) {
+                            loadAreas(cityId, null, function() {
+                                if (response.area) {
+                                    $('#shop_store_area').val(response.area.id);
+                                }
+                            });
+                        }
+                        setTimeout(function() {
+                            $('#shopQuickAddAreaModal').modal('hide');
+                        }, 1200);
+                    } else {
+                        $('#shop-quick-add-area-error-msg').text(response.message || '{{ translate("Something_went_wrong") }}');
+                        $('#shop-quick-add-area-feedback').removeClass('d-none');
+                    }
+                },
+                error: function(xhr) {
+                    $('#shop-quick-add-area-feedback').removeClass('d-none');
+                    var errMsg = (xhr.responseJSON && xhr.responseJSON.errors)
+                        ? Object.values(xhr.responseJSON.errors).flat().join(' ')
+                        : (xhr.responseJSON && xhr.responseJSON.message)
+                            ? xhr.responseJSON.message
+                            : '{{ translate("Something_went_wrong") }}';
+                    $('#shop-quick-add-area-error-msg').text(errMsg);
+                    $('#shop-quick-add-area-success-msg').text('');
                 },
                 complete: function() {
                     $btn.prop('disabled', false);

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\BaseController;
+use App\Models\AreaRequest;
 use App\Models\CityRequest;
+use App\Models\Notification;
 use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
@@ -32,7 +34,7 @@ class LocationController extends BaseController
 
         $countries = LocationCountry::query()
             ->where('is_active', true)
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('cities')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -57,7 +59,7 @@ class LocationController extends BaseController
         $cities = LocationCity::query()
             ->where('country_id', $countryId)
             ->where('is_active', true)
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('areas')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -81,7 +83,7 @@ class LocationController extends BaseController
 
         $areas = LocationArea::query()
             ->where('city_id', $cityId)
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(getWebConfig(name: 'pagination_limit'));
@@ -293,6 +295,16 @@ class LocationController extends BaseController
             'status' => 'pending',
         ]);
 
+        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        Notification::create([
+            'sent_by' => 'system',
+            'sent_to' => 'admin',
+            'title' => translate('new_city_request'),
+            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'notification_count' => 1,
+            'status' => 1,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => translate('city_request_submitted_for_admin_approval'),
@@ -300,7 +312,7 @@ class LocationController extends BaseController
         ]);
     }
 
-    public function quickAddArea(Request $request): JsonResponse
+    public function quickAddAreaRequest(Request $request): JsonResponse
     {
         $request->validate([
             'name' => ['required', 'string', 'max:191', function ($attribute, $value, $fail) use ($request) {
@@ -310,22 +322,40 @@ class LocationController extends BaseController
                 if ($exists) {
                     $fail(translate('this_area_already_exists'));
                 }
+
+                $pendingExists = AreaRequest::where('seller_id', auth('seller')->id())
+                    ->where('city_id', $request->integer('city_id'))
+                    ->whereRaw('LOWER(area_name) = ?', [mb_strtolower($value)])
+                    ->where('status', 'pending')
+                    ->exists();
+                if ($pendingExists) {
+                    $fail(translate('a_request_for_this_area_is_already_pending'));
+                }
             }],
             'city_id' => ['required', 'integer', 'exists:location_cities,id'],
         ]);
 
-        $area = LocationArea::create([
+        $areaRequest = AreaRequest::create([
+            'seller_id' => auth('seller')->id(),
             'city_id' => $request->integer('city_id'),
-            'name' => $request->input('name'),
-            'is_active' => true,
-            'cod_available' => false,
-            'sort_order' => 0,
+            'area_name' => $request->input('name'),
+            'status' => 'pending',
+        ]);
+
+        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        Notification::create([
+            'sent_by' => 'system',
+            'sent_to' => 'admin',
+            'title' => translate('new_area_request'),
+            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_area') . ': ' . $areaRequest->area_name,
+            'notification_count' => 1,
+            'status' => 1,
         ]);
 
         return response()->json([
             'success' => true,
-            'area' => $area->only(['id', 'name']),
-            'message' => translate('Area_added_successfully'),
+            'message' => translate('area_request_submitted_for_admin_approval'),
+            'area_request' => $areaRequest->only(['id', 'area_name', 'status']),
         ]);
     }
 }

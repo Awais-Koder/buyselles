@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\Http\Controllers\BaseController;
+use App\Models\AreaRequest;
 use App\Models\CityRequest;
 use App\Models\LocationArea;
 use App\Models\LocationCity;
@@ -324,6 +325,79 @@ class LocationController extends BaseController
         ]);
 
         ToastMagic::success(translate('city_request_rejected'));
+
+        return back();
+    }
+
+    // ----- Area Request Management -----
+
+    public function areaRequests(Request $request): View
+    {
+        $searchValue = $request->get('searchValue');
+        $status = $request->get('status');
+
+        $areaRequests = AreaRequest::query()
+            ->with(['seller', 'city.country', 'approvedArea'])
+            ->when($searchValue, fn($q) => $q->where('area_name', 'like', "%{$searchValue}%"))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->latest()
+            ->paginate(getWebConfig(name: 'pagination_limit'));
+
+        return view('admin-views.business-settings.location.area-requests', compact('areaRequests', 'searchValue', 'status'));
+    }
+
+    public function approveAreaRequest(Request $request, int $id): RedirectResponse
+    {
+        $areaRequest = AreaRequest::with('city')->findOrFail($id);
+
+        if ($areaRequest->status !== 'pending') {
+            ToastMagic::error(translate('this_request_has_already_been_processed'));
+
+            return back();
+        }
+
+        $area = LocationArea::create([
+            'city_id' => $areaRequest->city_id,
+            'name' => $areaRequest->area_name,
+            'is_active' => true,
+        ]);
+
+        $areaRequest->update([
+            'status' => 'approved',
+            'approved_area_id' => $area->id,
+        ]);
+
+        Product::where('pending_area_request_id', $areaRequest->id)
+            ->update([
+                'location_area_id' => $area->id,
+                'pending_area_request_id' => null,
+            ]);
+
+        ToastMagic::success(translate('area_request_approved_and_area_created'));
+
+        return back();
+    }
+
+    public function rejectAreaRequest(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'admin_note' => 'nullable|string|max:500',
+        ]);
+
+        $areaRequest = AreaRequest::findOrFail($id);
+
+        if ($areaRequest->status !== 'pending') {
+            ToastMagic::error(translate('this_request_has_already_been_processed'));
+
+            return back();
+        }
+
+        $areaRequest->update([
+            'status' => 'rejected',
+            'admin_note' => $request->admin_note,
+        ]);
+
+        ToastMagic::success(translate('area_request_rejected'));
 
         return back();
     }

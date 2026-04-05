@@ -98,11 +98,17 @@
                 } else {
                     $globalOpt.addClass('d-none');
                     if ($('#product_location_country').val() === '0') {
-                        $('#product_location_country').val('');
-                        $('#product_location_city').val('').prop('disabled', true).html(
+                        $('#product_location_country').val('').trigger('change.select2');
+                        var $cityReset = $('#product_location_city');
+                        var $areaReset = $('#product_location_area');
+                        if ($cityReset.hasClass('select2-hidden-accessible')) $cityReset.select2('destroy');
+                        if ($areaReset.hasClass('select2-hidden-accessible')) $areaReset.select2('destroy');
+                        $cityReset.val('').prop('disabled', true).html(
                             '<option value="">{{ translate('Select_City') }}</option>');
-                        $('#product_location_area').val('').prop('disabled', true).html(
+                        $areaReset.val('').prop('disabled', true).html(
                             '<option value="">{{ translate('Select_Area') }}</option>');
+                        initLocationSelect2($cityReset);
+                        initLocationSelect2($areaReset);
                     }
                 }
             }
@@ -121,7 +127,17 @@
                 return areasRouteTemplate.replace(':id', cityId);
             }
 
+            function initLocationSelect2($select) {
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
+                $select.select2({ width: '100%' });
+            }
+
             function populateSelect($select, items, selectedId, placeholder) {
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.select2('destroy');
+                }
                 $select.empty().append($('<option>', {
                     value: '',
                     text: placeholder
@@ -133,6 +149,7 @@
                         selected: (String(item.id) === String(selectedId)),
                     }));
                 });
+                initLocationSelect2($select);
             }
 
             function loadCities(countryId, callback) {
@@ -169,10 +186,16 @@
 
             $(document).on('change', '#product_location_country', function() {
                 var countryId = $(this).val();
-                $('#product_location_city').val('').prop('disabled', true).html(
+                var $citySelect = $('#product_location_city');
+                var $areaSelect = $('#product_location_area');
+                if ($citySelect.hasClass('select2-hidden-accessible')) $citySelect.select2('destroy');
+                if ($areaSelect.hasClass('select2-hidden-accessible')) $areaSelect.select2('destroy');
+                $citySelect.val('').prop('disabled', true).html(
                     '<option value="">{{ translate('Select_City') }}</option>');
-                $('#product_location_area').val('').prop('disabled', true).html(
+                $areaSelect.val('').prop('disabled', true).html(
                     '<option value="">{{ translate('Select_Area') }}</option>');
+                initLocationSelect2($citySelect);
+                initLocationSelect2($areaSelect);
                 if (countryId && countryId !== '0') {
                     loadCities(countryId);
                 }
@@ -180,8 +203,11 @@
 
             $(document).on('change', '#product_location_city', function() {
                 var cityId = $(this).val();
-                $('#product_location_area').val('').prop('disabled', true).html(
+                var $areaSelect = $('#product_location_area');
+                if ($areaSelect.hasClass('select2-hidden-accessible')) $areaSelect.select2('destroy');
+                $areaSelect.val('').prop('disabled', true).html(
                     '<option value="">{{ translate('Select_Area') }}</option>');
+                initLocationSelect2($areaSelect);
                 if (cityId) {
                     loadAreas(cityId);
                 }
@@ -189,6 +215,11 @@
 
             // ── init ──
             toggleGlobalOption();
+
+            // Initialize Select2 on all main location selects
+            initLocationSelect2($('#product_location_country'));
+            initLocationSelect2($('#product_location_city'));
+            initLocationSelect2($('#product_location_area'));
 
         }());
     </script>

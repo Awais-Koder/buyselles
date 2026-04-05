@@ -15,6 +15,7 @@
         <div class="mb-2">
             <select class="form-control form-control-sm" id="prod-location-country">
                 <option value="">--- {{ translate('all_countries') }} ---</option>
+                <option value="global" {{ $locCountryId == 'global' ? 'selected' : '' }}>{{ translate('global') }} ({{ translate('all_countries') }})</option>
                 @foreach ($locationCountries as $country)
                     <option value="{{ $country->id }}" {{ $locCountryId == $country->id ? 'selected' : '' }}>
                         {{ $country->name }}
@@ -100,7 +101,7 @@
                 areaEl.innerHTML = '<option value="">--- {{ translate('all_areas') }} ---</option>';
                 cityEl.disabled  = true;
                 areaEl.disabled  = true;
-                if (this.value) { loadCities(this.value, null, null); }
+                if (this.value && this.value !== 'global') { loadCities(this.value, null, null); }
             });
 
             cityEl.addEventListener('change', function () {

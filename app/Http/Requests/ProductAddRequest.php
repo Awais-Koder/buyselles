@@ -52,6 +52,7 @@ class ProductAddRequest extends Request
             $rules['location_city_id'] = 'nullable';
             $rules['location_area_id'] = 'nullable';
             $rules['pending_city_request_id'] = 'nullable|integer';
+            $rules['pending_area_request_id'] = 'nullable|integer';
 
             // Digital products can be Global (value 0 → stored as null)
             if ($this->input('product_type') === 'digital' && $this->input('location_country_id') == '0') {

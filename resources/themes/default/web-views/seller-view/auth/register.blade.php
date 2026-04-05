@@ -150,6 +150,7 @@
 @endsection
 
 @push('script')
+    <script src="{{ theme_asset(path: 'public/assets/back-end/js/select2.min.js') }}"></script>
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/vendor-registration.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
     <script src="{{ theme_asset(path: 'public/assets/front-end/js/daterangepicker.min.js') }}"></script>

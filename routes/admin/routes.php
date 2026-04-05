@@ -1102,6 +1102,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                     Route::get('city-requests', 'cityRequests')->name('city-requests');
                     Route::post('city-requests/{id}/approve', 'approveCityRequest')->name('approve-city-request');
                     Route::post('city-requests/{id}/reject', 'rejectCityRequest')->name('reject-city-request');
+
+                    // Area Requests from vendors
+                    Route::get('area-requests', 'areaRequests')->name('area-requests');
+                    Route::post('area-requests/{id}/approve', 'approveAreaRequest')->name('approve-area-request');
+                    Route::post('area-requests/{id}/reject', 'rejectAreaRequest')->name('reject-area-request');
                 });
             });
         });

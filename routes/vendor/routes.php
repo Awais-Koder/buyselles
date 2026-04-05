@@ -69,6 +69,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::get('location-cities/{countryId}', 'locationCities')->name('location-cities');
                     Route::get('location-areas/{cityId}', 'locationAreas')->name('location-areas');
                     Route::post('request-city', 'requestCity')->name('request-city');
+                    Route::post('request-area', 'requestArea')->name('request-area');
                 });
             });
         });
@@ -339,7 +340,7 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                         Route::get('cities/{countryId}', 'getProductFormCities')->name('cities');
                         Route::get('areas/{cityId}', 'getProductFormAreas')->name('areas');
                         Route::post('quick-add-city-request', 'quickAddCityRequest')->name('quick-add-city-request');
-                        Route::post('quick-add-area', 'quickAddArea')->name('quick-add-area');
+                        Route::post('quick-add-area-request', 'quickAddAreaRequest')->name('quick-add-area-request');
                         // All-active location dropdowns
                         Route::get('all-cities/{countryId}', 'getCitiesByCountry')->name('all-cities');
                         Route::get('all-areas/{cityId}', 'getAreasByCity')->name('all-areas');

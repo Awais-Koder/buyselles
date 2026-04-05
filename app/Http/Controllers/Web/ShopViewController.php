@@ -723,6 +723,9 @@ class ShopViewController extends Controller
             'publishing_house_id' => $request['publishing_house_id'],
             'search_category_value' => $request['search_category_value'],
             'product_name' => $request['product_name'],
+            'country_id' => $request['country_id'],
+            'city_id' => $request['city_id'],
+            'area_id' => $request['area_id'],
             'page' => $request['page'] ?? 1,
         ];
 

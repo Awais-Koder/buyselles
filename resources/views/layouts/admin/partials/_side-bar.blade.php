@@ -1122,9 +1122,9 @@
                         <span class="aside-mini-hidden-element text-truncate flex-grow-1">
                             {{ translate('Business_Setup') }}
                         </span>
-                        @php($pendingCityRequests = \App\Models\CityRequest::where('status', 'pending')->count())
-                        @if($pendingCityRequests > 0)
-                            <span class="badge badge-pill badge-danger ml-1">{{ $pendingCityRequests > 99 ? '99+' : $pendingCityRequests }}</span>
+                        @php($pendingLocationRequests = \App\Models\CityRequest::where('status', 'pending')->count() + \App\Models\AreaRequest::where('status', 'pending')->count())
+                        @if($pendingLocationRequests > 0)
+                            <span class="badge badge-pill badge-danger ml-1">{{ $pendingLocationRequests > 99 ? '99+' : $pendingLocationRequests }}</span>
                         @endif
                     </a>
                 </li>

@@ -74,6 +74,28 @@
     </div>
 @endif
 
+@if(isset($filterSection) && in_array('location', $filterSection))
+    @php
+        $filterCountries = \App\Models\LocationCountry::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(['id', 'name']);
+    @endphp
+    <div class="p-12 p-sm-20 bg-section rounded mb-3 mb-sm-4 text-dark overflow-wrap-anywhere">
+        <label for="" class="form-label title-color">{{ translate('Location') }}</label>
+        <div class="bg-white rounded p-3">
+            <select class="form-control" name="filter_country">
+                <option value="">{{ translate('All_Locations') }}</option>
+                <option value="global" {{ request('filter_country') === 'global' ? 'selected' : '' }}>
+                    {{ translate('Global') }} ({{ translate('All_Countries') }})
+                </option>
+                @foreach($filterCountries as $filterCountry)
+                    <option value="{{ $filterCountry->id }}" {{ request('filter_country') == $filterCountry->id ? 'selected' : '' }}>
+                        {{ $filterCountry->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+@endif
+
 @if(isset($filterSection) && in_array('product_status', $filterSection))
     <div class="p-12 p-sm-20 bg-section rounded mb-3 mb-sm-20 overflow-wrap-anywhere">
         <label for="" class="form-label title-color">{{ translate('Status') }}</label>

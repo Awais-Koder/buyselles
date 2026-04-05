@@ -13,10 +13,12 @@ use App\Enums\SessionKey;
 use App\Events\VendorRegistrationEvent;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Vendor\VendorAddRequest;
+use App\Models\AreaRequest;
 use App\Models\CityRequest;
 use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
+use App\Models\Notification;
 use App\Repositories\VendorRegistrationReasonRepository;
 use App\Services\RecaptchaService;
 use App\Services\ShopService;
@@ -168,10 +170,64 @@ class RegisterController extends BaseController
             'status' => 'pending',
         ]);
 
+        Notification::create([
+            'sent_by' => 'system',
+            'sent_to' => 'admin',
+            'title' => translate('new_city_request'),
+            'description' => translate('a_new_vendor_registration_requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'notification_count' => 1,
+            'status' => 1,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => translate('city_request_submitted_for_admin_approval'),
             'city_request' => $cityRequest->only(['id', 'city_name', 'status']),
+        ]);
+    }
+
+    public function requestArea(Request $request): JsonResponse
+    {
+        $request->validate([
+            'area_name' => ['required', 'string', 'max:191', function ($attribute, $value, $fail) use ($request) {
+                $exists = LocationArea::where('city_id', $request->integer('city_id'))
+                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($value)])
+                    ->exists();
+                if ($exists) {
+                    $fail(translate('this_area_already_exists'));
+                }
+
+                $pendingExists = AreaRequest::where('city_id', $request->integer('city_id'))
+                    ->whereRaw('LOWER(area_name) = ?', [mb_strtolower($value)])
+                    ->where('status', 'pending')
+                    ->exists();
+                if ($pendingExists) {
+                    $fail(translate('a_request_for_this_area_is_already_pending'));
+                }
+            }],
+            'city_id' => ['required', 'integer', 'exists:location_cities,id'],
+        ]);
+
+        $areaRequest = AreaRequest::create([
+            'seller_id' => null,
+            'city_id' => $request->integer('city_id'),
+            'area_name' => $request->input('area_name'),
+            'status' => 'pending',
+        ]);
+
+        Notification::create([
+            'sent_by' => 'system',
+            'sent_to' => 'admin',
+            'title' => translate('new_area_request'),
+            'description' => translate('a_new_vendor_registration_requested_a_new_area') . ': ' . $areaRequest->area_name,
+            'notification_count' => 1,
+            'status' => 1,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => translate('area_request_submitted_for_admin_approval'),
+            'area_request' => $areaRequest->only(['id', 'area_name', 'status']),
         ]);
     }
 }

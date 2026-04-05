@@ -342,7 +342,7 @@ class ProductRepository implements ProductRepositoryInterface
             })
             ->when(! empty($withCount), function ($query) use ($withCount) {
                 // Apply all plain (non-reviews) withCount relations generically
-                $generic = array_filter($withCount, fn ($v, $k) => $k !== 'reviews', ARRAY_FILTER_USE_BOTH);
+                $generic = array_filter($withCount, fn($v, $k) => $k !== 'reviews', ARRAY_FILTER_USE_BOTH);
                 if (! empty($generic)) {
                     return $query->withCount(array_values($generic));
                 }
@@ -427,12 +427,12 @@ class ProductRepository implements ProductRepositoryInterface
             })
             ->when($whereIn, function ($query) use ($whereIn) {
                 collect($whereIn)->each(
-                    fn ($values, $column) => $query->whereIn($column, $values)
+                    fn($values, $column) => $query->whereIn($column, $values)
                 );
             })
             ->when($whereNotIn, function ($query) use ($whereNotIn) {
                 collect($whereNotIn)->each(
-                    fn ($values, $column) => $query->whereNotIn($column, $values)
+                    fn($values, $column) => $query->whereNotIn($column, $values)
                 );
             })->when(! empty($orderBy), function ($query) use ($orderBy) {
                 $query->orderBy(array_key_first($orderBy), array_values($orderBy)[0]);

@@ -59,9 +59,16 @@
                             <div class="d-flex align-items-center gap-2">
                                 <a href="{{ route('admin.business-settings.location.city-requests') }}" class="btn btn-outline-info btn-sm">
                                     <i class="fi fi-rr-paper-plane"></i> {{ translate('City_Requests') }}
-                                    @php $pendingCount = \App\Models\CityRequest::where('status', 'pending')->count(); @endphp
-                                    @if($pendingCount > 0)
-                                        <span class="badge badge-danger ml-1">{{ $pendingCount }}</span>
+                                    @php $pendingCityCount = \App\Models\CityRequest::where('status', 'pending')->count(); @endphp
+                                    @if($pendingCityCount > 0)
+                                        <span class="badge badge-danger ml-1">{{ $pendingCityCount }}</span>
+                                    @endif
+                                </a>
+                                <a href="{{ route('admin.business-settings.location.area-requests') }}" class="btn btn-outline-info btn-sm">
+                                    <i class="fi fi-rr-paper-plane"></i> {{ translate('Area_Requests') }}
+                                    @php $pendingAreaCount = \App\Models\AreaRequest::where('status', 'pending')->count(); @endphp
+                                    @if($pendingAreaCount > 0)
+                                        <span class="badge badge-danger ml-1">{{ $pendingAreaCount }}</span>
                                     @endif
                                 </a>
                                 <form action="{{ url()->current() }}" method="GET">

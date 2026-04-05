@@ -47,6 +47,7 @@
                                             'filter_sort_by' => request('filter_sort_by'),
                                             'filter_product_types' => request('filter_product_types'),
                                             'product_status' => request('product_status'),
+                                            'filter_country' => request('filter_country'),
                                             'filter_brand_ids' => request('filter_brand_ids'),
                                             'filter_category_ids' => request('filter_category_ids'),
                                         ]) }}">
@@ -60,6 +61,7 @@
                                         !empty(request('filter_sort_by')) ||
                                             !empty(request('filter_product_types')) ||
                                             !empty(request('product_status')) ||
+                                            !empty(request('filter_country')) ||
                                             !empty(request('filter_shop_ids')) ||
                                             !empty(request('filter_brand_ids')) ||
                                             !empty(request('filter_category_ids')))
@@ -71,6 +73,7 @@
                                             !empty(request('filter_sort_by')) ||
                                                 !empty(request('filter_product_types')) ||
                                                 !empty(request('product_status')) ||
+                                                !empty(request('filter_country')) ||
                                                 !empty(request('filter_shop_ids')) ||
                                                 !empty(request('filter_brand_ids')) ||
                                                 !empty(request('filter_category_ids'))) class="btn btn--primary px-4"

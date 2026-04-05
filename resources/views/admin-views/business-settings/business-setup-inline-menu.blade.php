@@ -64,9 +64,9 @@
             <a class="nav-link {{ Request::is('admin/business-settings/location*') ? 'active' : '' }}"
                 href="{{ route('admin.business-settings.location.index') }}">
                 {{ translate('Location_Setup') }}
-                @php($pendingCityRequestCount = \App\Models\CityRequest::where('status', 'pending')->count())
-                @if($pendingCityRequestCount > 0)
-                    <span class="badge badge-danger badge-pill ml-1">{{ $pendingCityRequestCount }}</span>
+                @php($pendingLocationRequestCount = \App\Models\CityRequest::where('status', 'pending')->count() + \App\Models\AreaRequest::where('status', 'pending')->count())
+                @if($pendingLocationRequestCount > 0)
+                    <span class="badge badge-danger badge-pill ml-1">{{ $pendingLocationRequestCount }}</span>
                 @endif
             </a>
         </li>

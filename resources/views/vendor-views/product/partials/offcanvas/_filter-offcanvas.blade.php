@@ -11,9 +11,9 @@
             </div>
 
             @php
-                $filterSections = ['sorting', 'product_type', 'product_status', 'brand', 'category'];
+                $filterSections = ['sorting', 'product_type', 'product_status', 'location', 'brand', 'category'];
                 if (in_array(request('type', ''), ['new-request','denied'])) {
-                    $filterSections = ['sorting', 'product_type', 'brand', 'category'];
+                    $filterSections = ['sorting', 'product_type', 'location', 'brand', 'category'];
                 }
             @endphp
 

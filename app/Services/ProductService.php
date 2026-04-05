@@ -589,6 +589,7 @@ class ProductService
             'location_city_id' => $request['product_type'] == 'physical' ? ($request['location_city_id'] ?: null) : null,
             'location_area_id' => $request['product_type'] == 'physical' ? ($request['location_area_id'] ?: null) : null,
             'pending_city_request_id' => ($request['product_type'] === 'physical' && empty($request['location_city_id'])) ? ($request['pending_city_request_id'] ?: null) : null,
+            'pending_area_request_id' => ($request['product_type'] === 'physical' && !empty($request['location_city_id']) && empty($request['location_area_id'])) ? ($request['pending_area_request_id'] ?: null) : null,
             'color_image' => json_encode($processedImages['colored_image_names']),
             'images' => json_encode($processedImages['image_names']),
             'thumbnail' => $request->has('image') ? $this->upload(dir: 'product/thumbnail/', format: 'webp', image: $request['image']) : $request->existing_thumbnail,
@@ -730,6 +731,7 @@ class ProductService
             'location_city_id' => $request['product_type'] == 'physical' ? ($request['location_city_id'] ?: null) : null,
             'location_area_id' => $request['product_type'] == 'physical' ? ($request['location_area_id'] ?: null) : null,
             'pending_city_request_id' => ($request['product_type'] === 'physical' && empty($request['location_city_id'])) ? ($request['pending_city_request_id'] ?: null) : null,
+            'pending_area_request_id' => ($request['product_type'] === 'physical' && !empty($request['location_city_id']) && empty($request['location_area_id'])) ? ($request['pending_area_request_id'] ?: null) : null,
         ];
 
         return $dataArray;

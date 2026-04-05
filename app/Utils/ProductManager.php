@@ -909,7 +909,7 @@ class ProductManager
         foreach ($data as $item) {
             $storage[] = [
                 'product' => $item->product['name'] ?? '',
-                'customer' => isset($item->customer) ? $item->customer->f_name.' '.$item->customer->l_name : '',
+                'customer' => isset($item->customer) ? $item->customer->f_name . ' ' . $item->customer->l_name : '',
                 'comment' => $item->comment,
                 'rating' => $item->rating,
             ];
@@ -1567,7 +1567,7 @@ class ProductManager
 
     public static function getPriorityWiseFlashDealsProductsQuery($id = null, $userId = null): array
     {
-        $cacheKey = 'cache_flash_deal_'.($id ?? 'default');
+        $cacheKey = 'cache_flash_deal_' . ($id ?? 'default');
         $cacheKeys = Cache::get(CACHE_FLASH_DEAL_KEYS, []);
 
         if (! in_array($cacheKey, $cacheKeys)) {
@@ -1809,21 +1809,21 @@ class ProductManager
     public static function applySellerFilters($query, $request)
     {
         return $query
-            ->when($request->brand_id, fn ($query) => $query->where('brand_id', $request->brand_id))
-            ->when($request->category_id, fn ($query) => $query->where('category_id', $request->category_id))
-            ->when($request->sub_category_id, fn ($query) => $query->where('sub_category_id', $request->sub_category_id))
-            ->when($request->sub_sub_category_id, fn ($query) => $query->where('sub_sub_category_id', $request->sub_sub_category_id))
-            ->when($request->product_type, fn ($query) => $query->where('product_type', $request->product_type))
+            ->when($request->brand_id, fn($query) => $query->where('brand_id', $request->brand_id))
+            ->when($request->category_id, fn($query) => $query->where('category_id', $request->category_id))
+            ->when($request->sub_category_id, fn($query) => $query->where('sub_category_id', $request->sub_category_id))
+            ->when($request->sub_sub_category_id, fn($query) => $query->where('sub_sub_category_id', $request->sub_sub_category_id))
+            ->when($request->product_type, fn($query) => $query->where('product_type', $request->product_type))
             ->when($request->publishing_house_id, function ($query) use ($request) {
                 $query->whereHas(
                     'digitalProductPublishingHouse',
-                    fn ($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
+                    fn($subQuery) => $subQuery->where('publishing_house_id', $request->publishing_house_id)
                 );
             })
             ->when($request->author_id, function ($query) use ($request) {
                 $query->whereHas(
                     'digitalProductAuthors',
-                    fn ($subQuery) => $subQuery->where('author_id', $request->author_id)
+                    fn($subQuery) => $subQuery->where('author_id', $request->author_id)
                 );
             });
     }
@@ -2128,6 +2128,9 @@ class ProductManager
                 return $query->where(['product_type' => $request['product_type']]);
             })
             ->when($request['country_id'], function ($query, $countryId) {
+                if ($countryId === 'global') {
+                    return $query->whereNull('location_country_id');
+                }
                 return $query->where('location_country_id', $countryId);
             })
             ->when($request['city_id'], function ($query, $cityId) {
@@ -2311,7 +2314,7 @@ class ProductManager
             ->when($request->has('color_ids') && ! empty($request['color_ids']) && is_array($request['color_ids']), function ($query) use ($request) {
                 return $query->where(function ($query) use ($request) {
                     foreach ($request['color_ids'] as $color) {
-                        $query->orWhere('colors', 'like', '%'.$color.'%');
+                        $query->orWhere('colors', 'like', '%' . $color . '%');
                     }
                 });
             })
@@ -2556,7 +2559,7 @@ class ProductManager
     {
         $user = Helpers::getCustomerInformation($request);
 
-        $cacheKey = 'cache_cart_list_for_'.($user == 'offline' ? 'guest_'.session('guest_id') ?? ($request->guest_id ?? 0) : 'customer_'.$user->id);
+        $cacheKey = 'cache_cart_list_for_' . ($user == 'offline' ? 'guest_' . session('guest_id') ?? ($request->guest_id ?? 0) : 'customer_' . $user->id);
         self::cacheCartListAllUserKeys(cacheKey: $cacheKey);
 
         $cartItemsList = Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($request, $user) {
@@ -2760,7 +2763,7 @@ class ProductManager
                     $colorName = $getColors->firstWhere('code', $color)->name;
 
                     foreach ($optionCombinations as $combination) {
-                        $possibleVariant[] = $colorName.'-'.implode('-', $combination);
+                        $possibleVariant[] = $colorName . '-' . implode('-', $combination);
                     }
                 }
             } catch (Exception $e) {
@@ -2800,7 +2803,7 @@ class ProductManager
             'first_variant_in_cart' => $firstVariantInCart,
             'quantity' => $initialProductQuantity,
             'price' => $price,
-            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value').'%',
+            'discount' => $discountType == 'flat' ? webCurrencyConverter($discount) : getProductPriceByType(product: $product, type: 'discount', result: 'value') . '%',
             'discount_type' => $discountType,
             'total_quantity_price' => $price * $initialProductQuantity,
             'variant' => $firstVariant,
@@ -2911,7 +2914,7 @@ class ProductManager
             ! empty($product->color_images_full_url)
         ) {
             $keys = collect($product->color_images_full_url)
-                ->filter(fn ($c) => ($c['color'] ?? null) === null)
+                ->filter(fn($c) => ($c['color'] ?? null) === null)
                 ->pluck('image_name.key')
                 ->filter();
             if ($keys->isNotEmpty()) {

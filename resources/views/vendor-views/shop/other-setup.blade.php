@@ -147,8 +147,8 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label text-dark mb-0">{{ translate('Store_Area') }}</label>
                                     <button type="button" class="btn btn-link p-0 fs-12 text-primary" data-toggle="modal"
-                                        data-target="#shopQuickAddAreaModal" title="{{ translate('Add_New_Area') }}">
-                                        <i class="fi fi-rr-plus"></i> {{ translate('Add_new') }}
+                                        data-target="#shopRequestAreaModal" title="{{ translate('Request_New_Area') }}">
+                                        <i class="fi fi-rr-paper-plane"></i> {{ translate('Request_area') }}
                                     </button>
                                 </div>
                                 <select name="store_area_id" id="shop_store_area" class="form-control"
@@ -200,43 +200,44 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                 </div>
             </div>
 
-            {{-- Quick Add Area Modal --}}
-            <div class="modal fade" id="shopQuickAddAreaModal" tabindex="-1" role="dialog" aria-labelledby="shopQuickAddAreaModalLabel">
+            {{-- Request Area Modal --}}
+            <div class="modal fade" id="shopRequestAreaModal" tabindex="-1" role="dialog" aria-labelledby="shopRequestAreaModalLabel">
                 <div class="modal-dialog modal-dialog-centered" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="shopQuickAddAreaModalLabel">{{ translate('Add_New_Area') }}</h5>
+                            <h5 class="modal-title" id="shopRequestAreaModalLabel">{{ translate('Request_New_Area') }}</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
+                            <p class="text-muted mb-3">{{ translate('if_the_area_you_need_is_not_listed_request_admin_to_add_it') }}</p>
                             <div class="form-group">
                                 <label class="title-color">{{ translate('Country') }}</label>
-                                <select id="shop_qa_area_country_id" class="form-control">
+                                <select id="shop_ra_area_country_id" class="form-control">
                                     <option value="">{{ translate('Select_Country') }}</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="title-color">{{ translate('City') }}</label>
-                                <select id="shop_qa_area_city_id" class="form-control" disabled>
+                                <label class="title-color">{{ translate('City') }} <span class="input-required-icon">*</span></label>
+                                <select id="shop_ra_area_city_id" class="form-control" disabled>
                                     <option value="">{{ translate('Select_City') }}</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="title-color">{{ translate('Area_Name') }} <span class="input-required-icon">*</span></label>
-                                <input type="text" id="shop_qa_area_name" class="form-control"
+                                <input type="text" id="shop_ra_area_name" class="form-control"
                                     placeholder="{{ translate('e.g._Manhattan') }}">
                             </div>
-                            <div id="shop-quick-add-area-feedback" class="mt-2 d-none">
-                                <span class="text-success" id="shop-quick-add-area-success-msg"></span>
-                                <span class="text-danger" id="shop-quick-add-area-error-msg"></span>
+                            <div id="shop-request-area-feedback" class="mt-2 d-none">
+                                <span class="text-success" id="shop-request-area-success-msg"></span>
+                                <span class="text-danger" id="shop-request-area-error-msg"></span>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ translate('Cancel') }}</button>
-                            <button type="button" class="btn btn--primary" id="shopQuickAddAreaSaveBtn">
-                                <span>{{ translate('Save') }}</span>
+                            <button type="button" class="btn btn--primary" id="shopRequestAreaSaveBtn">
+                                <span>{{ translate('Submit_Request') }}</span>
                                 <span class="spinner-border spinner-border-sm d-none" role="status"></span>
                             </button>
                         </div>
@@ -403,38 +404,71 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
         var areasRoute    = '{{ route("vendor.shop.location.areas", ":id") }}';
         var allCitiesRoute = '{{ route("vendor.shop.location.all-cities", ":id") }}';
         var requestCityRoute = '{{ route("vendor.shop.location.quick-add-city-request") }}';
-        var quickAddAreaRoute = '{{ route("vendor.shop.location.quick-add-area") }}';
+        var requestAreaRoute = '{{ route("vendor.shop.location.quick-add-area-request") }}';
         var csrfToken     = '{{ csrf_token() }}';
 
         var preselectedCityId = '{{ $shop?->store_city_id ?? "" }}';
         var preselectedAreaId = '{{ $shop?->store_area_id ?? "" }}';
+
+        function initLocationSelect2($select) {
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
+            }
+            var opts = { width: '100%' };
+            var $modal = $select.closest('.modal');
+            if ($modal.length) {
+                opts.dropdownParent = $modal;
+            }
+            $select.select2(opts);
+        }
 
         // On page load: if country is already selected, load cities
         var initialCountryId = $('#shop_store_country').val();
         if (initialCountryId) {
             loadCities(initialCountryId, preselectedCityId, function() {
                 if (preselectedCityId) {
-                    loadAreas(preselectedCityId, preselectedAreaId);
+                    loadAreas(preselectedCityId, preselectedAreaId, function() {
+                        initLocationSelect2($('#shop_store_area'));
+                    });
+                } else {
+                    initLocationSelect2($('#shop_store_area'));
                 }
+                initLocationSelect2($('#shop_store_city'));
             });
+        } else {
+            initLocationSelect2($('#shop_store_city'));
+            initLocationSelect2($('#shop_store_area'));
         }
 
         // Country change → load cities, reset area
         $(document).on('change', '#shop_store_country', function() {
             var countryId = $(this).val();
-            $('#shop_store_city').html('<option value="">--- {{ translate("Select_City") }} ---</option>').prop('disabled', true);
-            $('#shop_store_area').html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            var $citySelect = $('#shop_store_city');
+            var $areaSelect = $('#shop_store_area');
+            if ($citySelect.hasClass('select2-hidden-accessible')) $citySelect.select2('destroy');
+            if ($areaSelect.hasClass('select2-hidden-accessible')) $areaSelect.select2('destroy');
+            $citySelect.html('<option value="">--- {{ translate("Select_City") }} ---</option>').prop('disabled', true);
+            $areaSelect.html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            initLocationSelect2($citySelect);
+            initLocationSelect2($areaSelect);
             if (countryId) {
-                loadCities(countryId);
+                loadCities(countryId, null, function() {
+                    initLocationSelect2($('#shop_store_city'));
+                });
             }
         });
 
         // City change → load areas
         $(document).on('change', '#shop_store_city', function() {
             var cityId = $(this).val();
-            $('#shop_store_area').html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            var $areaSelect = $('#shop_store_area');
+            if ($areaSelect.hasClass('select2-hidden-accessible')) $areaSelect.select2('destroy');
+            $areaSelect.html('<option value="">--- {{ translate("Select_Area") }} ---</option>').prop('disabled', true);
+            initLocationSelect2($areaSelect);
             if (cityId) {
-                loadAreas(cityId);
+                loadAreas(cityId, null, function() {
+                    initLocationSelect2($('#shop_store_area'));
+                });
             }
         });
 
@@ -478,12 +512,14 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                     if (currentCountry) {
                         $rcCountry.val(currentCountry);
                     }
+                    initLocationSelect2($rcCountry);
                 });
             } else {
                 var currentCountry = $('#shop_store_country').val();
                 if (currentCountry) {
                     $rcCountry.val(currentCountry);
                 }
+                initLocationSelect2($rcCountry);
             }
             // Reset form
             $('#shop_rc_city_name').val('');
@@ -539,73 +575,79 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
             });
         });
 
-        // --- Quick Add Area Modal ---
-        $('#shopQuickAddAreaModal').on('show.bs.modal', function() {
-            var $qaCountry = $('#shop_qa_area_country_id');
+        // --- Request Area Modal ---
+        $('#shopRequestAreaModal').on('show.bs.modal', function() {
+            var $raCountry = $('#shop_ra_area_country_id');
             // Populate countries from main dropdown
-            $qaCountry.html('<option value="">{{ translate("Select_Country") }}</option>');
+            $raCountry.html('<option value="">{{ translate("Select_Country") }}</option>');
             $('#shop_store_country option').each(function() {
                 if ($(this).val()) {
-                    $qaCountry.append('<option value="' + $(this).val() + '">' + $(this).text() + '</option>');
+                    $raCountry.append('<option value="' + $(this).val() + '">' + $(this).text().trim() + '</option>');
                 }
             });
             // Pre-select current country
             var currentCountry = $('#shop_store_country').val();
             if (currentCountry) {
-                $qaCountry.val(currentCountry);
+                $raCountry.val(currentCountry);
                 // Load cities for this country
-                var $qaCitySelect = $('#shop_qa_area_city_id');
-                $qaCitySelect.html('<option value="">{{ translate("Loading...") }}</option>').prop('disabled', true);
+                var $raCitySelect = $('#shop_ra_area_city_id');
+                $raCitySelect.html('<option value="">{{ translate("Loading...") }}</option>').prop('disabled', true);
                 $.get(citiesRoute.replace(':id', currentCountry), function(data) {
-                    $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
+                    $raCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
                     var currentCity = $('#shop_store_city').val();
                     $.each(data, function(i, city) {
                         var selected = (currentCity && currentCity == city.id) ? ' selected' : '';
-                        $qaCitySelect.append('<option value="' + city.id + '"' + selected + '>' + city.name + '</option>');
+                        $raCitySelect.append('<option value="' + city.id + '"' + selected + '>' + city.name + '</option>');
                     });
-                    $qaCitySelect.prop('disabled', false);
+                    $raCitySelect.prop('disabled', false);
+                    initLocationSelect2($raCitySelect);
                 });
             }
+            initLocationSelect2($raCountry);
             // Reset form
-            $('#shop_qa_area_name').val('');
-            $('#shop-quick-add-area-feedback').addClass('d-none');
-            $('#shop-quick-add-area-success-msg').text('');
-            $('#shop-quick-add-area-error-msg').text('');
+            $('#shop_ra_area_name').val('');
+            $('#shop-request-area-feedback').addClass('d-none');
+            $('#shop-request-area-success-msg').text('');
+            $('#shop-request-area-error-msg').text('');
         });
 
         // Country change inside area modal → load cities
-        $(document).on('change', '#shop_qa_area_country_id', function() {
+        $(document).on('change', '#shop_ra_area_country_id', function() {
             var countryId = $(this).val();
-            var $qaCitySelect = $('#shop_qa_area_city_id');
-            $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>').prop('disabled', true);
+            var $raCitySelect = $('#shop_ra_area_city_id');
+            if ($raCitySelect.hasClass('select2-hidden-accessible')) $raCitySelect.select2('destroy');
+            $raCitySelect.html('<option value="">{{ translate("Select_City") }}</option>').prop('disabled', true);
             if (countryId) {
                 $.get(citiesRoute.replace(':id', countryId), function(data) {
-                    $qaCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
+                    $raCitySelect.html('<option value="">{{ translate("Select_City") }}</option>');
                     $.each(data, function(i, city) {
-                        $qaCitySelect.append('<option value="' + city.id + '">' + city.name + '</option>');
+                        $raCitySelect.append('<option value="' + city.id + '">' + city.name + '</option>');
                     });
-                    $qaCitySelect.prop('disabled', false);
+                    $raCitySelect.prop('disabled', false);
+                    initLocationSelect2($raCitySelect);
                 });
+            } else {
+                initLocationSelect2($raCitySelect);
             }
         });
 
-        $(document).on('click', '#shopQuickAddAreaSaveBtn', function() {
+        $(document).on('click', '#shopRequestAreaSaveBtn', function() {
             var $btn = $(this);
-            var cityId = $('#shop_qa_area_city_id').val();
-            var areaName = $('#shop_qa_area_name').val().trim();
+            var cityId = $('#shop_ra_area_city_id').val();
+            var areaName = $('#shop_ra_area_name').val().trim();
 
-            $('#shop-quick-add-area-feedback').addClass('d-none');
-            $('#shop-quick-add-area-success-msg').text('');
-            $('#shop-quick-add-area-error-msg').text('');
+            $('#shop-request-area-feedback').addClass('d-none');
+            $('#shop-request-area-success-msg').text('');
+            $('#shop-request-area-error-msg').text('');
 
             if (!cityId) {
-                $('#shop-quick-add-area-error-msg').text('{{ translate("Please_select_a_city") }}');
-                $('#shop-quick-add-area-feedback').removeClass('d-none');
+                $('#shop-request-area-error-msg').text('{{ translate("Please_select_a_city") }}');
+                $('#shop-request-area-feedback').removeClass('d-none');
                 return;
             }
             if (!areaName) {
-                $('#shop-quick-add-area-error-msg').text('{{ translate("Area_name_is_required") }}');
-                $('#shop-quick-add-area-feedback').removeClass('d-none');
+                $('#shop-request-area-error-msg').text('{{ translate("Area_name_is_required") }}');
+                $('#shop-request-area-feedback').removeClass('d-none');
                 return;
             }
 
@@ -613,7 +655,7 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
             $btn.find('.spinner-border').removeClass('d-none');
 
             $.ajax({
-                url: quickAddAreaRoute,
+                url: requestAreaRoute,
                 type: 'POST',
                 data: {
                     _token: csrfToken,
@@ -622,34 +664,26 @@ $freeDeliveryResponsibility = getWebConfig(name: 'free_delivery_responsibility')
                 },
                 success: function(response) {
                     if (response.success) {
-                        $('#shop-quick-add-area-feedback').removeClass('d-none');
-                        $('#shop-quick-add-area-success-msg').text(response.message || '{{ translate("Area_added_successfully") }}');
-                        $('#shop-quick-add-area-error-msg').text('');
-                        // Reload areas in main form if same city is selected
-                        if (String($('#shop_store_city').val()) === String(cityId)) {
-                            loadAreas(cityId, null, function() {
-                                if (response.area) {
-                                    $('#shop_store_area').val(response.area.id);
-                                }
-                            });
-                        }
+                        $('#shop-request-area-feedback').removeClass('d-none');
+                        $('#shop-request-area-success-msg').text(response.message || '{{ translate("area_request_submitted_for_admin_approval") }}');
+                        $('#shop-request-area-error-msg').text('');
                         setTimeout(function() {
-                            $('#shopQuickAddAreaModal').modal('hide');
-                        }, 1200);
+                            $('#shopRequestAreaModal').modal('hide');
+                        }, 1500);
                     } else {
-                        $('#shop-quick-add-area-error-msg').text(response.message || '{{ translate("Something_went_wrong") }}');
-                        $('#shop-quick-add-area-feedback').removeClass('d-none');
+                        $('#shop-request-area-error-msg').text(response.message || '{{ translate("Something_went_wrong") }}');
+                        $('#shop-request-area-feedback').removeClass('d-none');
                     }
                 },
                 error: function(xhr) {
-                    $('#shop-quick-add-area-feedback').removeClass('d-none');
+                    $('#shop-request-area-feedback').removeClass('d-none');
                     var errMsg = (xhr.responseJSON && xhr.responseJSON.errors)
                         ? Object.values(xhr.responseJSON.errors).flat().join(' ')
                         : (xhr.responseJSON && xhr.responseJSON.message)
                             ? xhr.responseJSON.message
                             : '{{ translate("Something_went_wrong") }}';
-                    $('#shop-quick-add-area-error-msg').text(errMsg);
-                    $('#shop-quick-add-area-success-msg').text('');
+                    $('#shop-request-area-error-msg').text(errMsg);
+                    $('#shop-request-area-success-msg').text('');
                 },
                 complete: function() {
                     $btn.prop('disabled', false);

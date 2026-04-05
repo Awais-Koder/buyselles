@@ -130,6 +130,7 @@ class Product extends Model
         'location_city_id',
         'location_area_id',
         'pending_city_request_id',
+        'pending_area_request_id',
     ];
 
     /**
@@ -185,6 +186,7 @@ class Product extends Model
         'location_city_id' => 'integer',
         'location_area_id' => 'integer',
         'pending_city_request_id' => 'integer',
+        'pending_area_request_id' => 'integer',
         'digital_product_file_types' => 'array',
         'digital_product_extensions' => 'array',
         'thumbnail_storage_type' => 'string',
@@ -309,6 +311,11 @@ class Product extends Model
     public function pendingCityRequest(): BelongsTo
     {
         return $this->belongsTo(CityRequest::class, 'pending_city_request_id');
+    }
+
+    public function pendingAreaRequest(): BelongsTo
+    {
+        return $this->belongsTo(AreaRequest::class, 'pending_area_request_id');
     }
 
     public function getIsShopTemporaryCloseAttribute($value): int

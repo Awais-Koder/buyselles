@@ -1,0 +1,144 @@
+@extends('layouts.admin.app')
+
+@section('title', translate('add_product_mapping'))
+
+@section('content')
+<div class="content container-fluid">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="mb-4">{{ translate('add_product_supplier_mapping') }}</h3>
+
+            <form action="{{ route('admin.supplier.mapping.store') }}" method="post">
+                @csrf
+
+                <div class="row gy-3">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('product') }} <span class="text-danger">*</span></label>
+                            <select name="product_id" class="form-control" required>
+                                <option value="">{{ translate('select_product') }}</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" {{ old('product_id') == $product->id ? 'selected' : '' }}>
+                                        {{ $product->name }} (#{{ $product->id }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('supplier') }} <span class="text-danger">*</span></label>
+                            <select name="supplier_api_id" class="form-control" required>
+                                <option value="">{{ translate('select_supplier') }}</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" {{ old('supplier_api_id') == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->name }} ({{ $supplier->driver }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('supplier_product_id_SKU') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="supplier_product_id" class="form-control"
+                                   placeholder="{{ translate('ex') }}: PROD-12345"
+                                   value="{{ old('supplier_product_id') }}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('supplier_product_name') }}</label>
+                            <input type="text" name="supplier_product_name" class="form-control"
+                                   placeholder="{{ translate('optional_cached_name') }}"
+                                   value="{{ old('supplier_product_name') }}">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('cost_price') }} <span class="text-danger">*</span></label>
+                            <input type="number" name="cost_price" class="form-control" step="0.01" min="0"
+                                   value="{{ old('cost_price', '0.00') }}" required>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('currency') }}</label>
+                            <input type="text" name="cost_currency" class="form-control" maxlength="3"
+                                   value="{{ old('cost_currency', 'USD') }}">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('markup_type') }} <span class="text-danger">*</span></label>
+                            <select name="markup_type" class="form-control" required>
+                                <option value="percent" {{ old('markup_type', 'percent') == 'percent' ? 'selected' : '' }}>{{ translate('percent') }} (%)</option>
+                                <option value="flat" {{ old('markup_type') == 'flat' ? 'selected' : '' }}>{{ translate('flat') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('markup_value') }}</label>
+                            <input type="number" name="markup_value" class="form-control" step="0.01" min="0"
+                                   value="{{ old('markup_value', '10') }}">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('priority') }} <span class="text-danger">*</span></label>
+                            <input type="number" name="priority" class="form-control" min="0"
+                                   value="{{ old('priority', 0) }}" required>
+                            <small class="text-muted">{{ translate('lower_number_=_higher_priority') }}</small>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('min_stock_threshold') }}</label>
+                            <input type="number" name="min_stock_threshold" class="form-control" min="0"
+                                   value="{{ old('min_stock_threshold', 5) }}">
+                            <small class="text-muted">{{ translate('auto_restock_when_below_this') }}</small>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('max_restock_quantity') }}</label>
+                            <input type="number" name="max_restock_qty" class="form-control" min="1"
+                                   value="{{ old('max_restock_qty', 50) }}">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="auto_restock" value="1"
+                                   id="auto-restock-toggle" {{ old('auto_restock', true) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="auto-restock-toggle">
+                                {{ translate('enable_auto_restock') }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fi fi-sr-check"></i> {{ translate('save') }}
+                    </button>
+                    <a href="{{ route('admin.supplier.mapping.list') }}" class="btn btn-secondary">
+                        {{ translate('cancel') }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection

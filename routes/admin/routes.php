@@ -1263,4 +1263,51 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             });
         });
     });
+
+    // ─── Supplier API Management ────────────────────────────────────────
+    Route::group(['prefix' => 'supplier', 'as' => 'supplier.'], function () {
+
+        // Suppliers CRUD
+        Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierController::class)->group(function () {
+            Route::get('list', 'index')->name('list');
+            Route::get('add', 'getAddView')->name('add');
+            Route::post('add', 'add')->name('store');
+            Route::get('edit/{id}', 'getUpdateView')->name('edit');
+            Route::post('edit/{id}', 'update')->name('update');
+            Route::post('status', 'updateStatus')->name('status');
+            Route::post('delete', 'delete')->name('delete');
+            Route::get('test-connection/{id}', 'testConnection')->name('test-connection');
+        });
+
+        // Product-Supplier Mappings
+        Route::group(['prefix' => 'mapping', 'as' => 'mapping.'], function () {
+            Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierMappingController::class)->group(function () {
+                Route::get('list', 'index')->name('list');
+                Route::get('add', 'getAddView')->name('add');
+                Route::post('add', 'add')->name('store');
+                Route::get('edit/{id}', 'getUpdateView')->name('edit');
+                Route::post('edit/{id}', 'update')->name('update');
+                Route::post('status', 'updateStatus')->name('status');
+                Route::post('delete', 'delete')->name('delete');
+            });
+        });
+
+        // API Logs & Supplier Orders
+        Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierLogController::class)->group(function () {
+            Route::get('api-logs', 'apiLogs')->name('api-logs');
+            Route::get('api-logs/{id}', 'logDetail')->name('api-log-detail');
+            Route::get('orders', 'supplierOrders')->name('orders');
+        });
+    });
+
+    // ─── Reseller / Partner API Key Management ──────────────────────────
+    Route::group(['prefix' => 'reseller-keys', 'as' => 'reseller-keys.'], function () {
+        Route::controller(\App\Http\Controllers\Admin\Supplier\ResellerApiKeyController::class)->group(function () {
+            Route::get('list', 'index')->name('list');
+            Route::post('generate', 'generate')->name('generate');
+            Route::post('toggle-status', 'toggleStatus')->name('toggle-status');
+            Route::post('delete', 'delete')->name('delete');
+            Route::get('api-docs', 'apiDocs')->name('api-docs');
+        });
+    });
 });

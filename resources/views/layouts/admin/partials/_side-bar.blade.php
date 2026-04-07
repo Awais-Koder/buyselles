@@ -1496,6 +1496,86 @@
 
             @endif
 
+            {{-- Supplier API Management --}}
+            <li class="nav-item nav-item_title {{ Request::is('admin/supplier*') ? 'scroll-here' : '' }}">
+                <small class="nav-subtitle" title="">{{ translate('supplier_management') }}</small>
+            </li>
+            <li class="{{ Request::is('admin/supplier*') ? 'sub-menu-opened' : '' }}">
+                <a class="nav-link nav-link-toggle {{ Request::is('admin/supplier*') ? 'active' : '' }}"
+                    href="javascript:" title="{{ translate('supplier_API') }}">
+                    <i class="fi fi-sr-link-alt"></i>
+                    <span class="aside-mini-hidden-element flex-grow-1 d-flex justify-content-between align-items-center">
+                        <span class="text-truncate max-w-180">
+                            {{ translate('supplier_API') }}
+                        </span>
+                        <i class="fi fi-sr-angle-down"></i>
+                    </span>
+                </a>
+                <ul class="aside-submenu navbar-nav">
+                    <li class="nav-item px-3 py-2 fw-semibold text-dark bg-section2 aside-mini-show-element">
+                        {{ translate('supplier_API') }}
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/supplier/list') || Request::is('admin/supplier/add') || Request::is('admin/supplier/edit*') ? 'active' : '' }}"
+                            href="{{ route('admin.supplier.list') }}" title="{{ translate('suppliers') }}">
+                            <span class="text-truncate">{{ translate('suppliers') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/supplier/mapping*') ? 'active' : '' }}"
+                            href="{{ route('admin.supplier.mapping.list') }}" title="{{ translate('product_mappings') }}">
+                            <span class="text-truncate">{{ translate('product_mappings') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/supplier/api-logs') ? 'active' : '' }}"
+                            href="{{ route('admin.supplier.api-logs') }}" title="{{ translate('API_logs') }}">
+                            <span class="text-truncate">{{ translate('API_logs') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/supplier/orders') ? 'active' : '' }}"
+                            href="{{ route('admin.supplier.orders') }}" title="{{ translate('supplier_orders') }}">
+                            <span class="text-truncate">{{ translate('supplier_orders') }}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            {{-- Partner / Reseller API Keys --}}
+            <li class="nav-item nav-item_title {{ Request::is('admin/reseller-keys*') ? 'scroll-here' : '' }}">
+                <small class="nav-subtitle" title="">{{ translate('partner_api') }}</small>
+            </li>
+            <li class="{{ Request::is('admin/reseller-keys*') ? 'sub-menu-opened' : '' }}">
+                <a class="nav-link nav-link-toggle {{ Request::is('admin/reseller-keys*') ? 'active' : '' }}"
+                    href="javascript:" title="{{ translate('partner_api') }}">
+                    <i class="fi fi-sr-users-alt"></i>
+                    <span class="aside-mini-hidden-element flex-grow-1 d-flex justify-content-between align-items-center">
+                        <span class="text-truncate max-w-180">
+                            {{ translate('partner_api') }}
+                        </span>
+                        <i class="fi fi-sr-angle-down"></i>
+                    </span>
+                </a>
+                <ul class="aside-submenu navbar-nav">
+                    <li class="nav-item px-3 py-2 fw-semibold text-dark bg-section2 aside-mini-show-element">
+                        {{ translate('partner_api') }}
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/reseller-keys/list') ? 'active' : '' }}"
+                            href="{{ route('admin.reseller-keys.list') }}" title="{{ translate('api_keys') }}">
+                            <span class="text-truncate">{{ translate('api_keys') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ Request::is('admin/reseller-keys/api-docs') ? 'active' : '' }}"
+                            href="{{ route('admin.reseller-keys.api-docs') }}" title="{{ translate('api_documentation') }}">
+                            <span class="text-truncate">{{ translate('api_documentation') }}</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <?php $checkSetupGuideRequirements = checkSetupGuideRequirements(panel: 'admin'); ?>
 
             <li

@@ -15,6 +15,7 @@ use App\Contracts\Repositories\VendorRepositoryInterface;
 use App\Contracts\Repositories\VendorWalletRepositoryInterface;
 use App\Http\Controllers\BaseController;
 use App\Services\DashboardService;
+use App\Services\Supplier\SupplierManager;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +39,7 @@ class DashboardController extends BaseController
         private readonly RestockProductRepositoryInterface $restockProductRepo,
         private readonly DashboardService $dashboardService,
         private readonly ChattingRepositoryInterface $chattingRepo,
+        private readonly SupplierManager $supplierManager,
     ) {}
 
     /**
@@ -103,7 +105,9 @@ class DashboardController extends BaseController
             'getTotalDeliveryManCount' => $this->deliveryManRepo->getListWhere(filters: ['seller_id' => 0], dataLimit: 'all')->count(),
         ];
 
-        return view('admin-views.system.dashboard', compact('data', 'inHouseEarning', 'vendorEarning', 'commissionEarn', 'inHouseOrderEarningArray', 'vendorOrderEarningArray', 'label', 'dateType'));
+        $supplierBalances = $this->supplierManager->getSupplierBalances();
+
+        return view('admin-views.system.dashboard', compact('data', 'inHouseEarning', 'vendorEarning', 'commissionEarn', 'inHouseOrderEarningArray', 'vendorOrderEarningArray', 'label', 'dateType', 'supplierBalances'));
     }
 
     public function getOrderStatus(Request $request)

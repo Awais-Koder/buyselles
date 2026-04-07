@@ -1,0 +1,201 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Supplier;
+
+use App\Http\Controllers\BaseController;
+use App\Models\Product;
+use App\Models\SupplierApi;
+use App\Models\SupplierProductMapping;
+use Brian2694\Toastr\Facades\Toastr;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Validator;
+
+class SupplierMappingController extends BaseController
+{
+    /**
+     * Display product-supplier mappings for a given product.
+     */
+    public function index(?Request $request, ?string $type = null): View|Collection|LengthAwarePaginator|null|callable|RedirectResponse|JsonResponse
+    {
+        $searchValue = $request->get('searchValue');
+        $supplierId = $request->get('supplier_id');
+
+        $mappings = SupplierProductMapping::query()
+            ->with(['product', 'supplierApi'])
+            ->when($supplierId, fn ($q) => $q->where('supplier_api_id', $supplierId))
+            ->when($searchValue, function ($q) use ($searchValue) {
+                $q->whereHas('product', fn ($pq) => $pq->where('name', 'like', "%{$searchValue}%"))
+                    ->orWhere('supplier_product_id', 'like', "%{$searchValue}%");
+            })
+            ->orderBy('priority')
+            ->paginate(getWebConfig(name: 'pagination_limit'));
+
+        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name']);
+
+        return view('admin-views.supplier.mapping-list', compact('mappings', 'suppliers', 'searchValue', 'supplierId'));
+    }
+
+    /**
+     * Show add mapping form.
+     */
+    public function getAddView(): View
+    {
+        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name', 'driver']);
+
+        $products = Product::where('product_type', 'digital')
+            ->where('digital_product_type', 'ready_product')
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('admin-views.supplier.mapping-add', compact('suppliers', 'products'));
+    }
+
+    /**
+     * Store a new product-supplier mapping.
+     */
+    public function add(Request $request): RedirectResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id',
+            'supplier_api_id' => 'required|exists:supplier_apis,id',
+            'supplier_product_id' => 'required|string|max:255',
+            'cost_price' => 'required|numeric|min:0',
+            'cost_currency' => 'required|string|max:3',
+            'markup_type' => 'required|in:percent,flat',
+            'markup_value' => 'required|numeric|min:0',
+            'priority' => 'required|integer|min:0',
+            'min_stock_threshold' => 'required|integer|min:0',
+            'max_restock_qty' => 'required|integer|min:1',
+            'auto_restock' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            Toastr::error($validator->errors()->first());
+
+            return redirect()->back()->withInput();
+        }
+
+        // Check for duplicate mapping
+        $exists = SupplierProductMapping::where('product_id', $request->input('product_id'))
+            ->where('supplier_api_id', $request->input('supplier_api_id'))
+            ->exists();
+
+        if ($exists) {
+            Toastr::error(translate('this_product_is_already_mapped_to_this_supplier'));
+
+            return redirect()->back()->withInput();
+        }
+
+        SupplierProductMapping::create([
+            'product_id' => $request->input('product_id'),
+            'supplier_api_id' => $request->input('supplier_api_id'),
+            'supplier_product_id' => $request->input('supplier_product_id'),
+            'supplier_product_name' => $request->input('supplier_product_name'),
+            'cost_price' => $request->input('cost_price'),
+            'cost_currency' => $request->input('cost_currency', 'USD'),
+            'markup_type' => $request->input('markup_type'),
+            'markup_value' => $request->input('markup_value', 0),
+            'priority' => $request->input('priority', 0),
+            'auto_restock' => (bool) $request->input('auto_restock', true),
+            'min_stock_threshold' => $request->input('min_stock_threshold', 5),
+            'max_restock_qty' => $request->input('max_restock_qty', 50),
+            'is_active' => true,
+        ]);
+
+        Toastr::success(translate('mapping_added_successfully'));
+
+        return redirect()->route('admin.supplier.mapping.list');
+    }
+
+    /**
+     * Show edit mapping form.
+     */
+    public function getUpdateView(int $id): View|RedirectResponse
+    {
+        $mapping = SupplierProductMapping::with(['product', 'supplierApi'])->findOrFail($id);
+
+        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name', 'driver']);
+
+        $products = Product::where('product_type', 'digital')
+            ->where('digital_product_type', 'ready_product')
+            ->where('status', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('admin-views.supplier.mapping-edit', compact('mapping', 'suppliers', 'products'));
+    }
+
+    /**
+     * Update a mapping.
+     */
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'supplier_product_id' => 'required|string|max:255',
+            'cost_price' => 'required|numeric|min:0',
+            'cost_currency' => 'required|string|max:3',
+            'markup_type' => 'required|in:percent,flat',
+            'markup_value' => 'required|numeric|min:0',
+            'priority' => 'required|integer|min:0',
+            'min_stock_threshold' => 'required|integer|min:0',
+            'max_restock_qty' => 'required|integer|min:1',
+            'auto_restock' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            Toastr::error($validator->errors()->first());
+
+            return redirect()->back()->withInput();
+        }
+
+        $mapping = SupplierProductMapping::findOrFail($id);
+        $mapping->update([
+            'supplier_product_id' => $request->input('supplier_product_id'),
+            'supplier_product_name' => $request->input('supplier_product_name'),
+            'cost_price' => $request->input('cost_price'),
+            'cost_currency' => $request->input('cost_currency', 'USD'),
+            'markup_type' => $request->input('markup_type'),
+            'markup_value' => $request->input('markup_value', 0),
+            'priority' => $request->input('priority', 0),
+            'auto_restock' => (bool) $request->input('auto_restock', true),
+            'min_stock_threshold' => $request->input('min_stock_threshold', 5),
+            'max_restock_qty' => $request->input('max_restock_qty', 50),
+        ]);
+
+        Toastr::success(translate('mapping_updated_successfully'));
+
+        return redirect()->route('admin.supplier.mapping.list');
+    }
+
+    /**
+     * Toggle mapping active status (AJAX).
+     */
+    public function updateStatus(Request $request): JsonResponse
+    {
+        $mapping = SupplierProductMapping::findOrFail($request->input('id'));
+        $mapping->update(['is_active' => $request->input('status', 0)]);
+
+        return response()->json([
+            'success' => 1,
+            'message' => translate('status_updated_successfully'),
+        ]);
+    }
+
+    /**
+     * Delete a mapping.
+     */
+    public function delete(Request $request): RedirectResponse
+    {
+        SupplierProductMapping::findOrFail($request->input('id'))->delete();
+
+        Toastr::success(translate('mapping_deleted_successfully'));
+
+        return redirect()->back();
+    }
+}

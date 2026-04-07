@@ -69,6 +69,41 @@
                 </div>
             </div>
 
+            @if(!empty($supplierBalances))
+            <div class="row g-3 mt-1">
+                <div class="col-12">
+                    <div class="card remove-card-shadow">
+                        <div class="card-body">
+                            <h4 class="d-flex align-items-center text-capitalize gap-10 mb-3">
+                                <i class="fi fi-rr-plug-connection fs-5 mb-1"></i>
+                                <span class="fw-bold fs-16">{{ translate('Supplier_API_Balances') }}</span>
+                            </h4>
+                            <div class="row g-2">
+                                @foreach($supplierBalances as $item)
+                                <div class="col-sm-6 col-lg-3">
+                                    <div class="card border h-100">
+                                        <div class="card-body py-3 px-3">
+                                            <p class="text-muted mb-1 fs-12 text-truncate">{{ $item['name'] }}</p>
+                                            @if($item['balance']->supported)
+                                                @if($item['balance']->message)
+                                                    <span class="text-danger fs-13">{{ $item['balance']->message }}</span>
+                                                @else
+                                                    <h5 class="mb-0 fw-bold">{{ number_format($item['balance']->balance, 2) }} <small class="fs-12 fw-normal text-muted">{{ $item['balance']->currency }}</small></h5>
+                                                @endif
+                                            @else
+                                                <span class="text-muted fs-12">{{ translate('Not_Supported') }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <div class="row g-3">
                 <div class="col-lg-8" id="order-statistics-div">
                     @include('admin-views.system.partials.order-statistics')

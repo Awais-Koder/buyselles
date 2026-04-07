@@ -434,3 +434,26 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         Route::post('contact-us', 'contact_store');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Supplier Webhook (No auth — verified via HMAC in job)
+|--------------------------------------------------------------------------
+*/
+Route::post('supplier/webhook/{supplier}', [\App\Http\Controllers\Api\SupplierWebhookController::class, 'handle'])
+    ->name('api.supplier.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Reseller API (API Key auth)
+|--------------------------------------------------------------------------
+*/
+Route::group(['prefix' => 'reseller', 'middleware' => ['reseller_api_auth']], function () {
+    Route::controller(\App\Http\Controllers\Api\ResellerController::class)->group(function () {
+        Route::get('products', 'products');
+        Route::get('products/{id}', 'productDetail');
+        Route::post('orders', 'createOrder');
+        Route::get('orders/{id}', 'orderDetail');
+        Route::get('balance', 'balance');
+    });
+});

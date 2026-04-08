@@ -27,14 +27,14 @@ class ResellerApiAuth
         $resellerKey = Cache::remember(
             "reseller_key:{$hashedKey}",
             now()->addMinutes(5),
-            fn () => ResellerApiKey::with('user')->where('api_key_hash', $hashedKey)->first()
+            fn () => ResellerApiKey::with('user')->where('api_key', $hashedKey)->first()
         );
 
         if (! $resellerKey) {
             return response()->json(['error' => 'Invalid API key.'], 401);
         }
 
-        if (! hash_equals($resellerKey->api_secret_hash, hash('sha256', $apiSecret))) {
+        if (! hash_equals($resellerKey->api_secret, hash('sha256', $apiSecret))) {
             return response()->json(['error' => 'Invalid API secret.'], 401);
         }
 
@@ -65,7 +65,7 @@ class ResellerApiAuth
 
         RateLimiter::hit($rateKey, 60);
 
-        $resellerKey->recordUsage();
+        $resellerKey->recordUsage($request->ip());
 
         $request->attributes->set('reseller_key', $resellerKey);
         $request->attributes->set('reseller_user', $resellerKey->user);

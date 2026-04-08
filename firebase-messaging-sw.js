@@ -13,9 +13,13 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-messaging.setBackgroundMessageHandler(function(payload) {
+messaging.setBackgroundMessageHandler(function (payload) {
     return self.registration.showNotification(payload.data.title, {
         body: payload.data.body || '',
         icon: payload.data.icon || ''
     });
 });
+
+// c6389808-2ada-4184-9315-4a6a2b02e619
+
+

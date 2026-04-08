@@ -10849,4 +10849,8 @@ return [
 	"validation_error_check_errors_field" => "Validation error check errors field",
 	"auto_restock" => "Auto restock",
 	"enable_auto_restock" => "Enable auto restock",
+	"insufficient_stock_for_requested_quantity" => "Insufficient stock for requested quantity",
+	"search_by_name_email_or_phone" => "Search by name email or phone",
+	"revoke" => "Revoke",
+	"never" => "Never",
 ];

@@ -175,9 +175,11 @@
                         <small class="text-muted">{{ translate('descriptive_name_for_this_key') }}</small>
                     </div>
                     <div>
-                        <label class="form-label fw-semibold">{{ translate('customer_user_id') }} <span class="text-danger">*</span></label>
-                        <input type="number" name="user_id" class="form-control" placeholder="{{ translate('user_id') }}" required min="1">
-                        <small class="text-muted">{{ translate('customer_account_that_owns_this_key') }}</small>
+                        <label class="form-label fw-semibold">{{ translate('customer') }} <span class="text-danger">*</span></label>
+                        <select id="reseller-key-user-select" name="user_id" class="form-control w-100" required
+                                data-placeholder="{{ translate('search_by_name_email_or_phone') }}">
+                        </select>
+                        <small class="text-muted d-block mt-1">{{ translate('customer_account_that_owns_this_key') }}</small>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
@@ -198,6 +200,29 @@
 @push('script')
 <script>
     'use strict';
+
+    // Customer search dropdown inside modal — must use dropdownParent to render above modal overlay
+    $('#generateKeyModal').on('shown.bs.modal', function () {
+        if (!$('#reseller-key-user-select').hasClass('select2-hidden-accessible')) {
+            $('#reseller-key-user-select').select2({
+                dropdownParent: $('#generateKeyModal'),
+                placeholder: $('#reseller-key-user-select').data('placeholder'),
+                allowClear: true,
+                ajax: {
+                    url: $('#get-customer-list-without-all-customer-route').data('action'),
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return { searchValue: params.term, page: params.page };
+                    },
+                    processResults: function (data) {
+                        return { results: data };
+                    },
+                    cache: true
+                }
+            });
+        }
+    });
 
     // Copy to clipboard
     $(document).on('click', '.copy-btn', function () {

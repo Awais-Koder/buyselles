@@ -208,6 +208,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('featured-status', 'updateFeaturedStatus')->name('featured-status');
             Route::get('get-categories', 'getCategories')->name('get-categories');
             Route::post('status-update', 'updateStatus')->name('status-update');
+            Route::post('partner-approved-toggle', 'togglePartnerApproved')->name('partner-approved-toggle');
             Route::get('barcode/{id}', 'getBarcodeView')->name('barcode');
             Route::get('export-excel/{type}', 'exportList')->name('export-excel');
             Route::get('stock-limit-list/{type}', 'getStockLimitListView')->name('stock-limit-list');
@@ -1305,9 +1306,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
         Route::controller(\App\Http\Controllers\Admin\Supplier\ResellerApiKeyController::class)->group(function () {
             Route::get('list', 'index')->name('list');
             Route::post('generate', 'generate')->name('generate');
+            Route::post('approve', 'approve')->name('approve');
+            Route::post('reject', 'reject')->name('reject');
             Route::post('toggle-status', 'toggleStatus')->name('toggle-status');
             Route::post('delete', 'delete')->name('delete');
             Route::get('api-docs', 'apiDocs')->name('api-docs');
+            Route::get('{id}/edit', 'edit')->name('edit');
+            Route::post('{id}/update', 'updateKey')->name('update');
+            Route::get('{id}/logs', 'keyLogs')->name('logs');
+            Route::post('{id}/top-up', 'topUpWallet')->name('top-up');
         });
     });
 });

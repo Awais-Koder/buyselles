@@ -82,6 +82,7 @@ class ResellerController extends Controller
             productId: $request->input('product_id'),
             quantity: $request->input('quantity'),
             reference: $request->input('reference'),
+            idempotencyKey: $request->header('X-Idempotency-Key'),
         );
 
         if (isset($result['error'])) {
@@ -124,12 +125,12 @@ class ResellerController extends Controller
             return response()->json(['error' => 'Permission denied.'], 403);
         }
 
-        $user = $request->attributes->get('reseller_user');
-
         return response()->json([
             'data' => [
-                'balance' => (float) ($user->wallet_balance ?? 0),
+                'balance' => (float) $resellerKey->wallet_balance,
                 'currency' => 'USD',
+                'key_id' => $resellerKey->id,
+                'key_name' => $resellerKey->name,
             ],
         ]);
     }

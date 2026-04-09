@@ -43,6 +43,9 @@
                 <h3 class="mb-0">
                     {{ translate('reseller_api_keys') }}
                     <span class="badge text-dark bg-body-secondary fw-semibold rounded-50">{{ $keys->total() }}</span>
+                    @if($pendingCount > 0)
+                        <span class="badge bg-warning text-dark ms-1">{{ $pendingCount }} {{ translate('pending') }}</span>
+                    @endif
                 </h3>
 
                 <div class="d-flex flex-wrap gap-3 align-items-stretch">
@@ -67,6 +70,31 @@
                 </div>
             </div>
 
+            {{-- Status filter tabs --}}
+            <ul class="nav nav-tabs border-0 gap-2 mb-2">
+                <li class="nav-item">
+                    <a class="nav-link {{ !$filterStatus ? 'active' : '' }}"
+                       href="{{ route('admin.reseller-keys.list') }}">{{ translate('all') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $filterStatus === 'pending' ? 'active' : '' }}"
+                       href="{{ route('admin.reseller-keys.list', ['status' => 'pending']) }}">
+                        {{ translate('pending') }}
+                        @if($pendingCount > 0)
+                            <span class="badge bg-warning text-dark ms-1">{{ $pendingCount }}</span>
+                        @endif
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $filterStatus === 'active' ? 'active' : '' }}"
+                       href="{{ route('admin.reseller-keys.list', ['status' => 'active']) }}">{{ translate('active') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ $filterStatus === 'inactive' ? 'active' : '' }}"
+                       href="{{ route('admin.reseller-keys.list', ['status' => 'inactive']) }}">{{ translate('inactive') }}</a>
+                </li>
+            </ul>
+
             <div class="table-responsive">
                 <table class="table table-hover table-borderless align-middle">
                     <thead class="text-capitalize">
@@ -90,6 +118,10 @@
                                 @if($key->user)
                                     <div class="fw-semibold">{{ $key->user->name }}</div>
                                     <small class="text-muted">{{ $key->user->email }}</small>
+                                @elseif($key->seller)
+                                    <div class="fw-semibold">{{ $key->seller->f_name }} {{ $key->seller->l_name }}</div>
+                                    <small class="text-muted">{{ $key->seller->email }}</small>
+                                    <small class="badge bg-info text-dark ms-1">{{ translate('vendor') }}</small>
                                 @else
                                     <span class="text-muted fst-italic">—</span>
                                 @endif
@@ -107,23 +139,49 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                @if($key->is_active)
+                                @php $s = $key->status ?? ($key->is_active ? 'active' : 'inactive'); @endphp
+                                @if($s === 'active')
                                     <span class="badge bg-success">{{ translate('active') }}</span>
+                                @elseif($s === 'pending')
+                                    <span class="badge bg-warning text-dark">{{ translate('pending') }}</span>
                                 @else
-                                    <span class="badge bg-secondary">{{ translate('revoked') }}</span>
+                                    <span class="badge bg-secondary">{{ translate('inactive') }}</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 <div class="d-flex gap-2 justify-content-center">
-                                    <form method="post" action="{{ route('admin.reseller-keys.toggle-status') }}"
-                                          class="d-inline">
-                                        @csrf
-                                        <input type="hidden" name="id" value="{{ $key->id }}">
-                                        <button type="submit" class="btn-icon"
-                                                title="{{ $key->is_active ? translate('revoke') : translate('activate') }}">
-                                            <i class="fi fi-rr-{{ $key->is_active ? 'ban' : 'check' }}"></i>
+                                    @if(($key->status ?? '') === 'pending')
+                                        <button type="button" class="btn btn-success btn-sm approve-key-btn"
+                                                data-id="{{ $key->id }}" data-name="{{ $key->name }}"
+                                                data-request-note="{{ $key->request_note ?? '' }}"
+                                                title="{{ translate('approve') }}">
+                                            <i class="fi fi-sr-check me-1"></i>{{ translate('approve') }}
                                         </button>
-                                    </form>
+                                        <button type="button" class="btn btn-danger btn-sm reject-key-btn"
+                                                data-id="{{ $key->id }}" data-name="{{ $key->name }}"
+                                                data-request-note="{{ $key->request_note ?? '' }}"
+                                                title="{{ translate('reject') }}">
+                                            <i class="fi fi-rr-ban me-1"></i>{{ translate('reject') }}
+                                        </button>
+                                    @else
+                                        <form method="post" action="{{ route('admin.reseller-keys.toggle-status') }}"
+                                              class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $key->id }}">
+                                            <button type="submit" class="btn-icon"
+                                                    title="{{ ($key->status ?? '') === 'active' ? translate('deactivate') : translate('activate') }}">
+                                                <i class="fi fi-rr-{{ ($key->status ?? '') === 'active' ? 'ban' : 'check' }}"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('admin.reseller-keys.edit', $key->id) }}"
+                                       class="btn-icon" title="{{ translate('edit') }}">
+                                        <i class="fi fi-rr-pencil"></i>
+                                    </a>
+                                    <a href="{{ route('admin.reseller-keys.logs', $key->id) }}"
+                                       class="btn-icon" title="{{ translate('view_logs') }}">
+                                        <i class="fi fi-rr-list"></i>
+                                    </a>
                                     <form method="post" action="{{ route('admin.reseller-keys.delete') }}"
                                           class="d-inline delete-key-form">
                                         @csrf
@@ -197,6 +255,78 @@
 
 @endsection
 
+{{-- Approve Modal --}}
+<div class="modal fade" id="approveKeyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fi fi-sr-check text-success me-2"></i>{{ translate('approve_api_key') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('admin.reseller-keys.approve') }}">
+                @csrf
+                <input type="hidden" name="id" id="approve-key-id">
+                <div class="modal-body d-flex flex-column gap-3">
+                    <p class="mb-0">{{ translate('approving_key') }}: <strong id="approve-key-name"></strong></p>
+                    <div id="approve-request-note-wrap" class="alert alert-info mb-0 d-none">
+                        <p class="mb-1 fw-semibold small">{{ translate('vendor_request_note') }}:</p>
+                        <p class="mb-0 fst-italic" id="approve-request-note-text"></p>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">{{ translate('admin_note') }} <span class="text-muted fw-normal">({{ translate('optional') }})</span></label>
+                        <textarea name="admin_note" class="form-control" rows="2" maxlength="500"
+                                  placeholder="{{ translate('optional_note_to_vendor') }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="fi fi-sr-check me-1"></i>{{ translate('approve') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Reject Modal --}}
+<div class="modal fade" id="rejectKeyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fi fi-rr-ban text-danger me-2"></i>{{ translate('reject_api_key') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('admin.reseller-keys.reject') }}">
+                @csrf
+                <input type="hidden" name="id" id="reject-key-id">
+                <div class="modal-body d-flex flex-column gap-3">
+                    <p class="mb-0">{{ translate('rejecting_key') }}: <strong id="reject-key-name"></strong></p>
+                    <div id="reject-request-note-wrap" class="alert alert-info mb-0 d-none">
+                        <p class="mb-1 fw-semibold small">{{ translate('vendor_request_note') }}:</p>
+                        <p class="mb-0 fst-italic" id="reject-request-note-text"></p>
+                    </div>
+                    <div>
+                        <label class="form-label fw-semibold">{{ translate('reason') }} <span class="text-muted fw-normal">({{ translate('optional') }})</span></label>
+                        <textarea name="admin_note" class="form-control" rows="2" maxlength="500"
+                                  placeholder="{{ translate('reason_visible_to_vendor') }}"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ translate('cancel') }}</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fi fi-rr-ban me-1"></i>{{ translate('reject') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('script')
 <script>
     'use strict';
@@ -222,6 +352,34 @@
                 }
             });
         }
+    });
+
+    // Approve modal
+    $(document).on('click', '.approve-key-btn', function () {
+        var note = $(this).data('request-note');
+        $('#approve-key-id').val($(this).data('id'));
+        $('#approve-key-name').text($(this).data('name'));
+        if (note) {
+            $('#approve-request-note-text').text(note);
+            $('#approve-request-note-wrap').removeClass('d-none');
+        } else {
+            $('#approve-request-note-wrap').addClass('d-none');
+        }
+        new bootstrap.Modal(document.getElementById('approveKeyModal')).show();
+    });
+
+    // Reject modal
+    $(document).on('click', '.reject-key-btn', function () {
+        var note = $(this).data('request-note');
+        $('#reject-key-id').val($(this).data('id'));
+        $('#reject-key-name').text($(this).data('name'));
+        if (note) {
+            $('#reject-request-note-text').text(note);
+            $('#reject-request-note-wrap').removeClass('d-none');
+        } else {
+            $('#reject-request-note-wrap').addClass('d-none');
+        }
+        new bootstrap.Modal(document.getElementById('rejectKeyModal')).show();
     });
 
     // Copy to clipboard

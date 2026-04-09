@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Jobs\ReleasePartnerEscrowJob;
 use App\Models\DigitalProductCode;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\PartnerOrderIdempotency;
 use App\Models\Product;
 use App\Models\ResellerApiKey;
+use App\Models\SellerWallet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -23,6 +26,7 @@ class ResellerApiService
             ->where('digital_product_type', 'ready_product')
             ->where('status', 1)
             ->where('request_status', 1)
+            ->where('partner_approved', 1)
             ->withCount(['digitalProductCodes as available_stock' => function ($q) {
                 $q->where('status', 'available')
                     ->where('is_active', true)
@@ -72,6 +76,7 @@ class ResellerApiService
             ->where('digital_product_type', 'ready_product')
             ->where('status', 1)
             ->where('request_status', 1)
+            ->where('partner_approved', 1)
             ->withCount(['digitalProductCodes as available_stock' => function ($q) {
                 $q->where('status', 'available')
                     ->where('is_active', true)
@@ -102,15 +107,29 @@ class ResellerApiService
     }
 
     /**
-     * Create a reseller order: debit wallet, assign codes, return result.
+     * Create a reseller order idempotently: debit wallet, assign codes, return result.
+     * If $idempotencyKey is provided and a matching record exists, the cached response is returned.
      */
-    public function createOrder(ResellerApiKey $resellerKey, int $productId, int $quantity, ?string $reference): array
+    public function createOrder(ResellerApiKey $resellerKey, int $productId, int $quantity, ?string $reference, ?string $idempotencyKey = null): array
     {
+        // ── Idempotency check ────────────────────────────────────────────
+        if ($idempotencyKey !== null) {
+            $existing = PartnerOrderIdempotency::query()
+                ->where('reseller_api_key_id', $resellerKey->id)
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existing) {
+                return array_merge($existing->response_payload, ['idempotent_replay' => true]);
+            }
+        }
+
         $product = Product::query()
             ->where('product_type', 'digital')
             ->where('digital_product_type', 'ready_product')
             ->where('status', 1)
             ->where('request_status', 1)
+            ->where('partner_approved', 1)
             ->find($productId);
 
         if (! $product) {
@@ -138,33 +157,35 @@ class ResellerApiService
         }
 
         $totalCost = $product->unit_price * $quantity;
-        $user = $resellerKey->user;
 
-        if (($user->wallet_balance ?? 0) < $totalCost) {
+        if ((float) $resellerKey->wallet_balance < $totalCost) {
             return [
                 'error' => 'Insufficient wallet balance.',
-                'balance' => (float) ($user->wallet_balance ?? 0),
+                'balance' => (float) $resellerKey->wallet_balance,
                 'required' => $totalCost,
                 'status' => 402,
             ];
         }
 
         try {
-            return DB::transaction(function () use ($user, $product, $productId, $quantity, $totalCost, $reference) {
-                // Debit wallet
-                $user->decrement('wallet_balance', $totalCost);
+            return DB::transaction(function () use ($resellerKey, $product, $productId, $quantity, $totalCost, $reference, $idempotencyKey) {
+                // Debit partner wallet balance
+                ResellerApiKey::where('id', $resellerKey->id)
+                    ->lockForUpdate()
+                    ->decrement('wallet_balance', $totalCost);
 
-                // Create order
+                // Create order (seller_id on key acts as the buyer identity)
                 $order = Order::create([
-                    'customer_id' => $user->id,
-                    'customer_type' => 'customer',
+                    'customer_id' => null,
+                    'customer_type' => 'partner',
                     'payment_status' => 'paid',
                     'order_status' => 'delivered',
-                    'payment_method' => 'reseller_wallet',
+                    'payment_method' => 'partner_wallet',
                     'order_amount' => $totalCost,
                     'order_type' => 'default',
-                    'order_note' => $reference ? 'Reseller ref: ' . $reference : 'Reseller API order',
+                    'order_note' => $reference ? 'Partner ref: ' . $reference : 'Partner API order (key #' . $resellerKey->id . ')',
                     'is_guest' => 0,
+                    'seller_id' => $resellerKey->seller_id,
                 ]);
 
                 // Create order detail
@@ -220,7 +241,16 @@ class ResellerApiService
                     ];
                 }
 
-                return [
+                // ── Escrow: credit vendor pending_balance ────────────────────
+                $sellerId = $product->user_id;
+                SellerWallet::where('seller_id', $sellerId)
+                    ->increment('pending_balance', $totalCost);
+
+                // Release escrow after 48 h
+                ReleasePartnerEscrowJob::dispatch($order->id, $sellerId, $totalCost)
+                    ->delay(now()->addHours(48));
+
+                $result = [
                     'data' => [
                         'order_id' => $order->id,
                         'product_id' => $productId,
@@ -233,6 +263,18 @@ class ResellerApiService
                         'codes' => $codes,
                     ],
                 ];
+
+                // ── Persist idempotency record ───────────────────────────────
+                if ($idempotencyKey !== null) {
+                    PartnerOrderIdempotency::create([
+                        'reseller_api_key_id' => $resellerKey->id,
+                        'idempotency_key' => $idempotencyKey,
+                        'order_id' => $order->id,
+                        'response_payload' => $result,
+                    ]);
+                }
+
+                return $result;
             });
         } catch (\Throwable $e) {
             Log::error('ResellerApiService: order creation failed', [
@@ -250,9 +292,11 @@ class ResellerApiService
      */
     public function getOrder(int $orderId, ResellerApiKey $resellerKey): ?array
     {
+        // Orders placed via partner API are scoped to the seller_id of the key
         $order = Order::query()
             ->where('id', $orderId)
-            ->where('customer_id', $resellerKey->user_id)
+            ->where('seller_id', $resellerKey->seller_id)
+            ->where('payment_method', 'partner_wallet')
             ->with(['orderDetails'])
             ->first();
 
@@ -290,19 +334,26 @@ class ResellerApiService
     /**
      * Generate a new API key pair for a user.
      */
-    public static function generateKeyPair(int $userId, string $name = 'API Key'): ResellerApiKey
+    /**
+     * Generate a new API key pair for a seller.
+     * Key starts as pending — requires admin approval before it becomes active.
+     */
+    public static function generateKeyPair(?int $userId, string $name = 'API Key', ?int $sellerId = null, ?string $requestNote = null): ResellerApiKey
     {
         $rawKey = 'rslr_' . Str::random(40);
         $rawSecret = Str::random(48);
 
         return ResellerApiKey::create([
             'user_id' => $userId,
+            'seller_id' => $sellerId,
             'name' => $name,
             'api_key' => hash('sha256', $rawKey),
             'api_secret' => hash('sha256', $rawSecret),
             'permissions' => ['products.list', 'orders.create', 'orders.view', 'balance.view'],
             'rate_limit_per_minute' => 60,
-            'is_active' => true,
+            'is_active' => false,
+            'status' => 'pending',
+            'request_note' => $requestNote,
         ])->setAttribute('raw_api_key', $rawKey)
             ->setAttribute('raw_api_secret', $rawSecret);
     }

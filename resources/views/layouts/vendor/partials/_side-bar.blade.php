@@ -591,6 +591,19 @@
                                 </a>
                             </li>
                         @endif
+
+                        {{-- Developer API Section --}}
+                        <li
+                            class="navbar-vertical-aside-has-menu {{ Request::is('vendor/developer*') ? 'active' : '' }}">
+                            <a class="js-navbar-vertical-aside-menu-link nav-link"
+                               href="{{ route('vendor.developer.index') }}"
+                               title="{{ translate('Developer_API') }}">
+                                <i class="fi fi-rr-code-simple nav-icon"></i>
+                                <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate text-capitalize">
+                                    {{ translate('Developer_API') }}
+                                </span>
+                            </a>
+                        </li>
                         @php($shippingMethod = getWebConfig('shipping_method'))
                         @if ($shippingMethod == 'sellerwise_shipping' && $canAccess('vendor_delivery_man'))
                             <li class="nav-item {{ Request::is('vendor/delivery-man*') ? 'scroll-here' : '' }}">

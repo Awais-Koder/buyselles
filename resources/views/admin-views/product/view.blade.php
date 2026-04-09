@@ -74,6 +74,27 @@
                         </label>
                     </label>
                     </form>
+
+                    {{-- Partner API Approval Toggle --}}
+                    <form action="{{ route('admin.products.partner-approved-toggle') }}" method="post"
+                          id="product-partner-approved{{ $product['id'] }}-form"
+                          class="admin-product-partner-approved-form">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $product['id'] }}">
+                        <label class="form-control mb-0 d-flex gap-3 align-items-center w-max-content">
+                            <span class="fw-semibold">{{ translate('Partner_API') }}</span>
+                            <label class="switcher mx-auto"
+                                   for="products-partner-approved-{{ $product['id'] }}">
+                                <input class="switcher_input partner-approved-toggle" type="checkbox"
+                                       value="1"
+                                       id="products-partner-approved-{{ $product['id'] }}"
+                                       {{ $product['partner_approved'] ? 'checked' : '' }}
+                                       data-product-id="{{ $product['id'] }}">
+                                <span class="switcher_control"></span>
+                            </label>
+                        </label>
+                    </form>
+
                 @php
                     $buttonText = $product['request_status'] == 1 ? translate('Edit') : translate('Edit_&_Approved');
                 @endphp
@@ -1133,6 +1154,29 @@
                     updateBlurryDiv($(this));
                 });
             }, 300);
+        });
+
+        // Partner API approval toggle
+        $(document).on('change', '.partner-approved-toggle', function () {
+            const checkbox = $(this);
+            const productId = checkbox.data('product-id');
+            const checked = checkbox.is(':checked');
+
+            $.ajax({
+                url: '{{ route('admin.products.partner-approved-toggle') }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    id: productId,
+                },
+                success: function (response) {
+                    toastr.success(response.message);
+                },
+                error: function () {
+                    checkbox.prop('checked', !checked);
+                    toastr.error('{{ translate('Failed_to_update_Partner_API_approval') }}');
+                }
+            });
         });
 
     </script>

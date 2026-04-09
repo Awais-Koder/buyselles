@@ -407,6 +407,18 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                 Route::get('/get-order-data', 'getOrderData')->name('get-order-data');
             });
 
+            // ─── Partner / Developer API Section ─────────────────────────
+            Route::group(['prefix' => 'developer', 'as' => 'developer.'], function () {
+                Route::controller(\App\Http\Controllers\Vendor\PartnerApiController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::post('request-key', 'requestKey')->name('request-key');
+                    Route::post('update-ips', 'updateIps')->name('update-ips');
+                    Route::post('revoke-key', 'revokeKey')->name('revoke-key');
+                    Route::post('regenerate-key', 'regenerateKey')->name('regenerate-key');
+                    Route::get('logs', 'logs')->name('logs');
+                });
+            });
+
             Route::group(['prefix' => 'report', 'as' => 'report.', 'middleware' => ['vendor_module:vendor_reports']], function () {
                 Route::controller(ProductReportController::class)->group(function () {
                     Route::get('all-product', 'all_product')->name('all-product');

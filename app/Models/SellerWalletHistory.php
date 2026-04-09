@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class SellerWalletHistory extends Model
 {
-    //
+    protected $guarded = [];
 }

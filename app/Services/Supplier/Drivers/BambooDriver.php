@@ -382,19 +382,33 @@ class BambooDriver implements SupplierDriverInterface
     public function getBalance(): BalanceResult
     {
         try {
-            $response = $this->get('/api/Integration/v1/accounts/balance');
+            $response = $this->get('/api/integration/v1.0/accounts');
 
             if ($response->successful()) {
-                $data = $response->json();
+                $accounts = $response->json('accounts', []);
+                $targetId = (int) ($this->credentials['account_id'] ?? 0);
 
-                return new BalanceResult(
-                    supported: true,
-                    balance: (float) ($data['balance'] ?? $data['availableBalance'] ?? 0),
-                    currency: (string) ($data['currencyCode'] ?? $data['currency'] ?? 'USD'),
-                );
+                // Pick the matching account, or the first active one
+                $account = null;
+                foreach ($accounts as $acc) {
+                    if ($targetId > 0 && (int) ($acc['id'] ?? 0) === $targetId) {
+                        $account = $acc;
+                        break;
+                    }
+                    if (($acc['isActive'] ?? false) && $account === null) {
+                        $account = $acc;
+                    }
+                }
+
+                if ($account) {
+                    return new BalanceResult(
+                        supported: true,
+                        balance: (float) ($account['balance'] ?? 0),
+                        currency: (string) ($account['currency'] ?? 'USD'),
+                    );
+                }
             }
 
-            // Bamboo may not expose a balance endpoint for all account types
             return BalanceResult::unsupported();
         } catch (\Throwable) {
             return BalanceResult::unsupported();
@@ -509,16 +523,17 @@ class BambooDriver implements SupplierDriverInterface
             $response = $this->get('/api/integration/v1.0/accounts');
 
             if ($response->successful()) {
-                $accounts = $response->json();
+                $accounts = $response->json('accounts', []);
 
-                // Pick the first account (or first active one)
-                $account = $accounts[0] ?? null;
-                if ($account) {
-                    $id = (int) ($account['Id'] ?? $account['id'] ?? 0);
-                    if ($id > 0) {
-                        \Illuminate\Support\Facades\Cache::put($cacheKey, $id, now()->addHours(24));
+                // Pick the first active account
+                foreach ($accounts as $acc) {
+                    if ($acc['isActive'] ?? false) {
+                        $id = (int) ($acc['id'] ?? 0);
+                        if ($id > 0) {
+                            \Illuminate\Support\Facades\Cache::put($cacheKey, $id, now()->addHours(24));
 
-                        return $id;
+                            return $id;
+                        }
                     }
                 }
             }

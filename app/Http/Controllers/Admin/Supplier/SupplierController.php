@@ -30,12 +30,15 @@ class SupplierController extends BaseController
         $searchValue = $request->get('searchValue');
 
         $suppliers = SupplierApi::query()
-            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('priority')
             ->orderByDesc('id')
             ->paginate(getWebConfig(name: 'pagination_limit'));
 
-        return view('admin-views.supplier.list', compact('suppliers', 'searchValue'));
+        $balances = collect($this->supplierManager->getSupplierBalances())
+            ->keyBy('id');
+
+        return view('admin-views.supplier.list', compact('suppliers', 'searchValue', 'balances'));
     }
 
     /**
@@ -55,7 +58,7 @@ class SupplierController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
-            'driver' => 'required|string|in:'.implode(',', $this->supplierManager->getAvailableDrivers()),
+            'driver' => 'required|string|in:' . implode(',', $this->supplierManager->getAvailableDrivers()),
             'base_url' => 'required|url|max:500',
             'auth_type' => 'required|in:api_key,bearer_token,oauth2,basic,hmac',
             'rate_limit_per_minute' => 'required|integer|min:1|max:1000',
@@ -133,7 +136,7 @@ class SupplierController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
-            'driver' => 'required|string|in:'.implode(',', $this->supplierManager->getAvailableDrivers()),
+            'driver' => 'required|string|in:' . implode(',', $this->supplierManager->getAvailableDrivers()),
             'base_url' => 'required|url|max:500',
             'auth_type' => 'required|in:api_key,bearer_token,oauth2,basic,hmac',
             'rate_limit_per_minute' => 'required|integer|min:1|max:1000',
@@ -236,7 +239,7 @@ class SupplierController extends BaseController
                 $driver = $this->supplierManager->driver($supplier);
                 $products = $driver->fetchProducts(['page' => 0, 'size' => 1000]);
 
-                return collect($products)->map(fn ($p) => [
+                return collect($products)->map(fn($p) => [
                     'id' => $p->supplierProductId,
                     'name' => $p->name,
                     'price' => $p->price,
@@ -252,7 +255,7 @@ class SupplierController extends BaseController
             if ($search !== '') {
                 $needle = mb_strtolower($search);
                 $filtered = $filtered->filter(
-                    fn ($p) => str_contains(mb_strtolower((string) ($p['name'] ?? '')), $needle)
+                    fn($p) => str_contains(mb_strtolower((string) ($p['name'] ?? '')), $needle)
                         || str_contains(mb_strtolower((string) ($p['id'] ?? '')), $needle)
                 );
             }

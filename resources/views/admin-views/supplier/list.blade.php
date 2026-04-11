@@ -38,6 +38,7 @@
                             <th>{{ translate('name') }}</th>
                             <th>{{ translate('driver') }}</th>
                             <th class="text-center">{{ translate('health') }}</th>
+                            <th class="text-center">{{ translate('balance') }}</th>
                             <th class="text-center">{{ translate('priority') }}</th>
                             <th class="text-center">{{ translate('rate_limit') }}</th>
                             <th class="text-center">{{ translate('sandbox') }}</th>
@@ -68,6 +69,19 @@
                                 <span class="badge {{ $healthBadge }}">{{ $supplier->health_status }}</span>
                                 @if($supplier->health_checked_at)
                                     <br><small class="text-muted">{{ $supplier->health_checked_at->diffForHumans() }}</small>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @php
+                                    $bal = $balances[$supplier->id]['balance'] ?? null;
+                                @endphp
+                                @if($bal && $bal->supported)
+                                    <span class="fw-semibold {{ $bal->balance > 0 ? 'text-success' : 'text-danger' }}">
+                                        {{ number_format($bal->balance, 2) }}
+                                    </span>
+                                    <br><small class="text-muted">{{ $bal->currency }}</small>
+                                @else
+                                    <span class="text-muted">—</span>
                                 @endif
                             </td>
                             <td class="text-center">{{ $supplier->priority }}</td>
@@ -124,7 +138,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-4">
+                            <td colspan="10" class="text-center py-4">
                                 <div class="d-flex flex-column align-items-center gap-2">
                                     <i class="fi fi-sr-inbox-in fs-1 text-muted"></i>
                                     <span class="text-muted">{{ translate('no_suppliers_found') }}</span>

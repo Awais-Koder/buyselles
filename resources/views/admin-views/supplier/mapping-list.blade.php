@@ -96,7 +96,14 @@
                                         <input class="switcher_input custom-modal-plugin" type="checkbox" value="1"
                                                name="status" id="mapping-status{{ $mapping->id }}"
                                                {{ $mapping->is_active ? 'checked' : '' }}
-                                               data-modal-type="input-change-form" data-reload="true">
+                                               data-modal-type="input-change-form" data-reload="true"
+                                               data-modal-form="#mapping-status{{ $mapping->id }}-form"
+                                               data-on-title="{{ translate('Want_to_Turn_ON_Mapping_Status') . '?' }}"
+                                               data-off-title="{{ translate('Want_to_Turn_OFF_Mapping_Status') . '?' }}"
+                                               data-on-message="<p>{{ translate('If_enabled_this_supplier_mapping_will_be_used_for_stock_fulfillment') }}</p>"
+                                               data-off-message="<p>{{ translate('If_disabled_this_mapping_will_not_be_used_for_any_stock_fulfillment') }}</p>"
+                                               data-on-button-text="{{ translate('turn_on') }}"
+                                               data-off-button-text="{{ translate('turn_off') }}">
                                         <span class="switcher_control"></span>
                                     </label>
                                 </form>

@@ -108,4 +108,20 @@ class SupplierProductMapping extends Model
     {
         return $query->where('auto_restock', true);
     }
+
+    // ─── Static helpers ──────────────────────────────────────────────────
+
+    /**
+     * Return true when at least one active mapping (via an active supplier)
+     * exists for the given product.  Used to decide whether a zero local-code
+     * count should be treated as "out of stock" for digital ready-products.
+     */
+    public static function hasActiveMapping(int $productId): bool
+    {
+        return static::query()
+            ->where('product_id', $productId)
+            ->where('is_active', true)
+            ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
+            ->exists();
+    }
 }

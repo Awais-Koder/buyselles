@@ -202,6 +202,82 @@ class SupplierController extends BaseController
     }
 
     /**
+     * Browse the product catalog of a supplier (AJAX).
+     * Used by the mapping-add form to search and select a supplier product.
+     *
+     * The full catalog is cached per supplier for 15 minutes so that search
+     * and pagination are instant after the first (slow) fetch from Bamboo.
+     *
+     * Query params:
+     *   search   (string)  — filter by product name (PHP-side, case-insensitive)
+     *   page     (int)     — 0-based page index
+     *   size     (int)     — page size (default 50, max 100)
+     *   refresh  (bool)    — pass refresh=1 to bust the cache and re-fetch
+     */
+    public function browseCatalog(int $id, Request $request): JsonResponse
+    {
+        $supplier = SupplierApi::findOrFail($id);
+
+        $size = min((int) $request->get('size', 50), 100);
+        $page = max((int) $request->get('page', 0), 0);
+        $search = trim((string) $request->get('search', ''));
+        $refresh = (bool) $request->get('refresh', false);
+
+        $cacheKey = "supplier_catalog_{$supplier->id}";
+
+        if ($refresh) {
+            \Cache::forget($cacheKey);
+        }
+
+        try {
+            // Fetch all items once and cache — search/page are applied in PHP.
+            // fetchProducts() uses a 120 s timeout to handle Bamboo's large response.
+            $allItems = \Cache::remember($cacheKey, now()->addMinutes(15), function () use ($supplier) {
+                $driver = $this->supplierManager->driver($supplier);
+                $products = $driver->fetchProducts(['page' => 0, 'size' => 1000]);
+
+                return collect($products)->map(fn ($p) => [
+                    'id' => $p->supplierProductId,
+                    'name' => $p->name,
+                    'price' => $p->price,
+                    'currency' => $p->currency,
+                    'stock' => $p->stockAvailable,
+                    'region' => $p->region,
+                    'image' => $p->imageUrl,
+                ])->values()->all();
+            });
+
+            $filtered = collect($allItems);
+
+            if ($search !== '') {
+                $needle = mb_strtolower($search);
+                $filtered = $filtered->filter(
+                    fn ($p) => str_contains(mb_strtolower((string) ($p['name'] ?? '')), $needle)
+                        || str_contains(mb_strtolower((string) ($p['id'] ?? '')), $needle)
+                );
+            }
+
+            $total = $filtered->count();
+            $items = $filtered->slice($page * $size, $size)->values()->all();
+
+            return response()->json([
+                'success' => true,
+                'products' => $items,
+                'page' => $page,
+                'size' => $size,
+                'count' => count($items),
+                'total' => $total,
+                'cached' => ! $refresh,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Test connection to a supplier (AJAX).
      */
     public function testConnection(int $id): JsonResponse

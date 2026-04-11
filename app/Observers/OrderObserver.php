@@ -18,10 +18,23 @@ class OrderObserver
 
     /**
      * Handle the Order "created" event.
+     * Some payment methods (wallet, free orders) create the order already in 'paid' status,
+     * so the updated observer won't fire. We handle those here.
      */
     public function created(Order $order): void
     {
-        //
+        if ($order->payment_status === 'paid') {
+            try {
+                $this->codeService->assignAndNotify($order);
+            } catch (\Throwable $e) {
+                Log::error('OrderObserver: digital code assignment/email failed on create', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $this->dispatchSupplierFallbackIfNeeded($order);
+        }
     }
 
     /**
@@ -90,7 +103,7 @@ class OrderObserver
                 $hasMapping = SupplierProductMapping::query()
                     ->where('product_id', $productId)
                     ->where('is_active', true)
-                    ->whereHas('supplierApi', fn($q) => $q->where('is_active', true))
+                    ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
                     ->exists();
 
                 if ($hasMapping) {

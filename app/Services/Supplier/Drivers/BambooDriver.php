@@ -112,7 +112,8 @@ class BambooDriver implements SupplierDriverInterface
             $params['TargetCurrency'] = strtoupper($filters['target_currency']);
         }
 
-        $response = $this->get('/api/integration/v2.0/catalog', $params);
+        // The full catalog response can be 200KB+; allow 2 minutes for slow connections.
+        $response = $this->get('/api/integration/v2.0/catalog', $params, timeout: 120);
 
         if ($response->failed()) {
             throw new \RuntimeException("Bamboo fetchProducts failed: HTTP {$response->status()} — {$response->body()}");
@@ -197,77 +198,84 @@ class BambooDriver implements SupplierDriverInterface
     }
 
     /**
-     * Place an order with Bamboo for the given product SKU.
+     * Place an order with Bamboo using the V1 async API.
      *
-     * Bamboo orders are synchronous for pre-loaded stock — codes are returned
-     * immediately in the response. If status is "Pending" the webhook/poll
-     * will deliver codes later.
+     * V1 is fully asynchronous — the response is simply the RequestId string.
+     * Codes are delivered later via Bamboo's order-notification webhook.
+     *
+     * Endpoint: POST /api/integration/v1.0/orders/checkout
+     * Body:     { RequestId, AccountId, Products: [{ ProductId, Quantity, Value }] }
+     * Response: "<RequestId>"  (plain JSON string)
      */
-    public function placeOrder(string $supplierProductId, int $quantity): SupplierOrderResult
+    public function placeOrder(string $supplierProductId, int $quantity, ?float $unitPrice = null): SupplierOrderResult
     {
-        $faceValue = (float) ($this->settings['face_value'] ?? 0);
-        $currencyCode = strtoupper($this->settings['currency_code'] ?? 'USD');
+        $accountId = $this->resolveAccountId();
+
+        if ($accountId === 0) {
+            throw new \RuntimeException('Bamboo placeOrder: could not resolve account_id — set it in credentials or ensure the accounts API is reachable.');
+        }
+
+        // V1 Value = the card face value (denomination), NOT the wholesale cost.
+        // Fetch it from catalog to ensure correctness per product.
+        $faceValue = $this->getProductFaceValue($supplierProductId);
+
+        if ($faceValue <= 0) {
+            throw new \RuntimeException("Bamboo placeOrder: could not determine face value for product {$supplierProductId} from catalog.");
+        }
+
+        $requestId = (string) \Illuminate\Support\Str::uuid();
 
         $body = [
-            'ClientReference' => 'BS-' . uniqid(),
+            'RequestId' => $requestId,
+            'AccountId' => $accountId,
             'Products' => [
                 [
                     'ProductId' => (int) $supplierProductId,
                     'Quantity' => $quantity,
-                    'UnitPrice' => $faceValue > 0 ? $faceValue : null,
-                    'CurrencyCode' => $currencyCode,
+                    'Value' => $faceValue,
                 ],
             ],
         ];
 
-        // Remove null UnitPrice to let Bamboo use the default face value
-        if ($body['Products'][0]['UnitPrice'] === null) {
-            unset($body['Products'][0]['UnitPrice']);
-        }
-
-        $response = $this->post('/api/integration/v2.0/orders', $body);
+        $response = $this->post('/api/integration/v1.0/orders/checkout', $body);
 
         if ($response->failed()) {
             throw new \RuntimeException("Bamboo placeOrder failed: HTTP {$response->status()} — {$response->body()}");
         }
 
-        $data = $response->json();
-        $orderId = (string) ($data['orderId'] ?? '');
-        $status = strtolower($data['status'] ?? 'pending');
+        // V1 response body is just the RequestId string: "71ac2817-..."
+        $returnedId = trim($response->body(), '" \n\r\t');
+        $supplierOrderId = $returnedId !== '' ? $returnedId : $requestId;
 
-        $codes = $this->extractCodes($data);
-
-        $normalizedStatus = match ($status) {
-            'completed', 'success', 'succeeded' => 'fulfilled',
-            'pending', 'processing', 'inprogress' => count($codes) > 0 ? 'partial' : 'processing',
-            'failed', 'error', 'cancelled', 'canceled' => 'failed',
-            default => count($codes) > 0 ? 'fulfilled' : 'processing',
-        };
-
+        // V1 is always async — codes come via webhook
         return new SupplierOrderResult(
-            supplierOrderId: $orderId,
-            status: $normalizedStatus,
-            codes: $codes,
-            rawResponse: $data,
+            supplierOrderId: $supplierOrderId,
+            status: 'processing',
+            codes: [],
+            rawResponse: ['request_id' => $supplierOrderId],
         );
     }
 
     /**
-     * Poll the status of an existing Bamboo order.
+     * Poll the status of an existing Bamboo V1 order.
+     *
+     * Endpoint: GET /api/integration/v1.0/orders/{requestId}
      */
     public function getOrderStatus(string $supplierOrderId): SupplierOrderResult
     {
-        $response = $this->get("/api/integration/v2.0/orders/{$supplierOrderId}");
+        $response = $this->get("/api/integration/v1.0/orders/{$supplierOrderId}");
 
         if ($response->failed()) {
             throw new \RuntimeException("Bamboo getOrderStatus failed: HTTP {$response->status()}");
         }
 
-        $data = $response->json();
-        $status = strtolower($data['status'] ?? 'pending');
+        $data = $response->json() ?? [];
+
+        // V1 uses PascalCase keys: Status, Products
+        $rawStatus = strtolower((string) ($data['Status'] ?? $data['status'] ?? 'pending'));
         $codes = $this->extractCodes($data);
 
-        $normalizedStatus = match ($status) {
+        $normalizedStatus = match ($rawStatus) {
             'completed', 'success', 'succeeded' => 'fulfilled',
             'pending', 'processing', 'inprogress' => count($codes) > 0 ? 'partial' : 'processing',
             'failed', 'error', 'cancelled', 'canceled' => 'failed',
@@ -308,8 +316,10 @@ class BambooDriver implements SupplierDriverInterface
             }
         }
 
-        $orderId = (string) ($payload['orderId'] ?? '');
-        $status = strtolower($payload['status'] ?? 'unknown');
+        // V1 webhook uses PascalCase keys; V2 uses camelCase — handle both
+        $orderId = (string) ($payload['RequestId'] ?? $payload['OrderId'] ?? $payload['orderId'] ?? '');
+        $rawStatus = (string) ($payload['Status'] ?? $payload['status'] ?? 'unknown');
+        $status = strtolower($rawStatus);
         $codes = $this->extractCodes($payload);
 
         $type = match ($status) {
@@ -404,19 +414,19 @@ class BambooDriver implements SupplierDriverInterface
                 'type' => 'password',
                 'required' => true,
             ],
+            'account_id' => [
+                'label' => 'Account ID (optional — auto-detected from Bamboo accounts API if left empty)',
+                'type' => 'number',
+                'required' => false,
+            ],
         ];
     }
 
     public function getConfigSchema(): array
     {
         return [
-            'currency_code' => [
-                'label' => 'Order Currency Code (e.g. USD)',
-                'type' => 'text',
-                'default' => 'USD',
-            ],
             'face_value' => [
-                'label' => 'Default Face Value (leave empty to use catalog default)',
+                'label' => 'Card Face Value / Denomination (required — e.g. 10 for a $10 card)',
                 'type' => 'number',
                 'default' => null,
             ],
@@ -439,13 +449,26 @@ class BambooDriver implements SupplierDriverInterface
      * @param  array<string, mixed>  $data
      * @return string[]
      */
+    /**
+     * Extract redemption codes from a Bamboo V1/V2 order response or webhook payload.
+     *
+     * V1 webhook uses PascalCase: Products[].PinCode / SerialNumber
+     * V2 response uses camelCase: products[].pinCode / serialNumber
+     *
+     * @param  array<string, mixed>  $data
+     * @return string[]
+     */
     private function extractCodes(array $data): array
     {
         $codes = [];
 
-        foreach ($data['products'] ?? [] as $product) {
-            $pin = trim((string) ($product['pinCode'] ?? ''));
-            $serial = trim((string) ($product['serialNumber'] ?? ''));
+        // V1 uses 'Products' (PascalCase), V2 uses 'products' (camelCase)
+        $products = $data['Products'] ?? $data['products'] ?? [];
+
+        foreach ($products as $product) {
+            // V1: PinCode / SerialNumber (PascalCase); V2: pinCode / serialNumber (camelCase)
+            $pin = trim((string) ($product['PinCode'] ?? $product['pinCode'] ?? ''));
+            $serial = trim((string) ($product['SerialNumber'] ?? $product['serialNumber'] ?? ''));
 
             if ($pin !== '') {
                 // If both exist, combine as "SERIAL:PIN" so nothing is lost
@@ -461,18 +484,109 @@ class BambooDriver implements SupplierDriverInterface
     }
 
     /**
+     * Resolve the Bamboo account ID.
+     *
+     * Priority: credentials → cached → fetched from /api/integration/v1.0/accounts.
+     * The first active account is used when multiple exist.
+     */
+    private function resolveAccountId(): int
+    {
+        // 1. Explicitly set in credentials
+        $fromCreds = (int) ($this->credentials['account_id'] ?? 0);
+        if ($fromCreds > 0) {
+            return $fromCreds;
+        }
+
+        // 2. Cached (per supplier, 24 hours)
+        $cacheKey = "bamboo_account_id_{$this->supplier->id}";
+        $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        if ($cached) {
+            return (int) $cached;
+        }
+
+        // 3. Fetch from Bamboo accounts API
+        try {
+            $response = $this->get('/api/integration/v1.0/accounts');
+
+            if ($response->successful()) {
+                $accounts = $response->json();
+
+                // Pick the first account (or first active one)
+                $account = $accounts[0] ?? null;
+                if ($account) {
+                    $id = (int) ($account['Id'] ?? $account['id'] ?? 0);
+                    if ($id > 0) {
+                        \Illuminate\Support\Facades\Cache::put($cacheKey, $id, now()->addHours(24));
+
+                        return $id;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Bamboo: failed to auto-detect account_id', [
+                'supplier_id' => $this->supplier->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Fetch the face value (denomination) for a Bamboo product from the V2 catalog.
+     *
+     * The V1 order endpoint requires the card's face value in the Value field,
+     * which is NOT the wholesale/cost price. For fixed-denomination cards,
+     * minFaceValue == maxFaceValue. For variable cards, use minFaceValue.
+     */
+    private function getProductFaceValue(string $supplierProductId): float
+    {
+        try {
+            $response = $this->get('/api/integration/v2.0/catalog', [
+                'ProductId' => (int) $supplierProductId,
+                'PageSize' => 1,
+                'PageIndex' => 0,
+            ]);
+
+            if ($response->failed()) {
+                Log::warning('Bamboo: catalog lookup for face value failed', [
+                    'product_id' => $supplierProductId,
+                    'status' => $response->status(),
+                ]);
+
+                return 0;
+            }
+
+            foreach ($response->json('items', []) as $brand) {
+                foreach ($brand['products'] ?? [] as $product) {
+                    if ((string) ($product['id'] ?? '') === $supplierProductId) {
+                        return (float) ($product['minFaceValue'] ?? $product['maxFaceValue'] ?? 0);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Bamboo: exception fetching face value', [
+                'product_id' => $supplierProductId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return 0;
+    }
+
+    /**
      * Make a GET request with Basic Auth.
      *
      * @param  array<string, mixed>  $query
      */
-    private function get(string $path, array $query = []): Response
+    private function get(string $path, array $query = [], int $timeout = 30): Response
     {
         $request = Http::withBasicAuth(
             $this->credentials['client_id'] ?? '',
             $this->credentials['client_secret'] ?? ''
         )
             ->acceptJson()
-            ->timeout(30);
+            ->timeout($timeout);
 
         $url = $this->url($path);
 

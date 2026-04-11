@@ -35,7 +35,7 @@ class SupplierMappingController extends BaseController
             ->orderBy('priority')
             ->paginate(getWebConfig(name: 'pagination_limit'));
 
-        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name']);
+        $suppliers = SupplierApi::orderBy('name')->get(['id', 'name']);
 
         return view('admin-views.supplier.mapping-list', compact('mappings', 'suppliers', 'searchValue', 'supplierId'));
     }
@@ -45,7 +45,7 @@ class SupplierMappingController extends BaseController
      */
     public function getAddView(): View
     {
-        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name', 'driver']);
+        $suppliers = SupplierApi::orderBy('name')->get(['id', 'name', 'driver', 'is_active']);
 
         $products = Product::where('product_type', 'digital')
             ->where('digital_product_type', 'ready_product')
@@ -120,7 +120,7 @@ class SupplierMappingController extends BaseController
     {
         $mapping = SupplierProductMapping::with(['product', 'supplierApi'])->findOrFail($id);
 
-        $suppliers = SupplierApi::active()->orderBy('name')->get(['id', 'name', 'driver']);
+        $suppliers = SupplierApi::orderBy('name')->get(['id', 'name', 'driver', 'is_active']);
 
         $products = Product::where('product_type', 'digital')
             ->where('digital_product_type', 'ready_product')

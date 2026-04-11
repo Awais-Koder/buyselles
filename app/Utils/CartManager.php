@@ -399,7 +399,7 @@ class CartManager
         }
 
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity') . ' ' . $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         if ($user == 'offline') {
@@ -420,7 +420,7 @@ class CartManager
             $choices[$choice->name] = $request[$choice->name];
             $variations[$choice->title] = $request[$choice->name];
             if ($string != null) {
-                $string .= '-' . str_replace(' ', '', $request[$choice->name]);
+                $string .= '-'.str_replace(' ', '', $request[$choice->name]);
             } else {
                 $string .= str_replace(' ', '', $request[$choice->name]);
             }
@@ -482,7 +482,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request['id'], 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $string])->first();
@@ -511,7 +511,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
 
@@ -553,7 +553,7 @@ class CartManager
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
                     'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             } elseif ($product['product_type'] == 'physical' && ($shippingType == 'category_wise' || $shippingType == 'product_wise')) {
                 $cart->update([
@@ -568,7 +568,7 @@ class CartManager
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
                     'cart_shipping_cost' => $getShippingCost->cost ?? 0,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
             $cart->update(['is_checked' => 1]);
@@ -582,7 +582,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -592,17 +592,21 @@ class CartManager
         if ($product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request['quantity']) {
             $available = (int) $product['current_stock'];
             if ($available <= 0) {
-                return ['status' => 0, 'message' => translate('out_of_stock!')];
+                if (\App\Models\SupplierProductMapping::hasActiveMapping($product['id'])) {
+                    // Supplier can fulfil — treat local zero-stock as available.
+                } else {
+                    return ['status' => 0, 'message' => translate('out_of_stock!')];
+                }
+            } else {
+                return [
+                    'status' => 0,
+                    'message' => translate('Only').' '.$available.' '.translate('code(s)_in_stock').'. '.translate('You_can_purchase_up_to').' '.$available.'.',
+                ];
             }
-
-            return [
-                'status' => 0,
-                'message' => translate('Only') . ' ' . $available . ' ' . translate('code(s)_in_stock') . '. ' . translate('You_can_purchase_up_to') . ' ' . $available . '.',
-            ];
         }
 
         if ($product['minimum_order_qty'] > $request['quantity']) {
-            return ['status' => 0, 'message' => translate('Minimum_order_quantity') . ' ' . $product['minimum_order_qty']];
+            return ['status' => 0, 'message' => translate('Minimum_order_quantity').' '.$product['minimum_order_qty']];
         }
 
         $price = $product->unit_price;
@@ -651,7 +655,7 @@ class CartManager
         if ($cartCheck) {
             $cartArray['cart_group_id'] = $cartCheck['cart_group_id'];
         } else {
-            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']) . '-' . Str::random(5) . '-' . time();
+            $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
         $cart = Cart::where(['product_id' => $request->id, 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $request['variant_key']])->first();
@@ -679,7 +683,7 @@ class CartManager
                     'status' => 1,
                     'redirect_to' => 'checkout',
                     'cart' => $cart,
-                    'message' => translate('successfully_added') . '!',
+                    'message' => translate('successfully_added').'!',
                 ];
             }
         }
@@ -688,7 +692,7 @@ class CartManager
             'status' => 1,
             'in_cart_key' => $cart['id'],
             'cart' => $cart,
-            'message' => translate('successfully_added') . '!',
+            'message' => translate('successfully_added').'!',
             'product_variant_type' => count(json_decode($product['variation'], true)) > 0 ? 'multi_variant' : 'single_variant',
         ];
     }
@@ -905,7 +909,7 @@ class CartManager
                         $hasSupplierMapping = \App\Models\SupplierProductMapping::query()
                             ->where('product_id', $product['id'])
                             ->where('is_active', true)
-                            ->whereHas('supplierApi', fn($q) => $q->where('is_active', true))
+                            ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
                             ->exists();
 
                         if (! $hasSupplierMapping) {

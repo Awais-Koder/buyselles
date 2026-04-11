@@ -34,7 +34,7 @@
                                 <option value="">{{ translate('select_supplier') }}</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ old('supplier_api_id', $mapping->supplier_api_id) == $supplier->id ? 'selected' : '' }}>
-                                        {{ $supplier->name }} ({{ $supplier->driver }})
+                                        {{ $supplier->name }} ({{ $supplier->driver }}){{ $supplier->is_active ? '' : ' — '.translate('inactive') }}
                                     </option>
                                 @endforeach
                             </select>

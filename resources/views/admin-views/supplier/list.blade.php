@@ -89,7 +89,14 @@
                                         <input class="switcher_input custom-modal-plugin" type="checkbox" value="1"
                                                name="status" id="supplier-status{{ $supplier->id }}"
                                                {{ $supplier->is_active ? 'checked' : '' }}
-                                               data-modal-type="input-change-form" data-reload="true">
+                                               data-modal-type="input-change-form" data-reload="true"
+                                               data-modal-form="#supplier-status{{ $supplier->id }}-form"
+                                               data-on-title="{{ translate('Want_to_Turn_ON_Supplier_Status') . '?' }}"
+                                               data-off-title="{{ translate('Want_to_Turn_OFF_Supplier_Status') . '?' }}"
+                                               data-on-message="<p>{{ translate('If_enabled_this_supplier_will_be_used_for_automatic_code_fulfillment') }}</p>"
+                                               data-off-message="<p>{{ translate('If_disabled_this_supplier_will_not_be_used_for_any_order_fulfillment') }}</p>"
+                                               data-on-button-text="{{ translate('turn_on') }}"
+                                               data-off-button-text="{{ translate('turn_off') }}">
                                         <span class="switcher_control"></span>
                                     </label>
                                 </form>

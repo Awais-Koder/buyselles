@@ -64,8 +64,8 @@
                         @forelse($orders as $key => $order)
                             <tr>
                                 <td>{{ $orders->firstItem() + $key }}</td>
-                                <td>{{ $order->supplier?->name ?? translate('deleted') }}</td>
-                                <td>{{ $order->mapping?->product?->name ?? translate('N/A') }}</td>
+                                <td>{{ $order->supplierApi?->name ?? translate('deleted') }}</td>
+                                <td>{{ $order->productMapping?->product?->name ?? translate('N/A') }}</td>
                                 <td>
                                     <span class="badge bg-light text-dark border">{{ $order->supplier_order_id ?? '-' }}</span>
                                 </td>
@@ -78,7 +78,7 @@
                                         <span class="text-muted">{{ translate('restock') }}</span>
                                     @endif
                                 </td>
-                                <td>{{ $order->quantity_requested }}</td>
+                                <td>{{ $order->quantity }}</td>
                                 <td>{{ $order->cost_currency }} {{ number_format($order->total_cost, 2) }}</td>
                                 <td>
                                     @php
@@ -95,8 +95,9 @@
                                     </span>
                                 </td>
                                 <td>
-                                    @if($order->codes_received)
-                                        <span class="badge bg-success">{{ count($order->codes_received) }}</span>
+                                    @php $codesCount = count($order->getDecryptedCodes()); @endphp
+                                    @if($codesCount > 0)
+                                        <span class="badge bg-success">{{ $codesCount }}</span>
                                     @else
                                         <span class="text-muted">0</span>
                                     @endif

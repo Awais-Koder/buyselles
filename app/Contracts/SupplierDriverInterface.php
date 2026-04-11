@@ -38,8 +38,10 @@ interface SupplierDriverInterface
 
     /**
      * Place an order with the supplier for the given product and quantity.
+     *
+     * @param  float|null  $unitPrice  Optional cost/face-value per unit (from product mapping).
      */
-    public function placeOrder(string $supplierProductId, int $quantity): SupplierOrderResult;
+    public function placeOrder(string $supplierProductId, int $quantity, ?float $unitPrice = null): SupplierOrderResult;
 
     /**
      * Get the current status of a supplier order.

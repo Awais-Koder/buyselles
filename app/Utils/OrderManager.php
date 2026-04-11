@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Events\OrderEditDuePaymentEvent;
 use App\Events\OrderPlacedEvent;
+use App\Jobs\SupplierCodeFetchJob;
 use App\Models\Admin;
 use App\Models\AdminWallet;
 use App\Models\BusinessSetting;
@@ -11,6 +12,7 @@ use App\Models\Cart;
 use App\Models\CartShipping;
 use App\Models\Color;
 use App\Models\Coupon;
+use App\Models\DigitalProductCode;
 use App\Models\DigitalProductVariation;
 use App\Models\OfflinePayments;
 use App\Models\Order;
@@ -28,6 +30,7 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingType;
 use App\Models\Shop;
 use App\Models\Storage;
+use App\Models\SupplierProductMapping;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
@@ -51,7 +54,7 @@ class OrderManager
 
     public static function generateUniqueOrderID(): string
     {
-        return rand(1000, 9999).'-'.Str::random(5).'-'.time();
+        return rand(1000, 9999) . '-' . Str::random(5) . '-' . time();
     }
 
     public static function getOrderSummaryBeforePlaceOrder($cart, $coupon_discount): array
@@ -449,7 +452,7 @@ class OrderManager
             if (Order::where(['customer_id' => $user['id']])->count() > 0) {
                 return [
                     'status' => false,
-                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user').'!',
+                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user') . '!',
                 ];
             }
         }
@@ -554,7 +557,7 @@ class OrderManager
                 'discount' => $discount,
                 'coupon_type' => $couponType,
                 'total_cart_amount' => $onlyProductTotalAmount,
-                'messages' => translate('coupon_applied_successfully').'!',
+                'messages' => translate('coupon_applied_successfully') . '!',
             ];
         }
 
@@ -1339,11 +1342,14 @@ class OrderManager
                         'error' => $e->getMessage(),
                     ]);
                 }
+
+                // ── Dispatch supplier fetch for any unfulfilled digital codes ──
+                self::dispatchSupplierFallbackIfNeeded($order);
             }
 
             // ── Auto-deliver fully-digital orders that are already paid ──
             $isFullyDigital = collect($vendorWiseCart['cart_list'])->every(
-                fn ($item) => ($item->product_type ?? $item->product?->product_type ?? '') === 'digital'
+                fn($item) => ($item->product_type ?? $item->product?->product_type ?? '') === 'digital'
             );
             if ($isFullyDigital && ($data['payment_status'] ?? '') === 'paid') {
                 Order::where('id', $order_id)->update([
@@ -1708,13 +1714,13 @@ class OrderManager
             $productDetails = json_decode($orderProduct->product_details, true);
             $product = Product::active()->where(['id' => $orderProduct->product_id])->with(['digitalVariation'])->first();
             if (! $product) {
-                $errorMessages[] = $productDetails['name'] ?? ''.translate(' currently_not_available');
+                $errorMessages[] = $productDetails['name'] ?? '' . translate(' currently_not_available');
             }
             if ($product) {
                 $productValid = true;
                 if (($product['product_type'] == 'physical') && (($product['current_stock'] < $orderProduct['qty']) || ($product['minimum_order_qty'] > $product['current_stock']))) {
                     $productValid = false;
-                    $errorMessages[] = $productDetails['name'] ?? ''.translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
+                    $errorMessages[] = $productDetails['name'] ?? '' . translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
                 }
                 if ($productValid) {
                     $color = null;
@@ -1727,7 +1733,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $variationKey => $var) {
                                 if ($variationKey != 'color') {
-                                    $choices['choice_'.$i] = $var;
+                                    $choices['choice_' . $i] = $var;
                                     $i++;
                                 }
                             }
@@ -1735,7 +1741,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $index => $var) {
                                 if ($var) {
-                                    $choices['choice_'.$i] = $var;
+                                    $choices['choice_' . $i] = $var;
                                 }
                                 $i++;
                             }
@@ -1753,7 +1759,7 @@ class OrderManager
                     if (isset($cartCheck)) {
                         $cartGroupId = $cartCheck['cart_group_id'];
                     } else {
-                        $cartGroupId = $user['id'].'-'.Str::random(5).'-'.time();
+                        $cartGroupId = $user['id'] . '-' . Str::random(5) . '-' . time();
                     }
                     // Generate Group ID End
 
@@ -1765,7 +1771,7 @@ class OrderManager
                                 $price = json_decode($product->variation)[$i]->price;
                                 if (json_decode($product->variation)[$i]->qty < $orderProduct->qty) {
                                     $productValid = false;
-                                    $errorMessages[] = $productDetails['name'].translate(' variation does not have enough stock to fulfill the requested quantity.');
+                                    $errorMessages[] = $productDetails['name'] . translate(' variation does not have enough stock to fulfill the requested quantity.');
                                 }
                             }
                         }
@@ -1906,9 +1912,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $cartItem->allProducts->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $cartItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1931,9 +1937,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $seller == 'admin' ? getInHouseShopConfig(key: 'name') : $cartGroupFirstItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1970,7 +1976,7 @@ class OrderManager
 
             if ($minimumOrderAmount > $totalAmount) {
                 $shopIdentity = $product->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $product->seller->shop->name;
-                $message = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                $message = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
             }
         }
 
@@ -2221,7 +2227,7 @@ class OrderManager
                         if ($shippingMethod == 'inhouse_shipping') {
                             $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                             if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                $message[] = translate('shipping_Not_Available_for').' '.getWebConfig(name: 'company_name');
+                                $message[] = translate('shipping_Not_Available_for') . ' ' . getWebConfig(name: 'company_name');
                                 $response['status'] = 0;
                                 $response['redirect'] = route('shop-cart');
                             }
@@ -2229,14 +2235,14 @@ class OrderManager
                             if ($cart->seller_is == 'admin') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for').' '.getInHouseShopConfig(key: 'name');
+                                    $message[] = translate('shipping_Not_Available_for') . ' ' . getInHouseShopConfig(key: 'name');
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
                             } elseif ($cart->seller_is == 'seller') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_id' => $cart->seller_id, 'creator_type' => 'seller'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for').' '.$cart->seller->shop->name;
+                                    $message[] = translate('shipping_Not_Available_for') . ' ' . $cart->seller->shop->name;
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
@@ -2259,7 +2265,7 @@ class OrderManager
                                 $response['errorType'] = 'empty-shipping';
                                 $response['redirect'] = route('shop-cart');
                                 $shopIdentity = $cart->seller_is == 'admin' ? getInHouseShopConfig(key: 'name') : $cart->seller->shop->name;
-                                $message[] = translate('select').' '.$shopIdentity.' '.translate('shipping_method');
+                                $message[] = translate('select') . ' ' . $shopIdentity . ' ' . translate('shipping_method');
                             }
                         }
                     }
@@ -2601,6 +2607,64 @@ class OrderManager
             if (! empty($orderEditDuePaymentEvent)) {
                 event(new OrderEditDuePaymentEvent(notification: $orderEditDuePaymentEvent['notificationData']));
             }
+        }
+    }
+
+    /**
+     * Check if any digital order details still need codes and have supplier mappings.
+     * If so, dispatch a SupplierCodeFetchJob to fetch codes from external suppliers.
+     *
+     * This is called directly from generateOrder() because order creation uses
+     * DB::table('orders')->insertGetId() which bypasses Eloquent observers.
+     */
+    private static function dispatchSupplierFallbackIfNeeded(Order $order): void
+    {
+        try {
+            $order->loadMissing('orderDetails');
+
+            foreach ($order->orderDetails as $detail) {
+                $productDetails = json_decode($detail->product_details ?? '{}');
+                $productType = $productDetails->product_type ?? null;
+                $digitalType = $productDetails->digital_product_type ?? null;
+
+                if ($productType !== 'digital' || $digitalType !== 'ready_product') {
+                    continue;
+                }
+
+                $productId = $detail->product_id ?? ($productDetails->id ?? null);
+                if (! $productId) {
+                    continue;
+                }
+
+                $assignedCount = DigitalProductCode::query()
+                    ->where('order_detail_id', $detail->id)
+                    ->where('status', 'sold')
+                    ->count();
+
+                if ((int) $detail->qty - $assignedCount <= 0) {
+                    continue;
+                }
+
+                $hasMapping = SupplierProductMapping::query()
+                    ->where('product_id', $productId)
+                    ->where('is_active', true)
+                    ->whereHas('supplierApi', fn($q) => $q->where('is_active', true))
+                    ->exists();
+
+                if ($hasMapping) {
+                    SupplierCodeFetchJob::dispatch($order->id);
+                    Log::info('OrderManager: dispatched SupplierCodeFetchJob for unfulfilled codes', [
+                        'order_id' => $order->id,
+                    ]);
+
+                    return;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('OrderManager: supplier fallback check failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

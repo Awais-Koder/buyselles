@@ -167,15 +167,15 @@ class SupplierManager
 
             $result = $this->fetchAndStockCodes($product, $needed);
 
-            if ($result['inserted'] > 0) {
-                // Update the supplier order with platform order reference
-                if ($result['supplier_order_id']) {
-                    SupplierOrder::where('id', $result['supplier_order_id'])->update([
-                        'order_id' => $order->id,
-                        'order_detail_id' => $detail->id,
-                    ]);
-                }
+            // Always link supplier order to platform order (even for async/V1 where codes come via webhook)
+            if ($result['supplier_order_id']) {
+                SupplierOrder::where('id', $result['supplier_order_id'])->update([
+                    'order_id' => $order->id,
+                    'order_detail_id' => $detail->id,
+                ]);
+            }
 
+            if ($result['inserted'] > 0) {
                 $anyFulfilled = true;
             }
         }
@@ -291,17 +291,29 @@ class SupplierManager
             );
 
             // Process codes from webhook
-            if ($result->hasCodes() && $result->supplierOrderId) {
+            if ($result->supplierOrderId) {
                 $supplierOrder = SupplierOrder::where('supplier_api_id', $supplier->id)
                     ->where('supplier_order_id', $result->supplierOrderId)
                     ->first();
 
                 if ($supplierOrder) {
-                    $this->processReceivedCodes(
-                        supplierOrder: $supplierOrder,
-                        mapping: $supplierOrder->productMapping,
-                        codes: $result->codes,
-                    );
+                    if ($result->hasCodes()) {
+                        $this->processReceivedCodes(
+                            supplierOrder: $supplierOrder,
+                            mapping: $supplierOrder->productMapping,
+                            codes: $result->codes,
+                        );
+
+                        // If this supplier order is linked to a platform order, assign codes to customer
+                        if ($supplierOrder->order_id) {
+                            $order = Order::find($supplierOrder->order_id);
+                            if ($order) {
+                                $this->codeService->assignAndNotify($order);
+                            }
+                        }
+                    } elseif ($result->type === 'order_failed') {
+                        $supplierOrder->update(['status' => 'failed']);
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -338,7 +350,7 @@ class SupplierManager
 
         try {
             $driver = $this->driver($supplier);
-            $result = $driver->placeOrder($mapping->supplier_product_id, $quantity);
+            $result = $driver->placeOrder($mapping->supplier_product_id, $quantity, (float) $mapping->cost_price);
 
             $this->logger->logResponse(
                 logId: $logId,

@@ -236,6 +236,9 @@ class SupplierManager
                 ]);
             }
 
+            // Always sync the product's selling price when manual stock is depleted
+            $this->codeService->applyApiPriceIfManualDepleted($mapping->product_id);
+
             $mapping->update(['last_synced_at' => now()]);
 
             // Auto-restock if below threshold
@@ -437,6 +440,7 @@ class SupplierManager
         $bulkResult = $this->codeService->bulkAddToPool(
             productId: $mapping->product_id,
             records: $codes,
+            source: 'supplier_api',
         );
 
         $supplierOrder->update([
@@ -446,6 +450,11 @@ class SupplierManager
         ]);
 
         $mapping->update(['last_synced_at' => now()]);
+
+        // If all manual stock is depleted, switch the product price to the API-based price
+        if ($bulkResult['inserted'] > 0) {
+            $this->codeService->applyApiPriceIfManualDepleted($mapping->product_id);
+        }
 
         return $bulkResult['inserted'];
     }

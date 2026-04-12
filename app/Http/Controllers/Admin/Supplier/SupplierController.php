@@ -30,7 +30,7 @@ class SupplierController extends BaseController
         $searchValue = $request->get('searchValue');
 
         $suppliers = SupplierApi::query()
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('priority')
             ->orderByDesc('id')
             ->paginate(getWebConfig(name: 'pagination_limit'));
@@ -58,7 +58,7 @@ class SupplierController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
-            'driver' => 'required|string|in:' . implode(',', $this->supplierManager->getAvailableDrivers()),
+            'driver' => 'required|string|in:'.implode(',', $this->supplierManager->getAvailableDrivers()),
             'base_url' => 'required|url|max:500',
             'auth_type' => 'required|in:api_key,bearer_token,oauth2,basic,hmac',
             'rate_limit_per_minute' => 'required|integer|min:1|max:1000',
@@ -136,7 +136,7 @@ class SupplierController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
-            'driver' => 'required|string|in:' . implode(',', $this->supplierManager->getAvailableDrivers()),
+            'driver' => 'required|string|in:'.implode(',', $this->supplierManager->getAvailableDrivers()),
             'base_url' => 'required|url|max:500',
             'auth_type' => 'required|in:api_key,bearer_token,oauth2,basic,hmac',
             'rate_limit_per_minute' => 'required|integer|min:1|max:1000',
@@ -215,7 +215,6 @@ class SupplierController extends BaseController
      *   search   (string)  — filter by product name (PHP-side, case-insensitive)
      *   page     (int)     — 0-based page index
      *   size     (int)     — page size (default 50, max 100)
-     *   refresh  (bool)    — pass refresh=1 to bust the cache and re-fetch
      */
     public function browseCatalog(int $id, Request $request): JsonResponse
     {
@@ -224,60 +223,113 @@ class SupplierController extends BaseController
         $size = min((int) $request->get('size', 50), 100);
         $page = max((int) $request->get('page', 0), 0);
         $search = trim((string) $request->get('search', ''));
-        $refresh = (bool) $request->get('refresh', false);
 
-        $cacheKey = "supplier_catalog_{$supplier->id}";
+        $catalogKey = \App\Jobs\SyncSupplierCatalogJob::catalogCacheKey($supplier->id);
+        $allItems = \Cache::get($catalogKey);
 
-        if ($refresh) {
-            \Cache::forget($cacheKey);
+        if ($allItems === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'no_cache',
+            ]);
         }
 
-        try {
-            // Fetch all items once and cache — search/page are applied in PHP.
-            // fetchProducts() uses a 120 s timeout to handle Bamboo's large response.
-            $allItems = \Cache::remember($cacheKey, now()->addMinutes(15), function () use ($supplier) {
-                $driver = $this->supplierManager->driver($supplier);
-                $products = $driver->fetchProducts(['page' => 0, 'size' => 1000]);
+        $filtered = collect($allItems);
 
-                return collect($products)->map(fn($p) => [
-                    'id' => $p->supplierProductId,
-                    'name' => $p->name,
-                    'price' => $p->price,
-                    'currency' => $p->currency,
-                    'stock' => $p->stockAvailable,
-                    'region' => $p->region,
-                    'image' => $p->imageUrl,
-                ])->values()->all();
-            });
+        if ($search !== '') {
+            $needle = mb_strtolower($search);
+            $filtered = $filtered->filter(
+                fn ($p) => str_contains(mb_strtolower((string) ($p['name'] ?? '')), $needle)
+                    || str_contains(mb_strtolower((string) ($p['id'] ?? '')), $needle)
+            );
+        }
 
-            $filtered = collect($allItems);
+        $total = $filtered->count();
+        $items = $filtered->slice($page * $size, $size)->values()->all();
 
-            if ($search !== '') {
-                $needle = mb_strtolower($search);
-                $filtered = $filtered->filter(
-                    fn($p) => str_contains(mb_strtolower((string) ($p['name'] ?? '')), $needle)
-                        || str_contains(mb_strtolower((string) ($p['id'] ?? '')), $needle)
-                );
+        return response()->json([
+            'success' => true,
+            'products' => $items,
+            'page' => $page,
+            'size' => $size,
+            'count' => count($items),
+            'total' => $total,
+        ]);
+    }
+
+    /**
+     * Dispatch a background job to sync the supplier catalog.
+     */
+    public function dispatchCatalogSync(int $id): JsonResponse
+    {
+        $supplier = SupplierApi::findOrFail($id);
+
+        $statusKey = \App\Jobs\SyncSupplierCatalogJob::statusCacheKey($supplier->id);
+        $current = \Cache::get($statusKey);
+
+        // Don't dispatch if already running (unless stale — started > 20 min ago)
+        if ($current && ($current['state'] ?? '') === 'running') {
+            $startedAt = $current['started_at'] ?? null;
+            $isStale = $startedAt && now()->diffInMinutes(\Carbon\Carbon::parse($startedAt)) > 20;
+
+            if (! $isStale) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'already_running',
+                    'status' => $current,
+                ]);
             }
+        }
 
-            $total = $filtered->count();
-            $items = $filtered->slice($page * $size, $size)->values()->all();
+        // Clear old catalog cache and set status to 'running' immediately
+        // to prevent race condition where poll sees stale 'done' status
+        \Cache::forget(\App\Jobs\SyncSupplierCatalogJob::catalogCacheKey($supplier->id));
+
+        \Cache::put($statusKey, [
+            'state' => 'running',
+            'progress' => 0,
+            'total_brands' => null,
+            'pages_fetched' => 0,
+            'total_pages' => 0,
+            'started_at' => now()->toIso8601String(),
+        ], now()->addMinutes(30));
+
+        \App\Jobs\SyncSupplierCatalogJob::dispatch($supplier->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'dispatched',
+        ]);
+    }
+
+    /**
+     * Poll the status of a running catalog sync job.
+     */
+    public function catalogSyncStatus(int $id): JsonResponse
+    {
+        $supplier = SupplierApi::findOrFail($id);
+
+        $statusKey = \App\Jobs\SyncSupplierCatalogJob::statusCacheKey($supplier->id);
+        $status = \Cache::get($statusKey);
+
+        if (! $status) {
+            // Check if we already have a cached catalog (from a previous sync)
+            $catalogKey = \App\Jobs\SyncSupplierCatalogJob::catalogCacheKey($supplier->id);
+            $hasCatalog = \Cache::has($catalogKey);
 
             return response()->json([
                 'success' => true,
-                'products' => $items,
-                'page' => $page,
-                'size' => $size,
-                'count' => count($items),
-                'total' => $total,
-                'cached' => ! $refresh,
+                'status' => [
+                    'state' => $hasCatalog ? 'done' : 'idle',
+                    'has_catalog' => $hasCatalog,
+                ],
             ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'status' => $status,
+        ]);
     }
 
     /**

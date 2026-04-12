@@ -10,7 +10,6 @@
 
             <form action="{{ route('admin.supplier.mapping.update', $mapping->id) }}" method="post">
                 @csrf
-                @method('PUT')
 
                 <div class="row gy-3">
                     <div class="col-lg-6">

@@ -178,10 +178,15 @@
                     </button>
                 </div>
 
-                {{-- Loading state --}}
+                {{-- Loading / syncing state --}}
                 <div id="catalog-loading" class="text-center py-5" style="display:none;">
                     <div class="spinner-border text-primary" role="status"></div>
-                    <p class="text-muted mt-2">{{ translate('loading_catalog') }}&hellip;</p>
+                    <p class="text-muted mt-2" id="catalog-status-text">{{ translate('loading_catalog') }}&hellip;</p>
+                    <div class="progress mt-2 mx-auto" id="catalog-progress-wrap" style="display:none;max-width:400px;height:20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             id="catalog-progress-bar" role="progressbar"
+                             style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
                 </div>
 
                 {{-- Error state --}}
@@ -232,9 +237,13 @@
 <script>
 (function () {
     const catalogUrl    = "{{ rtrim(url('admin/supplier'), '/') }}";
+    const csrfToken     = "{{ csrf_token() }}";
     const searchInput   = document.getElementById('catalog-search');
     const searchBtn     = document.getElementById('catalog-search-btn');
     const loadingEl     = document.getElementById('catalog-loading');
+    const statusTextEl  = document.getElementById('catalog-status-text');
+    const progressWrap  = document.getElementById('catalog-progress-wrap');
+    const progressBar   = document.getElementById('catalog-progress-bar');
     const errorEl       = document.getElementById('catalog-error');
     const tableWrapEl   = document.getElementById('catalog-table-wrap');
     const tbodyEl       = document.getElementById('catalog-tbody');
@@ -246,42 +255,12 @@
     const browsBtn      = document.getElementById('browse-catalog-btn');
     const refreshBtn    = document.getElementById('catalog-refresh-btn');
 
-    let currentPage = 0;
-    let isRefresh   = false;
-    const pageSize  = 50;
+    let currentPage  = 0;
+    let pollTimer    = null;
+    const pageSize   = 50;
+    const POLL_INTERVAL = 2000;
 
-    // Show/hide Browse Catalog button based on supplier selection
-    supplierSel.addEventListener('change', function () {
-        browsBtn.style.display = this.value ? 'inline-flex' : 'none';
-        currentPage = 0;
-    });
-
-    // Trigger search on Enter
-    searchInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { currentPage = 0; isRefresh = false; loadCatalog(); }
-    });
-    searchBtn.addEventListener('click', function () { currentPage = 0; isRefresh = false; loadCatalog(); });
-
-    // Bust cache and reload
-    refreshBtn.addEventListener('click', function () {
-        currentPage = 0;
-        isRefresh   = true;
-        loadCatalog();
-    });
-
-    // Load catalog when modal opens
-    document.getElementById('catalogModal').addEventListener('show.bs.modal', function () {
-        if (!tbodyEl.children.length) {
-            loadCatalog();
-        }
-    });
-
-    prevBtn.addEventListener('click', function () {
-        if (currentPage > 0) { currentPage--; isRefresh = false; loadCatalog(); }
-    });
-    nextBtn.addEventListener('click', function () {
-        currentPage++; isRefresh = false; loadCatalog();
-    });
+    // ── Helpers ──────────────────────────────────────────────────────────
 
     function setVisibility(loading, error, table, empty) {
         loadingEl.style.display   = loading ? '' : 'none';
@@ -290,106 +269,23 @@
         emptyEl.style.display     = empty   ? '' : 'none';
     }
 
-    function loadCatalog() {
-        const supplierId = supplierSel.value;
-        if (!supplierId) return;
+    function setProgress(pct, text) {
+        progressWrap.style.display = '';
+        const val = Math.min(Math.round(pct), 100);
+        progressBar.style.width = val + '%';
+        progressBar.textContent = val + '%';
+        progressBar.setAttribute('aria-valuenow', val);
+        if (text) statusTextEl.textContent = text;
+    }
 
-        setVisibility(true, false, false, false);
-        refreshBtn.disabled = true;
+    function resetProgress() {
+        progressWrap.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+    }
 
-        const params = new URLSearchParams({
-            search:  searchInput.value.trim(),
-            page:    currentPage,
-            size:    pageSize,
-            refresh: isRefresh ? '1' : '0',
-        });
-
-        fetch(`${catalogUrl}/${supplierId}/catalog?${params}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            if (!data.success) {
-                setVisibility(false, true, false, false);
-                errorEl.textContent = data.message || '{{ translate('failed_to_load_catalog') }}';
-                return;
-            }
-
-            const products = data.products || [];
-
-            if (products.length === 0) {
-                setVisibility(false, false, false, true);
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
-                countTextEl.textContent = '';
-                return;
-            }
-
-            tbodyEl.innerHTML = products.map(function (p) {
-                // 999 is the sentinel used when Bamboo returns null for count (unlimited / not tracked).
-                // Show the real number always; append "+" for the sentinel so it's clear "at least 999".
-                let stockHtml;
-                if (p.stock === 0) {
-                    stockHtml = '<span class="badge bg-danger">{{ translate('out_of_stock') }}</span>';
-                } else if (p.stock >= 999) {
-                    stockHtml = '<span class="badge bg-success">999+</span>';
-                } else if (p.stock >= 50) {
-                    stockHtml = `<span class="badge bg-success">${p.stock}</span>`;
-                } else {
-                    stockHtml = `<span class="badge bg-warning text-dark">${p.stock}</span>`;
-                }
-
-                const region = p.region
-                    ? `<span class="badge bg-secondary">${escHtml(p.region)}</span>`
-                    : '<span class="text-muted">—</span>';
-
-                return `<tr>
-                    <td><code>${escHtml(String(p.id))}</code></td>
-                    <td>${escHtml(p.name)}</td>
-                    <td class="text-end fw-semibold">${escHtml(String(p.price))} <small class="text-muted">${escHtml(p.currency)}</small></td>
-                    <td class="text-center">${stockHtml}</td>
-                    <td class="text-center">${region}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-primary select-product-btn"
-                            data-id="${escHtml(String(p.id))}"
-                            data-name="${escHtml(p.name)}"
-                            data-price="${escHtml(String(p.price))}"
-                            data-currency="${escHtml(p.currency)}">
-                            {{ translate('select') }}
-                        </button>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            // Attach select handlers
-            tbodyEl.querySelectorAll('.select-product-btn').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    document.getElementById('supplier_product_id').value   = btn.dataset.id;
-                    document.getElementById('supplier_product_name').value = btn.dataset.name;
-                    document.getElementById('cost_price').value            = btn.dataset.price;
-                    document.getElementById('cost_currency').value         = btn.dataset.currency;
-
-                    bootstrap.Modal.getInstance(document.getElementById('catalogModal')).hide();
-                });
-            });
-
-            const total = data.total ?? products.length;
-            prevBtn.disabled = currentPage === 0;
-            nextBtn.disabled = (currentPage + 1) * pageSize >= total;
-
-            const from = currentPage * pageSize + 1;
-            const to   = Math.min(from + products.length - 1, total);
-            countTextEl.textContent = `${from}–${to} {{ translate('of') }} ${total} {{ translate('items') }}`;
-
-            setVisibility(false, false, true, false);
-            isRefresh = false;
-            refreshBtn.disabled = false;
-        })
-        .catch(function (err) {
-            setVisibility(false, true, false, false);
-            errorEl.textContent = '{{ translate('failed_to_load_catalog') }}: ' + err.message;
-            refreshBtn.disabled = false;
-        });
+    function stopPolling() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
     }
 
     function escHtml(str) {
@@ -400,7 +296,281 @@
             .replace(/"/g, '&quot;');
     }
 
-    // If old supplier_api_id was submitted, show the button immediately
+    function ajaxGet(url) {
+        return fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        }).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        });
+    }
+
+    function ajaxPost(url) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+            }
+        }).then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+        });
+    }
+
+    // ── Sync (dispatch + poll) ───────────────────────────────────────────
+
+    function startSync(supplierId) {
+        stopPolling();
+        setVisibility(true, false, false, false);
+        resetProgress();
+        statusTextEl.textContent = '{{ translate('starting_catalog_sync') }}\u2026';
+        refreshBtn.disabled = true;
+
+        ajaxPost(catalogUrl + '/' + supplierId + '/catalog/sync')
+            .then(function (data) {
+                if (data.message === 'already_running' || data.message === 'dispatched') {
+                    pollStatus(supplierId);
+                } else {
+                    setVisibility(false, true, false, false);
+                    errorEl.textContent = data.message || '{{ translate('failed_to_start_sync') }}';
+                    refreshBtn.disabled = false;
+                }
+            })
+            .catch(function (err) {
+                setVisibility(false, true, false, false);
+                errorEl.textContent = '{{ translate('failed_to_start_sync') }}: ' + err.message;
+                refreshBtn.disabled = false;
+            });
+    }
+
+    function pollStatus(supplierId) {
+        stopPolling();
+
+        var tick = function () {
+            ajaxGet(catalogUrl + '/' + supplierId + '/catalog/status')
+                .then(function (data) {
+                    var st = (data.status || {});
+                    var state = st.state || 'idle';
+
+                    if (state === 'running') {
+                        var pct = st.progress || 0;
+                        var fetched = st.pages_fetched || 0;
+                        var total   = st.total_pages || '?';
+                        setVisibility(true, false, false, false);
+                        setProgress(pct, '{{ translate('syncing_catalog') }}: ' + fetched + '/' + total + ' {{ translate('pages') }}\u2026');
+                    } else if (state === 'done') {
+                        stopPolling();
+                        setProgress(100, '{{ translate('sync_complete_loading') }}\u2026');
+                        currentPage = 0;
+                        loadCatalog(supplierId);
+                    } else if (state === 'failed') {
+                        stopPolling();
+                        setVisibility(false, true, false, false);
+                        errorEl.textContent = st.error || '{{ translate('catalog_sync_failed') }}';
+                        refreshBtn.disabled = false;
+                        resetProgress();
+                    } else {
+                        // idle — no sync running, no cache; stop polling and wait
+                        stopPolling();
+                        setVisibility(false, false, false, true);
+                        refreshBtn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    // Network glitch — keep polling, don't break
+                });
+        };
+
+        tick(); // immediate first check
+        pollTimer = setInterval(tick, POLL_INTERVAL);
+    }
+
+    // ── Check status on modal open ───────────────────────────────────────
+
+    function checkAndLoad(supplierId) {
+        setVisibility(true, false, false, false);
+        resetProgress();
+        statusTextEl.textContent = '{{ translate('checking_catalog') }}\u2026';
+        refreshBtn.disabled = true;
+
+        ajaxGet(catalogUrl + '/' + supplierId + '/catalog/status')
+            .then(function (data) {
+                var st = (data.status || {});
+                var state = st.state || 'idle';
+
+                if (state === 'done') {
+                    // Catalog is cached — load it directly
+                    statusTextEl.textContent = '{{ translate('loading_catalog') }}\u2026';
+                    currentPage = 0;
+                    loadCatalog(supplierId);
+                } else if (state === 'running') {
+                    // Sync already in progress — just poll
+                    pollStatus(supplierId);
+                } else {
+                    // idle or failed — start a fresh sync
+                    startSync(supplierId);
+                }
+            })
+            .catch(function (err) {
+                setVisibility(false, true, false, false);
+                errorEl.textContent = '{{ translate('failed_to_load_catalog') }}: ' + err.message;
+                refreshBtn.disabled = false;
+            });
+    }
+
+    // ── Load cached catalog (instant) ────────────────────────────────────
+
+    function loadCatalog(supplierId) {
+        if (!supplierId) supplierId = supplierSel.value;
+        if (!supplierId) return;
+
+        setVisibility(true, false, false, false);
+        statusTextEl.textContent = '{{ translate('loading_catalog') }}\u2026';
+        resetProgress();
+
+        var params = new URLSearchParams({
+            search: searchInput.value.trim(),
+            page:   currentPage,
+            size:   pageSize,
+        });
+
+        ajaxGet(catalogUrl + '/' + supplierId + '/catalog?' + params)
+            .then(function (data) {
+                if (!data.success) {
+                    if (data.message === 'no_cache') {
+                        // Cache expired — show empty state, user can click refresh
+                        setVisibility(false, false, false, true);
+                        refreshBtn.disabled = false;
+                        return;
+                    }
+                    setVisibility(false, true, false, false);
+                    errorEl.textContent = data.message || '{{ translate('failed_to_load_catalog') }}';
+                    refreshBtn.disabled = false;
+                    return;
+                }
+
+                var products = data.products || [];
+
+                if (products.length === 0) {
+                    setVisibility(false, false, false, true);
+                    prevBtn.disabled = true;
+                    nextBtn.disabled = true;
+                    countTextEl.textContent = '';
+                    refreshBtn.disabled = false;
+                    return;
+                }
+
+                tbodyEl.innerHTML = products.map(function (p) {
+                    var stockHtml;
+                    if (p.stock === 0) {
+                        stockHtml = '<span class="badge bg-danger">{{ translate('out_of_stock') }}</span>';
+                    } else if (p.stock >= 999) {
+                        stockHtml = '<span class="badge bg-success">999+</span>';
+                    } else if (p.stock >= 50) {
+                        stockHtml = '<span class="badge bg-success">' + p.stock + '</span>';
+                    } else {
+                        stockHtml = '<span class="badge bg-warning text-dark">' + p.stock + '</span>';
+                    }
+
+                    var region = p.region
+                        ? '<span class="badge bg-secondary">' + escHtml(p.region) + '</span>'
+                        : '<span class="text-muted">\u2014</span>';
+
+                    return '<tr>' +
+                        '<td><code>' + escHtml(String(p.id)) + '</code></td>' +
+                        '<td>' + escHtml(p.name) + '</td>' +
+                        '<td class="text-end fw-semibold">' + escHtml(String(p.price)) + ' <small class="text-muted">' + escHtml(p.currency) + '</small></td>' +
+                        '<td class="text-center">' + stockHtml + '</td>' +
+                        '<td class="text-center">' + region + '</td>' +
+                        '<td class="text-center">' +
+                            '<button type="button" class="btn btn-sm btn-primary select-product-btn"' +
+                            ' data-id="' + escHtml(String(p.id)) + '"' +
+                            ' data-name="' + escHtml(p.name) + '"' +
+                            ' data-price="' + escHtml(String(p.price)) + '"' +
+                            ' data-currency="' + escHtml(p.currency) + '">' +
+                            '{{ translate('select') }}' +
+                            '</button>' +
+                        '</td>' +
+                    '</tr>';
+                }).join('');
+
+                // Attach select handlers
+                tbodyEl.querySelectorAll('.select-product-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        document.getElementById('supplier_product_id').value   = btn.dataset.id;
+                        document.getElementById('supplier_product_name').value = btn.dataset.name;
+                        document.getElementById('cost_price').value            = btn.dataset.price;
+                        document.getElementById('cost_currency').value         = btn.dataset.currency;
+                        bootstrap.Modal.getInstance(document.getElementById('catalogModal')).hide();
+                    });
+                });
+
+                var total = data.total != null ? data.total : products.length;
+                prevBtn.disabled = currentPage === 0;
+                nextBtn.disabled = (currentPage + 1) * pageSize >= total;
+
+                var from = currentPage * pageSize + 1;
+                var to   = Math.min(from + products.length - 1, total);
+                countTextEl.textContent = from + '\u2013' + to + ' {{ translate('of') }} ' + total + ' {{ translate('items') }}';
+
+                setVisibility(false, false, true, false);
+                refreshBtn.disabled = false;
+            })
+            .catch(function (err) {
+                setVisibility(false, true, false, false);
+                errorEl.textContent = '{{ translate('failed_to_load_catalog') }}: ' + err.message;
+                refreshBtn.disabled = false;
+            });
+    }
+
+    // ── Event listeners ──────────────────────────────────────────────────
+
+    // Show/hide Browse Catalog button when supplier changes
+    supplierSel.addEventListener('change', function () {
+        browsBtn.style.display = this.value ? 'inline-flex' : 'none';
+        currentPage = 0;
+        tbodyEl.innerHTML = '';
+        stopPolling();
+    });
+
+    // Modal open → check status → load or sync
+    document.getElementById('catalogModal').addEventListener('show.bs.modal', function () {
+        var supplierId = supplierSel.value;
+        if (supplierId) checkAndLoad(supplierId);
+    });
+
+    // Stop polling when modal closes
+    document.getElementById('catalogModal').addEventListener('hidden.bs.modal', function () {
+        stopPolling();
+    });
+
+    // Search
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { currentPage = 0; loadCatalog(); }
+    });
+    searchBtn.addEventListener('click', function () { currentPage = 0; loadCatalog(); });
+
+    // Pagination
+    prevBtn.addEventListener('click', function () {
+        if (currentPage > 0) { currentPage--; loadCatalog(); }
+    });
+    nextBtn.addEventListener('click', function () {
+        currentPage++; loadCatalog();
+    });
+
+    // Refresh → force a new sync from supplier API
+    refreshBtn.addEventListener('click', function () {
+        var supplierId = supplierSel.value;
+        if (supplierId) {
+            currentPage = 0;
+            tbodyEl.innerHTML = '';
+            startSync(supplierId);
+        }
+    });
+
+    // If supplier was pre-selected (e.g. old value from validation), show button
     if (supplierSel.value) {
         browsBtn.style.display = 'inline-flex';
     }

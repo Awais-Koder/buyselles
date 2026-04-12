@@ -33,7 +33,6 @@ class SupplierStockSyncJob implements ShouldQueue
     {
         $mappings = SupplierProductMapping::query()
             ->active()
-            ->autoRestock()
             ->with('supplierApi')
             ->get();
 

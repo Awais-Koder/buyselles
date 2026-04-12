@@ -35,6 +35,9 @@
                     <a href="{{ route('admin.supplier.mapping.add') }}" class="btn btn-primary">
                         + {{ translate('add_mapping') }}
                     </a>
+                    <button type="button" id="sync-prices-btn" class="btn btn-outline-info">
+                        <i class="fi fi-rr-rotate-right" id="sync-prices-icon"></i> {{ translate('sync_prices') }}
+                    </button>
                 </div>
             </div>
 
@@ -145,6 +148,12 @@
 </div>
 @endsection
 
+@push('css_or_js')
+<style>
+    @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+@endpush
+
 @push('script')
 <script>
     'use strict';
@@ -165,6 +174,29 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 form.submit();
+            }
+        });
+    });
+
+    $(document).on('click', '#sync-prices-btn', function() {
+        let btn = $(this);
+        let icon = $('#sync-prices-icon');
+        btn.prop('disabled', true);
+        icon.css('animation', 'spin 1s linear infinite');
+
+        $.ajax({
+            url: "{{ route('admin.supplier.mapping.sync-prices') }}",
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function(data) {
+                toastr.success(data.message || '{{ translate('price_sync_dispatched_successfully') }}');
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || '{{ translate('failed_to_dispatch_price_sync') }}');
+            },
+            complete: function() {
+                icon.css('animation', '');
+                btn.prop('disabled', false);
             }
         });
     });

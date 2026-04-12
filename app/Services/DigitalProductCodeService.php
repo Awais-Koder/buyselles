@@ -31,6 +31,7 @@ class DigitalProductCodeService
         string $plainCode,
         ?string $serialNumber = null,
         ?string $expiryDate = null,
+        string $source = 'manual',
     ): ?DigitalProductCode {
         $normalised = strtolower(trim($plainCode));
         $hash = hash('sha256', $normalised);
@@ -73,6 +74,7 @@ class DigitalProductCodeService
                 'serial_number' => $serialNumber ? trim($serialNumber) : null,
                 'expiry_date' => $expiryDate ?: null,
                 'status' => 'available',
+                'source' => $source,
             ]);
         } catch (\Illuminate\Database\QueryException $e) {
             // Catch race-condition duplicate (concurrent insert between the EXISTS check and CREATE)
@@ -96,7 +98,7 @@ class DigitalProductCodeService
      * @param  array<int, string|array{code: string, serial_number?: string|null, expiry_date?: string|null}>  $records
      * @return array{inserted: int, skipped: int}
      */
-    public function bulkAddToPool(int $productId, array $records): array
+    public function bulkAddToPool(int $productId, array $records, string $source = 'manual'): array
     {
         $inserted = 0;
         $skipped = 0;
@@ -119,7 +121,7 @@ class DigitalProductCodeService
                 continue;
             }
 
-            $result = $this->addToPool($productId, $plainCode, $serialNumber, $expiryDate);
+            $result = $this->addToPool($productId, $plainCode, $serialNumber, $expiryDate, $source);
             if ($result === null) {
                 $skipped++; // duplicate
             } else {
@@ -359,6 +361,81 @@ class DigitalProductCodeService
     /**
      * Sync the product's current_stock to match available, non-expired, active codes.
      */
+    /**
+     * Switch product price to the supplier API price (cost + markup) when all
+     * manually uploaded stock is depleted.
+     *
+     * Rules:
+     * - Only switches when manual available codes reach zero.
+     * - Uses the highest-priority active mapping's calculateSellPrice().
+     * - Logs the price change so admins can audit it.
+     * - Does nothing if no active supplier mapping exists.
+     */
+    public function applyApiPriceIfManualDepleted(int $productId): void
+    {
+        $manualStock = DigitalProductCode::query()
+            ->where('product_id', $productId)
+            ->where('source', 'manual')
+            ->where('status', 'available')
+            ->where('is_active', true)
+            ->where(function ($q): void {
+                $q->whereNull('expiry_date')
+                    ->orWhereDate('expiry_date', '>=', now()->toDateString());
+            })
+            ->count();
+
+        if ($manualStock > 0) {
+            // Manual stock still available — keep the current price
+            return;
+        }
+
+        // Find the highest-priority active mapping for this product
+        $mapping = SupplierProductMapping::where('product_id', $productId)
+            ->active()
+            ->byPriority()
+            ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
+            ->first();
+
+        if (! $mapping) {
+            return;
+        }
+
+        $apiPrice = $mapping->calculateSellPrice();
+
+        if ($apiPrice <= 0) {
+            return;
+        }
+
+        $product = Product::find($productId);
+
+        if (! $product) {
+            return;
+        }
+
+        // Avoid redundant writes if price is already correct
+        if ((float) $product->unit_price === $apiPrice) {
+            return;
+        }
+
+        $previousPrice = $product->unit_price;
+
+        Product::where('id', $productId)->update([
+            'unit_price' => $apiPrice,
+            'purchase_price' => $mapping->cost_price,
+        ]);
+
+        Log::info('DigitalProductCodeService: price switched to API price (manual stock depleted)', [
+            'product_id' => $productId,
+            'previous_price' => $previousPrice,
+            'api_price' => $apiPrice,
+            'cost_price' => $mapping->cost_price,
+            'markup_type' => $mapping->markup_type,
+            'markup_value' => $mapping->markup_value,
+            'mapping_id' => $mapping->id,
+            'supplier_api_id' => $mapping->supplier_api_id,
+        ]);
+    }
+
     public function syncStock(int $productId): void
     {
         $available = DigitalProductCode::query()

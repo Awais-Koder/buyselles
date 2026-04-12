@@ -72,86 +72,123 @@ class BambooDriver implements SupplierDriverInterface
      * We flatten brand → products into individual SupplierProductDTOs
      * so the rest of the system can map them 1-to-1.
      *
+     * When `fetch_all` is true (default when no explicit page is given), the method
+     * automatically paginates through every page and returns the complete catalog.
+     * The Bamboo API paginates by **brand**, not by product, so a single page of
+     * 100 brands can contain many more products.
+     *
      * @param  array<string, mixed>  $filters  Accepts: country_code, currency_code,
      *                                         name, page, size, modified_since,
-     *                                         brand_id, product_id, target_currency
+     *                                         brand_id, product_id, target_currency,
+     *                                         fetch_all (bool, default true)
      * @return SupplierProductDTO[]
      */
     public function fetchProducts(array $filters = []): array
     {
-        $params = [
-            'PageIndex' => $filters['page'] ?? 0,
-            'PageSize' => $filters['size'] ?? 100,
-        ];
+        // When a caller explicitly passes a page number, honour it (single-page mode).
+        // Otherwise default to fetching every page automatically.
+        $fetchAll = $filters['fetch_all'] ?? ! isset($filters['page']);
+
+        $pageSize = min((int) ($filters['size'] ?? 100), 100); // API cap: 100 brands/page
+        $startPage = (int) ($filters['page'] ?? 0);
+
+        // Optional progress callback: fn(int $page, int $brandsOnPage, int $totalBrandCount): void
+        $onPage = $filters['on_page'] ?? null;
+
+        $baseParams = [];
 
         if (! empty($filters['country_code'])) {
-            $params['CountryCode'] = strtoupper($filters['country_code']);
+            $baseParams['CountryCode'] = strtoupper($filters['country_code']);
         }
 
         if (! empty($filters['currency_code'])) {
-            $params['CurrencyCode'] = strtoupper($filters['currency_code']);
+            $baseParams['CurrencyCode'] = strtoupper($filters['currency_code']);
         }
 
         if (! empty($filters['name'])) {
-            $params['Name'] = $filters['name'];
+            $baseParams['Name'] = $filters['name'];
         }
 
         if (! empty($filters['modified_since'])) {
-            $params['ModifiedDate'] = $filters['modified_since'];
+            $baseParams['ModifiedDate'] = $filters['modified_since'];
         }
 
         if (! empty($filters['product_id'])) {
-            $params['ProductId'] = $filters['product_id'];
+            $baseParams['ProductId'] = $filters['product_id'];
         }
 
         if (! empty($filters['brand_id'])) {
-            $params['BrandId'] = $filters['brand_id'];
+            $baseParams['BrandId'] = $filters['brand_id'];
         }
 
         if (! empty($filters['target_currency'])) {
-            $params['TargetCurrency'] = strtoupper($filters['target_currency']);
-        }
-
-        // The full catalog response can be 200KB+; allow 2 minutes for slow connections.
-        $response = $this->get('/api/integration/v2.0/catalog', $params, timeout: 120);
-
-        if ($response->failed()) {
-            throw new \RuntimeException("Bamboo fetchProducts failed: HTTP {$response->status()} — {$response->body()}");
+            $baseParams['TargetCurrency'] = strtoupper($filters['target_currency']);
         }
 
         $dtos = [];
+        $currentPage = $startPage;
 
-        foreach ($response->json('items', []) as $brand) {
-            $brandName = (string) ($brand['name'] ?? '');
-            $countryCode = (string) ($brand['countryCode'] ?? '');
-            $currencyCode = (string) ($brand['currencyCode'] ?? '');
-            $description = $brand['description'] ?? null;
-            $logoUrl = $brand['logoUrl'] ?? null;
+        do {
+            $params = array_merge($baseParams, [
+                'PageIndex' => $currentPage,
+                'PageSize' => $pageSize,
+            ]);
 
-            foreach ($brand['products'] ?? [] as $product) {
-                $productId = (string) ($product['id'] ?? '');
+            // The full catalog response can be large; allow 2 minutes per page.
+            $response = $this->get('/api/integration/v2.0/catalog', $params, timeout: 120);
 
-                if ($productId === '') {
-                    continue;
-                }
-
-                $minPrice = (float) ($product['price']['min'] ?? $product['minFaceValue'] ?? 0);
-                $priceCurrency = (string) ($product['price']['currencyCode'] ?? $currencyCode);
-
-                $dtos[] = new SupplierProductDTO(
-                    supplierProductId: $productId,
-                    name: (string) ($product['name'] ?? $brandName),
-                    description: $description,
-                    category: null,
-                    imageUrl: $logoUrl,
-                    price: $minPrice,
-                    currency: $priceCurrency,
-                    stockAvailable: ($product['count'] ?? null) !== null ? (int) $product['count'] : 999,
-                    region: $countryCode ?: null,
-                    rawData: array_merge($brand, ['_product' => $product]),
-                );
+            if ($response->failed()) {
+                throw new \RuntimeException("Bamboo fetchProducts failed: HTTP {$response->status()} — {$response->body()}");
             }
-        }
+
+            $body = $response->json();
+            $items = $body['items'] ?? [];
+
+            // Bamboo returns { pageIndex, pageSize, count, items }
+            // where `count` is the total number of *brands* across all pages.
+            $totalBrands = (int) ($body['count'] ?? 0);
+
+            // Fire progress callback so callers (e.g. jobs) can track progress.
+            if (is_callable($onPage)) {
+                $onPage($currentPage, count($items), $totalBrands);
+            }
+
+            foreach ($items as $brand) {
+                $brandName = (string) ($brand['name'] ?? '');
+                $countryCode = (string) ($brand['countryCode'] ?? '');
+                $currencyCode = (string) ($brand['currencyCode'] ?? '');
+                $description = $brand['description'] ?? null;
+                $logoUrl = $brand['logoUrl'] ?? null;
+
+                foreach ($brand['products'] ?? [] as $product) {
+                    $productId = (string) ($product['id'] ?? '');
+
+                    if ($productId === '') {
+                        continue;
+                    }
+
+                    $minPrice = (float) ($product['price']['min'] ?? $product['minFaceValue'] ?? 0);
+                    $priceCurrency = (string) ($product['price']['currencyCode'] ?? $currencyCode);
+
+                    $dtos[] = new SupplierProductDTO(
+                        supplierProductId: $productId,
+                        name: (string) ($product['name'] ?? $brandName),
+                        description: $description,
+                        category: null,
+                        imageUrl: $logoUrl,
+                        price: $minPrice,
+                        currency: $priceCurrency,
+                        stockAvailable: ($product['count'] ?? null) !== null ? (int) $product['count'] : 999,
+                        region: $countryCode ?: null,
+                        rawData: array_merge($brand, ['_product' => $product]),
+                    );
+                }
+            }
+
+            $currentPage++;
+
+            // Stop when: single-page mode, empty page, or all brands fetched.
+        } while ($fetchAll && count($items) >= $pageSize && ($currentPage * $pageSize) < ($totalBrands + $pageSize));
 
         return $dtos;
     }
@@ -628,6 +665,6 @@ class BambooDriver implements SupplierDriverInterface
     {
         $base = rtrim($this->supplier->base_url ?: 'https://api.bamboocardportal.com', '/');
 
-        return $base . '/' . ltrim($path, '/');
+        return $base.'/'.ltrim($path, '/');
     }
 }

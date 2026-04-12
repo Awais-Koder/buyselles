@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Crypt;
  * @property string|null $serial_number Optional serial/reference number (plain text)
  * @property Carbon|null $expiry_date Code expiry date
  * @property string $status available | reserved | sold | failed | expired
+ * @property string $source manual | supplier_api
  * @property bool $is_active Whether the code is active (can be sold) or deactivated by vendor/admin
  * @property int|null $order_id
  * @property int|null $order_detail_id
@@ -36,6 +37,7 @@ class DigitalProductCode extends Model
         'serial_number',
         'expiry_date',
         'status',
+        'source',
         'is_active',
         'order_id',
         'order_detail_id',

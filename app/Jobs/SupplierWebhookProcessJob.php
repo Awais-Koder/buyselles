@@ -54,8 +54,19 @@ class SupplierWebhookProcessJob implements ShouldQueue
             return;
         }
 
-        // Reconstruct a request-like object for the driver's parseWebhook method
-        $request = Request::create($this->fullUrl, 'POST', $this->payload);
+        // Reconstruct a request-like object for the driver's parseWebhook method.
+        // Pass the payload as a raw JSON body so that when Content-Type: application/json
+        // is present, $request->all() correctly decodes it instead of trying to parse
+        // form-encoded data as JSON (which returns an empty array).
+        $request = Request::create(
+            $this->fullUrl,
+            'POST',
+            [],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode($this->payload),
+        );
         foreach ($this->headers as $key => $value) {
             $request->headers->set($key, $value);
         }

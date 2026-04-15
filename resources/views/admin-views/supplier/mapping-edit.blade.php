@@ -124,6 +124,44 @@
                             </label>
                         </div>
                     </div>
+
+                    {{-- ─── Customizable / Variable Amount ──────────────────────────── --}}
+                    <div class="col-lg-12">
+                        <hr class="my-2">
+                        <h5 class="mb-3">{{ translate('variable_amount_settings') }}</h5>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_customizable" value="1"
+                                   id="customizable-toggle" {{ old('is_customizable', $mapping->is_customizable) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="customizable-toggle">
+                                {{ translate('customizable_variable_amount') }}
+                            </label>
+                            <br>
+                            <small class="text-muted">{{ translate('when_enabled_customer_can_enter_a_custom_amount_instead_of_a_fixed_denomination') }}</small>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 customizable-fields" style="{{ old('is_customizable', $mapping->is_customizable) ? '' : 'display:none;' }}">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('minimum_amount') }} <span class="text-danger">*</span></label>
+                            <input type="number" name="min_amount" class="form-control" step="0.01" min="0"
+                                   value="{{ old('min_amount', $mapping->min_amount) }}"
+                                   placeholder="{{ translate('ex') }}: 5.00">
+                            <small class="text-muted">{{ translate('minimum_value_the_customer_can_enter') }}</small>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6 customizable-fields" style="{{ old('is_customizable', $mapping->is_customizable) ? '' : 'display:none;' }}">
+                        <div class="form-group">
+                            <label class="form-label">{{ translate('maximum_amount') }} <span class="text-danger">*</span></label>
+                            <input type="number" name="max_amount" class="form-control" step="0.01" min="0"
+                                   value="{{ old('max_amount', $mapping->max_amount) }}"
+                                   placeholder="{{ translate('ex') }}: 500.00">
+                            <small class="text-muted">{{ translate('maximum_value_the_customer_can_enter') }}</small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="d-flex gap-3 mt-4">
@@ -139,3 +177,19 @@
     </div>
 </div>
 @endsection
+
+@push('script')
+<script>
+(function () {
+    const customizableToggle = document.getElementById('customizable-toggle');
+    const customizableFields = document.querySelectorAll('.customizable-fields');
+    if (customizableToggle) {
+        customizableToggle.addEventListener('change', function () {
+            customizableFields.forEach(el => {
+                el.style.display = this.checked ? '' : 'none';
+            });
+        });
+    }
+})();
+</script>
+@endpush

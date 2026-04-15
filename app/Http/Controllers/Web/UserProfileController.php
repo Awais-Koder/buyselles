@@ -572,6 +572,7 @@ class UserProfileController extends Controller
                     return [
                         'productName' => $code->product?->name ?? translate('Digital_Product'),
                         'code' => $code->decryptCode(),
+                        'pin' => $code->decryptPin(),
                         'serial' => $code->serial_number,
                         'expiry' => $code->expiry_date?->format('Y-m-d'),
                     ];

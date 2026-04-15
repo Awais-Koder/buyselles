@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
  * @property string|null $product_details
  * @property int $qty
  * @property float $price
+ * @property float|null $custom_amount
  * @property float $tax
  * @property float $discount
  * @property string $tax_model
@@ -44,6 +45,7 @@ class OrderDetail extends Model
         'order_id',
         'product_details',
         'price',
+        'custom_amount',
         'discount',
         'qty',
         'tax',
@@ -67,6 +69,7 @@ class OrderDetail extends Model
         'product_id' => 'integer',
         'order_id' => 'integer',
         'price' => 'float',
+        'custom_amount' => 'float',
         'discount' => 'float',
         'qty' => 'integer',
         'tax' => 'float',

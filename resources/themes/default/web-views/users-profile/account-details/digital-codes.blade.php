@@ -55,6 +55,12 @@
                                                         </button>
                                                     </div>
                                                     <div class="d-flex flex-wrap gap-2 fs-11 text-muted">
+                                                        @if (!empty($dCode['pin']))
+                                                            <span>
+                                                                <strong>{{ translate('PIN') }}:</strong>
+                                                                <code class="text-dark fw-semibold">{{ $dCode['pin'] }}</code>
+                                                            </span>
+                                                        @endif
                                                         @if (!empty($dCode['serial']))
                                                             <span>
                                                                 <strong>{{ translate('Serial') }}:</strong>

@@ -697,10 +697,13 @@
                                                     <i class="fi fi-rr-copy"></i> {{ translate('Copy') }}
                                                 </button>
                                             </div>
-                                            @if (!empty($dc->serial_number) || !empty($dc->expiry_date))
+                                            @if (!empty($dc->pin) || !empty($dc->serial_number) || !empty($dc->expiry_date))
                                                 <p class="text-muted mb-0 mt-1 fs-12">
+                                                    @if (!empty($dc->pin))
+                                                        <strong>{{ translate('PIN') }}:</strong> <code class="text-dark fw-semibold">{{ $dc->decryptPin() }}</code>
+                                                    @endif
                                                     @if (!empty($dc->serial_number))
-                                                        <strong>S/N:</strong> {{ $dc->serial_number }}
+                                                        &nbsp;<strong>S/N:</strong> {{ $dc->serial_number }}
                                                     @endif
                                                     @if (!empty($dc->expiry_date))
                                                         &nbsp;<strong>{{ translate('Exp') }}:</strong>
@@ -727,6 +730,9 @@
                                         <div
                                             style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
                                             {{ $dc->decryptCode() }}</div>
+                                        @if (!empty($dc->pin))
+                                            <div style="font-size:8pt;font-weight:bold;">PIN: {{ $dc->decryptPin() }}</div>
+                                        @endif
                                         @if (!empty($dc->serial_number))
                                             <div style="font-size:7pt;">S/N: {{ $dc->serial_number }}</div>
                                         @endif

@@ -12,6 +12,7 @@ use App\DTOs\Supplier\WebhookResult;
 use App\Models\SupplierApi;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -253,8 +254,9 @@ class BambooDriver implements SupplierDriverInterface
         }
 
         // V1 Value = the card face value (denomination), NOT the wholesale cost.
-        // Fetch it from catalog to ensure correctness per product.
-        $faceValue = $this->getProductFaceValue($supplierProductId);
+        // For customizable/variable products, unitPrice IS the customer-chosen face value.
+        // For fixed cards, fetch from catalog to ensure correctness.
+        $faceValue = ($unitPrice && $unitPrice > 0) ? $unitPrice : $this->getProductFaceValue($supplierProductId);
 
         if ($faceValue <= 0) {
             throw new \RuntimeException("Bamboo placeOrder: could not determine face value for product {$supplierProductId} from catalog.");
@@ -297,6 +299,9 @@ class BambooDriver implements SupplierDriverInterface
      * Poll the status of an existing Bamboo V1 order.
      *
      * Endpoint: GET /api/integration/v1.0/orders/{requestId}
+     *
+     * Response format:
+     *   { "items": [{ "cards": [{ "cardCode", "pin", "serialNumber", "expirationDate", "status" }] }], "status": "Succeeded" }
      */
     public function getOrderStatus(string $supplierOrderId): SupplierOrderResult
     {
@@ -308,9 +313,8 @@ class BambooDriver implements SupplierDriverInterface
 
         $data = $response->json() ?? [];
 
-        // V1 uses PascalCase keys: Status, Products
         $rawStatus = strtolower((string) ($data['Status'] ?? $data['status'] ?? 'pending'));
-        $codes = $this->extractCodes($data);
+        $codes = $this->extractCardsFromOrderResponse($data);
 
         $normalizedStatus = match ($rawStatus) {
             'completed', 'success', 'succeeded' => 'fulfilled',
@@ -535,6 +539,57 @@ class BambooDriver implements SupplierDriverInterface
     }
 
     /**
+     * Extract structured card data from a Bamboo GET /orders/{requestId} response.
+     *
+     * The GET response uses: items[].cards[].{cardCode, pin, serialNumber, expirationDate, status}
+     * Returns structured arrays compatible with bulkAddToPool().
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<int, array{code: string, pin?: string|null, serial_number?: string|null, expiry_date?: string|null}>
+     */
+    private function extractCardsFromOrderResponse(array $data): array
+    {
+        $codes = [];
+
+        $items = $data['Items'] ?? $data['items'] ?? [];
+
+        foreach ($items as $item) {
+            $cards = $item['Cards'] ?? $item['cards'] ?? [];
+
+            foreach ($cards as $card) {
+                $cardCode = trim((string) ($card['CardCode'] ?? $card['cardCode'] ?? ''));
+                $pin = trim((string) ($card['Pin'] ?? $card['pin'] ?? ''));
+                $serial = trim((string) ($card['SerialNumber'] ?? $card['serialNumber'] ?? ''));
+                $expiry = $card['ExpirationDate'] ?? $card['expirationDate'] ?? null;
+
+                if ($cardCode === '') {
+                    continue;
+                }
+
+                $entry = ['code' => $cardCode];
+
+                if ($pin !== '') {
+                    $entry['pin'] = $pin;
+                }
+                if ($serial !== '') {
+                    $entry['serial_number'] = $serial;
+                }
+                if ($expiry !== null) {
+                    try {
+                        $entry['expiry_date'] = \Carbon\Carbon::parse($expiry)->format('Y-m-d');
+                    } catch (\Throwable) {
+                        $entry['expiry_date'] = null;
+                    }
+                }
+
+                $codes[] = $entry;
+            }
+        }
+
+        return $codes;
+    }
+
+    /**
      * Resolve the Bamboo account ID.
      *
      * Priority: credentials → cached → fetched from /api/integration/v1.0/accounts.
@@ -590,9 +645,19 @@ class BambooDriver implements SupplierDriverInterface
      * The V1 order endpoint requires the card's face value in the Value field,
      * which is NOT the wholesale/cost price. For fixed-denomination cards,
      * minFaceValue == maxFaceValue. For variable cards, use minFaceValue.
+     *
+     * Results are cached for 24 hours to survive intermittent Bamboo API outages.
      */
     private function getProductFaceValue(string $supplierProductId): float
     {
+        $cacheKey = "bamboo_face_value:{$supplierProductId}";
+
+        // Return cached value if available (survives intermittent 403s)
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null && (float) $cached > 0) {
+            return (float) $cached;
+        }
+
         try {
             $response = $this->get('/api/integration/v2.0/catalog', [
                 'ProductId' => (int) $supplierProductId,
@@ -606,13 +671,19 @@ class BambooDriver implements SupplierDriverInterface
                     'status' => $response->status(),
                 ]);
 
-                return 0;
+                return (float) ($cached ?? 0);
             }
 
             foreach ($response->json('items', []) as $brand) {
                 foreach ($brand['products'] ?? [] as $product) {
                     if ((string) ($product['id'] ?? '') === $supplierProductId) {
-                        return (float) ($product['minFaceValue'] ?? $product['maxFaceValue'] ?? 0);
+                        $faceValue = (float) ($product['minFaceValue'] ?? $product['maxFaceValue'] ?? 0);
+
+                        if ($faceValue > 0) {
+                            Cache::put($cacheKey, $faceValue, now()->addHours(24));
+                        }
+
+                        return $faceValue;
                     }
                 }
             }
@@ -623,7 +694,7 @@ class BambooDriver implements SupplierDriverInterface
             ]);
         }
 
-        return 0;
+        return (float) ($cached ?? 0);
     }
 
     /**

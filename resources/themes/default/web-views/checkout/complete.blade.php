@@ -5,6 +5,8 @@
 @section('content')
     @php
         $hasDigitalCodes = !empty($digitalCodes) && count($digitalCodes) > 0;
+        $hasPendingSupplierCodes = $hasPendingSupplierCodes ?? false;
+        $showDigitalCodesSection = $hasDigitalCodes || $hasPendingSupplierCodes;
         $orderIdsStr     = isset($order_ids) && count($order_ids) > 0
             ? '#' . implode(', #', $order_ids)
             : '';
@@ -47,7 +49,7 @@
                             @endif
 
                             <div class="row mt-4">
-                                @if ($hasDigitalCodes)
+                                @if ($showDigitalCodesSection)
                                     <div class="col-12 text-center mb-2">
                                         <button type="button" class="btn btn--primary"
                                             data-bs-toggle="modal" data-bs-target="#orderSuccessModal">
@@ -85,7 +87,7 @@
     {{-- ═══════════════════════════════════════════════════════════════ --}}
     {{-- Digital Codes Card (always visible below for reference)        --}}
     {{-- ═══════════════════════════════════════════════════════════════ --}}
-    @if ($hasDigitalCodes)
+    @if ($showDigitalCodesSection)
         <div class="container mb-5 rtl __inline-53 text-align-direction">
             <div class="row d-flex justify-content-center">
                 <div class="col-md-10 col-lg-10">
@@ -104,40 +106,74 @@
                             </button>
                         </div>
                         <div class="card-body">
-                            @foreach ($digitalCodes as $item)
-                                <div class="border rounded p-3 mb-3">
-                                    <p class="fw-bold mb-1 text-muted" style="font-size:0.85rem;">
-                                        {{ $item['productName'] }}
-                                        @if ($item['orderId'])
-                                            &nbsp;&mdash;&nbsp;
-                                            <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
-                                        @endif
-                                    </p>
-                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                        <code class="fs-5 fw-bold text-dark bg-light px-3 py-2 rounded border"
-                                            id="code-{{ $loop->index }}"
-                                            style="letter-spacing:3px; font-family:'Courier New',monospace; word-break:break-all;">
-                                            {{ $item['code'] }}
-                                        </code>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            onclick="copyCodeById('code-{{ $loop->index }}', this)"
-                                            title="{{ translate('Copy_Code') }}">
-                                            <i class="fa fa-copy"></i> {{ translate('Copy') }}
-                                        </button>
-                                    </div>
-                                    @if (!empty($item['serial']) || !empty($item['expiry']))
-                                        <p class="text-muted mb-0" style="font-size:0.78rem;">
-                                            @if (!empty($item['serial']))
-                                                <strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
-                                            @endif
-                                            @if (!empty($item['expiry']))
-                                                &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                            <div id="codes-card-container">
+                                @foreach ($digitalCodes as $item)
+                                    <div class="border rounded p-3 mb-3">
+                                        <p class="fw-bold mb-1 text-muted" style="font-size:0.85rem;">
+                                            {{ $item['productName'] }}
+                                            @if ($item['orderId'])
+                                                &nbsp;&mdash;&nbsp;
+                                                <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
                                             @endif
                                         </p>
-                                    @endif
+                                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                            <code class="fs-5 fw-bold text-dark bg-light px-3 py-2 rounded border"
+                                                id="code-{{ $loop->index }}"
+                                                style="letter-spacing:3px; font-family:'Courier New',monospace; word-break:break-all;">
+                                                {{ $item['code'] }}
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="copyCodeById('code-{{ $loop->index }}', this)"
+                                                title="{{ translate('Copy_Code') }}">
+                                                <i class="fa fa-copy"></i> {{ translate('Copy') }}
+                                            </button>
+                                        </div>
+                                        @if (!empty($item['pin']) || !empty($item['serial']) || !empty($item['expiry']))
+                                            <p class="text-muted mb-0" style="font-size:0.78rem;">
+                                                @if (!empty($item['pin']))
+                                                    <strong>{{ translate('PIN') }}:</strong> <code class="text-dark fw-semibold">{{ $item['pin'] }}</code>
+                                                @endif
+                                                @if (!empty($item['serial']))
+                                                    &nbsp;&nbsp;<strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
+                                                @endif
+                                                @if (!empty($item['expiry']))
+                                                    &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                                                @endif
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Loading spinner for pending supplier codes --}}
+                            @if ($hasPendingSupplierCodes)
+                                <div id="codes-card-loading" class="text-center py-4" @if($hasDigitalCodes) style="display:none;" @endif>
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">{{ translate('Loading...') }}</span>
+                                    </div>
+                                    <p class="mt-2 text-muted mb-0" style="font-size:0.9rem;">
+                                        <i class="fa fa-clock me-1"></i>
+                                        {{ translate('Fetching_your_digital_codes_from_supplier...') }}
+                                    </p>
+                                    <p class="text-muted mb-0" style="font-size:0.78rem;">
+                                        {{ translate('This_usually_takes_30-60_seconds._Please_wait.') }}
+                                    </p>
                                 </div>
-                            @endforeach
-                            <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;">
+                            @endif
+
+                            {{-- Timeout message (shown by JS after 3 min) --}}
+                            <div id="codes-card-timeout" class="text-center py-3" style="display:none;">
+                                <i class="fa fa-envelope text-primary" style="font-size:32px;"></i>
+                                <p class="mt-2 text-muted mb-0">
+                                    {{ translate('Your_codes_are_taking_longer_than_expected.') }}
+                                    {{ translate('They_will_be_sent_to_your_email_shortly.') }}
+                                </p>
+                                <p class="text-muted mb-0" style="font-size:0.8rem;">
+                                    {{ translate('You_can_also_check_your_order_history_later.') }}
+                                </p>
+                            </div>
+
+                            <p class="text-danger mt-1 mb-0" style="font-size:0.8rem;" id="codes-card-warning" @if(!$hasDigitalCodes) style="display:none;" @endif>
                                 <i class="fa fa-exclamation-triangle"></i>
                                 {{ translate('Warning:_Do_not_share_your_codes_with_anyone.') }}
                             </p>
@@ -153,10 +189,10 @@
     {{-- ═══════════════════════════════════════════════════════════════ --}}
     <div class="modal fade" id="orderSuccessModal" tabindex="-1"
         aria-labelledby="orderSuccessModalLabel"
-        data-bs-backdrop="{{ $hasDigitalCodes ? 'static' : 'true' }}"
-        data-bs-keyboard="{{ $hasDigitalCodes ? 'false' : 'true' }}"
+        data-bs-backdrop="{{ $showDigitalCodesSection ? 'static' : 'true' }}"
+        data-bs-keyboard="{{ $showDigitalCodesSection ? 'false' : 'true' }}"
         aria-modal="true" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable {{ $hasDigitalCodes ? 'modal-lg' : 'modal-md' }}">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable {{ $showDigitalCodesSection ? 'modal-lg' : 'modal-md' }}">
             <div class="modal-content border-0 shadow">
 
                 {{-- Header --}}
@@ -184,49 +220,79 @@
 
                 {{-- Body --}}
                 <div class="modal-body pt-3 pb-2">
-                    @if ($hasDigitalCodes)
-                        <div class="alert alert-warning py-2 px-3 fs-13 mb-3">
+                    @if ($showDigitalCodesSection)
+                        <div class="alert alert-warning py-2 px-3 fs-13 mb-3" id="codes-modal-alert" @if(!$hasDigitalCodes) style="display:none;" @endif>
                             <i class="fa fa-exclamation-triangle me-1"></i>
                             <strong>{{ translate('Important') }}:</strong>
                             {{ translate('Copy_or_print_your_codes_below._They_are_also_sent_to_your_email.') }}
                         </div>
 
-                        @foreach ($digitalCodes as $idx => $item)
-                            <div class="border rounded p-3 mb-3 bg-light">
-                                <p class="text-muted mb-1 fw-semibold" style="font-size:0.8rem;">
-                                    <i class="fa fa-box me-1"></i>
-                                    {{ $item['productName'] }}
-                                    @if ($item['orderId'])
-                                        &mdash; <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
-                                    @endif
-                                </p>
-                                <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
-                                    <code class="fs-4 fw-bold text-dark bg-white px-3 py-2 rounded border flex-grow-1 text-center"
-                                        id="modal-code-{{ $idx }}"
-                                        style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
-                                        {{ $item['code'] }}
-                                    </code>
-                                    <button type="button" class="btn btn-sm btn-outline-primary modal-copy-btn"
-                                        data-target="modal-code-{{ $idx }}"
-                                        title="{{ translate('Copy_Code') }}">
-                                        <i class="fa fa-copy"></i> {{ translate('Copy') }}
-                                    </button>
-                                </div>
-                                @if (!empty($item['serial']) || !empty($item['expiry']))
-                                    <p class="text-muted mb-0 mt-1" style="font-size:0.76rem;">
-                                        @if (!empty($item['serial']))
-                                            <strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
-                                        @endif
-                                        @if (!empty($item['expiry']))
-                                            &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                        <div id="codes-modal-container">
+                            @foreach ($digitalCodes as $idx => $item)
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    <p class="text-muted mb-1 fw-semibold" style="font-size:0.8rem;">
+                                        <i class="fa fa-box me-1"></i>
+                                        {{ $item['productName'] }}
+                                        @if ($item['orderId'])
+                                            &mdash; <span class="text-secondary">{{ translate('Order') }} #{{ $item['orderId'] }}</span>
                                         @endif
                                     </p>
-                                @endif
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                        <code class="fs-4 fw-bold text-dark bg-white px-3 py-2 rounded border flex-grow-1 text-center"
+                                            id="modal-code-{{ $idx }}"
+                                            style="letter-spacing:4px;font-family:'Courier New',monospace;word-break:break-all;">
+                                            {{ $item['code'] }}
+                                        </code>
+                                        <button type="button" class="btn btn-sm btn-outline-primary modal-copy-btn"
+                                            data-target="modal-code-{{ $idx }}"
+                                            title="{{ translate('Copy_Code') }}">
+                                            <i class="fa fa-copy"></i> {{ translate('Copy') }}
+                                        </button>
+                                    </div>
+                                    @if (!empty($item['pin']) || !empty($item['serial']) || !empty($item['expiry']))
+                                        <p class="text-muted mb-0 mt-1" style="font-size:0.76rem;">
+                                            @if (!empty($item['pin']))
+                                                <strong>{{ translate('PIN') }}:</strong> <code class="text-dark fw-semibold">{{ $item['pin'] }}</code>
+                                            @endif
+                                            @if (!empty($item['serial']))
+                                                &nbsp;&nbsp;<strong>{{ translate('S/N') }}:</strong> {{ $item['serial'] }}
+                                            @endif
+                                            @if (!empty($item['expiry']))
+                                                &nbsp;&nbsp;<strong>{{ translate('Exp') }}:</strong> {{ $item['expiry'] }}
+                                            @endif
+                                        </p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Loading spinner for pending supplier codes --}}
+                        @if ($hasPendingSupplierCodes)
+                            <div id="codes-modal-loading" class="text-center py-4" @if($hasDigitalCodes) style="display:none;" @endif>
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">{{ translate('Loading...') }}</span>
+                                </div>
+                                <p class="mt-2 text-muted mb-0">
+                                    <i class="fa fa-clock me-1"></i>
+                                    {{ translate('Fetching_your_digital_codes_from_supplier...') }}
+                                </p>
+                                <p class="text-muted mb-0" style="font-size:0.78rem;">
+                                    {{ translate('This_usually_takes_30-60_seconds._Please_wait.') }}
+                                </p>
                             </div>
-                        @endforeach
+                        @endif
+
+                        {{-- Timeout message (shown by JS) --}}
+                        <div id="codes-modal-timeout" class="text-center py-3" style="display:none;">
+                            <i class="fa fa-envelope text-primary" style="font-size:32px;"></i>
+                            <p class="mt-2 text-muted mb-0">
+                                {{ translate('Your_codes_are_taking_longer_than_expected.') }}
+                                {{ translate('They_will_be_sent_to_your_email_shortly.') }}
+                            </p>
+                        </div>
 
                         {{-- Confirmation checkbox — required before close --}}
-                        <div class="form-check p-3 border rounded mt-2" style="background:#fffde7;">
+                        <div class="form-check p-3 border rounded mt-2" style="background:#fffde7;" id="codes-modal-confirm-wrap" @if(!$hasDigitalCodes) style="display:none;" @endif>
                             <input class="form-check-input" type="checkbox" id="confirmCodesDownloaded" value="1">
                             <label class="form-check-label fw-semibold" for="confirmCodesDownloaded" style="cursor:pointer;">
                                 <i class="fa fa-shield-alt me-1 text-success"></i>
@@ -259,16 +325,16 @@
                         <i class="fa fa-print me-1"></i>
                         {{ translate('Print_Receipt') }}
                     </button>
-                    @if (!$hasDigitalCodes)
+                    @if (!$showDigitalCodesSection)
                         <a href="{{ route('track-order.index') }}" class="btn btn-outline-primary">
                             <i class="fa fa-map-marker me-1"></i> {{ translate('Track_Order') }}
                         </a>
                     @endif
                     <button type="button" id="modalCloseBtn"
-                        class="btn btn--primary {{ $hasDigitalCodes ? 'disabled' : '' }}"
+                        class="btn btn--primary {{ $showDigitalCodesSection ? 'disabled' : '' }}"
                         data-bs-dismiss="modal"
-                        @if($hasDigitalCodes) disabled @endif>
-                        @if($hasDigitalCodes)
+                        @if($showDigitalCodesSection) disabled @endif>
+                        @if($showDigitalCodesSection)
                             {{ translate('Close_(save_codes_first)') }}
                         @else
                             {{ translate('Close') }}
@@ -312,25 +378,30 @@
                 <div><strong>{{ translate('Order') }}:</strong> {{ $orderIdsStr }}</div>
             @endif
         </div>
-        @if ($hasDigitalCodes)
+        @if ($showDigitalCodesSection)
             <div style="border-top:1px dashed #000;padding-top:5px;margin-top:3px;">
                 <div style="text-align:center;font-weight:bold;font-size:9pt;margin-bottom:4px;">
                     ── {{ translate('Digital_Codes') }} ──
                 </div>
-                @foreach ($digitalCodes as $item)
-                    <div style="margin-bottom:8px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
-                        <div style="font-size:8pt;color:#555;">{{ $item['productName'] }}</div>
-                        <div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
-                            {{ $item['code'] }}
+                <div id="codes-receipt-container">
+                    @foreach ($digitalCodes as $item)
+                        <div style="margin-bottom:8px;padding-bottom:5px;border-bottom:1px dotted #ccc;">
+                            <div style="font-size:8pt;color:#555;">{{ $item['productName'] }}</div>
+                            <div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">
+                                {{ $item['code'] }}
+                            </div>
+                            @if (!empty($item['pin']))
+                                <div style="font-size:7pt;">PIN: {{ $item['pin'] }}</div>
+                            @endif
+                            @if (!empty($item['serial']))
+                                <div style="font-size:7pt;">S/N: {{ $item['serial'] }}</div>
+                            @endif
+                            @if (!empty($item['expiry']))
+                                <div style="font-size:7pt;">Exp: {{ $item['expiry'] }}</div>
+                            @endif
                         </div>
-                        @if (!empty($item['serial']))
-                            <div style="font-size:7pt;">S/N: {{ $item['serial'] }}</div>
-                        @endif
-                        @if (!empty($item['expiry']))
-                            <div style="font-size:7pt;">Exp: {{ $item['expiry'] }}</div>
-                        @endif
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
         @endif
         <div style="text-align:center;margin-top:8px;font-size:7pt;border-top:1px dashed #000;padding-top:5px;">
@@ -346,6 +417,167 @@
     'use strict';
 
     var hasDigitalCodes = {{ $hasDigitalCodes ? 'true' : 'false' }};
+    var hasPendingCodes = {{ ($hasPendingSupplierCodes ?? false) ? 'true' : 'false' }};
+    var showDigitalCodesSection = {{ $showDigitalCodesSection ? 'true' : 'false' }};
+    var orderIds = @json($order_ids ?? []);
+    var pollUrl = '{{ route("check-digital-codes-status") }}';
+    var pollInterval = null;
+    var pollStartTime = Date.now();
+    var POLL_TIMEOUT_MS = 180000; // 3 minutes
+    var POLL_INTERVAL_MS = 5000;  // 5 seconds
+    var dynamicCodeIndex = {{ count($digitalCodes ?? []) }};
+
+    // ── Auto-open modal on page load ──────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        var modalEl = document.getElementById('orderSuccessModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            var bsModal = new bootstrap.Modal(modalEl, {
+                backdrop: showDigitalCodesSection ? 'static' : true,
+                keyboard: !showDigitalCodesSection
+            });
+            bsModal.show();
+        }
+
+        // Start polling if there are pending supplier codes
+        if (hasPendingCodes) {
+            pollInterval = setInterval(pollForCodes, POLL_INTERVAL_MS);
+        }
+    });
+
+    // ── AJAX polling for supplier codes ───────────────────────────
+    function pollForCodes() {
+        if (Date.now() - pollStartTime > POLL_TIMEOUT_MS) {
+            clearInterval(pollInterval);
+            showTimeoutMessage();
+            return;
+        }
+
+        var params = new URLSearchParams();
+        orderIds.forEach(function(id) { params.append('orderIds[]', id); });
+
+        fetch(pollUrl + '?' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.codes && data.codes.length > 0) {
+                renderCodesDynamic(data.codes);
+            }
+            if (!data.pending) {
+                clearInterval(pollInterval);
+                hideElement('codes-card-loading');
+                hideElement('codes-modal-loading');
+            }
+        })
+        .catch(function(err) {
+            console.error('Digital codes poll error:', err);
+        });
+    }
+
+    function renderCodesDynamic(codes) {
+        // Hide loading spinners
+        hideElement('codes-card-loading');
+        hideElement('codes-modal-loading');
+
+        // Show alerts / warnings / confirm
+        showElement('codes-modal-alert');
+        showElement('codes-card-warning');
+        showElement('codes-modal-confirm-wrap');
+
+        var cardContainer = document.getElementById('codes-card-container');
+        var modalContainer = document.getElementById('codes-modal-container');
+        var receiptContainer = document.getElementById('codes-receipt-container');
+
+        // Clear existing content (replace with fresh from server)
+        if (cardContainer) cardContainer.innerHTML = '';
+        if (modalContainer) modalContainer.innerHTML = '';
+        if (receiptContainer) receiptContainer.innerHTML = '';
+
+        codes.forEach(function(item, idx) {
+            var cardId = 'dyn-code-' + idx;
+            var modalId = 'dyn-modal-code-' + idx;
+
+            var metaParts = [];
+            if (item.pin) metaParts.push('<strong>PIN:</strong> <code class="text-dark fw-semibold">' + esc(item.pin) + '</code>');
+            if (item.serial) metaParts.push('<strong>S/N:</strong> ' + esc(item.serial));
+            if (item.expiry) metaParts.push('<strong>Exp:</strong> ' + esc(item.expiry));
+            var metaHtml = metaParts.length
+                ? '<p class="text-muted mb-0" style="font-size:0.78rem;">' + metaParts.join(' &nbsp;&nbsp;') + '</p>'
+                : '';
+            var modalMetaHtml = metaParts.length
+                ? '<p class="text-muted mb-0 mt-1" style="font-size:0.76rem;">' + metaParts.join(' &nbsp;&nbsp;') + '</p>'
+                : '';
+
+            var orderLabel = item.orderId ? ' &mdash; <span class="text-secondary">{{ translate("Order") }} #' + esc(item.orderId) + '</span>' : '';
+
+            // Card HTML
+            if (cardContainer) {
+                cardContainer.insertAdjacentHTML('beforeend',
+                    '<div class="border rounded p-3 mb-3">'
+                    + '<p class="fw-bold mb-1 text-muted" style="font-size:0.85rem;">' + esc(item.productName) + orderLabel + '</p>'
+                    + '<div class="d-flex align-items-center gap-2 flex-wrap mb-1">'
+                    + '<code class="fs-5 fw-bold text-dark bg-light px-3 py-2 rounded border" id="' + cardId + '" style="letter-spacing:3px;font-family:\'Courier New\',monospace;word-break:break-all;">' + esc(item.code) + '</code>'
+                    + '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyCodeById(\'' + cardId + '\', this)"><i class="fa fa-copy"></i> {{ translate("Copy") }}</button>'
+                    + '</div>'
+                    + metaHtml
+                    + '</div>'
+                );
+            }
+
+            // Modal HTML
+            if (modalContainer) {
+                modalContainer.insertAdjacentHTML('beforeend',
+                    '<div class="border rounded p-3 mb-3 bg-light">'
+                    + '<p class="text-muted mb-1 fw-semibold" style="font-size:0.8rem;"><i class="fa fa-box me-1"></i>' + esc(item.productName) + orderLabel + '</p>'
+                    + '<div class="d-flex align-items-center gap-2 flex-wrap mt-1">'
+                    + '<code class="fs-4 fw-bold text-dark bg-white px-3 py-2 rounded border flex-grow-1 text-center" id="' + modalId + '" style="letter-spacing:4px;font-family:\'Courier New\',monospace;word-break:break-all;">' + esc(item.code) + '</code>'
+                    + '<button type="button" class="btn btn-sm btn-outline-primary modal-copy-btn" data-target="' + modalId + '"><i class="fa fa-copy"></i> {{ translate("Copy") }}</button>'
+                    + '</div>'
+                    + modalMetaHtml
+                    + '</div>'
+                );
+            }
+
+            // Receipt HTML
+            if (receiptContainer) {
+                var receiptParts = '<div style="margin-bottom:8px;padding-bottom:5px;border-bottom:1px dotted #ccc;">'
+                    + '<div style="font-size:8pt;color:#555;">' + esc(item.productName) + '</div>'
+                    + '<div style="font-size:13pt;font-weight:bold;letter-spacing:2px;word-break:break-all;margin:3px 0;">' + esc(item.code) + '</div>';
+                if (item.pin) receiptParts += '<div style="font-size:7pt;">PIN: ' + esc(item.pin) + '</div>';
+                if (item.serial) receiptParts += '<div style="font-size:7pt;">S/N: ' + esc(item.serial) + '</div>';
+                if (item.expiry) receiptParts += '<div style="font-size:7pt;">Exp: ' + esc(item.expiry) + '</div>';
+                receiptParts += '</div>';
+                receiptContainer.insertAdjacentHTML('beforeend', receiptParts);
+            }
+        });
+
+        hasDigitalCodes = true;
+    }
+
+    function showTimeoutMessage() {
+        hideElement('codes-card-loading');
+        hideElement('codes-modal-loading');
+        showElement('codes-card-timeout');
+        showElement('codes-modal-timeout');
+    }
+
+    function hideElement(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+
+    function showElement(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = '';
+    }
+
+    function esc(str) {
+        if (!str && str !== 0) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(String(str)));
+        return div.innerHTML;
+    }
 
     // ── Auto-open modal on page load ──────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {

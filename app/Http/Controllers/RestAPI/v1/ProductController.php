@@ -355,6 +355,41 @@ class ProductController extends Controller
                 $product['restock_requested_list'] = [];
                 $product['is_restock_requested'] = 0;
             }
+
+            // Denomination / Customizable amount info from supplier mapping
+            $supplierMapping = \App\Models\SupplierProductMapping::where('product_id', $product['id'])
+                ->where('is_active', true)
+                ->with(['activeDenominations' => function ($q) {
+                    $q->orderBy('sort_order');
+                }])
+                ->first();
+
+            $fixedDenoms = $supplierMapping ? $supplierMapping->activeDenominations->where('type', 'fixed') : collect();
+            $variableDenom = $supplierMapping ? $supplierMapping->activeDenominations->where('type', 'variable')->first() : null;
+
+            $product['is_customizable'] = (bool) ($supplierMapping && $supplierMapping->is_customizable);
+            $product['customizable_min_amount'] = $supplierMapping?->min_amount;
+            $product['customizable_max_amount'] = $supplierMapping?->max_amount;
+
+            $product['has_denominations'] = $fixedDenoms->isNotEmpty() || $variableDenom !== null;
+            $product['denominations'] = $fixedDenoms->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'name' => $d->name,
+                    'type' => $d->type,
+                    'face_value' => (float) $d->face_value,
+                    'face_value_currency' => $d->face_value_currency,
+                    'sell_price' => (float) $d->calculateSellPrice(),
+                ];
+            })->values();
+            $product['variable_denomination'] = $variableDenom ? [
+                'id' => $variableDenom->id,
+                'name' => $variableDenom->name,
+                'type' => $variableDenom->type,
+                'min_face_value' => (float) $variableDenom->min_face_value,
+                'max_face_value' => (float) $variableDenom->max_face_value,
+                'face_value_currency' => $variableDenom->face_value_currency,
+            ] : null;
         }
 
         return response()->json($product, 200);
@@ -619,7 +654,8 @@ class ProductController extends Controller
         $order = Order::where([
             'id' => $request->order_id,
             'customer_id' => $request->user()->id,
-            'payment_status' => 'paid'])->first();
+            'payment_status' => 'paid',
+        ])->first();
 
         if (! isset($order->delivery_man_id)) {
             return response()->json(['message' => translate('invalid_review')], 403);
@@ -639,7 +675,6 @@ class ProductController extends Controller
                 'rating' => $request->rating,
             ]
         );
-
     }
 
     public function get_shipping_methods(Request $request)

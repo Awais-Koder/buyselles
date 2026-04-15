@@ -37,7 +37,7 @@ class ResellerApiService
             }]);
 
         if ($search) {
-            $query->where('name', 'like', '%' . $search . '%');
+            $query->where('name', 'like', '%'.$search.'%');
         }
 
         if ($categoryId) {
@@ -47,7 +47,7 @@ class ResellerApiService
         $products = $query->paginate($perPage, ['*'], 'page', $page);
 
         return [
-            'data' => $products->map(fn(Product $p) => [
+            'data' => $products->map(fn (Product $p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'slug' => $p->slug,
@@ -183,7 +183,7 @@ class ResellerApiService
                     'payment_method' => 'partner_wallet',
                     'order_amount' => $totalCost,
                     'order_type' => 'default',
-                    'order_note' => $reference ? 'Partner ref: ' . $reference : 'Partner API order (key #' . $resellerKey->id . ')',
+                    'order_note' => $reference ? 'Partner ref: '.$reference : 'Partner API order (key #'.$resellerKey->id.')',
                     'is_guest' => 0,
                     'seller_id' => $resellerKey->seller_id,
                 ]);
@@ -236,6 +236,7 @@ class ResellerApiService
 
                     $codes[] = [
                         'code' => $code->decryptCode(),
+                        'pin' => $code->decryptPin(),
                         'serial' => $code->serial_number,
                         'expiry' => $code->expiry_date?->format('Y-m-d'),
                     ];
@@ -308,8 +309,9 @@ class ResellerApiService
             ->where('order_id', $order->id)
             ->where('status', 'sold')
             ->get()
-            ->map(fn($code) => [
+            ->map(fn ($code) => [
                 'code' => $code->decryptCode(),
+                'pin' => $code->decryptPin(),
                 'serial' => $code->serial_number,
                 'product_id' => $code->product_id,
                 'expiry' => $code->expiry_date?->format('Y-m-d'),
@@ -322,7 +324,7 @@ class ResellerApiService
             'payment_status' => $order->payment_status,
             'total' => (float) $order->order_amount,
             'created_at' => $order->created_at?->toIso8601String(),
-            'items' => $order->orderDetails->map(fn($d) => [
+            'items' => $order->orderDetails->map(fn ($d) => [
                 'product_id' => $d->product_id,
                 'quantity' => $d->qty,
                 'price' => (float) $d->price,
@@ -340,7 +342,7 @@ class ResellerApiService
      */
     public static function generateKeyPair(?int $userId, string $name = 'API Key', ?int $sellerId = null, ?string $requestNote = null): ResellerApiKey
     {
-        $rawKey = 'rslr_' . Str::random(40);
+        $rawKey = 'rslr_'.Str::random(40);
         $rawSecret = Str::random(48);
 
         return ResellerApiKey::create([

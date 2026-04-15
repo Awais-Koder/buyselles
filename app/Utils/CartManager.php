@@ -610,10 +610,61 @@ class CartManager
         }
 
         $price = $product->unit_price;
+        $customAmount = null;
         $digitalVariation = DigitalProductVariation::where(['product_id' => $product['id'], 'variant_key' => $request['variant_key']])->first();
         if ($request['variant_key'] && $digitalVariation) {
             $price = $digitalVariation['price'];
         }
+
+        // Handle customizable / variable-amount products AND fixed denomination products
+        $mapping = \App\Models\SupplierProductMapping::where('product_id', $product['id'])
+            ->where('is_active', true)
+            ->first();
+
+        $supplierDenominationId = null;
+
+        // Case 1: Fixed denomination selected (customer picked a denomination button)
+        if ($mapping && $request->has('supplier_denomination_id') && $request['supplier_denomination_id']) {
+            $denomination = \App\Models\SupplierProductDenomination::where('id', $request['supplier_denomination_id'])
+                ->where('supplier_product_mapping_id', $mapping->id)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $denomination) {
+                return ['status' => 0, 'message' => translate('invalid_denomination_selected')];
+            }
+
+            $supplierDenominationId = $denomination->id;
+
+            if ($denomination->isFixed()) {
+                $customAmount = (float) $denomination->face_value;
+                $price = $denomination->calculateSellPrice();
+            } else {
+                // Variable denomination: customer-entered amount IS the sell price (markup already factored into the range by admin)
+                if ($request->has('custom_amount') && $request['custom_amount'] !== null) {
+                    $customAmount = (float) $request['custom_amount'];
+                    if ($customAmount < $denomination->min_face_value || $customAmount > $denomination->max_face_value) {
+                        return [
+                            'status' => 0,
+                            'message' => translate('amount_must_be_between').' '.$denomination->min_face_value.' - '.$denomination->max_face_value,
+                        ];
+                    }
+                    $price = $customAmount;
+                }
+            }
+        }
+        // Case 2: Legacy customizable flow (no denomination system, direct custom_amount)
+        elseif ($mapping && $mapping->is_customizable && $request->has('custom_amount') && $request['custom_amount'] !== null) {
+            $customAmount = (float) $request['custom_amount'];
+            if ($customAmount < $mapping->min_amount || $customAmount > $mapping->max_amount) {
+                return [
+                    'status' => 0,
+                    'message' => translate('amount_must_be_between').' '.$mapping->min_amount.' - '.$mapping->max_amount,
+                ];
+            }
+            $price = $customAmount;
+        }
+
         $user = Helpers::getCustomerInformation($request);
         $guestId = session('guest_id') ?? ($request->guest_id ?? 0);
 
@@ -636,6 +687,8 @@ class CartManager
             'variant' => $request['variant_key'],
             'quantity' => $request['quantity'],
             'price' => $price,
+            'custom_amount' => $customAmount,
+            'supplier_denomination_id' => $supplierDenominationId,
             'discount' => $getProductDiscount,
             'is_checked' => 1,
             'slug' => $product['slug'],
@@ -658,7 +711,15 @@ class CartManager
             $cartArray['cart_group_id'] = ($user == 'offline' ? 'guest' : $user['id']).'-'.Str::random(5).'-'.time();
         }
 
-        $cart = Cart::where(['product_id' => $request->id, 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $request['variant_key']])->first();
+        $cartQuery = Cart::where(['product_id' => $request->id, 'customer_id' => $customerId, 'is_guest' => $isGuest, 'variant' => $request['variant_key']]);
+        if ($supplierDenominationId !== null) {
+            $cartQuery->where('supplier_denomination_id', $supplierDenominationId);
+        } elseif ($customAmount !== null) {
+            $cartQuery->where('custom_amount', $customAmount);
+        } else {
+            $cartQuery->whereNull('custom_amount')->whereNull('supplier_denomination_id');
+        }
+        $cart = $cartQuery->first();
         if ($cart) {
             Cart::where(['id' => $cart['id']])->update($cartArray);
         } else {
@@ -777,8 +838,11 @@ class CartManager
             $status = 0;
             $qty = $cart['quantity'];
         } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request->quantity) {
-            $status = 0;
-            $qty = $cart['quantity'];
+            // If a supplier can fulfil this product on-demand, skip stock limit
+            if (! \App\Models\SupplierProductMapping::hasActiveMapping($product['id'])) {
+                $status = 0;
+                $qty = $cart['quantity'];
+            }
         }
 
         if ($status) {

@@ -112,6 +112,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::post('offline-payment-checkout-complete', 'getOfflinePaymentCheckoutComplete')->name('offline-payment-checkout-complete');
         Route::get('order-placed', 'order_placed')->name('order-placed');
         Route::get('order-placed-success', 'getOrderPlaceView')->name('order-placed-success');
+        Route::get('check-digital-codes-status', 'checkDigitalCodesStatus')->name('check-digital-codes-status');
         Route::get('order/digital-codes/receipt', 'printDigitalCodes')->name('order.digital-codes.receipt');
         Route::get('shop-cart', 'shop_cart')->name('shop-cart');
         Route::post('order_note', 'order_note')->name('order_note');

@@ -1131,7 +1131,8 @@ function productQuickViewFunctionalityInitialize() {
 
     getVariantPrice(".add-to-cart-details-form");
 
-    $(".add-to-cart-details-form input").on("change", function () {
+    $(".add-to-cart-details-form input").on("change", function (e) {
+        if ($(e.target).attr('id') === 'custom-amount-input') return;
         getVariantPrice(".add-to-cart-details-form");
     });
 
@@ -1759,11 +1760,13 @@ function debounce(func, delay) {
 let currentPriceRequest = null;
 const debouncedGetVariantPrice = debounce(getVariantPrice, 300);
 
-$(".add-to-cart-details-form input").on("input change", () => {
+$(".add-to-cart-details-form input").on("input change", function (e) {
+    if ($(e.target).attr('id') === 'custom-amount-input') return;
     debouncedGetVariantPrice(".add-to-cart-details-form");
 });
 
-$(".add-to-cart-sticky-form input").on("input change", () => {
+$(".add-to-cart-sticky-form input").on("input change", function (e) {
+    if ($(e.target).attr('id') === 'custom-amount-input') return;
     debouncedGetVariantPrice(".add-to-cart-sticky-form");
 });
 
@@ -1956,11 +1959,13 @@ $(".add-to-cart-details-form").on("submit", function (event) {
     event.preventDefault();
 });
 
-$(".add-to-cart-details-form input").on("change", () => {
+$(".add-to-cart-details-form input").on("change", function () {
+    if ($(this).attr("name") === "custom_amount") return;
     getVariantPrice(".add-to-cart-details-form");
 });
 
-$(".add-to-cart-sticky-form input").on("change", () => {
+$(".add-to-cart-sticky-form input").on("change", function () {
+    if ($(this).attr("name") === "custom_amount") return;
     getVariantPrice(".add-to-cart-sticky-form");
 });
 
@@ -1996,6 +2001,13 @@ function getVariantPrice(formSelector = ".add-to-cart-details-form") {
                 }
                 updateProductDetailsTopSection(".add-to-cart-details-form", response);
                 updateProductDetailsBottomSection(".add-to-cart-sticky-form", response);
+
+                // Re-apply custom amount price if the input has a value
+                var $customAmountInput = $('#custom-amount-input');
+                if ($customAmountInput.length && $customAmountInput.val()) {
+                    $customAmountInput.trigger('change');
+                }
+
                 if (response?.discount_amount > 0) {
                     if (response?.discount_type === "flat") {
                         $(formSelector).find(".discounted_badge").html(`${response?.discount}`);

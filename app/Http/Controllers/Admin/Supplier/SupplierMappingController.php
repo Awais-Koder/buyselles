@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Supplier;
 
 use App\Http\Controllers\BaseController;
+use App\Jobs\SyncDenominationsJob;
 use App\Models\Product;
 use App\Models\SupplierApi;
 use App\Models\SupplierProductMapping;
@@ -73,6 +74,9 @@ class SupplierMappingController extends BaseController
             'min_stock_threshold' => 'required|integer|min:0',
             'max_restock_qty' => 'required|integer|min:1',
             'auto_restock' => 'nullable|boolean',
+            'is_customizable' => 'nullable|boolean',
+            'min_amount' => 'nullable|numeric|min:0',
+            'max_amount' => 'nullable|numeric|min:0|gte:min_amount',
         ]);
 
         if ($validator->fails()) {
@@ -92,7 +96,7 @@ class SupplierMappingController extends BaseController
             return redirect()->back()->withInput();
         }
 
-        SupplierProductMapping::create([
+        $mapping = SupplierProductMapping::create([
             'product_id' => $request->input('product_id'),
             'supplier_api_id' => $request->input('supplier_api_id'),
             'supplier_product_id' => $request->input('supplier_product_id'),
@@ -106,7 +110,12 @@ class SupplierMappingController extends BaseController
             'min_stock_threshold' => $request->input('min_stock_threshold', 5),
             'max_restock_qty' => $request->input('max_restock_qty', 50),
             'is_active' => true,
+            'is_customizable' => (bool) $request->input('is_customizable', false),
+            'min_amount' => $request->input('is_customizable') ? $request->input('min_amount') : null,
+            'max_amount' => $request->input('is_customizable') ? $request->input('max_amount') : null,
         ]);
+
+        SyncDenominationsJob::dispatch($mapping->id);
 
         Toastr::success(translate('mapping_added_successfully'));
 
@@ -146,6 +155,9 @@ class SupplierMappingController extends BaseController
             'min_stock_threshold' => 'required|integer|min:0',
             'max_restock_qty' => 'required|integer|min:1',
             'auto_restock' => 'nullable|boolean',
+            'is_customizable' => 'nullable|boolean',
+            'min_amount' => 'nullable|numeric|min:0',
+            'max_amount' => 'nullable|numeric|min:0|gte:min_amount',
         ]);
 
         if ($validator->fails()) {
@@ -155,6 +167,7 @@ class SupplierMappingController extends BaseController
         }
 
         $mapping = SupplierProductMapping::findOrFail($id);
+        $supplierProductChanged = $mapping->supplier_product_id !== $request->input('supplier_product_id');
         $mapping->update([
             'supplier_product_id' => $request->input('supplier_product_id'),
             'supplier_product_name' => $request->input('supplier_product_name'),
@@ -166,7 +179,14 @@ class SupplierMappingController extends BaseController
             'auto_restock' => (bool) $request->input('auto_restock', true),
             'min_stock_threshold' => $request->input('min_stock_threshold', 5),
             'max_restock_qty' => $request->input('max_restock_qty', 50),
+            'is_customizable' => (bool) $request->input('is_customizable', false),
+            'min_amount' => $request->input('is_customizable') ? $request->input('min_amount') : null,
+            'max_amount' => $request->input('is_customizable') ? $request->input('max_amount') : null,
         ]);
+
+        if ($supplierProductChanged || $mapping->activeDenominations()->count() === 0) {
+            SyncDenominationsJob::dispatch($mapping->id);
+        }
 
         Toastr::success(translate('mapping_updated_successfully'));
 

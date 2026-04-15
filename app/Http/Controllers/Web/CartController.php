@@ -118,6 +118,18 @@ class CartController extends Controller
             }
         }
 
+        // Override price with denomination sell price when a denomination is selected
+        if ($request->filled('supplier_denomination_id')) {
+            $denomination = \App\Models\SupplierProductDenomination::find($request['supplier_denomination_id']);
+            if ($denomination && $denomination->is_active) {
+                $denomPrice = $denomination->calculateSellPrice();
+                $discount = 0;
+                $price = $denomPrice;
+                $discountedUnitPrice = $denomPrice;
+                $unit_price = $denomPrice;
+            }
+        }
+
         $deliveryInfo = [];
         $stock_limit = getWebConfig(name: 'stock_limit');
         if (theme_root_path() == 'theme_fashion') {
@@ -153,7 +165,7 @@ class CartController extends Controller
                 : ($product['digital_product_type'] === 'ready_product'
                     ? ($product['current_stock'] > 0
                         ? $product['current_stock']
-                        : (\App\Models\SupplierProductMapping::hasActiveMapping($product['id']) ? 1 : 0))
+                        : (\App\Models\SupplierProductMapping::hasActiveMapping($product['id']) ? 100 : 0))
                     : 100),
             'delivery_cost' => isset($deliveryInfo['delivery_cost']) ? webCurrencyConverter($deliveryInfo['delivery_cost']) : 0,
             'unit_price' => webCurrencyConverter($price), // fashion theme

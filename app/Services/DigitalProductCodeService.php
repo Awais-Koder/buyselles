@@ -32,6 +32,7 @@ class DigitalProductCodeService
         ?string $serialNumber = null,
         ?string $expiryDate = null,
         string $source = 'manual',
+        ?string $pin = null,
     ): ?DigitalProductCode {
         $normalised = strtolower(trim($plainCode));
         $hash = hash('sha256', $normalised);
@@ -70,6 +71,7 @@ class DigitalProductCodeService
                 'product_id' => $productId,
                 'seller_id' => $sellerId,
                 'code' => Crypt::encryptString(trim($plainCode)),
+                'pin' => $pin ? Crypt::encryptString(trim($pin)) : null,
                 'code_hash' => $hash,
                 'serial_number' => $serialNumber ? trim($serialNumber) : null,
                 'expiry_date' => $expiryDate ?: null,
@@ -95,7 +97,7 @@ class DigitalProductCodeService
      *   ['code' => string, 'serial_number' => ?string, 'expiry_date' => ?string]
      * Passing a plain string is also accepted for backwards compatibility.
      *
-     * @param  array<int, string|array{code: string, serial_number?: string|null, expiry_date?: string|null}>  $records
+     * @param  array<int, string|array{code: string, pin?: string|null, serial_number?: string|null, expiry_date?: string|null}>  $records
      * @return array{inserted: int, skipped: int}
      */
     public function bulkAddToPool(int $productId, array $records, string $source = 'manual'): array
@@ -109,10 +111,12 @@ class DigitalProductCodeService
                 $plainCode = trim($record);
                 $serialNumber = null;
                 $expiryDate = null;
+                $pin = null;
             } else {
                 $plainCode = trim((string) ($record['code'] ?? ''));
                 $serialNumber = isset($record['serial_number']) ? trim((string) $record['serial_number']) : null;
                 $expiryDate = $record['expiry_date'] ?? null;
+                $pin = isset($record['pin']) ? trim((string) $record['pin']) : null;
             }
 
             if ($plainCode === '') {
@@ -121,7 +125,7 @@ class DigitalProductCodeService
                 continue;
             }
 
-            $result = $this->addToPool($productId, $plainCode, $serialNumber, $expiryDate, $source);
+            $result = $this->addToPool($productId, $plainCode, $serialNumber, $expiryDate, $source, $pin);
             if ($result === null) {
                 $skipped++; // duplicate
             } else {
@@ -512,6 +516,7 @@ class DigitalProductCodeService
                 return [
                     'productName' => $record->product?->name ?? translate('Digital Product'),
                     'code' => $record->decryptCode(),
+                    'pin' => $record->decryptPin(),
                     'serial' => $record->serial_number,
                     'expiry' => $record->expiry_date?->format('Y-m-d'),
                 ];

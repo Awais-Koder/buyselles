@@ -311,7 +311,9 @@
                                                 @endphp
                                             </div>
 
-                                            @php($extensionIndex = 0)
+                                            @php
+                                                $extensionIndex = 0;
+                                            @endphp
                                             @if (
                                                 $product['product_type'] == 'digital' &&
                                                     $product['digital_product_file_types'] &&
@@ -344,7 +346,9 @@
                                                                                 </label>
                                                                             </div>
                                                                         </div>
-                                                                        @php($extensionIndex++)
+                                                                        @php
+                                                                            $extensionIndex++;
+                                                                        @endphp
                                                                     @endforeach
                                                                 </div>
                                                             @endif
@@ -382,6 +386,109 @@
                                                     </div>
                                                 </div>
                                             @endforeach
+
+                                            {{-- ─── Denomination Selection / Variable Amount ──────────────────────────── --}}
+                                            @php
+                                                $denominationMapping = \App\Models\SupplierProductMapping::where('product_id', $product->id)
+                                                    ->where('is_active', true)
+                                                    ->with(['activeDenominations' => function ($q) { $q->orderBy('sort_order'); }])
+                                                    ->first();
+                                                $fixedDenoms = $denominationMapping ? $denominationMapping->activeDenominations->where('type', 'fixed') : collect();
+                                                $variableDenom = $denominationMapping ? $denominationMapping->activeDenominations->where('type', 'variable')->first() : null;
+                                                $hasFixedDenoms = $fixedDenoms->isNotEmpty();
+                                                $hasVariableDenom = $variableDenom !== null;
+                                                $showLegacyCustom = !$hasFixedDenoms && !$hasVariableDenom && $denominationMapping && $denominationMapping->is_customizable;
+                                            @endphp
+                                            @if ($hasFixedDenoms)
+                                                <div class="denomination-selection-section">
+                                                    <div class="d-flex align-items-start gap-3">
+                                                        <div class="product-description-label __color-9B9B9B fs-14 text-nowrap pt-1">
+                                                            {{ translate('denomination') }}
+                                                        </div>
+                                                        <div class="list-inline checkbox-alphanumeric checkbox-alphanumeric--style-1 mb-0 mx-1 flex-start ps-0">
+                                                            @foreach ($fixedDenoms as $denom)
+                                                                <div class="user-select-none">
+                                                                    <div class="for-mobile-capacity">
+                                                                        <input type="radio" hidden
+                                                                            id="denomination_{{ $denom->id }}"
+                                                                            name="supplier_denomination_id"
+                                                                            value="{{ $denom->id }}"
+                                                                            data-face-value="{{ $denom->face_value }}"
+                                                                            data-sell-price="{{ $denom->calculateSellPrice() }}"
+                                                                            data-currency="{{ $denom->face_value_currency }}"
+                                                                            {{ $loop->first ? 'checked' : '' }}>
+                                                                        <label for="denomination_{{ $denom->id }}" class="__text-12px">
+                                                                            <span class="text-nowrap">
+                                                                                {{ $denom->face_value_currency }} {{ number_format($denom->face_value, 0) }}
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                            @if ($hasVariableDenom)
+                                                <div class="customizable-amount-section">
+                                                    <input type="hidden" name="supplier_denomination_id" value="{{ $variableDenom->id }}">
+                                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                                        <div class="product-description-label __color-9B9B9B fs-14">
+                                                            {{ translate('amount') }}
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <input type="number"
+                                                                name="custom_amount"
+                                                                id="custom-amount-input"
+                                                                class="form-control w-180px text-center"
+                                                                step="0.01"
+                                                                min="{{ $variableDenom->min_face_value }}"
+                                                                max="{{ $variableDenom->max_face_value }}"
+                                                                placeholder="{{ $variableDenom->min_face_value }} - {{ $variableDenom->max_face_value }}"
+                                                                data-min="{{ $variableDenom->min_face_value }}"
+                                                                data-max="{{ $variableDenom->max_face_value }}"
+                                                                required>
+                                                            <span class="text-muted fs-12">
+                                                                ({{ webCurrencyConverter(amount: $variableDenom->min_face_value) }}
+                                                                —
+                                                                {{ webCurrencyConverter(amount: $variableDenom->max_face_value) }})
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        {{ translate('enter_your_desired_amount_between_the_range') }}
+                                                    </small>
+                                                </div>
+                                            @elseif ($showLegacyCustom)
+                                                <div class="customizable-amount-section">
+                                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                                        <div class="product-description-label __color-9B9B9B fs-14">
+                                                            {{ translate('amount') }}
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <input type="number"
+                                                                name="custom_amount"
+                                                                id="custom-amount-input"
+                                                                class="form-control w-180px text-center"
+                                                                step="0.01"
+                                                                min="{{ $denominationMapping->min_amount }}"
+                                                                max="{{ $denominationMapping->max_amount }}"
+                                                                placeholder="{{ $denominationMapping->min_amount }} - {{ $denominationMapping->max_amount }}"
+                                                                data-min="{{ $denominationMapping->min_amount }}"
+                                                                data-max="{{ $denominationMapping->max_amount }}"
+                                                                required>
+                                                            <span class="text-muted fs-12">
+                                                                ({{ webCurrencyConverter(amount: $denominationMapping->min_amount) }}
+                                                                —
+                                                                {{ webCurrencyConverter(amount: $denominationMapping->max_amount) }})
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        {{ translate('enter_your_desired_amount_between_the_range') }}
+                                                    </small>
+                                                </div>
+                                            @endif
 
                                             <div class="">
                                                 <div class="product-quantity d-flex flex-column __gap-15">
@@ -795,7 +902,9 @@
                     </div>
                 </div>
                 <div class="col-lg-3">
-                    @php($companyReliability = getWebConfig('company_reliability'))
+                    @php
+                        $companyReliability = getWebConfig('company_reliability');
+                    @endphp
                     @if ($product->product_type == 'physical')
                         @if ($companyReliability != null)
                             <div class="product-details-shipping-details">
@@ -1124,6 +1233,85 @@
 @endsection
 
 @push('script')
+    @php
+        $denomMappingForScript = \App\Models\SupplierProductMapping::where('product_id', $product->id)
+            ->where('is_active', true)
+            ->with(['activeDenominations' => function ($q) { $q->orderBy('sort_order'); }])
+            ->first();
+        $scriptFixedDenoms = $denomMappingForScript ? $denomMappingForScript->activeDenominations->where('type', 'fixed') : collect();
+        $scriptVariableDenom = $denomMappingForScript ? $denomMappingForScript->activeDenominations->where('type', 'variable')->first() : null;
+        $scriptShowLegacyCustom = $scriptFixedDenoms->isEmpty() && !$scriptVariableDenom && $denomMappingForScript && $denomMappingForScript->is_customizable;
+    @endphp
+    @if ($scriptFixedDenoms->isNotEmpty())
+    <script>
+        $(document).ready(function () {
+            const $priceDisplay = $('.product-details-chosen-price-amount');
+            const $unitPriceDisplay = $('.discounted-unit-price');
+            const currencySymbol = @json(getCurrencySymbol());
+            const symbolPosition = @json(getWebConfig('currency_symbol_position'));
+            const decimalPoints = parseInt(@json(getWebConfig('decimal_point_settings'))) || 2;
+
+            function formatPrice(value) {
+                const num = value.toFixed(decimalPoints);
+                return symbolPosition === 'left' ? currencySymbol + num : num + currencySymbol;
+            }
+
+            function updateDenominationPrice() {
+                const $selected = $('input[name="supplier_denomination_id"]:checked');
+                if ($selected.length) {
+                    const sellPrice = parseFloat($selected.data('sell-price'));
+                    const qty = parseInt($('.product-details-cart-qty').val()) || 1;
+                    $unitPriceDisplay.text(formatPrice(sellPrice));
+                    $priceDisplay.text(formatPrice(sellPrice * qty));
+                }
+            }
+
+            $(document).on('change', 'input[name="supplier_denomination_id"]', updateDenominationPrice);
+            $(document).on('input change', '.product-details-cart-qty', updateDenominationPrice);
+
+            // Set initial price from first checked denomination
+            updateDenominationPrice();
+        });
+    </script>
+    @endif
+    @if ($scriptVariableDenom || $scriptShowLegacyCustom)
+    <script>
+        $(document).ready(function () {
+            const $input = $('#custom-amount-input');
+            const $priceDisplay = $('.product-details-chosen-price-amount');
+            const $unitPriceDisplay = $('.discounted-unit-price');
+            const currencySymbol = @json(getCurrencySymbol());
+            const symbolPosition = @json(getWebConfig('currency_symbol_position'));
+            const decimalPoints = parseInt(@json(getWebConfig('decimal_point_settings'))) || 2;
+
+            function formatPrice(value) {
+                const num = value.toFixed(decimalPoints);
+                return symbolPosition === 'left' ? currencySymbol + num : num + currencySymbol;
+            }
+
+            $input.on('input change', function () {
+                const amount = parseFloat($(this).val());
+                const min = parseFloat($input.data('min'));
+                const max = parseFloat($input.data('max'));
+
+                if (!isNaN(amount) && amount >= min && amount <= max) {
+                    $(this).removeClass('border-danger');
+                    const qty = parseInt($('.product-details-cart-qty').val()) || 1;
+                    $unitPriceDisplay.text(formatPrice(amount));
+                    $priceDisplay.text(formatPrice(amount * qty));
+                } else if ($(this).val() !== '') {
+                    $(this).addClass('border-danger');
+                }
+            });
+
+            $(document).on('input change', '.product-details-cart-qty', function () {
+                if ($input.val()) {
+                    $input.trigger('change');
+                }
+            });
+        });
+    </script>
+    @endif
     <script>
         $(document).on('change', 'input[name="color"]', function() {
             const selectedColor = $(this).val();

@@ -29,6 +29,7 @@ use App\Models\ShippingAddress;
 use App\Models\ShippingType;
 use App\Models\Shop;
 use App\Models\Subscription;
+use App\Models\SupplierOrder;
 use App\Models\SupplierProductMapping;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -709,6 +710,8 @@ class WebController extends Controller
 
         // Load digital codes assigned for these orders so the success page can show them
         $digitalCodesForDisplay = [];
+        $hasPendingSupplierCodes = false;
+
         if (! empty($orderIds)) {
             $codes = DigitalProductCode::query()
                 ->whereIn('order_id', $orderIds)
@@ -721,16 +724,24 @@ class WebController extends Controller
                     'orderId' => $code->order_id,
                     'productName' => $code->product?->name ?? translate('Digital Product'),
                     'code' => $code->decryptCode(),
+                    'pin' => $code->decryptPin(),
                     'serial' => $code->serial_number,
                     'expiry' => $code->expiry_date?->format('Y-m-d'),
                 ];
             }
+
+            // Check if any supplier orders are still processing for these orders
+            $hasPendingSupplierCodes = SupplierOrder::query()
+                ->whereIn('order_id', $orderIds)
+                ->whereIn('status', ['pending', 'processing'])
+                ->exists();
         }
 
         return view(VIEW_FILE_NAMES['order_complete'], [
             'order_ids' => $orderIds,
             'isNewCustomerInSession' => $isNewCustomerInSession,
             'digitalCodes' => $digitalCodesForDisplay,
+            'hasPendingSupplierCodes' => $hasPendingSupplierCodes,
         ]);
     }
 
@@ -753,6 +764,7 @@ class WebController extends Controller
                 $codes[] = [
                     'productName' => $record->product?->name ?? translate('Digital Product'),
                     'code' => $record->decryptCode(),
+                    'pin' => $record->decryptPin(),
                     'serial' => $record->serial_number,
                     'expiry' => $record->expiry_date?->format('Y-m-d'),
                 ];
@@ -773,6 +785,58 @@ class WebController extends Controller
         }
 
         return view('web-views.order.digital-code-receipt', compact('codes', 'orderId', 'orderDate', 'customerName'));
+    }
+
+    /**
+     * AJAX endpoint: check if digital codes are ready for the given orders.
+     * Used by the success page to poll for async supplier codes (Bamboo etc.).
+     */
+    public function checkDigitalCodesStatus(Request $request): JsonResponse
+    {
+        $orderIds = $request->input('orderIds', []);
+
+        if (! is_array($orderIds) || empty($orderIds)) {
+            return response()->json(['pending' => false, 'codes' => []]);
+        }
+
+        // Verify orders belong to the current customer
+        $customerId = auth('customer')->id();
+        $validOrderIds = Order::query()
+            ->whereIn('id', $orderIds)
+            ->where('customer_id', $customerId)
+            ->pluck('id')
+            ->all();
+
+        if (empty($validOrderIds)) {
+            return response()->json(['pending' => false, 'codes' => []]);
+        }
+
+        // Get assigned codes
+        $codes = DigitalProductCode::query()
+            ->whereIn('order_id', $validOrderIds)
+            ->where('status', 'sold')
+            ->with('product')
+            ->get();
+
+        $formattedCodes = $codes->map(fn (DigitalProductCode $code) => [
+            'orderId' => $code->order_id,
+            'productName' => $code->product?->name ?? translate('Digital Product'),
+            'code' => $code->decryptCode(),
+            'pin' => $code->decryptPin(),
+            'serial' => $code->serial_number,
+            'expiry' => $code->expiry_date?->format('Y-m-d'),
+        ])->values()->all();
+
+        // Check if any supplier orders are still processing
+        $pending = SupplierOrder::query()
+            ->whereIn('order_id', $validOrderIds)
+            ->whereIn('status', ['pending', 'processing'])
+            ->exists();
+
+        return response()->json([
+            'pending' => $pending,
+            'codes' => $formattedCodes,
+        ]);
     }
 
     public function getOfflinePaymentCheckoutComplete(Request $request): View|RedirectResponse

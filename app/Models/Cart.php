@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property array $variant
  * @property int $quantity
  * @property float $price
+ * @property float|null $custom_amount
  * @property float $tax
  * @property int $is_checked
  * @property float $discount
@@ -49,6 +50,7 @@ class Cart extends Model
         //        'variant' => 'array',
         'quantity' => 'integer',
         'price' => 'float',
+        'custom_amount' => 'float',
         'tax' => 'float',
         'is_checked' => 'integer',
         'discount' => 'float',
@@ -71,6 +73,7 @@ class Cart extends Model
         'variant',
         'quantity',
         'price',
+        'custom_amount',
         'tax',
         'discount',
         'tax_model',

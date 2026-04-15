@@ -2590,7 +2590,8 @@ class ProductManager
             $cartItemProduct = $cartItem?->product;
 
             if (empty($cartItem->variant)) {
-                $productTax = Helpers::tax_calculation(product: $cartItemProduct, price: $cartItemProduct->unit_price, tax: $cartItemProduct['tax'], tax_type: 'percent');
+                $priceForTax = ! empty($cartItem->custom_amount) ? $cartItem->price : $cartItemProduct->unit_price;
+                $productTax = Helpers::tax_calculation(product: $cartItemProduct, price: $priceForTax, tax: $cartItemProduct['tax'], tax_type: 'percent');
                 if ($cartItem->tax != $productTax) {
                     Cart::where(['id' => $cartItem['id']])->update(['tax' => $productTax]);
                 }
@@ -2617,7 +2618,7 @@ class ProductManager
                 }
             }
 
-            if (empty($cartItem->variant) && $cartItem->price != $cartItemProduct->unit_price) {
+            if (empty($cartItem->variant) && $cartItem->price != $cartItemProduct->unit_price && empty($cartItem->custom_amount)) {
                 Cart::where(['id' => $cartItem['id']])->update(['price' => $cartItemProduct->unit_price]);
             } elseif (! empty($cartItem->variant) && $cartItem->product_type == 'physical') {
                 $productVariation = json_decode($cartItemProduct?->variation ?? '', true);

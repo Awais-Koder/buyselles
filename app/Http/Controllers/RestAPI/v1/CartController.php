@@ -142,6 +142,8 @@ class CartController extends Controller
         $validator = Validator::make($request->all(), [
             'id' => 'required',
             'quantity' => 'required',
+            'custom_amount' => 'nullable|numeric|min:0',
+            'supplier_denomination_id' => 'nullable|integer|exists:supplier_product_denominations,id',
         ], [
             'id.required' => translate('Product ID is required!'),
         ]);

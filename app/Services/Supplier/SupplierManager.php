@@ -4,11 +4,13 @@ namespace App\Services\Supplier;
 
 use App\Contracts\SupplierDriverInterface;
 use App\DTOs\Supplier\BalanceResult;
+use App\Jobs\SupplierOrderPollJob;
 use App\Models\DigitalProductCode;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\SupplierApi;
 use App\Models\SupplierOrder;
+use App\Models\SupplierProductDenomination;
 use App\Models\SupplierProductMapping;
 use App\Services\DigitalProductCodeService;
 use App\Services\Supplier\Drivers\BambooDriver;
@@ -70,10 +72,16 @@ class SupplierManager
      * Fetch codes from suppliers and add them to the digital code pool.
      * Tries suppliers in priority order (fallback chain).
      *
+     * @param  float|null  $customAmount  Customer-chosen face value for customizable/variable products
+     * @param  int|null  $denominationId  Selected denomination ID (for fixed/variable denomination products)
      * @return array{inserted: int, supplier_id: int|null, supplier_order_id: int|null}
      */
-    public function fetchAndStockCodes(Product $product, int $quantity): array
+    public function fetchAndStockCodes(Product $product, int $quantity, ?float $customAmount = null, ?int $denominationId = null): array
     {
+        $denomination = $denominationId
+            ? SupplierProductDenomination::with('mapping.supplierApi')->find($denominationId)
+            : null;
+
         $mappings = SupplierProductMapping::where('product_id', $product->id)
             ->active()
             ->byPriority()
@@ -97,9 +105,9 @@ class SupplierManager
             }
 
             try {
-                $result = $this->placeSupplierOrder($supplier, $mapping, $quantity);
+                $result = $this->placeSupplierOrder($supplier, $mapping, $quantity, $customAmount, $denomination);
 
-                if ($result['inserted'] > 0) {
+                if ($result['inserted'] > 0 || $result['supplier_order_id']) {
                     return $result;
                 }
             } catch (\Throwable $e) {
@@ -165,7 +173,7 @@ class SupplierManager
                 continue;
             }
 
-            $result = $this->fetchAndStockCodes($product, $needed);
+            $result = $this->fetchAndStockCodes($product, $needed, $detail->custom_amount, $detail->supplier_denomination_id);
 
             // Always link supplier order to platform order (even for async/V1 where codes come via webhook)
             if ($result['supplier_order_id']) {
@@ -177,6 +185,17 @@ class SupplierManager
 
             if ($result['inserted'] > 0) {
                 $anyFulfilled = true;
+            } elseif ($result['supplier_order_id']) {
+                // Async supplier (e.g. Bamboo V1) — codes will arrive later.
+                // Dispatch a poll job to fetch codes from the supplier's GET order endpoint.
+                SupplierOrderPollJob::dispatch($result['supplier_order_id'])
+                    ->delay(now()->addSeconds(30));
+
+                Log::info('SupplierManager: dispatched poll job for async supplier order', [
+                    'supplier_order_id' => $result['supplier_order_id'],
+                    'order_id' => $order->id,
+                    'product_id' => $productId,
+                ]);
             }
         }
 
@@ -331,21 +350,29 @@ class SupplierManager
     /**
      * Place an order with a supplier and process received codes.
      *
+     * @param  float|null  $customAmount  Customer-chosen face value for customizable/variable products
+     * @param  SupplierProductDenomination|null  $denomination  Selected denomination (overrides mapping product ID)
      * @return array{inserted: int, supplier_id: int, supplier_order_id: int|null}
      */
     private function placeSupplierOrder(
         SupplierApi $supplier,
         SupplierProductMapping $mapping,
         int $quantity,
+        ?float $customAmount = null,
+        ?SupplierProductDenomination $denomination = null,
     ): array {
+        // When a denomination is selected, use its supplier_product_id instead of the mapping's
+        $supplierProductId = $denomination?->supplier_product_id ?? $mapping->supplier_product_id;
+
         $logId = $this->logger->logRequest(
             supplierApiId: $supplier->id,
             action: 'place_order',
             endpoint: $supplier->base_url,
             method: 'POST',
             requestPayload: [
-                'supplier_product_id' => $mapping->supplier_product_id,
+                'supplier_product_id' => $supplierProductId,
                 'quantity' => $quantity,
+                'denomination_id' => $denomination?->id,
             ],
         );
 
@@ -353,7 +380,17 @@ class SupplierManager
 
         try {
             $driver = $this->driver($supplier);
-            $result = $driver->placeOrder($mapping->supplier_product_id, $quantity, (float) $mapping->cost_price);
+
+            // For fixed denominations: use face_value. For variable: use customAmount. Fallback: mapping cost.
+            if ($denomination?->isFixed()) {
+                $unitPrice = (float) $denomination->face_value;
+            } elseif ($denomination?->isVariable() && $customAmount) {
+                $unitPrice = $customAmount;
+            } else {
+                $unitPrice = $customAmount ?? (float) $mapping->cost_price;
+            }
+
+            $result = $driver->placeOrder($supplierProductId, $quantity, $unitPrice);
 
             $this->logger->logResponse(
                 logId: $logId,
@@ -367,14 +404,15 @@ class SupplierManager
             );
 
             // Create supplier order record
+            $costPerUnit = $denomination?->cost_price ?? $customAmount ?? $mapping->cost_price;
             $supplierOrder = SupplierOrder::create([
                 'supplier_api_id' => $supplier->id,
                 'supplier_product_mapping_id' => $mapping->id,
                 'supplier_order_id' => $result->supplierOrderId,
                 'quantity' => $quantity,
-                'cost_per_unit' => $mapping->cost_price,
-                'total_cost' => $mapping->cost_price * $quantity,
-                'cost_currency' => $mapping->cost_currency,
+                'cost_per_unit' => $costPerUnit,
+                'total_cost' => $costPerUnit * $quantity,
+                'cost_currency' => $denomination?->cost_currency ?? $mapping->cost_currency,
                 'status' => $result->status,
             ]);
 

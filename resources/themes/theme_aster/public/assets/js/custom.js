@@ -545,11 +545,13 @@ $(".add-to-cart-details-form").on("submit", function (e) {
     e.preventDefault();
 });
 
-$(".add-to-cart-details-form input").on("change", function () {
+$(".add-to-cart-details-form input").on("change", function (e) {
+    if ($(e.target).attr('id') === 'custom-amount-input') return;
     getVariantPrice(".add-to-cart-details-form");
 });
 
-$(".add-to-cart-sticky-form input").on("change", function () {
+$(".add-to-cart-sticky-form input").on("change", function (e) {
+    if ($(e.target).attr('id') === 'custom-amount-input') return;
     getVariantPrice(".add-to-cart-sticky-form");
 });
 
@@ -977,6 +979,13 @@ function getVariantPrice(formSelector = ".add-to-cart-details-form") {
             success: function (response) {
                 updateProductDetailsTopSection(".add-to-cart-details-form", response);
                 updateProductDetailsBottomSection('.add-to-cart-sticky-form', response);
+
+                // Re-apply custom amount price if the input has a value
+                var $customAmountInput = $('#custom-amount-input');
+                if ($customAmountInput.length && $customAmountInput.val()) {
+                    $customAmountInput.trigger('change');
+                }
+
                 if (formSelector === '.add-to-cart-sticky-form' || checkFirstTimeVariant) {
                     checkFirstTimeVariant = false;
                 }

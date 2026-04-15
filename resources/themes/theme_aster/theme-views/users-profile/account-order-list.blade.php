@@ -311,6 +311,7 @@
                 'orderId'     => $c->order_id,
                 'productName' => $c->product?->name ?? translate('Digital_Product'),
                 'code'        => $c->decryptCode(),
+                'pin'         => $c->decryptPin(),
                 'serial'      => $c->serial_number,
                 'expiry'      => $c->expiry_date?->format('Y-m-d'),
             ])->all();
@@ -362,9 +363,10 @@
                                                 <i class="bi bi-clipboard"></i> {{ translate('Copy') }}
                                             </button>
                                         </div>
-                                        @if(!empty($item['serial']) || !empty($item['expiry']))
+                                        @if(!empty($item['pin']) || !empty($item['serial']) || !empty($item['expiry']))
                                             <p class="text-muted mb-0 mt-1" style="font-size:.75rem;">
-                                                @if(!empty($item['serial'])) <strong>S/N:</strong> {{ $item['serial'] }} @endif
+                                                @if(!empty($item['pin'])) <strong>{{ translate('PIN') }}:</strong> <code class="text-dark fw-semibold">{{ $item['pin'] }}</code> @endif
+                                                @if(!empty($item['serial'])) &nbsp;<strong>S/N:</strong> {{ $item['serial'] }} @endif
                                                 @if(!empty($item['expiry'])) &nbsp;<strong>Exp:</strong> {{ $item['expiry'] }} @endif
                                             </p>
                                         @endif

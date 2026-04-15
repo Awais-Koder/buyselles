@@ -608,6 +608,7 @@ API key create/revoke, product create/delete, settings change, dispute open/reso
 16. **Location selection is 3-level: Country → City → Area** — never skip a level
 17. **RTL layout must work on ALL pages** — test every screen in Arabic before marking done
 18. **WhatsApp/SMS for critical events only** — do not spam vendors
+19. **Never use inline `@php()` in Blade files** — `@php($var = expr)` compiles without closing `?>` in Laravel 12, breaking all subsequent directives. Always use `@php $var = expr; @endphp` block form.
 
 ---
 
@@ -813,6 +814,36 @@ Only `app/Jobs/SendEmailJob.php` exists. All new jobs go in `app/Jobs/`.
 5. Existing `WithdrawRequest` model (note singular) — new `withdrawal_requests` table entries extend this
 6. `BusinessSetting` model is the key-value config store — use for feature flags/settings
 7. Use `app/Http/Middleware/` for new middleware and register in `bootstrap/app.php`
+
+#### ⚠️ Blade `@php()` Inline Syntax Bug — CRITICAL
+
+**NEVER** use the inline `@php()` syntax in Blade files:
+
+```blade
+{{-- ❌ BROKEN — compiles to <?php($var = expr) WITHOUT closing ?> --}}
+@php($extensionIndex = 0)
+@php($guestCheckout = getWebConfig(name: 'guest_checkout'))
+```
+
+In this Laravel 12 codebase, `@php($var = expr)` compiles to `<?php($var = expr)` **without a closing `?>`**. This swallows all subsequent Blade directives as raw PHP, causing:
+- Blade directives appearing as raw text on page
+- "Cannot end a push stack" errors
+- Sections of the page silently disappearing
+
+**ALWAYS** use the block form instead:
+
+```blade
+{{-- ✅ CORRECT — always use block form --}}
+@php $extensionIndex = 0; @endphp
+@php $guestCheckout = getWebConfig(name: 'guest_checkout'); @endphp
+
+{{-- ✅ ALSO CORRECT — multi-line block --}}
+@php
+    $companyReliability = getWebConfig('company_reliability');
+@endphp
+```
+
+**When editing any Blade file**, grep for `@php(` and convert any inline occurrences to block form before finishing.
 
 ### UI / Frontend Conventions
 

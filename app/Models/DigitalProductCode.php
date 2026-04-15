@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Crypt;
  * @property int $product_id
  * @property int|null $seller_id
  * @property string $code AES-256-CBC encrypted at rest
+ * @property string|null $pin AES-256-CBC encrypted PIN (e.g. gift card PIN)
  * @property string|null $code_hash SHA-256 hash for duplicate detection
  * @property string|null $serial_number Optional serial/reference number (plain text)
  * @property Carbon|null $expiry_date Code expiry date
@@ -33,6 +34,7 @@ class DigitalProductCode extends Model
         'product_id',
         'seller_id',
         'code',
+        'pin',
         'code_hash',
         'serial_number',
         'expiry_date',
@@ -90,6 +92,19 @@ class DigitalProductCode extends Model
     public function decryptCode(): string
     {
         return Crypt::decryptString($this->code);
+    }
+
+    /**
+     * Decrypt and return the plain-text PIN.
+     * Returns null if no PIN is stored.
+     */
+    public function decryptPin(): ?string
+    {
+        if (empty($this->pin)) {
+            return null;
+        }
+
+        return Crypt::decryptString($this->pin);
     }
 
     /**

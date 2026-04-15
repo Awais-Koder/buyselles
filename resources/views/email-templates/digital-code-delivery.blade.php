@@ -186,6 +186,9 @@ $direction = Session::get('direction');
                             <div class="product-label">{{ $item['productName'] }}</div>
                             <div class="code-val">{{ $item['code'] }}</div>
                             <div class="meta-row">
+                                @if (!empty($item['pin']))
+                                    {{ translate('PIN') }}: <strong>{{ $item['pin'] }}</strong> &nbsp;|&nbsp;
+                                @endif
                                 @if (!empty($item['serial']))
                                     {{ translate('Serial') }}: {{ $item['serial'] }} &nbsp;|&nbsp;
                                 @endif

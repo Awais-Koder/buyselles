@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class SupplierProductMapping
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $product_id
  * @property int $supplier_api_id
  * @property string $supplier_product_id
+ * @property string|null $supplier_brand_id
+ * @property string|null $supplier_brand_name
  * @property string|null $supplier_product_name
  * @property float $cost_price
  * @property string $cost_currency
@@ -23,11 +26,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $min_stock_threshold
  * @property int $max_restock_qty
  * @property bool $is_active
+ * @property bool $is_customizable
+ * @property float|null $min_amount
+ * @property float|null $max_amount
  * @property Carbon|null $last_synced_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Product $product
  * @property-read SupplierApi $supplierApi
+ * @property-read \Illuminate\Database\Eloquent\Collection|SupplierProductDenomination[] $denominations
  */
 class SupplierProductMapping extends Model
 {
@@ -35,6 +42,8 @@ class SupplierProductMapping extends Model
         'product_id',
         'supplier_api_id',
         'supplier_product_id',
+        'supplier_brand_id',
+        'supplier_brand_name',
         'supplier_product_name',
         'cost_price',
         'cost_currency',
@@ -45,6 +54,9 @@ class SupplierProductMapping extends Model
         'min_stock_threshold',
         'max_restock_qty',
         'is_active',
+        'is_customizable',
+        'min_amount',
+        'max_amount',
         'last_synced_at',
     ];
 
@@ -60,6 +72,9 @@ class SupplierProductMapping extends Model
             'min_stock_threshold' => 'integer',
             'max_restock_qty' => 'integer',
             'is_active' => 'boolean',
+            'is_customizable' => 'boolean',
+            'min_amount' => 'decimal:2',
+            'max_amount' => 'decimal:2',
             'last_synced_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
@@ -78,6 +93,42 @@ class SupplierProductMapping extends Model
         return $this->belongsTo(SupplierApi::class);
     }
 
+    public function denominations(): HasMany
+    {
+        return $this->hasMany(SupplierProductDenomination::class);
+    }
+
+    public function activeDenominations(): HasMany
+    {
+        return $this->denominations()->where('is_active', true)->orderBy('sort_order')->orderBy('face_value');
+    }
+
+    /**
+     * Check if this mapping has any denominations (fixed or variable).
+     */
+    public function hasDenominations(): bool
+    {
+        return $this->denominations()->where('is_active', true)->exists();
+    }
+
+    /**
+     * Get fixed denominations for this mapping.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<SupplierProductDenomination>
+     */
+    public function fixedDenominations(): HasMany
+    {
+        return $this->denominations()->where('type', 'fixed')->where('is_active', true)->orderBy('sort_order')->orderBy('face_value');
+    }
+
+    /**
+     * Get the variable denomination for this mapping (typically at most one).
+     */
+    public function variableDenomination(): HasMany
+    {
+        return $this->denominations()->where('type', 'variable')->where('is_active', true);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────
 
     /**
@@ -90,6 +141,19 @@ class SupplierProductMapping extends Model
         }
 
         return round($this->cost_price + $this->markup_value, 2);
+    }
+
+    /**
+     * Calculate the sell price for a given custom amount using the mapping markup.
+     * For customizable products, the customer's chosen amount replaces the fixed cost.
+     */
+    public function calculateCustomSellPrice(float $amount): float
+    {
+        if ($this->markup_type === 'percent') {
+            return round($amount * (1 + $this->markup_value / 100), 2);
+        }
+
+        return round($amount + $this->markup_value, 2);
     }
 
     // ─── Scopes ──────────────────────────────────────────────────────────

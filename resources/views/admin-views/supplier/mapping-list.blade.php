@@ -151,7 +151,7 @@
 @push('css_or_js')
 <style>
     @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .sync-spinning { animation: spin 1s linear infinite; }
+    .sync-spinning { display: inline-block; animation: spin 1s linear infinite; }
 </style>
 @endpush
 
@@ -202,6 +202,7 @@
             },
             complete: function() {
                 icon.removeClass('sync-spinning');
+                icon.css('animation', 'none');
                 btn.prop('disabled', false);
             }
         });

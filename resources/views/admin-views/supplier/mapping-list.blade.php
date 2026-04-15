@@ -191,13 +191,13 @@
             data: { _token: '{{ csrf_token() }}' },
             timeout: 120000,
             success: function(data) {
-                toastr.success(data.message || '{{ translate('price_sync_completed_successfully') }}');
+                toastMagic.success(data.message || '{{ translate('price_sync_completed_successfully') }}', '', true);
             },
             error: function(xhr) {
                 if (xhr.statusText === 'timeout') {
-                    toastr.error('{{ translate('sync_request_timed_out_please_try_again') }}');
+                    toastMagic.error('{{ translate('sync_request_timed_out_please_try_again') }}', '', true);
                 } else {
-                    toastr.error(xhr.responseJSON?.message || '{{ translate('failed_to_sync_prices') }}');
+                    toastMagic.error(xhr.responseJSON?.message || '{{ translate('failed_to_sync_prices') }}', '', true);
                 }
             },
             complete: function() {

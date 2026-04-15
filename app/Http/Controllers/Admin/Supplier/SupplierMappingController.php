@@ -28,9 +28,9 @@ class SupplierMappingController extends BaseController
 
         $mappings = SupplierProductMapping::query()
             ->with(['product', 'supplierApi'])
-            ->when($supplierId, fn ($q) => $q->where('supplier_api_id', $supplierId))
+            ->when($supplierId, fn($q) => $q->where('supplier_api_id', $supplierId))
             ->when($searchValue, function ($q) use ($searchValue) {
-                $q->whereHas('product', fn ($pq) => $pq->where('name', 'like', "%{$searchValue}%"))
+                $q->whereHas('product', fn($pq) => $pq->where('name', 'like', "%{$searchValue}%"))
                     ->orWhere('supplier_product_id', 'like', "%{$searchValue}%");
             })
             ->orderBy('priority')
@@ -234,7 +234,7 @@ class SupplierMappingController extends BaseController
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => translate('price_sync_failed').': '.$e->getMessage(),
+                'message' => translate('price_sync_failed') . ': ' . $e->getMessage(),
             ], 500);
         }
     }

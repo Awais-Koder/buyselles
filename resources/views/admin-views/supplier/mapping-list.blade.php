@@ -151,6 +151,7 @@
 @push('css_or_js')
 <style>
     @@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .sync-spinning { animation: spin 1s linear infinite; }
 </style>
 @endpush
 
@@ -182,20 +183,28 @@
         let btn = $(this);
         let icon = $('#sync-prices-icon');
         btn.prop('disabled', true);
-        icon.css('animation', 'spin 1s linear infinite');
+        icon.addClass('sync-spinning');
 
         $.ajax({
             url: "{{ route('admin.supplier.mapping.sync-prices') }}",
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
+            timeout: 120000,
             success: function(data) {
-                toastr.success(data.message || '{{ translate('price_sync_dispatched_successfully') }}');
+                toastr.success(data.message || '{{ translate('price_sync_completed_successfully') }}');
+                if (data.synced > 0) {
+                    setTimeout(function() { location.reload(); }, 1500);
+                }
             },
             error: function(xhr) {
-                toastr.error(xhr.responseJSON?.message || '{{ translate('failed_to_dispatch_price_sync') }}');
+                if (xhr.statusText === 'timeout') {
+                    toastr.error('{{ translate('sync_request_timed_out_please_try_again') }}');
+                } else {
+                    toastr.error(xhr.responseJSON?.message || '{{ translate('failed_to_sync_prices') }}');
+                }
             },
             complete: function() {
-                icon.css('animation', '');
+                icon.removeClass('sync-spinning');
                 btn.prop('disabled', false);
             }
         });

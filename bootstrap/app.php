@@ -82,6 +82,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'reseller_api_auth' => \App\Http\Middleware\ResellerApiAuth::class,
         ]);
     })
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+        require base_path('routes/console.php');
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         // You can customize exception handling here if needed
     })

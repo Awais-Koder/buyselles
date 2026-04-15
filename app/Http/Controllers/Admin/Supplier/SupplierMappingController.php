@@ -220,54 +220,15 @@ class SupplierMappingController extends BaseController
     }
 
     /**
-     * Run stock/price sync for all active mappings synchronously and return results.
+     * Dispatch a background job to sync prices for all active mappings.
      */
     public function syncPrices(): JsonResponse
     {
-        try {
-            $mappings = SupplierProductMapping::query()
-                ->active()
-                ->with('supplierApi')
-                ->get();
+        \App\Jobs\SupplierStockSyncJob::dispatch();
 
-            if ($mappings->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => translate('no_active_mappings_to_sync'),
-                ]);
-            }
-
-            $manager = app(\App\Services\Supplier\SupplierManager::class);
-            $synced = 0;
-            $failed = 0;
-            $errors = [];
-
-            foreach ($mappings as $mapping) {
-                try {
-                    $manager->syncStock($mapping);
-                    $synced++;
-                } catch (\Throwable $e) {
-                    $failed++;
-                    $errors[] = $mapping->product?->name.': '.$e->getMessage();
-                }
-            }
-
-            $message = translate('sync_completed').": {$synced} ".translate('synced');
-            if ($failed > 0) {
-                $message .= ", {$failed} ".translate('failed');
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'synced' => $synced,
-                'failed' => $failed,
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => translate('price_sync_failed').': '.$e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => translate('price_sync_dispatched_successfully'),
+        ]);
     }
 }

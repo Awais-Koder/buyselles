@@ -224,11 +224,18 @@ class SupplierMappingController extends BaseController
      */
     public function syncPrices(): JsonResponse
     {
-        \App\Jobs\SupplierStockSyncJob::dispatch();
+        try {
+            \App\Jobs\SupplierStockSyncJob::dispatchSync();
 
-        return response()->json([
-            'success' => true,
-            'message' => translate('price_sync_dispatched_successfully'),
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => translate('price_sync_completed_successfully'),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => translate('price_sync_failed').': '.$e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -189,9 +189,9 @@
             url: "{{ route('admin.supplier.mapping.sync-prices') }}",
             type: 'POST',
             data: { _token: '{{ csrf_token() }}' },
-            timeout: 30000,
+            timeout: 120000,
             success: function(data) {
-                toastr.success(data.message || '{{ translate('price_sync_dispatched_successfully') }}');
+                toastr.success(data.message || '{{ translate('price_sync_completed_successfully') }}');
             },
             error: function(xhr) {
                 if (xhr.statusText === 'timeout') {

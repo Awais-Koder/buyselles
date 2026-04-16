@@ -29,6 +29,7 @@ use App\Http\Controllers\Vendor\Product\ProductController;
 use App\Http\Controllers\Vendor\ProductReportController;
 use App\Http\Controllers\Vendor\ProfileController;
 use App\Http\Controllers\Vendor\Promotion\ClearanceSaleController;
+use App\Http\Controllers\Vendor\DisputeController as VendorDisputeController;
 use App\Http\Controllers\Vendor\RefundController;
 use App\Http\Controllers\Vendor\ReviewController;
 use App\Http\Controllers\Vendor\Shipping\CategoryShippingCostController;
@@ -112,6 +113,16 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                     Route::any(POSOrder::HOLD_ORDERS[URI], 'getAllHoldOrdersView')->name('view-hold-orders');
                 });
             });
+            Route::group(['prefix' => 'dispute', 'as' => 'dispute.'], function () {
+                Route::controller(VendorDisputeController::class)->group(function () {
+                    Route::get('list/{status?}', 'index')->name('index');
+                    Route::get('{id}', 'show')->name('show');
+                    Route::post('{id}/respond', 'respond')->name('respond');
+                    Route::post('{id}/evidence', 'uploadEvidence')->name('evidence.upload');
+                    Route::post('{id}/escalate', 'escalate')->name('escalate');
+                });
+            });
+
             Route::group(['prefix' => 'refund', 'as' => 'refund.', 'middleware' => ['vendor_module:vendor_refund']], function () {
                 Route::controller(RefundController::class)->group(function () {
                     Route::get(Refund::INDEX[URI] . '/{status}', 'index')->name('index');

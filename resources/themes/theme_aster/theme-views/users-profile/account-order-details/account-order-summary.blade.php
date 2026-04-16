@@ -349,6 +349,16 @@
                                                                 </div>
                                                             @endif
 
+                                                            @if (($orderTotalPriceSummary['customerServiceFee'] ?? 0) > 0)
+                                                                <div
+                                                                    class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                                    <div class="text-capitalize">{{ translate('service_fee') }}</div>
+                                                                    <div>
+                                                                        {{ webCurrencyConverter(amount: $orderTotalPriceSummary['customerServiceFee']) }}
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+
                                                                 <div
                                                                     class="d-flex flex-wrap border-top pt-3 justify-content-between align-items-center gap-2">
                                                                     <h4 class="text-capitalize fs-18">

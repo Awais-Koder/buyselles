@@ -134,6 +134,7 @@ class Order extends Model
         'commission_type',
         'customer_service_fee',
         'customer_service_fee_type',
+        'dispute_status',
         'updated_at',
     ];
 
@@ -304,6 +305,22 @@ class Order extends Model
                 }
             )
             ->latest('id');
+    }
+
+    public function disputes(): HasMany
+    {
+        return $this->hasMany(Dispute::class, 'order_id');
+    }
+
+    public function activeDispute(): HasOne
+    {
+        return $this->hasOne(Dispute::class, 'order_id')
+            ->whereIn('status', ['open', 'vendor_response', 'under_review']);
+    }
+
+    public function escrow(): HasOne
+    {
+        return $this->hasOne(Escrow::class, 'order_id');
     }
 
     protected static function boot(): void

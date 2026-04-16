@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\MarkExpiredDigitalCodesCommand;
+use App\Jobs\AutoReleaseEscrowJob;
 use App\Jobs\SupplierHealthCheckJob;
 use App\Jobs\SupplierStockSyncJob;
 use Illuminate\Support\Facades\Schedule;
@@ -14,3 +15,6 @@ Schedule::job(new SupplierStockSyncJob)->everyFifteenMinutes();
 
 // Ping all active suppliers to monitor health/availability.
 Schedule::job(new SupplierHealthCheckJob)->everyFiveMinutes();
+
+// Auto-release escrows past their release deadline (no active dispute).
+Schedule::job(new AutoReleaseEscrowJob)->hourly();

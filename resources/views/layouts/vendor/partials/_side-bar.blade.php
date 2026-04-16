@@ -292,6 +292,30 @@
                                 </ul>
                             </li>
                         @endif
+                            {{-- Disputes --}}
+                            <li class="navbar-vertical-aside-has-menu {{ Request::is('vendor/dispute*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
+                                    href="javascript:" title="{{ translate('Disputes') }}">
+                                    <i class="fi fi-sr-shield-exclamation nav-icon"></i>
+                                    <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">
+                                        {{ translate('Disputes') }}
+                                    </span>
+                                    @php($vendorOpenCount = \App\Models\Dispute::where('vendor_id', auth('seller')->id())->where('status', 'open')->count())
+                                    @if($vendorOpenCount > 0)
+                                        <span class="badge badge-danger badge-pill ml-1">{{ $vendorOpenCount }}</span>
+                                    @endif
+                                </a>
+                                <ul class="js-navbar-vertical-aside-submenu nav nav-sub"
+                                    style="display: {{ Request::is('vendor/dispute*') ? 'block' : 'none' }}">
+                                    <li class="nav-item {{ Request::is('vendor/dispute/list*') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('vendor.dispute.index') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span class="text-truncate">{{ translate('All Disputes') }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
                         @if ($canAccess('vendor_products') || $canAccess('vendor_reviews'))
                             <li class="nav-item">
                                 <small class="nav-subtitle">{{ translate('product_management') }}</small>

@@ -250,6 +250,55 @@
                 </li>
             @endif
             @if (Helpers::module_permission_check('product_management'))
+                {{-- Dispute Center --}}
+                <li class="{{ Request::is('admin/dispute*') || Request::is('admin/escrow*') ? 'sub-menu-opened' : '' }}">
+                    <a class="nav-link nav-link-toggle {{ Request::is('admin/dispute*') || Request::is('admin/escrow*') ? 'active' : '' }}"
+                        href="javascript:" title="{{ translate('Dispute Center') }}">
+                        <i class="fi fi-sr-shield-exclamation"></i>
+                        <span
+                            class="aside-mini-hidden-element flex-grow-1 d-flex justify-content-between align-items-center">
+                            <span class="text-truncate max-w-180">
+                                {{ translate('Dispute Center') }}
+                            </span>
+                            @php($openDisputeCount = \App\Models\Dispute::whereIn('status', ['open','under_review'])->count())
+                            @if($openDisputeCount > 0)
+                                <span class="badge badge-pill badge-danger ml-1">{{ $openDisputeCount > 99 ? '99+' : $openDisputeCount }}</span>
+                            @endif
+                            <i class="fi fi-sr-angle-down"></i>
+                        </span>
+                    </a>
+                    <ul class="aside-submenu navbar-nav">
+                        <li class="nav-item px-3 py-2 fw-semibold text-dark bg-section2 aside-mini-show-element">
+                            {{ translate('Dispute Center') }}</li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::is('admin/dispute*') ? 'active' : '' }}"
+                                href="{{ route('admin.dispute.index') }}"
+                                title="{{ translate('Disputes') }}">
+                                <span class="flex-grow-1 text-truncate">
+                                    {{ translate('Disputes') }}
+                                </span>
+                                @if($openDisputeCount > 0)
+                                    <span class="badge fw-bold badge-danger badge-sm text-bg-danger">{{ $openDisputeCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::is('admin/escrow*') ? 'active' : '' }}"
+                                href="{{ route('admin.escrow.index') }}"
+                                title="{{ translate('Escrow Management') }}">
+                                <span class="flex-grow-1 text-truncate">
+                                    {{ translate('Escrow Management') }}
+                                </span>
+                                @php($heldCount = \App\Models\Escrow::where('status', 'held')->count())
+                                @if($heldCount > 0)
+                                    <span class="badge fw-bold badge-warning badge-sm text-bg-warning">{{ $heldCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
+            @if (Helpers::module_permission_check('product_management'))
                 <li
                     class="nav-item nav-item_title {{ Request::is('admin/brand*') || Request::is('admin/category*') || Request::is('admin/sub*') || Request::is('admin/attribute*') || Request::is('admin/products*') ? 'scroll-here' : '' }}">
                     <small class="nav-subtitle" title="">{{ translate('product_management') }}</small>

@@ -532,6 +532,27 @@ class BusinessSettingsController extends BaseController
         return back();
     }
 
+    public function getEscrowSettingsView(): View
+    {
+        return view('admin-views.business-settings.escrow-settings');
+    }
+
+    public function updateEscrowSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'escrow_auto_release_hours' => 'required|integer|min:1|max:720',
+        ]);
+
+        $this->businessSettingRepo->updateOrInsert(type: 'escrow_protection_status', value: $request->get('escrow_protection_status', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'escrow_auto_release_hours', value: $request->get('escrow_auto_release_hours', 48));
+
+        clearWebConfigCacheKeys();
+
+        ToastMagic::success(translate('escrow_settings_updated_successfully'));
+
+        return back();
+    }
+
     private function checkCurrencySupportGateway(?object $currencyCode): bool
     {
         $digitalPayment = getWebConfig(name: 'digital_payment');

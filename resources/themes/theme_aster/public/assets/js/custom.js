@@ -602,8 +602,12 @@ function addToCart(formSelector, redirectToCheckout = false, url = null) {
         });
 
         let existCartItem = $('.product-exist-in-cart-list[name="key"]').val();
+        // For open/variable denomination products (custom_amount input), always use
+        // add-to-cart so CartManager can update both price and custom_amount.
+        let customAmountInput = $(formSelector).find('#custom-amount-input');
+        let hasOpenDenomination = customAmountInput.length > 0 && customAmountInput.val() !== '';
         let formActionUrl = $(formSelector).attr("action");
-        if (existCartItem !== "" && !redirectToCheckout) {
+        if (existCartItem !== "" && !redirectToCheckout && !hasOpenDenomination) {
             formActionUrl = $("#update_quantity_url").data("url");
         }
 

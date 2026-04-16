@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\SellerWallet;
 use App\Models\Shop;
 use App\Models\Transaction;
+use App\Services\EscrowService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
@@ -739,6 +740,10 @@ class OrderRepository implements OrderRepositoryInterface
             } else {
                 $wallet = $this->sellerWallet->where('seller_id', $order['seller_id'])->first();
                 $wallet->commission_given += $commission;
+
+                $escrowService = app(EscrowService::class);
+                $useEscrow = $escrowService->isEscrowEligible($order);
+
                 if ($shippingModel == 'sellerwise_shipping') {
                     if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
@@ -752,13 +757,30 @@ class OrderRepository implements OrderRepositoryInterface
                     ])?->sum('order_due_amount') ?? 0;
                     $currentOrderAmount -= $editHistoryAmount;
 
-                    $wallet->total_earning += $currentOrderAmount;
+                    if ($useEscrow) {
+                        $wallet->pending_balance += $currentOrderAmount;
+                    } else {
+                        $wallet->total_earning += $currentOrderAmount;
+                    }
                 } else {
-                    $wallet->total_earning += ($orderAmount - $commission) + $orderSummary['total_tax'];
+                    $sellerEarning = ($orderAmount - $commission) + $orderSummary['total_tax'];
+                    if ($useEscrow) {
+                        $wallet->pending_balance += $sellerEarning;
+                    } else {
+                        $wallet->total_earning += $sellerEarning;
+                    }
                 }
             }
             $wallet->total_tax_collected += $orderSummary['total_tax'];
             $wallet->save();
+
+            // Create escrow record if applicable
+            if (isset($useEscrow) && $useEscrow) {
+                $sellerEarningForEscrow = ($shippingModel == 'sellerwise_shipping')
+                    ? $currentOrderAmount
+                    : ($orderAmount - $commission) + $orderSummary['total_tax'];
+                $escrowService->createEscrow($order, $sellerEarningForEscrow, $commission, $serviceFee);
+            }
         }
 
         return true;

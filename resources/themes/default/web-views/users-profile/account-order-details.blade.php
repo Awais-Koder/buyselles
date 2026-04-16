@@ -930,6 +930,26 @@
                                                 @endif
 
 
+                                                @if (($orderTotalPriceSummary['customerServiceFee'] ?? 0) > 0)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="text-start">
+                                                                <span class="product-qty title-semidark">
+                                                                    {{ translate('service_fee') }}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div class="text-end">
+                                                                <span class="fs-15">
+                                                                    {{ webCurrencyConverter(amount: $orderTotalPriceSummary['customerServiceFee']) }}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+
+
                                                 <tr class="border-top">
                                                     <td>
                                                         <div class="text-start">

@@ -1174,8 +1174,14 @@ function addToCart(
         let existCartItem = $('.product-exist-in-cart-list[name="key"]').val();
         let redirectToCheckoutValue = redirect_to_checkout.toString();
 
+        // For open/variable denomination products (custom_amount input), always use
+        // add-to-cart so CartManager can update both price and custom_amount. The
+        // update-quantity endpoint only updates qty and would leave the stored price stale.
+        let customAmountInput = $(formSelector).find('#custom-amount-input');
+        let hasOpenDenomination = customAmountInput.length > 0 && customAmountInput.val() !== '';
+
         let formActionUrl = $("#route-cart-add").data("url");
-        if (existCartItem !== "" && !redirect_to_checkout) {
+        if (existCartItem !== "" && !redirect_to_checkout && !hasOpenDenomination) {
             formActionUrl = $("#route-cart-updateQuantity-guest").data("url");
         }
 

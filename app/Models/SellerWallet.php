@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int|null $seller_id
  * @property float $total_earning
+ * @property float $pending_balance
  * @property float $withdrawn
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -26,6 +27,7 @@ class SellerWallet extends Model
     protected $fillable = [
         'seller_id',
         'total_earning',
+        'pending_balance',
         'withdrawn',
         'commission_given',
         'pending_withdraw',

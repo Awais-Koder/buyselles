@@ -270,6 +270,16 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
             Route::get('account-delete/{id}', 'account_delete');
         });
 
+        Route::controller(\App\Http\Controllers\Customer\DisputeController::class)->prefix('disputes')->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::get('{id}', 'show');
+            Route::post('{id}/message', 'addMessage');
+            Route::post('{id}/evidence', 'uploadEvidence');
+            Route::post('{id}/escalate', 'escalate');
+            Route::post('order/{orderId}/confirm-receipt', 'confirmReceipt');
+        });
+
         Route::group(['prefix' => 'address'], function () {
             Route::controller(CustomerController::class)->group(function () {
                 Route::get('get/{id}', 'get_address');

@@ -402,6 +402,16 @@
                                                     </span>
                                             </td>
                                         </tr>
+                                        @if (($orderTotalPriceSummary['customerServiceFee'] ?? 0) > 0)
+                                            <tr>
+                                                <td class="text-start text-dark text-capitalize">
+                                                    <span>{{ translate('service_fee') }}</span>
+                                                </td>
+                                                <td class="text-end text-dark">
+                                                    <span>{{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: $orderTotalPriceSummary['customerServiceFee']), currencyCode: getCurrencyCode()) }}</span>
+                                                </td>
+                                            </tr>
+                                        @endif
                                         <tr>
                                             <td class="text-start text-dark text-capitalize">
                                                 <strong>{{ translate('total') }}</strong>

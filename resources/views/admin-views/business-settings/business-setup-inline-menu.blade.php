@@ -76,6 +76,12 @@
                 {{ translate('Invoice') }}
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {{ Request::is('admin/business-settings/escrow-settings') ? 'active' : '' }}"
+                href="{{ route('admin.business-settings.escrow-settings') }}">
+                {{ translate('Escrow') }}
+            </a>
+        </li>
     </ul>
     <div class="nav--tab__prev">
         <button type="button" class="btn btn-circle border-0 bg-white text-primary">

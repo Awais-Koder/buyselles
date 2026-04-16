@@ -139,7 +139,7 @@
                                                 </li>
 
                                                 @foreach ($payment_gateways_list as $payment_gateway)
-                                                    @php($additionalData = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : [])
+                                                    @php $additionalData = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : []; @endphp
                                                         <?php
                                                         $gatewayImgPath = dynamicAsset(path: 'public/assets/back-end/img/modal/payment-methods/' . $payment_gateway->key_name . '.png');
                                                         if ($additionalData != null && $additionalData?->gateway_image && file_exists(base_path('storage/app/public/payment_modules/gateway_image/' . $additionalData->gateway_image))) {
@@ -175,7 +175,7 @@
                                                                    value="{{ route('web-payment-success') }}">
 
                                                             <label class="w-100">
-                                                                @php($additional_data = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : [])
+                                                                @php $additional_data = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : []; @endphp
                                                                 <button
                                                                     class="payment-method next-btn-enable d-flex align-items-center gap-3 digital-payment-card overflow-hidden w-100"
                                                                     type="submit">
@@ -206,10 +206,10 @@
                                                         <button type="reset" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-label="Close"></button>
                                                     </div>
-                                                    @php($customer_balance = auth('customer')->user()->wallet_balance)
-                                                    @php($couponAmount = session()->has('coupon_discount') ? session('coupon_discount') : 0)
-                                                    @php($totalAmount = $amount)
-                                                    @php($remain_balance = $customer_balance - $totalAmount)
+                                                    @php $customer_balance = auth('customer')->user()->wallet_balance; @endphp
+                                                    @php $couponAmount = session()->has('coupon_discount') ? session('coupon_discount') : 0; @endphp
+                                                    @php $totalAmount = $amount; @endphp
+                                                    @php $remain_balance = $customer_balance - $totalAmount; @endphp
                                                     <form action="{{ route('checkout-complete-wallet') }}" method="get"
                                                           class="needs-validation checkout-wallet-payment-form">
                                                         @csrf

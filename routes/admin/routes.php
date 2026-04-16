@@ -13,9 +13,11 @@ use App\Http\Controllers\Admin\Deliveryman\DeliveryManCashCollectController;
 use App\Http\Controllers\Admin\Deliveryman\DeliveryManController;
 use App\Http\Controllers\Admin\Deliveryman\DeliverymanWithdrawController;
 use App\Http\Controllers\Admin\Deliveryman\EmergencyContactController;
+use App\Http\Controllers\Admin\DisputeArbitrationController;
 use App\Http\Controllers\Admin\EmailTemplatesController;
 use App\Http\Controllers\Admin\Employee\CustomRoleController;
 use App\Http\Controllers\Admin\Employee\EmployeeController;
+use App\Http\Controllers\Admin\EscrowController;
 use App\Http\Controllers\Admin\ExpenseTransactionReportController;
 use App\Http\Controllers\Admin\HelpAndSupport\ContactController;
 use App\Http\Controllers\Admin\HelpAndSupport\HelpTopicController;
@@ -85,6 +87,10 @@ use App\Http\Controllers\Admin\Settings\VendorRegistrationSettingController;
 use App\Http\Controllers\Admin\Settings\VendorSettingsController;
 use App\Http\Controllers\Admin\Shipping\ShippingMethodController;
 use App\Http\Controllers\Admin\Shipping\ShippingTypeController;
+use App\Http\Controllers\Admin\Supplier\ResellerApiKeyController;
+use App\Http\Controllers\Admin\Supplier\SupplierController;
+use App\Http\Controllers\Admin\Supplier\SupplierLogController;
+use App\Http\Controllers\Admin\Supplier\SupplierMappingController;
 use App\Http\Controllers\Admin\SystemSetup\SystemLoginSetupController;
 use App\Http\Controllers\Admin\ThirdParty\GoogleMapAPIController;
 use App\Http\Controllers\Admin\ThirdParty\MailController;
@@ -868,9 +874,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::group(['prefix' => 'email-templates', 'as' => 'email-templates.', 'middleware' => ['module:system_settings']], function () {
                 Route::controller(EmailTemplatesController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
-                    Route::get('/' . '/{type}' . '/{tab}', 'getView')->name('view');
-                    Route::post('update/{type}' . '/{tab}', 'update')->name('update');
-                    Route::post('update-status/{type}' . '/{tab}', 'updateStatus')->name('update-status');
+                    Route::get('/'.'/{type}'.'/{tab}', 'getView')->name('view');
+                    Route::post('update/{type}'.'/{tab}', 'update')->name('update');
+                    Route::post('update-status/{type}'.'/{tab}', 'updateStatus')->name('update-status');
                 });
             });
 
@@ -1028,14 +1034,16 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::controller(BusinessSettingsController::class)->group(function () {
                 Route::get('refund-setup', 'getRefundSetupView')->name('refund-setup');
                 Route::post('refund-setup', 'updateRefundSetup')->name('refund-setup-update');
+                Route::get('escrow-settings', 'getEscrowSettingsView')->name('escrow-settings');
+                Route::post('escrow-settings', 'updateEscrowSettings')->name('escrow-settings-update');
             });
 
             Route::group(['prefix' => 'shipping-method', 'as' => 'shipping-method.'], function () {
                 Route::controller(ShippingMethodController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
                     Route::post('index', 'add');
-                    Route::get('update' . '/{id}', 'getUpdateView')->name('update');
-                    Route::post('update' . '/{id}', 'update');
+                    Route::get('update'.'/{id}', 'getUpdateView')->name('update');
+                    Route::post('update'.'/{id}', 'update');
                     Route::post('update-status', 'updateStatus')->name('update-status');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('update-shipping-responsibility', 'updateShippingResponsibility')->name('update-shipping-responsibility');
@@ -1249,8 +1257,28 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('status/{id}', 'updateStatus')->name('status');
             Route::get('update/{id}', 'getUpdateResponse')->name('update');
             Route::post('feature-status-update', 'updateFeatureStatus')->name('feature-status-update');
-            Route::post('update' . '/{id}', 'update');
+            Route::post('update'.'/{id}', 'update');
             Route::post('delete', 'delete')->name('delete');
+        });
+    });
+
+    Route::group(['prefix' => 'dispute', 'as' => 'dispute.'], function () {
+        Route::controller(DisputeArbitrationController::class)->group(function () {
+            Route::get('list', 'index')->name('index');
+            Route::get('{id}', 'show')->name('show');
+            Route::post('{id}/under-review', 'underReview')->name('under-review');
+            Route::post('{id}/resolve-refund', 'resolveRefund')->name('resolve-refund');
+            Route::post('{id}/resolve-release', 'resolveRelease')->name('resolve-release');
+            Route::post('{id}/close', 'close')->name('close');
+        });
+    });
+
+    Route::group(['prefix' => 'escrow', 'as' => 'escrow.'], function () {
+        Route::controller(EscrowController::class)->group(function () {
+            Route::get('list', 'index')->name('index');
+            Route::post('update-settings', 'updateSettings')->name('update-settings');
+            Route::get('{id}', 'show')->name('show');
+            Route::post('{id}/release', 'manualRelease')->name('release');
         });
     });
 
@@ -1269,7 +1297,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
     Route::group(['prefix' => 'supplier', 'as' => 'supplier.'], function () {
 
         // Suppliers CRUD
-        Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierController::class)->group(function () {
+        Route::controller(SupplierController::class)->group(function () {
             Route::get('list', 'index')->name('list');
             Route::get('add', 'getAddView')->name('add');
             Route::post('add', 'add')->name('store');
@@ -1285,7 +1313,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
 
         // Product-Supplier Mappings
         Route::group(['prefix' => 'mapping', 'as' => 'mapping.'], function () {
-            Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierMappingController::class)->group(function () {
+            Route::controller(SupplierMappingController::class)->group(function () {
                 Route::get('list', 'index')->name('list');
                 Route::get('add', 'getAddView')->name('add');
                 Route::post('add', 'add')->name('store');
@@ -1298,7 +1326,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
         });
 
         // API Logs & Supplier Orders
-        Route::controller(\App\Http\Controllers\Admin\Supplier\SupplierLogController::class)->group(function () {
+        Route::controller(SupplierLogController::class)->group(function () {
             Route::get('api-logs', 'apiLogs')->name('api-logs');
             Route::get('api-logs/{id}', 'logDetail')->name('api-log-detail');
             Route::get('orders', 'supplierOrders')->name('orders');
@@ -1307,7 +1335,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
 
     // ─── Reseller / Partner API Key Management ──────────────────────────
     Route::group(['prefix' => 'reseller-keys', 'as' => 'reseller-keys.'], function () {
-        Route::controller(\App\Http\Controllers\Admin\Supplier\ResellerApiKeyController::class)->group(function () {
+        Route::controller(ResellerApiKeyController::class)->group(function () {
             Route::get('list', 'index')->name('list');
             Route::post('generate', 'generate')->name('generate');
             Route::post('approve', 'approve')->name('approve');

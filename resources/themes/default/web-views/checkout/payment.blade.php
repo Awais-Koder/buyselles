@@ -83,7 +83,7 @@
                                                 @if (auth('customer')->check() && $wallet_status == 1)
                                                     <div class="w-100 h-100">
                                                         <div class="card cursor-pointer"
-                                                            onclick="document.getElementById('wallet_payment').checked=true; updateProceedButtonState();">
+                                                            onclick="var r=document.getElementById('wallet_payment'); r.checked=true; r.dispatchEvent(new Event('change'));">
                                                             <div
                                                                 class="btn btn-block click-if-alone d-flex justify-content-between gap-2 align-items-center">
                                                                 <div class="d-flex gap-2 align-items-start">
@@ -170,7 +170,7 @@
                                         @if ($digital_payment['status'] == 1)
                                             <div class="row gx-4">
                                                 @foreach ($payment_gateways_list as $payment_gateway)
-                                                    @php($additionalData = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : [])
+                                                    @php $additionalData = $payment_gateway['additional_data'] != null ? json_decode($payment_gateway['additional_data']) : []; @endphp
                                                     <?php
                                                     $gatewayImgPath = dynamicAsset(path: 'public/assets/back-end/img/modal/payment-methods/' . $payment_gateway->key_name . '.png');
                                                     if ($additionalData != null && $additionalData?->gateway_image && file_exists(base_path('storage/app/public/payment_modules/gateway_image/' . $additionalData->gateway_image))) {
@@ -322,10 +322,10 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    @php($customer_balance = auth('customer')->user()->wallet_balance)
-                    @php($couponAmount = session()->has('coupon_discount') ? session('coupon_discount') : 0)
-                    @php($totalAmount = $amount)
-                    @php($remain_balance = $customer_balance - $totalAmount)
+                    @php $customer_balance = auth('customer')->user()->wallet_balance; @endphp
+                    @php $couponAmount = session()->has('coupon_discount') ? session('coupon_discount') : 0; @endphp
+                    @php $totalAmount = $amount; @endphp
+                    @php $remain_balance = $customer_balance - $totalAmount; @endphp
                     <form action="{{ route('checkout-complete-wallet') }}" method="get" class="needs-validation">
                         @csrf
                         <div class="modal-body">

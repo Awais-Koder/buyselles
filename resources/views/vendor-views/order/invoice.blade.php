@@ -919,6 +919,14 @@ $orderTotalPriceSummary = \App\Utils\OrderManager::getOrderTotalPriceSummary(ord
                                             </td>
                                         </tr>
                                     @endif
+                                    @if (($orderTotalPriceSummary['customerServiceFee'] ?? 0) > 0)
+                                        <tr>
+                                            <td class="px-2 pt-1 pb-1 text-left">{{ translate('service_fee') }}</td>
+                                            <td class="px-2 pt-1 pb-1 text-right">
+                                                <span class="text-dark">{{ webCurrencyConverter(amount: $orderTotalPriceSummary['customerServiceFee']) }}</span>
+                                            </td>
+                                        </tr>
+                                    @endif
                                     <tr>
                                         <td colspan="2" class="border-bottom px-2 pb-2"></td>
                                     </tr>

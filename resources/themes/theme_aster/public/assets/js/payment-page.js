@@ -1,6 +1,6 @@
 "use strict";
 $("#digital-payment-btn").on("click", function () {
-    $(".digital-payment").slideToggle("slow", function (){
+    $(".digital-payment").slideToggle("slow", function () {
         updateDigitalPaymentBg();
     });
 });
@@ -52,7 +52,7 @@ $(".checkout-payment-form").on("submit", function (event) {
         complete: function () {
             $("#loading").removeClass("d-grid");
         },
-        error: function () {},
+        error: function () { },
     });
 });
 
@@ -92,7 +92,7 @@ $(".payment-method_parent").on("click", function (e) {
         $(this).addClass("border-selected");
     } else {
         $(".digital-payment-card").removeClass("border-selected");
-        $(".digital-payment").hide("slow", function (){
+        $(".digital-payment").hide("slow", function () {
             updateDigitalPaymentBg();
         });
     }
@@ -109,16 +109,13 @@ $(".digital-payment-card").on("click", function (e) {
         .find("input[name='payment_method']")
         .prop("checked", true);
 
-    if (
-        $("#digital-payment-btn .payment-method_parent").hasClass(
-            "border-selected"
-        )
-    ) {
-        $(".digital-payment-card").removeClass("border-selected");
-        $(this).addClass("border-selected");
-    } else {
-        $(".digital-payment-card").removeClass("border-selected");
-    }
+    // Clear visual selection from all parent methods (COD, wallet, offline)
+    $(".payment-method_parent").removeClass("border-selected");
+    // Keep the Digital Payment category parent highlighted
+    $("#digital-payment-btn .payment-method_parent").addClass("border-selected");
+
+    $(".digital-payment-card").removeClass("border-selected");
+    $(this).addClass("border-selected");
 });
 
 // proceed to next btn enable
@@ -146,8 +143,8 @@ updateProceedButtonState();
 
 $('.disabled-proceed-to-payment').on('click', function () {
     $("#proceed-to-payment-action")
-    .addClass("custom-disabled")
-    .attr("disabled", true);
+        .addClass("custom-disabled")
+        .attr("disabled", true);
 });
 
 // Attach event listeners to the collapse

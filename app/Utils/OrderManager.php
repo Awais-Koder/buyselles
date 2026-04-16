@@ -35,6 +35,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Services\DigitalProductCodeService;
+use App\Services\EscrowService;
 use App\Traits\CommonTrait;
 use App\Traits\CustomerTrait;
 use App\Traits\PdfGenerator;
@@ -54,7 +55,7 @@ class OrderManager
 
     public static function generateUniqueOrderID(): string
     {
-        return rand(1000, 9999).'-'.Str::random(5).'-'.time();
+        return rand(1000, 9999) . '-' . Str::random(5) . '-' . time();
     }
 
     public static function getOrderSummaryBeforePlaceOrder($cart, $coupon_discount): array
@@ -373,6 +374,9 @@ class OrderManager
                 $wallet = SellerWallet::where('seller_id', $order['seller_id'])->first();
                 $wallet->commission_given += $commission;
 
+                $escrowService = app(EscrowService::class);
+                $useEscrow = $escrowService->isEscrowEligible($order);
+
                 if ($shipping_model == 'sellerwise_shipping') {
                     if (! $order['is_shipping_free']) {
                         $wallet->delivery_charge_earned += $order['shipping_cost'];
@@ -385,13 +389,30 @@ class OrderManager
                     ])?->sum('order_due_amount') ?? 0;
                     $currentOrderAmount -= $editHistoryAmount;
 
-                    $wallet->total_earning += $currentOrderAmount;
+                    if ($useEscrow) {
+                        $wallet->pending_balance += $currentOrderAmount;
+                    } else {
+                        $wallet->total_earning += $currentOrderAmount;
+                    }
                 } else {
-                    $wallet->total_earning += ($order_amount - $commission) + $order_summary['total_tax'];
+                    $sellerEarning = ($order_amount - $commission) + $order_summary['total_tax'];
+                    if ($useEscrow) {
+                        $wallet->pending_balance += $sellerEarning;
+                    } else {
+                        $wallet->total_earning += $sellerEarning;
+                    }
                 }
             }
             $wallet->total_tax_collected += $order_summary['total_tax'];
             $wallet->save();
+
+            // Create escrow record if applicable
+            if (isset($useEscrow) && $useEscrow) {
+                $sellerEarningForEscrow = ($shipping_model == 'sellerwise_shipping')
+                    ? $currentOrderAmount
+                    : ($order_amount - $commission) + $order_summary['total_tax'];
+                $escrowService->createEscrow($order, $sellerEarningForEscrow, $commission, $serviceFee);
+            }
         }
     }
 
@@ -452,7 +473,7 @@ class OrderManager
             if (Order::where(['customer_id' => $user['id']])->count() > 0) {
                 return [
                     'status' => false,
-                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user').'!',
+                    'messages' => translate('sorry_this_coupon_is_not_valid_for_this_user') . '!',
                 ];
             }
         }
@@ -557,7 +578,7 @@ class OrderManager
                 'discount' => $discount,
                 'coupon_type' => $couponType,
                 'total_cart_amount' => $onlyProductTotalAmount,
-                'messages' => translate('coupon_applied_successfully').'!',
+                'messages' => translate('coupon_applied_successfully') . '!',
             ];
         }
 
@@ -1351,7 +1372,7 @@ class OrderManager
 
             // ── Auto-deliver fully-digital orders that are already paid ──
             $isFullyDigital = collect($vendorWiseCart['cart_list'])->every(
-                fn ($item) => ($item->product_type ?? $item->product?->product_type ?? '') === 'digital'
+                fn($item) => ($item->product_type ?? $item->product?->product_type ?? '') === 'digital'
             );
             if ($isFullyDigital && ($data['payment_status'] ?? '') === 'paid') {
                 Order::where('id', $order_id)->update([
@@ -1716,13 +1737,13 @@ class OrderManager
             $productDetails = json_decode($orderProduct->product_details, true);
             $product = Product::active()->where(['id' => $orderProduct->product_id])->with(['digitalVariation'])->first();
             if (! $product) {
-                $errorMessages[] = $productDetails['name'] ?? ''.translate(' currently_not_available');
+                $errorMessages[] = $productDetails['name'] ?? '' . translate(' currently_not_available');
             }
             if ($product) {
                 $productValid = true;
                 if (($product['product_type'] == 'physical') && (($product['current_stock'] < $orderProduct['qty']) || ($product['minimum_order_qty'] > $product['current_stock']))) {
                     $productValid = false;
-                    $errorMessages[] = $productDetails['name'] ?? ''.translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
+                    $errorMessages[] = $productDetails['name'] ?? '' . translate(' cannot be ordered because the available stock is insufficient or does not meet the minimum order quantity requirement.');
                 }
                 if ($productValid) {
                     $color = null;
@@ -1735,7 +1756,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $variationKey => $var) {
                                 if ($variationKey != 'color') {
-                                    $choices['choice_'.$i] = $var;
+                                    $choices['choice_' . $i] = $var;
                                     $i++;
                                 }
                             }
@@ -1743,7 +1764,7 @@ class OrderManager
                             $i = 1;
                             foreach ($variation as $index => $var) {
                                 if ($var) {
-                                    $choices['choice_'.$i] = $var;
+                                    $choices['choice_' . $i] = $var;
                                 }
                                 $i++;
                             }
@@ -1761,7 +1782,7 @@ class OrderManager
                     if (isset($cartCheck)) {
                         $cartGroupId = $cartCheck['cart_group_id'];
                     } else {
-                        $cartGroupId = $user['id'].'-'.Str::random(5).'-'.time();
+                        $cartGroupId = $user['id'] . '-' . Str::random(5) . '-' . time();
                     }
                     // Generate Group ID End
 
@@ -1773,7 +1794,7 @@ class OrderManager
                                 $price = json_decode($product->variation)[$i]->price;
                                 if (json_decode($product->variation)[$i]->qty < $orderProduct->qty) {
                                     $productValid = false;
-                                    $errorMessages[] = $productDetails['name'].translate(' variation does not have enough stock to fulfill the requested quantity.');
+                                    $errorMessages[] = $productDetails['name'] . translate(' variation does not have enough stock to fulfill the requested quantity.');
                                 }
                             }
                         }
@@ -1914,9 +1935,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $cartItem->allProducts->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $cartItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1939,9 +1960,9 @@ class OrderManager
                         $status = 0;
                         $shopIdentity = $seller == 'admin' ? getInHouseShopConfig(key: 'name') : $cartGroupFirstItem->seller->shop->name;
                         if (isset($request['payment_request_from']) && $request['payment_request_from'] == 'app') {
-                            $messages[] = translate('Please_complete_minimum_Order_Amount').' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('Please_complete_minimum_Order_Amount') . ' ' . translate('for') . ' ' . $shopIdentity;
                         } else {
-                            $messages[] = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                            $messages[] = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
                         }
                     }
                     $amount = $amount + $newAmount;
@@ -1978,7 +1999,7 @@ class OrderManager
 
             if ($minimumOrderAmount > $totalAmount) {
                 $shopIdentity = $product->added_by == 'admin' ? getInHouseShopConfig(key: 'name') : $product->seller->shop->name;
-                $message = translate('minimum_Order_Amount').' '.webCurrencyConverter(amount: $minimumOrderAmount).' '.translate('for').' '.$shopIdentity;
+                $message = translate('minimum_Order_Amount') . ' ' . webCurrencyConverter(amount: $minimumOrderAmount) . ' ' . translate('for') . ' ' . $shopIdentity;
             }
         }
 
@@ -2129,7 +2150,7 @@ class OrderManager
         return self::storePdf(view: $mpdf_view, filePrefix: 'order_invoice_', filePostfix: $order['id'], pdfType: 'invoice', requestFrom: 'web');
     }
 
-    public static function checkValidationForCheckoutPages(Request $request): array
+    public static function checkValidationForCheckoutPages(Request $request, bool $skipShippingCheck = false): array
     {
         $response['status'] = 1;
         $response['physical_product_view'] = false;
@@ -2229,7 +2250,7 @@ class OrderManager
                         if ($shippingMethod == 'inhouse_shipping') {
                             $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                             if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                $message[] = translate('shipping_Not_Available_for').' '.getWebConfig(name: 'company_name');
+                                $message[] = translate('shipping_Not_Available_for') . ' ' . getWebConfig(name: 'company_name');
                                 $response['status'] = 0;
                                 $response['redirect'] = route('shop-cart');
                             }
@@ -2237,14 +2258,14 @@ class OrderManager
                             if ($cart->seller_is == 'admin') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_type' => 'admin'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for').' '.getInHouseShopConfig(key: 'name');
+                                    $message[] = translate('shipping_Not_Available_for') . ' ' . getInHouseShopConfig(key: 'name');
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
                             } elseif ($cart->seller_is == 'seller') {
                                 $sellerShippingCount = ShippingMethod::where(['status' => 1])->where(['creator_id' => $cart->seller_id, 'creator_type' => 'seller'])->count();
                                 if ($sellerShippingCount <= 0 && isset($cart->seller->shop)) {
-                                    $message[] = translate('shipping_Not_Available_for').' '.$cart->seller->shop->name;
+                                    $message[] = translate('shipping_Not_Available_for') . ' ' . $cart->seller->shop->name;
                                     $response['status'] = 0;
                                     $response['redirect'] = route('shop-cart');
                                 }
@@ -2252,22 +2273,26 @@ class OrderManager
                         }
 
                         if ($sellerShippingCount > 0 && $shippingMethod == 'inhouse_shipping' && $inhouseShippingMsgCount < 1) {
-                            $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
-                            if (! isset($cartShipping)) {
-                                $response['status'] = 0;
-                                $response['errorType'] = 'empty-shipping';
-                                $response['redirect'] = route('shop-cart');
-                                $message[] = translate('select_shipping_method');
+                            if (! $skipShippingCheck) {
+                                $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
+                                if (! isset($cartShipping)) {
+                                    $response['status'] = 0;
+                                    $response['errorType'] = 'empty-shipping';
+                                    $response['redirect'] = route('shop-cart');
+                                    $message[] = translate('select_shipping_method');
+                                }
                             }
                             $inhouseShippingMsgCount++;
                         } elseif ($sellerShippingCount > 0 && $shippingMethod != 'inhouse_shipping') {
-                            $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
-                            if (! isset($cartShipping)) {
-                                $response['status'] = 0;
-                                $response['errorType'] = 'empty-shipping';
-                                $response['redirect'] = route('shop-cart');
-                                $shopIdentity = $cart->seller_is == 'admin' ? getInHouseShopConfig(key: 'name') : $cart->seller->shop->name;
-                                $message[] = translate('select').' '.$shopIdentity.' '.translate('shipping_method');
+                            if (! $skipShippingCheck) {
+                                $cartShipping = CartShipping::where('cart_group_id', $cart->cart_group_id)->first();
+                                if (! isset($cartShipping)) {
+                                    $response['status'] = 0;
+                                    $response['errorType'] = 'empty-shipping';
+                                    $response['redirect'] = route('shop-cart');
+                                    $shopIdentity = $cart->seller_is == 'admin' ? getInHouseShopConfig(key: 'name') : $cart->seller->shop->name;
+                                    $message[] = translate('select') . ' ' . $shopIdentity . ' ' . translate('shipping_method');
+                                }
                             }
                         }
                     }
@@ -2363,7 +2388,9 @@ class OrderManager
             $deliveryFeeDiscount = $shipping;
         }
 
-        $totalAmount = ($total + $shipping - $extraDiscount - $couponDiscount - $referAndEarnDiscount + $order['total_tax_amount']);
+        $customerServiceFee = (float) ($order['customer_service_fee'] ?? 0);
+
+        $totalAmount = ($total + $shipping - $extraDiscount - $couponDiscount - $referAndEarnDiscount + $order['total_tax_amount'] + $customerServiceFee);
 
         if ($order['edit_due_amount'] > 0) {
             $editedTotalPaidAmount = $totalAmount - $order['edit_due_amount'];
@@ -2383,6 +2410,7 @@ class OrderManager
             'shippingTotal' => $shipping,
             'deliveryFeeDiscount' => $deliveryFeeDiscount,
             'totalItemQuantity' => $totalItemQuantity,
+            'customerServiceFee' => $customerServiceFee,
             'totalAmount' => $totalAmount,
             'totalTaxAmount' => $order['total_tax_amount'],
             'paidAmount' => $order['paid_amount'],
@@ -2650,7 +2678,7 @@ class OrderManager
                 $hasMapping = SupplierProductMapping::query()
                     ->where('product_id', $productId)
                     ->where('is_active', true)
-                    ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
+                    ->whereHas('supplierApi', fn($q) => $q->where('is_active', true))
                     ->exists();
 
                 if ($hasMapping) {

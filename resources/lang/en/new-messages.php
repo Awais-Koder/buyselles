@@ -11203,4 +11203,5 @@ return [
 	"escrow_protection_is_not_enabled_for_physical_products" => "Escrow protection is not enabled for physical products",
 	"escrow_protection_is_not_enabled_for_digital_products" => "Escrow protection is not enabled for digital products",
 	"what_is_the_issue" => "What is the issue",
+	"By_Turning_On_Vendor_Edit_Order_Option" => "By Turning On Vendor Edit Order Option",
 ];

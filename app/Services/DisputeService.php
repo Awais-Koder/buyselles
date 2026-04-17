@@ -27,6 +27,38 @@ class DisputeService
      */
     public function canOpenDispute(Order $order, string $userType): array
     {
+        $escrowEnabled = (int) (getWebConfig(name: 'escrow_protection_status') ?? 0);
+        if (! $escrowEnabled) {
+            return ['allowed' => false, 'reason' => translate('dispute_system_is_currently_disabled_by_the_administrator')];
+        }
+
+        // Check if escrow is enabled for the order's product type(s)
+        $escrowPhysical = (int) (getWebConfig(name: 'escrow_physical_products') ?? 0);
+        $escrowDigital = (int) (getWebConfig(name: 'escrow_digital_products') ?? 0);
+        $orderDetails = $order->relationLoaded('details') ? $order->details : $order->details()->get();
+
+        $hasPhysical = false;
+        $hasDigital = false;
+        foreach ($orderDetails as $detail) {
+            $productDetails = is_string($detail->product_details) ? json_decode($detail->product_details, true) : $detail->product_details;
+            $productType = $productDetails['product_type'] ?? 'physical';
+            if ($productType === 'digital') {
+                $hasDigital = true;
+            } else {
+                $hasPhysical = true;
+            }
+        }
+
+        if ($hasDigital && ! $escrowDigital && $hasPhysical && ! $escrowPhysical) {
+            return ['allowed' => false, 'reason' => translate('escrow_protection_is_not_enabled_for_the_products_in_this_order')];
+        }
+        if ($hasDigital && ! $hasPhysical && ! $escrowDigital) {
+            return ['allowed' => false, 'reason' => translate('escrow_protection_is_not_enabled_for_digital_products')];
+        }
+        if ($hasPhysical && ! $hasDigital && ! $escrowPhysical) {
+            return ['allowed' => false, 'reason' => translate('escrow_protection_is_not_enabled_for_physical_products')];
+        }
+
         if (! in_array($order->order_status, ['delivered', 'completed'])) {
             return ['allowed' => false, 'reason' => translate('dispute_can_only_be_opened_for_delivered_orders')];
         }
@@ -37,8 +69,9 @@ class DisputeService
 
         $disputeWindowDays = (int) (getWebConfig(name: 'dispute_window_days') ?? 7);
         $deliveredAt = $order->updated_at;
-        if ($deliveredAt && now()->diffInDays($deliveredAt) > $disputeWindowDays) {
-            return ['allowed' => false, 'reason' => translate('dispute_window_has_expired')];
+        $daysSinceDelivery = $deliveredAt ? (int) abs(now()->diffInDays($deliveredAt)) : 0;
+        if ($deliveredAt && $daysSinceDelivery > $disputeWindowDays) {
+            return ['allowed' => false, 'reason' => translate('dispute_window_has_expired') . '. ' . translate('disputes_must_be_opened_within') . ' ' . $disputeWindowDays . ' ' . translate('days_of_delivery')];
         }
 
         // COD/offline orders — no escrow, so disputes go through standard refund flow

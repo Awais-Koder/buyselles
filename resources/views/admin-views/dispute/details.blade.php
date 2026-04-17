@@ -15,7 +15,7 @@
             @php
                 $statusColors = ['open' => 'warning', 'vendor_response' => 'info', 'under_review' => 'primary', 'resolved_refund' => 'success', 'resolved_release' => 'success', 'closed' => 'secondary', 'auto_closed' => 'secondary'];
             @endphp
-            <span class="badge badge-soft-{{ $statusColors[$dispute->status] ?? 'secondary' }} text-capitalize ms-2">
+            <span class="badge bg-{{ $statusColors[$dispute->status] ?? 'secondary' }} text-white text-capitalize ms-2">
                 {{ translate(str_replace('_', ' ', $dispute->status)) }}
             </span>
         </div>
@@ -26,60 +26,132 @@
 
                 {{-- Message Thread --}}
                 <div class="card mb-4">
-                    <div class="card-header">
+                    <div class="card-header d-flex align-items-center justify-content-between">
                         <h5 class="mb-0">{{ translate('Messages') }}</h5>
+                        <span class="badge badge-soft-info">{{ $dispute->messages->count() }}</span>
                     </div>
-                    <div class="card-body" style="max-height:450px; overflow-y:auto;" id="messageThread">
+                    <div class="card-body" style="max-height:420px; overflow-y:auto;" id="messageThread">
                         @forelse($dispute->messages as $msg)
-                            <div class="d-flex gap-3 mb-3 {{ $msg->user_type === 'admin' ? 'flex-row-reverse' : '' }}">
-                                <div class="avatar avatar-sm bg-soft-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
-                                    <i class="fi fi-rr-user"></i>
+                            @php $isAdmin = $msg->sender_type === 'admin'; @endphp
+                            <div class="d-flex gap-3 mb-3 {{ $isAdmin ? 'flex-row-reverse' : '' }}">
+                                <div class="avatar avatar-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0
+                                    {{ $isAdmin ? 'bg-primary text-white' : ($msg->sender_type === 'system' ? 'bg-soft-secondary' : 'bg-soft-warning') }}">
+                                    <i class="fi fi-rr-{{ $isAdmin ? 'shield-check' : ($msg->sender_type === 'vendor' ? 'store-alt' : 'user') }}"></i>
                                 </div>
-                                <div class="flex-grow-1 {{ $msg->user_type === 'admin' ? 'text-end' : '' }}">
+                                <div class="flex-grow-1 {{ $isAdmin ? 'text-end' : '' }}">
                                     <div class="fw-semibold fs-12 mb-1">
-                                        {{ $msg->sender?->name ?? translate('System') }}
+                                        {{ $msg->sender_name }}
+                                        <span class="badge {{ $isAdmin ? 'bg-primary text-white' : ($msg->sender_type === 'vendor' ? 'badge-soft-warning' : 'badge-soft-secondary') }} ms-1 text-capitalize">
+                                            {{ translate($msg->sender_type) }}
+                                        </span>
                                         <span class="text-muted ms-1">{{ $msg->created_at->diffForHumans() }}</span>
                                     </div>
-                                    <div class="p-3 rounded {{ $msg->user_type === 'admin' ? 'bg-soft-primary' : 'bg-soft-secondary' }}">
+                                    <div class="p-3 rounded {{ $isAdmin ? 'bg-primary text-white' : 'bg-soft-secondary' }}">
                                         {{ $msg->message }}
                                     </div>
                                 </div>
                             </div>
                         @empty
-                            <p class="text-muted text-center py-3">{{ translate('No messages yet') }}</p>
+                            <div class="text-center text-muted py-4">
+                                <i class="fi fi-rr-comment-alt fs-36 d-block mb-2"></i>
+                                {{ translate('No messages yet') }}
+                            </div>
                         @endforelse
+                    </div>
+
+                    {{-- Admin send message form (disabled on closed disputes) --}}
+                    @php $isClosed = in_array($dispute->status, ['resolved_refund', 'resolved_release', 'closed', 'auto_closed']); @endphp
+                    <div class="card-footer">
+                        @if(!$isClosed)
+                            <form action="{{ route('admin.dispute.message', $dispute->id) }}" method="POST" class="d-flex gap-2 align-items-end">
+                                @csrf
+                                <div class="flex-grow-1">
+                                    <textarea name="message" class="form-control @error('message') is-invalid @enderror"
+                                        rows="2" maxlength="2000"
+                                        placeholder="{{ translate('Type a message to the buyer or vendor...') }}"
+                                        required></textarea>
+                                    @error('message')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fi fi-rr-paper-plane"></i>
+                                </button>
+                            </form>
+                        @else
+                            <p class="text-muted text-center mb-0 fs-12">
+                                <i class="fi fi-rr-lock me-1"></i> {{ translate('This dispute is resolved — messaging is disabled.') }}
+                            </p>
+                        @endif
                     </div>
                 </div>
 
                 {{-- Evidence --}}
-                @if($dispute->evidence->count())
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">{{ translate('Evidence') }}</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2">
+                <div class="card mb-4">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0">{{ translate('Evidence') }}</h5>
+                        <span class="badge badge-soft-{{ $dispute->evidence->count() ? 'success' : 'secondary' }}">
+                            {{ $dispute->evidence->count() }} {{ translate('file(s)') }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        @if($dispute->evidence->count())
+                            <div class="row g-3">
                                 @foreach($dispute->evidence as $ev)
-                                    <div class="col-6 col-md-4">
-                                        @if($ev->file_type === 'image')
-                                            <a href="{{ asset('storage/' . $ev->file_path) }}" target="_blank">
-                                                <img src="{{ asset('storage/' . $ev->file_path) }}" class="img-thumbnail w-100" alt="">
-                                            </a>
-                                        @else
-                                            <a href="{{ asset('storage/' . $ev->file_path) }}" class="btn btn-outline-primary w-100" target="_blank">
-                                                <i class="fi fi-rr-download"></i> {{ translate('Video') }}
-                                            </a>
-                                        @endif
-                                        @if($ev->caption)
-                                            <small class="text-muted d-block mt-1">{{ $ev->caption }}</small>
-                                        @endif
-                                        <small class="text-muted d-block">{{ translate('By') }}: {{ ucfirst($ev->user_type) }}</small>
+                                    <div class="col-12 col-md-6">
+                                        <div class="border rounded overflow-hidden">
+                                            @if($ev->file_type === 'image')
+                                                <a href="{{ asset('storage/' . $ev->file_path) }}" target="_blank" title="{{ translate('Open full size') }}">
+                                                    <img src="{{ asset('storage/' . $ev->file_path) }}"
+                                                        class="w-100"
+                                                        style="max-height:200px; object-fit:cover; cursor:zoom-in;"
+                                                        alt="{{ $ev->original_name }}">
+                                                </a>
+                                            @else
+                                                <video controls preload="metadata"
+                                                    class="w-100"
+                                                    style="max-height:200px; background:#000;">
+                                                    <source src="{{ asset('storage/' . $ev->file_path) }}" type="video/mp4">
+                                                </video>
+                                            @endif
+                                            <div class="px-2 py-1 bg-light d-flex align-items-center justify-content-between gap-2">
+                                                <div class="fs-12 text-truncate">
+                                                    <i class="fi fi-rr-{{ $ev->file_type === 'image' ? 'picture' : 'video-camera' }} me-1"></i>
+                                                    <span class="fw-semibold text-capitalize">{{ translate($ev->user_type) }}</span>
+                                                    @if($ev->caption)
+                                                        · <span class="text-muted">{{ $ev->caption }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="d-flex gap-1 flex-shrink-0">
+                                                    <a href="{{ asset('storage/' . $ev->file_path) }}"
+                                                        target="_blank"
+                                                        class="btn btn-sm btn-outline-primary py-0"
+                                                        title="{{ translate('Open') }}">
+                                                        <i class="fi fi-rr-arrow-up-right-from-square"></i>
+                                                    </a>
+                                                    <a href="{{ asset('storage/' . $ev->file_path) }}"
+                                                        download="{{ $ev->original_name }}"
+                                                        class="btn btn-sm btn-outline-secondary py-0"
+                                                        title="{{ translate('Download') }}">
+                                                        <i class="fi fi-rr-download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="px-2 py-1 fs-11 text-muted border-top">
+                                                {{ $ev->original_name }} &bull; {{ number_format($ev->file_size / 1024 / 1024, 2) }} MB &bull; {{ $ev->created_at->format('d M Y H:i') }}
+                                            </div>
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
-                        </div>
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="fi fi-rr-picture fs-36 d-block mb-2"></i>
+                                {{ translate('No evidence uploaded yet') }}
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </div>
 
                 {{-- Escrow Card --}}
                 @if($escrow)
@@ -132,7 +204,7 @@
                             <dt class="col-5 text-muted">{{ translate('Priority') }}</dt>
                             <dd class="col-7 text-capitalize">{{ $dispute->priority ?? 'medium' }}</dd>
                             <dt class="col-5 text-muted">{{ translate('Reason') }}</dt>
-                            <dd class="col-7">{{ $dispute->reason?->name ?? translate('N/A') }}</dd>
+                            <dd class="col-7">{{ $dispute->reason?->title ?? translate('N/A') }}</dd>
                             <dt class="col-5 text-muted">{{ translate('Description') }}</dt>
                             <dd class="col-7">{{ $dispute->description }}</dd>
                             <dt class="col-5 text-muted">{{ translate('Submitted') }}</dt>

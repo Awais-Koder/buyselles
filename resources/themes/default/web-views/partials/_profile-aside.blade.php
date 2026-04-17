@@ -132,7 +132,7 @@
                 </div>
             @endif
 
-            @php($business_mode = getWebConfig(name: 'business_mode'))
+            @php $business_mode = getWebConfig(name: 'business_mode'); @endphp
             <div>
                 <div class="widget-title">
                     <a class="{{ Request::is('chat/vendor') ? 'active-menu' : '' }} {{ Request::is('chat/delivery-man') ? 'active-menu' : '' }}"
@@ -185,6 +185,35 @@
             </div>
             <div>
                 <div class="widget-title">
+                    <a class="{{ Request::is('account-dispute*') || Request::is('open-dispute*') ? 'active-menu' : '' }}"
+                        href="{{ route('account-disputes') }}">
+                        <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M10 1.667A8.333 8.333 0 1 0 10 18.334 8.333 8.333 0 0 0 10 1.667zm0 1.666a6.667 6.667 0 1 1 0 13.334A6.667 6.667 0 0 1 10 3.333zm0 5a.833.833 0 0 0-.833.834v3.333a.833.833 0 0 0 1.666 0V9.167A.833.833 0 0 0 10 8.333zm0-2.5a1.042 1.042 0 1 0 0 2.084 1.042 1.042 0 0 0 0-2.084z"
+                                    fill="currentColor" />
+                            </svg>
+                        </span>
+                        <span class="aside-link d-flex align-items-center gap-2">
+                            {{ translate('my_disputes') }}
+                            @auth('customer')
+                                @php
+                                    $myOpenDisputes = \App\Models\Dispute::where('buyer_id', auth('customer')->id())
+                                        ->whereIn('status', ['open', 'vendor_response', 'under_review'])
+                                        ->count();
+                                @endphp
+                                @if ($myOpenDisputes > 0)
+                                    <span class="badge badge-sm"
+                                        style="background:#dc3545;color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;">{{ $myOpenDisputes }}</span>
+                                @endif
+                            @endauth
+                        </span>
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <div class="widget-title">
                     <a class="{{ Request::is('account-ticket*') || Request::is('support-ticket*') ? 'active-menu' : '' }}"
                         href="{{ route('account-tickets') }}" style="position:relative">
                         <span>
@@ -201,7 +230,7 @@
                         <span class="aside-link d-flex align-items-center gap-2">
                             {{ translate('support_ticket') }}
                             @auth('customer')
-                                @php($myOpenTickets = \App\Models\SupportTicket::where('customer_id', auth('customer')->id())->where('status', 'open')->count())
+                                @php $myOpenTickets = \App\Models\SupportTicket::where('customer_id', auth('customer')->id())->where('status', 'open')->count(); @endphp
                                 @if ($myOpenTickets > 0)
                                     <span class="badge badge-sm"
                                         style="background:#dc3545;color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;">{{ $myOpenTickets }}</span>

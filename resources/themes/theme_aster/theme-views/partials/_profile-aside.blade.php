@@ -116,6 +116,26 @@
                             @endauth
                         </a>
                     </li>
+                    <li class="{{ Request::is('account-dispute*') || Request::is('open-dispute*') ? 'active' : '' }}">
+                        <a href="{{ route('account-disputes') }}">
+                            <img width="20" src="{{ theme_asset('assets/img/icons/profile-icon8.png') }}"
+                                class="dark-support" alt="">
+                            <span class="text-capitalize d-flex align-items-center gap-1">
+                                {{ translate('my_disputes') }}
+                                @auth('customer')
+                                    @php
+                                        $myOpenDisputes = \App\Models\Dispute::where('buyer_id', auth('customer')->id())
+                                            ->whereIn('status', ['open', 'vendor_response', 'under_review'])
+                                            ->count();
+                                    @endphp
+                                    @if ($myOpenDisputes > 0)
+                                        <span class="badge badge-sm"
+                                            style="background:#dc3545;color:#fff;font-size:10px;padding:1px 6px;border-radius:20px;">{{ $myOpenDisputes }}</span>
+                                    @endif
+                                @endauth
+                            </span>
+                        </a>
+                    </li>
                     <li class="{{ Request::is('account-tickets') || Request::is('support-ticket*') ? 'active' : '' }}">
                         <a href="{{ route('account-tickets') }}">
                             <img width="20" src="{{ theme_asset('assets/img/icons/profile-icon8.png') }}"

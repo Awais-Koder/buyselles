@@ -44,7 +44,43 @@ class EscrowService
             return false;
         }
 
-        return true;
+        $physicalEnabled = (bool) (getWebConfig(name: 'escrow_physical_products') ?? 0);
+        $digitalEnabled = (bool) (getWebConfig(name: 'escrow_digital_products') ?? 0);
+
+        if (! $physicalEnabled && ! $digitalEnabled) {
+            return false;
+        }
+
+        $details = $order->relationLoaded('orderDetails')
+            ? $order->orderDetails
+            : $order->orderDetails()->get();
+
+        $hasPhysical = false;
+        $hasDigital = false;
+
+        foreach ($details as $detail) {
+            $productData = is_string($detail->product_details)
+                ? json_decode($detail->product_details, true)
+                : (array) $detail->product_details;
+
+            $productType = $productData['product_type'] ?? 'physical';
+
+            if ($productType === 'digital') {
+                $hasDigital = true;
+            } else {
+                $hasPhysical = true;
+            }
+        }
+
+        if ($hasPhysical && $physicalEnabled) {
+            return true;
+        }
+
+        if ($hasDigital && $digitalEnabled) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

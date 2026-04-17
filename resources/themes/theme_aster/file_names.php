@@ -74,4 +74,8 @@ return [
     'frontend_blog_details_view' => 'theme-views.blogs.details',
     'frontend_popular_blogs_view' => 'theme-views.blogs.index-popular',
     'blog_seo_meta_content_partials' => 'theme-views.partials._blogSEOMetaContentData',
+
+    'account_disputes' => 'theme-views.users-profile.account-disputes',
+    'account_dispute_details' => 'theme-views.users-profile.account-dispute-details',
+    'account_dispute_open_form' => 'theme-views.users-profile.open-dispute-form',
 ];

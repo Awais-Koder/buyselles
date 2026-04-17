@@ -874,9 +874,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::group(['prefix' => 'email-templates', 'as' => 'email-templates.', 'middleware' => ['module:system_settings']], function () {
                 Route::controller(EmailTemplatesController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
-                    Route::get('/'.'/{type}'.'/{tab}', 'getView')->name('view');
-                    Route::post('update/{type}'.'/{tab}', 'update')->name('update');
-                    Route::post('update-status/{type}'.'/{tab}', 'updateStatus')->name('update-status');
+                    Route::get('/' . '/{type}' . '/{tab}', 'getView')->name('view');
+                    Route::post('update/{type}' . '/{tab}', 'update')->name('update');
+                    Route::post('update-status/{type}' . '/{tab}', 'updateStatus')->name('update-status');
                 });
             });
 
@@ -1042,8 +1042,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::controller(ShippingMethodController::class)->group(function () {
                     Route::get('index', 'index')->name('index');
                     Route::post('index', 'add');
-                    Route::get('update'.'/{id}', 'getUpdateView')->name('update');
-                    Route::post('update'.'/{id}', 'update');
+                    Route::get('update' . '/{id}', 'getUpdateView')->name('update');
+                    Route::post('update' . '/{id}', 'update');
                     Route::post('update-status', 'updateStatus')->name('update-status');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('update-shipping-responsibility', 'updateShippingResponsibility')->name('update-shipping-responsibility');
@@ -1257,7 +1257,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('status/{id}', 'updateStatus')->name('status');
             Route::get('update/{id}', 'getUpdateResponse')->name('update');
             Route::post('feature-status-update', 'updateFeatureStatus')->name('feature-status-update');
-            Route::post('update'.'/{id}', 'update');
+            Route::post('update' . '/{id}', 'update');
             Route::post('delete', 'delete')->name('delete');
         });
     });
@@ -1270,6 +1270,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('{id}/resolve-refund', 'resolveRefund')->name('resolve-refund');
             Route::post('{id}/resolve-release', 'resolveRelease')->name('resolve-release');
             Route::post('{id}/close', 'close')->name('close');
+            Route::post('{id}/message', 'sendMessage')->name('message');
         });
     });
 

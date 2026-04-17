@@ -148,7 +148,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-soft-{{ $statusColors[$status] ?? 'secondary' }} text-capitalize">
+                                    <span class="badge bg-{{ $statusColors[$status] ?? 'secondary' }} text-white text-capitalize">
                                         {{ translate(str_replace('_', ' ', $status)) }}
                                     </span>
                                 </td>

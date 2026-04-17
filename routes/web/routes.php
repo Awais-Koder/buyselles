@@ -27,6 +27,7 @@ use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\ChattingController;
 use App\Http\Controllers\Web\CouponController;
 use App\Http\Controllers\Web\CurrencyController;
+use App\Http\Controllers\Web\CustomerDisputeController;
 use App\Http\Controllers\Web\DigitalProductDownloadController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\PageController;
@@ -228,6 +229,8 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::get('refund-details/{id}', 'refund_details')->name('refund-details');
         Route::post('refund-store', 'store_refund')->name('refund-store');
         Route::get('account-tickets', 'account_tickets')->name('account-tickets');
+        Route::get('account-disputes', 'account_disputes')->name('account-disputes')->middleware('customer');
+        Route::get('account-dispute/{id}', 'account_dispute_details')->name('account-dispute.details')->middleware('customer');
         Route::get('order-cancel/{id}', 'order_cancel')->name('order-cancel');
         Route::post('ticket-submit', 'submitSupportTicket')->name('ticket-submit');
         Route::get('account-delete/{id}', 'account_delete')->name('account-delete');
@@ -236,6 +239,14 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::get('user-restock-requests', 'restockRequestsView')->name('user-restock-requests')->middleware('customer');
         Route::get('user-restock-request-delete', 'deleteRestockRequest')->name('user-restock-request-delete')->middleware('customer');
         Route::get('user-all-restock-request-delete/{ids}', 'deleteAllRestockRequest')->name('user-all-restock-request-delete')->middleware('customer');
+    });
+
+    Route::controller(CustomerDisputeController::class)->middleware('customer')->group(function () {
+        Route::get('open-dispute/{orderId}', 'openDisputeForm')->name('open-dispute.form');
+        Route::post('open-dispute', 'storeDispute')->name('open-dispute.store');
+        Route::post('account-dispute/{id}/message', 'sendMessage')->name('account-dispute.message');
+        Route::post('account-dispute/{id}/evidence', 'uploadEvidence')->name('account-dispute.evidence');
+        Route::post('account-dispute/{id}/escalate', 'escalate')->name('account-dispute.escalate');
     });
 
     Route::controller(ChattingController::class)->group(function () {

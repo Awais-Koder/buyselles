@@ -8,6 +8,7 @@ use App\Contracts\Repositories\OrderStatusHistoryRepositoryInterface;
 use App\Contracts\Repositories\RestockProductCustomerRepositoryInterface;
 use App\Contracts\Repositories\RestockProductRepositoryInterface;
 use App\Contracts\Repositories\RobotsMetaContentRepositoryInterface;
+use App\Enums\DisputeStatus;
 use App\Enums\WebConfigKey;
 use App\Events\RefundEvent;
 use App\Http\Controllers\Controller;
@@ -18,6 +19,7 @@ use App\Models\Coupon;
 use App\Models\DeliveryMan;
 use App\Models\DeliveryZipCode;
 use App\Models\DigitalProductCode;
+use App\Models\Dispute;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -139,7 +141,7 @@ class UserProfileController extends Controller
             }
             auth()->guard('customer')->logout();
 
-            ImageManager::delete('/profile/'.$user['image']);
+            ImageManager::delete('/profile/' . $user['image']);
             session()->forget('wish_list');
 
             $user->delete();
@@ -148,7 +150,7 @@ class UserProfileController extends Controller
             return redirect()->route('home');
         }
 
-        Toastr::warning(translate('access_denied').'!!');
+        Toastr::warning(translate('access_denied') . '!!');
 
         return back();
     }
@@ -402,7 +404,7 @@ class UserProfileController extends Controller
             $offlinePaymentMethods = OfflinePaymentMethod::where('status', 1)->get();
             $offlinePaymentStatus = getWebConfig(name: 'offline_payment');
             $paymentGatewayList = payment_gateways();
-            $isPhysicalProduct = $order->details()->whereHas('product', fn ($q) => $q->where('product_type', 'physical'))->exists();
+            $isPhysicalProduct = $order->details()->whereHas('product', fn($q) => $q->where('product_type', 'physical'))->exists();
             $cashOnDeliveryStatus = getWebConfig(name: 'cash_on_delivery');
 
             if ($cashOnDeliveryStatus && $cashOnDeliveryStatus['status'] && $isPhysicalProduct) {
@@ -597,6 +599,60 @@ class UserProfileController extends Controller
         }
     }
 
+    public function account_disputes(): View|RedirectResponse
+    {
+        if (! auth('customer')->check()) {
+            return redirect()->route('home');
+        }
+
+        $disputes = Dispute::where('buyer_id', auth('customer')->id())
+            ->with(['reason', 'order'])
+            ->latest()
+            ->paginate(10);
+
+        return view(VIEW_FILE_NAMES['account_disputes'], compact('disputes'));
+    }
+
+    public function account_dispute_details(int $id): View|RedirectResponse
+    {
+        if (! auth('customer')->check()) {
+            return redirect()->route('home');
+        }
+
+        $dispute = Dispute::where('id', $id)
+            ->where('buyer_id', auth('customer')->id())
+            ->with([
+                'reason',
+                'order',
+                'messages.buyerSender',
+                'messages.vendorSender',
+                'messages.adminSender',
+                'evidence',
+                'statusLogs',
+            ])
+            ->first();
+
+        if (! $dispute) {
+            Toastr::warning(translate('dispute_not_found'));
+
+            return redirect()->route('account-disputes');
+        }
+
+        $isClosed = in_array($dispute->status, [
+            DisputeStatus::RESOLVED_REFUND,
+            DisputeStatus::RESOLVED_RELEASE,
+            DisputeStatus::CLOSED,
+            DisputeStatus::AUTO_CLOSED,
+        ]);
+
+        $canEscalate = in_array($dispute->status, [
+            DisputeStatus::OPEN,
+            DisputeStatus::VENDOR_RESPONSE,
+        ]);
+
+        return view(VIEW_FILE_NAMES['account_dispute_details'], compact('dispute', 'isClosed', 'canEscalate'));
+    }
+
     public function account_tickets()
     {
         if (auth('customer')->check()) {
@@ -684,7 +740,7 @@ class UserProfileController extends Controller
     public function comment_submit(Request $request, $id)
     {
         if ($request->file('image') == null && empty($request['comment'])) {
-            Toastr::error(translate('type_something').'!');
+            Toastr::error(translate('type_something') . '!');
 
             return back();
         }
@@ -726,7 +782,7 @@ class UserProfileController extends Controller
             dispatch(new SendEmailJob($adminEmail, new SupportTicketNotifyAdminMail((int) $id, false)));
         }
 
-        Toastr::success(translate('message_send_successfully').'!');
+        Toastr::success(translate('message_send_successfully') . '!');
 
         return back();
     }
@@ -737,7 +793,7 @@ class UserProfileController extends Controller
             'status' => 'close',
             'updated_at' => now(),
         ]);
-        Toastr::success(translate('ticket_closed').'!');
+        Toastr::success(translate('ticket_closed') . '!');
 
         return redirect('/account-tickets');
     }
@@ -750,22 +806,22 @@ class UserProfileController extends Controller
 
             if ($support->attachment && ! is_array($support->attachment) && count(json_decode($support->attachment)) > 0) {
                 foreach (json_decode($support->attachment, true) as $image) {
-                    ImageManager::delete('/support-ticket/'.$image);
+                    ImageManager::delete('/support-ticket/' . $image);
                 }
             } elseif ($support->attachment && is_array($support->attachment) && count($support->attachment) > 0) {
                 foreach ($support->attachment as $image) {
-                    ImageManager::delete('/support-ticket/'.$image['file_name']);
+                    ImageManager::delete('/support-ticket/' . $image['file_name']);
                 }
             }
 
             foreach ($support->conversations as $conversation) {
                 if ($conversation->attachment && ! is_array($support->attachment) && count(json_decode($conversation->attachment)) > 0) {
                     foreach (json_decode($conversation->attachment, true) as $image) {
-                        ImageManager::delete('/support-ticket/'.$image);
+                        ImageManager::delete('/support-ticket/' . $image);
                     }
                 } elseif ($conversation->attachment && is_array($conversation->attachment) && count($conversation->attachment) > 0) {
                     foreach ($conversation->attachment as $image) {
-                        ImageManager::delete('/support-ticket/'.$image['file_name']);
+                        ImageManager::delete('/support-ticket/' . $image['file_name']);
                     }
                 }
             }
@@ -908,11 +964,11 @@ class UserProfileController extends Controller
 
         if (isset($orderExist)) {
             if ($orderExist['order_type'] == 'POS') {
-                Toastr::error(translate('this_order_is_created_by_').($orderExist['seller_is'] == 'seller' ? 'vendor' : 'admin').translate('_from POS').','.translate('please_contact_with_').($orderDetails['seller_is'] == 'seller' ? 'vendor' : 'admin').translate('_to_know_more_details').'.');
+                Toastr::error(translate('this_order_is_created_by_') . ($orderExist['seller_is'] == 'seller' ? 'vendor' : 'admin') . translate('_from POS') . ',' . translate('please_contact_with_') . ($orderDetails['seller_is'] == 'seller' ? 'vendor' : 'admin') . translate('_to_know_more_details') . '.');
 
                 return redirect()->back();
             }
-            if ($orderExist && $orderExist->orderDetails()->whereHas('product', fn ($q) => $q->where('product_type', 'physical'))->exists()) {
+            if ($orderExist && $orderExist->orderDetails()->whereHas('product', fn($q) => $q->where('product_type', 'physical'))->exists()) {
                 $isPhysicalProduct = true;
             }
             $isOrderOnlyDigital = self::getCheckIsOrderOnlyDigital($orderExist);
@@ -984,7 +1040,7 @@ class UserProfileController extends Controller
         if ($loyaltyPointStatus == 1) {
             $loyaltyPoint = CustomerManager::countLoyaltyPointForAmount($id);
             if ($user['loyalty_point'] < $loyaltyPoint) {
-                Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order').'!!');
+                Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order') . '!!');
 
                 return back();
             }
@@ -1007,7 +1063,7 @@ class UserProfileController extends Controller
             foreach ($request->file('images') as $img) {
                 $extension = $img->getClientOriginalExtension();
                 if (in_array($extension, getDisallowedExtensionsListArray())) {
-                    Toastr::error(translate('Invalid_file_format_given_').$extension);
+                    Toastr::error(translate('Invalid_file_format_given_') . $extension);
 
                     return redirect()->back();
                 }
@@ -1018,7 +1074,7 @@ class UserProfileController extends Controller
         $user = auth('customer')->user();
 
         if ($orderDetailsReward && $user->loyalty_point < $orderDetailsReward['reward_amount']) {
-            Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order').'!!');
+            Toastr::warning(translate('you_have_not_sufficient_loyalty_point_to_refund_this_order') . '!!');
 
             return back();
         }

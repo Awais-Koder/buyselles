@@ -21,10 +21,10 @@ if (! function_exists('getStorageImages')) {
                 return asset(str_replace('app/public/', '', $source));
             }
 
-            return (! empty($path) && $path['status'] == 200) ? $path['path'] : dynamicAsset($source);
+            return (! empty($path) && isset($path['status']) && $path['status'] == 200) ? $path['path'] : dynamicAsset($source);
         }
         if ($source && file_exists($source)) {
-            return (! empty($path) && $path['status'] == 200) ? $path['path'] : $source;
+            return (! empty($path) && isset($path['status']) && $path['status'] == 200) ? $path['path'] : $source;
         }
         $placeholderMap = [
             'backend-basic' => 'back-end/img/placeholder/placeholder-1-1.png',
@@ -95,13 +95,13 @@ if (! function_exists('getStorageImages')) {
                     $placeholderPath = theme_asset(path: $placeholderMap[$type][$theme]);
                 }
 
-                return (! empty($path) && $path['status'] == 200) ? $path['path'] : $placeholderPath;
+                return (! empty($path) && isset($path['status']) && $path['status'] == 200) ? $path['path'] : $placeholderPath;
             } else {
                 return (! empty($path) && isset($path['status']) && $path['status'] == 200) ? $path['path'] : dynamicAsset(path: 'public/assets/'.$placeholderMap[$type]);
             }
         }
 
-        return (! empty($path) && $path['status'] == 200) ? $path['path'] : dynamicStorage(path: 'public/assets/front-end/img/placeholder/placeholder-2-1.png');
+        return (! empty($path) && isset($path['status']) && $path['status'] == 200) ? $path['path'] : dynamicStorage(path: 'public/assets/front-end/img/placeholder/placeholder-2-1.png');
     }
 }
 if (! function_exists('checkImageStatus')) {
@@ -300,7 +300,6 @@ if (! function_exists('getFileInfoFromURL')) {
             $fileMimeType = mime_content_type($filePath);
             $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
             $fileSize = filesize($filePath);
-
         } else {
             try {
                 $headers = get_headers($url, true);
@@ -330,7 +329,6 @@ if (! function_exists('getFileInfoFromURL')) {
             'sizeReadable' => FileManagerLogic::formatBytes($fileSize),
         ];
     }
-
 }
 
 if (! function_exists('getCategorizeFileMimeType')) {
@@ -338,54 +336,132 @@ if (! function_exists('getCategorizeFileMimeType')) {
     {
         $mimeCategories = [
             'image' => [
-                'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff',
-                'image/x-icon', 'image/heif', 'image/heic',
+                'image/jpeg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/svg+xml',
+                'image/bmp',
+                'image/tiff',
+                'image/x-icon',
+                'image/heif',
+                'image/heic',
             ],
             'video' => [
-                'video/mp4', 'video/mpeg', 'video/ogg', 'video/webm', 'video/avi', 'video/quicktime',
-                'video/x-msvideo', 'video/x-ms-wmv', 'video/x-flv', 'video/3gpp', 'video/3gpp2',
+                'video/mp4',
+                'video/mpeg',
+                'video/ogg',
+                'video/webm',
+                'video/avi',
+                'video/quicktime',
+                'video/x-msvideo',
+                'video/x-ms-wmv',
+                'video/x-flv',
+                'video/3gpp',
+                'video/3gpp2',
             ],
             'audio' => [
-                'audio/mpeg', 'audio/ogg', 'audio/wav', 'audio/webm', 'audio/aac', 'audio/x-aac', 'audio/flac',
-                'audio/mp4', 'audio/3gpp', 'audio/3gpp2', 'audio/midi', 'audio/x-midi', 'audio/x-wav',
-                'audio/x-ms-wma', 'audio/x-ms-wmv', 'audio/x-realaudio',
+                'audio/mpeg',
+                'audio/ogg',
+                'audio/wav',
+                'audio/webm',
+                'audio/aac',
+                'audio/x-aac',
+                'audio/flac',
+                'audio/mp4',
+                'audio/3gpp',
+                'audio/3gpp2',
+                'audio/midi',
+                'audio/x-midi',
+                'audio/x-wav',
+                'audio/x-ms-wma',
+                'audio/x-ms-wmv',
+                'audio/x-realaudio',
             ],
             'document' => [
-                'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.template', 'application/rtf', 'text/plain',
-                'text/html', 'application/vnd.oasis.opendocument.text', 'application/vnd.oasis.opendocument.presentation',
-                'application/vnd.oasis.opendocument.spreadsheet', 'application/vnd.oasis.opendocument.graphics',
-                'application/x-abiword', 'application/x-appleworks', 'application/x-iwork-keynote-sffkey',
-                'application/x-iwork-pages-sffpages', 'application/x-iwork-numbers-sffnumbers',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+                'application/rtf',
+                'text/plain',
+                'text/html',
+                'application/vnd.oasis.opendocument.text',
+                'application/vnd.oasis.opendocument.presentation',
+                'application/vnd.oasis.opendocument.spreadsheet',
+                'application/vnd.oasis.opendocument.graphics',
+                'application/x-abiword',
+                'application/x-appleworks',
+                'application/x-iwork-keynote-sffkey',
+                'application/x-iwork-pages-sffpages',
+                'application/x-iwork-numbers-sffnumbers',
             ],
             'spreadsheet' => [
-                'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.oasis.opendocument.spreadsheet', 'application/vnd.sun.xml.calc', 'application/vnd.lotus-1-2-3',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.oasis.opendocument.spreadsheet',
+                'application/vnd.sun.xml.calc',
+                'application/vnd.lotus-1-2-3',
             ],
             'presentation' => [
-                'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'application/vnd.openxmlformats-officedocument.presentationml.slideshow', 'application/vnd.oasis.opendocument.presentation',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+                'application/vnd.oasis.opendocument.presentation',
             ],
             'application' => [
-                'application/zip', 'application/x-rar-compressed', 'application/x-tar', 'application/x-7z-compressed',
-                'application/x-bzip', 'application/x-bzip2', 'application/x-gzip', 'application/x-httpd-php',
-                'application/x-shockwave-flash', 'application/x-java-archive', 'application/x-msdownload',
-                'application/vnd.android.package-archive', 'application/x-msaccess', 'application/x-cab',
-                'application/x-debian-package', 'application/x-redhat-package-manager',
+                'application/zip',
+                'application/x-rar-compressed',
+                'application/x-tar',
+                'application/x-7z-compressed',
+                'application/x-bzip',
+                'application/x-bzip2',
+                'application/x-gzip',
+                'application/x-httpd-php',
+                'application/x-shockwave-flash',
+                'application/x-java-archive',
+                'application/x-msdownload',
+                'application/vnd.android.package-archive',
+                'application/x-msaccess',
+                'application/x-cab',
+                'application/x-debian-package',
+                'application/x-redhat-package-manager',
             ],
             'archive' => [
-                'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed', 'application/x-tar',
-                'application/gzip', 'application/x-bzip2', 'application/x-lzma', 'application/x-lzip',
+                'application/zip',
+                'application/x-rar-compressed',
+                'application/x-7z-compressed',
+                'application/x-tar',
+                'application/gzip',
+                'application/x-bzip2',
+                'application/x-lzma',
+                'application/x-lzip',
                 'application/x-xz',
             ],
             'font' => [
-                'font/otf', 'font/ttf', 'font/woff', 'font/woff2', 'application/x-font-ttf',
-                'application/x-font-woff', 'application/font-woff',
+                'font/otf',
+                'font/ttf',
+                'font/woff',
+                'font/woff2',
+                'application/x-font-ttf',
+                'application/x-font-woff',
+                'application/font-woff',
             ],
             'code' => [
-                'text/css', 'text/javascript', 'application/javascript', 'application/json', 'application/xml',
-                'text/xml', 'text/x-python', 'text/x-php', 'text/x-csrc', 'text/x-c++src', 'text/x-java-source',
-                'application/x-sh', 'application/x-perl', 'text/x-ruby',
+                'text/css',
+                'text/javascript',
+                'application/javascript',
+                'application/json',
+                'application/xml',
+                'text/xml',
+                'text/x-python',
+                'text/x-php',
+                'text/x-csrc',
+                'text/x-c++src',
+                'text/x-java-source',
+                'application/x-sh',
+                'application/x-perl',
+                'text/x-ruby',
             ],
             // Add more categories and MIME types as needed
         ];
@@ -521,29 +597,73 @@ if (! function_exists('getDisallowedExtensionsListArray')) {
     {
         $groups = [
             'server_side' => [
-                'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar',
-                'asp', 'aspx', 'jsp', 'cgi', 'pl', 'py', 'rb',
+                'php',
+                'php3',
+                'php4',
+                'php5',
+                'php7',
+                'php8',
+                'phtml',
+                'phar',
+                'asp',
+                'aspx',
+                'jsp',
+                'cgi',
+                'pl',
+                'py',
+                'rb',
             ],
             'client_side' => [
-                'js', 'mjs', 'html', 'htm', 'xhtml',
+                'js',
+                'mjs',
+                'html',
+                'htm',
+                'xhtml',
             ],
             'shell' => [
-                'sh', 'bash', 'bat', 'cmd', 'ps1', 'zsh', 'ksh',
+                'sh',
+                'bash',
+                'bat',
+                'cmd',
+                'ps1',
+                'zsh',
+                'ksh',
             ],
             'executables' => [
-                'exe', 'dll', 'so', 'bin', 'msi', 'app',
+                'exe',
+                'dll',
+                'so',
+                'bin',
+                'msi',
+                'app',
             ],
             'java' => [
-                'java', 'class', 'jar',
+                'java',
+                'class',
+                'jar',
             ],
             'archives' => [
-                '7z', 'gz', 'bz2', 'xz',
+                '7z',
+                'gz',
+                'bz2',
+                'xz',
             ],
             'config' => [
-                'env', 'ini', 'conf', 'config', 'yml', 'yaml', 'log',
+                'env',
+                'ini',
+                'conf',
+                'config',
+                'yml',
+                'yaml',
+                'log',
             ],
             'data_backup' => [
-                'sql', 'db', 'bak', 'old', 'swp', 'tmp',
+                'sql',
+                'db',
+                'bak',
+                'old',
+                'swp',
+                'tmp',
             ],
         ];
 

@@ -350,7 +350,7 @@ class BusinessSettingsController extends BaseController
             $this->createDeepLinkFiles($request);
             ToastMagic::success(translate('updated_successfully'));
         } catch (\Exception $e) {
-            ToastMagic::error(translate('update_failed').': '.$e->getMessage());
+            ToastMagic::error(translate('update_failed') . ': ' . $e->getMessage());
         }
 
         return back();
@@ -371,11 +371,11 @@ class BusinessSettingsController extends BaseController
         foreach ($filePaths as $wellKnownPath) {
             if (! file_exists($wellKnownPath)) {
                 if (! mkdir($wellKnownPath, 0755, true)) {
-                    throw new \Exception('Failed to create .well-known directory at: '.$wellKnownPath);
+                    throw new \Exception('Failed to create .well-known directory at: ' . $wellKnownPath);
                 }
             }
             if (! is_writable($wellKnownPath)) {
-                throw new \Exception('.well-known directory is not writable at: '.$wellKnownPath);
+                throw new \Exception('.well-known directory is not writable at: ' . $wellKnownPath);
             }
             $this->createAssetLinksFile($wellKnownPath, $request);
             $this->createAppleAppSiteAssociation($wellKnownPath, $request);
@@ -396,9 +396,9 @@ class BusinessSettingsController extends BaseController
                 ],
             ],
         ];
-        $filePath = $path.'/assetlinks.json';
+        $filePath = $path . '/assetlinks.json';
         if (file_put_contents($filePath, json_encode($assetLinks, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)) === false) {
-            throw new \Exception('Failed to create assetlinks.json at: '.$filePath);
+            throw new \Exception('Failed to create assetlinks.json at: ' . $filePath);
         }
         chmod($filePath, 0644);
     }
@@ -410,16 +410,16 @@ class BusinessSettingsController extends BaseController
                 'apps' => [],
                 'details' => [
                     [
-                        'appID' => $request['ios_team_id'].'.'.$request['ios_bundle_id'],
+                        'appID' => $request['ios_team_id'] . '.' . $request['ios_bundle_id'],
                         'paths' => config('deeplinks.ios_paths', ['*']),
                     ],
                 ],
             ],
         ];
 
-        $filePath = $path.'/apple-app-site-association';
+        $filePath = $path . '/apple-app-site-association';
         if (file_put_contents($filePath, json_encode($appleAppSiteAssociation, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)) === false) {
-            throw new \Exception('Failed to create apple-app-site-association at: '.$filePath);
+            throw new \Exception('Failed to create apple-app-site-association at: ' . $filePath);
         }
         chmod($filePath, 0644);
     }
@@ -457,7 +457,7 @@ class BusinessSettingsController extends BaseController
 
         if (empty($request['script_id']) && $request['is_active'] == 1) {
             $type = str_replace(' ', '_', ucwords(str_replace('_', ' ', $request['type'])));
-            ToastMagic::error(translate('Please_ensure_you_have_filled_in_the_'.$type.'_script_ID.'));
+            ToastMagic::error(translate('Please_ensure_you_have_filled_in_the_' . $type . '_script_ID.'));
 
             return back();
         }
@@ -541,10 +541,14 @@ class BusinessSettingsController extends BaseController
     {
         $request->validate([
             'escrow_auto_release_hours' => 'required|integer|min:1|max:720',
+            'dispute_window_days' => 'required|integer|min:1|max:90',
         ]);
 
         $this->businessSettingRepo->updateOrInsert(type: 'escrow_protection_status', value: $request->get('escrow_protection_status', 0));
         $this->businessSettingRepo->updateOrInsert(type: 'escrow_auto_release_hours', value: $request->get('escrow_auto_release_hours', 48));
+        $this->businessSettingRepo->updateOrInsert(type: 'escrow_physical_products', value: $request->get('escrow_physical_products', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'escrow_digital_products', value: $request->get('escrow_digital_products', 0));
+        $this->businessSettingRepo->updateOrInsert(type: 'dispute_window_days', value: $request->get('dispute_window_days', 7));
 
         clearWebConfigCacheKeys();
 

@@ -382,6 +382,42 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    @php
+                                        $escrowProtectionEnabled = (int) (getWebConfig(name: 'escrow_protection_status') ?? 0);
+                                        $existingDispute = \App\Models\Dispute::where('order_id', $order->id)
+                                            ->whereNotIn('status', ['resolved_refund', 'resolved_release', 'closed', 'auto_closed'])
+                                            ->first();
+                                    @endphp
+                                    @if ($escrowProtectionEnabled && ! $existingDispute)
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="d-flex justify-content-between align-items-center h-100 light-box rounded-8 p--20 gap-2 flex-wrap mb-3" style="border-left: 3px solid #dc3545;">
+                                                <div>
+                                                    <p class="m-0 fs-14 text-dark fw-semibold">{{ translate('have_an_issue_with_this_order') }}?</p>
+                                                    <p class="m-0 fs-12 text-muted">{{ translate('open_a_dispute_to_get_help') }}</p>
+                                                </div>
+                                                <a href="{{ route('open-dispute.form', $order->id) }}"
+                                                    class="btn btn-sm btn-outline-danger h-40px rounded text_capitalize font-semibold">
+                                                    <i class="fi fi-sr-triangle-warning me-1"></i>
+                                                    {{ translate('open_dispute') }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @elseif ($existingDispute)
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="d-flex justify-content-between align-items-center h-100 light-box rounded-8 p--20 gap-2 flex-wrap mb-3" style="border-left: 3px solid #ffc107;">
+                                                <div>
+                                                    <p class="m-0 fs-14 text-dark fw-semibold">{{ translate('dispute_opened') }}</p>
+                                                    <p class="m-0 fs-12 text-muted">{{ translate('status') }}: {{ translate($existingDispute->status) }}</p>
+                                                </div>
+                                                <a href="{{ route('account-dispute.details', $existingDispute->id) }}"
+                                                    class="btn btn-sm btn-outline-warning h-40px rounded text_capitalize font-semibold">
+                                                    <i class="fi fi-rr-eye me-1"></i>
+                                                    {{ translate('view_dispute') }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                                 @if ($order->order_type == 'default_type')
                                     <?php

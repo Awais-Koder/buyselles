@@ -85,7 +85,9 @@ class DisputeArbitrationController extends BaseController
             'vendor',
             'reason',
             'order.orderDetails.product',
-            'messages',
+            'messages.buyerSender',
+            'messages.vendorSender',
+            'messages.adminSender',
             'evidence',
             'statusLogs',
             'escrow',
@@ -96,6 +98,28 @@ class DisputeArbitrationController extends BaseController
             'dispute' => $dispute,
             'escrow' => $dispute->escrow,
         ]);
+    }
+
+    public function sendMessage(Request $request, int $id): RedirectResponse
+    {
+        $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $admin = auth('admin')->user();
+        $dispute = Dispute::findOrFail($id);
+
+        if (in_array($dispute->status, [DisputeStatus::RESOLVED_REFUND, DisputeStatus::RESOLVED_RELEASE, DisputeStatus::CLOSED, DisputeStatus::AUTO_CLOSED])) {
+            ToastMagic::error(translate('cannot_message_a_resolved_dispute'));
+
+            return back();
+        }
+
+        $this->disputeService->addMessage($dispute, (int) $admin->id, DisputeUserType::ADMIN, $request->message);
+
+        ToastMagic::success(translate('message_sent'));
+
+        return back();
     }
 
     public function underReview(int $id): RedirectResponse

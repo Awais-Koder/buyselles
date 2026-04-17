@@ -77,4 +77,8 @@ return [
     'frontend_app_blog_details_view' => 'web-views.blogs.details',
     'frontend_popular_blogs_view' => 'web-views.blogs.index-popular',
     'blog_seo_meta_content_partials' => 'web-views.partials._blogSEOMetaContentData',
+
+    'account_disputes' => 'web-views.users-profile.account-disputes',
+    'account_dispute_details' => 'web-views.users-profile.account-dispute-details',
+    'account_dispute_open_form' => 'web-views.users-profile.open-dispute-form',
 ];

@@ -35,20 +35,13 @@
         <div class="step-circle fs-13">
             <i class="czi-check"></i>
         </div>
-        <p class="m-0 fs-16 text-dark fw-medium">Cart</p>
+        <p class="m-0 fs-16 text-dark fw-medium">{{ translate('cart') }}</p>
     </div>
 
     <div class="step completed">
         <div class="step-circle fs-13">
             <i class="czi-check"></i>
         </div>
-        <p class="m-0 fs-16 text-dark fw-medium">Shipping & Billing</p>
-    </div>
-
-    <div class="step">
-        <div class="step-circle fs-13">
-            <i class="czi-check"></i>
-        </div>
-        <p class="m-0 fs-16 text-dark fw-medium">Payment</p>
+        <p class="m-0 fs-16 text-dark fw-medium">{{ translate('checkout') }}</p>
     </div>
 </div>

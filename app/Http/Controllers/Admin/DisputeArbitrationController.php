@@ -8,6 +8,7 @@ use App\Enums\ViewPaths\Admin\Dispute as DisputeViewPath;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\ResolveDisputeRequest;
 use App\Models\Dispute;
+use App\Models\DisputeEvidence;
 use App\Models\DisputeStatusLog;
 use App\Services\DisputeService;
 use App\Services\EscrowService;
@@ -53,7 +54,7 @@ class DisputeArbitrationController extends BaseController
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
-                    ->orWhereHas('order', fn($o) => $o->where('id', $search));
+                    ->orWhereHas('order', fn ($o) => $o->where('id', $search));
             });
         }
 
@@ -103,8 +104,16 @@ class DisputeArbitrationController extends BaseController
     public function sendMessage(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'message' => ['required', 'string', 'max:2000'],
+            'message' => ['nullable', 'string', 'max:2000'],
+            'files' => ['nullable', 'array', 'max:5'],
+            'files.*' => ['file', 'mimes:jpg,jpeg,png,mp4'],
         ]);
+
+        if (! $request->filled('message') && ! $request->hasFile('files')) {
+            ToastMagic::error(translate('please_provide_a_message_or_attach_at_least_one_file'));
+
+            return back();
+        }
 
         $admin = auth('admin')->user();
         $dispute = Dispute::findOrFail($id);
@@ -115,7 +124,37 @@ class DisputeArbitrationController extends BaseController
             return back();
         }
 
-        $this->disputeService->addMessage($dispute, (int) $admin->id, DisputeUserType::ADMIN, $request->message);
+        if ($request->filled('message')) {
+            $this->disputeService->addMessage($dispute, (int) $admin->id, DisputeUserType::ADMIN, $request->message);
+        }
+
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $mime = $file->getMimeType() ?? '';
+                $isVideo = str_contains($mime, 'video');
+                $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+                $maxLabel = $isVideo ? '50MB' : '5MB';
+
+                if ($file->getSize() > $maxBytes) {
+                    ToastMagic::error($file->getClientOriginalName().' '.translate('exceeds_maximum_allowed_size_of').' '.$maxLabel);
+
+                    return back();
+                }
+
+                $path = $file->store("dispute-evidence/{$id}", 'public');
+
+                DisputeEvidence::create([
+                    'dispute_id' => $dispute->id,
+                    'uploaded_by' => (int) $admin->id,
+                    'user_type' => DisputeUserType::ADMIN,
+                    'file_path' => $path,
+                    'file_type' => $isVideo ? 'video' : 'image',
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_size' => $file->getSize(),
+                    'created_at' => now(),
+                ]);
+            }
+        }
 
         ToastMagic::success(translate('message_sent'));
 
@@ -145,7 +184,7 @@ class DisputeArbitrationController extends BaseController
         $admin = auth('admin')->user();
         $dispute = Dispute::findOrFail($id);
 
-        if (! in_array($dispute->status, [DisputeStatus::OPEN, DisputeStatus::VENDOR_RESPONSE, DisputeStatus::UNDER_REVIEW])) {
+        if (! in_array($dispute->status, [DisputeStatus::OPEN, DisputeStatus::VENDOR_RESPONSE, DisputeStatus::UNDER_REVIEW, DisputeStatus::PENDING_CLOSURE])) {
             ToastMagic::error(translate('dispute_cannot_be_resolved_in_current_status'));
 
             return back();
@@ -163,7 +202,7 @@ class DisputeArbitrationController extends BaseController
         $admin = auth('admin')->user();
         $dispute = Dispute::findOrFail($id);
 
-        if (! in_array($dispute->status, [DisputeStatus::OPEN, DisputeStatus::VENDOR_RESPONSE, DisputeStatus::UNDER_REVIEW])) {
+        if (! in_array($dispute->status, [DisputeStatus::OPEN, DisputeStatus::VENDOR_RESPONSE, DisputeStatus::UNDER_REVIEW, DisputeStatus::PENDING_CLOSURE])) {
             ToastMagic::error(translate('dispute_cannot_be_resolved_in_current_status'));
 
             return back();
@@ -181,30 +220,40 @@ class DisputeArbitrationController extends BaseController
         $admin = auth('admin')->user();
         $dispute = Dispute::findOrFail($id);
 
-        if (in_array($dispute->status, [DisputeStatus::RESOLVED_REFUND, DisputeStatus::RESOLVED_RELEASE, DisputeStatus::CLOSED, DisputeStatus::AUTO_CLOSED])) {
+        if (in_array($dispute->status, [DisputeStatus::RESOLVED_REFUND, DisputeStatus::RESOLVED_RELEASE, DisputeStatus::CLOSED, DisputeStatus::AUTO_CLOSED, DisputeStatus::PENDING_CLOSURE])) {
             ToastMagic::error(translate('dispute_is_already_closed'));
 
             return back();
         }
 
+        // Move to pending_closure so buyer must confirm before final closure
         $oldStatus = $dispute->status;
 
-        $dispute->update(['status' => DisputeStatus::CLOSED]);
+        $dispute->update(['status' => DisputeStatus::PENDING_CLOSURE]);
 
         DisputeStatusLog::create([
             'dispute_id' => $dispute->id,
             'changed_by' => $admin->id,
             'changed_by_type' => DisputeUserType::ADMIN,
             'from_status' => $oldStatus,
-            'to_status' => DisputeStatus::CLOSED,
-            'note' => $request->get('note', 'Closed by admin'),
+            'to_status' => DisputeStatus::PENDING_CLOSURE,
+            'note' => $request->get('note') ?: translate('Admin_requested_closure_awaiting_buyer_confirmation'),
             'created_at' => now(),
         ]);
 
-        $dispute->order()->update(['dispute_status' => 'resolved']);
+        // Notify buyer via push
+        $buyer = $dispute->buyer;
+        if ($buyer && $buyer->cm_firebase_token) {
+            \App\Utils\Helpers::send_push_notif_to_device($buyer->cm_firebase_token, [
+                'title' => translate('Dispute Closure Requested'),
+                'description' => translate('Admin has requested to close dispute #').$dispute->id.translate('. Please confirm or respond.'),
+                'order_id' => $dispute->order_id,
+                'type' => 'dispute',
+            ]);
+        }
 
-        ToastMagic::success(translate('dispute_closed_successfully'));
+        ToastMagic::success(translate('closure_request_sent_to_buyer_awaiting_confirmation'));
 
-        return redirect()->route('admin.dispute.index');
+        return back();
     }
 }

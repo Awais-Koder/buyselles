@@ -118,7 +118,7 @@
             </div>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-                @if (str_contains(request()->url(), 'checkout-payment'))
+                @if (str_contains(request()->url(), 'checkout-payment') || str_contains(request()->url(), 'checkout-details'))
                     <label class="custom-control custom-checkbox mb-3 d-flex user-select-none cursor-pointer">
                         <input type="checkbox" class="custom-control-input payment-input-checkbox">
                         <span class="custom-control-label">
@@ -143,13 +143,14 @@
                     <i class="fi fi-rr-angle-double-left fs-10"></i> {{ translate('continue_shopping') }}
                 </a>
 
-                @if (str_contains(request()->url(), 'checkout-payment'))
-                    <button class="btn btn-primary text-capitalize custom-disabled" id="proceed-to-payment-action"
+                @if (str_contains(request()->url(), 'checkout-payment') || str_contains(request()->url(), 'checkout-details'))
+                    <button class="btn btn-primary text-capitalize {{ $cart->count() <= 0 ? 'custom-disabled' : '' }}"
+                            id="proceed-to-next-action"
                             data-goto-checkout="{{ route('customer.choose-shipping-address-other') }}"
-                            data-route="{{ route('checkout-payment') }}" data-type="{{ 'checkout-payment' }}"
+                            data-checkout-payment="{{ route('checkout-payment') }}"
                             {{ isset($isProductNullStatus) && $isProductNullStatus == 1 ? 'disabled' : '' }}
                             type="button">
-                        {{ translate('proceed_to_payment') }}
+                        {{ translate('place_order') }}
                     </button>
                 @else
                     <button class="btn btn-primary text-capitalize {{ $cart->count() <= 0 ? 'custom-disabled' : '' }}"

@@ -18,6 +18,11 @@
             <span class="badge bg-{{ $statusColors[$dispute->status] ?? 'secondary' }} text-white text-capitalize ms-2">
                 {{ translate(str_replace('_', ' ', $dispute->status)) }}
             </span>
+            @if ($dispute->escalated_at)
+                <span class="badge bg-danger text-white ms-1">
+                    <i class="fi fi-sr-triangle-warning me-1"></i>{{ translate('Escalated') }}
+                </span>
+            @endif
         </div>
 
         <div class="row g-4">
@@ -63,20 +68,27 @@
                     @php $isClosed = in_array($dispute->status, ['resolved_refund', 'resolved_release', 'closed', 'auto_closed']); @endphp
                     <div class="card-footer">
                         @if(!$isClosed)
-                            <form action="{{ route('admin.dispute.message', $dispute->id) }}" method="POST" class="d-flex gap-2 align-items-end">
+                            <form action="{{ route('admin.dispute.message', $dispute->id) }}" method="POST"
+                                class="d-flex flex-column gap-2" enctype="multipart/form-data">
                                 @csrf
-                                <div class="flex-grow-1">
-                                    <textarea name="message" class="form-control @error('message') is-invalid @enderror"
-                                        rows="2" maxlength="2000"
-                                        placeholder="{{ translate('Type a message to the buyer or vendor...') }}"
-                                        required></textarea>
-                                    @error('message')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                <textarea name="message" class="form-control @error('message') is-invalid @enderror"
+                                    rows="2" maxlength="2000"
+                                    placeholder="{{ translate('Type a message to the buyer or vendor...') }}"></textarea>
+                                @error('message')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="flex-grow-1">
+                                        <input type="file" name="files[]" multiple
+                                            class="form-control form-control-sm"
+                                            accept="image/jpeg,image/png,video/mp4"
+                                            id="adminEvidenceFiles">
+                                        <small class="text-muted fs-11">{{ translate('Attach up to 5 files (JPG/PNG max 5MB, MP4 max 50MB)') }}</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary px-4 flex-shrink-0">
+                                        <i class="fi fi-rr-paper-plane"></i>
+                                    </button>
                                 </div>
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="fi fi-rr-paper-plane"></i>
-                                </button>
                             </form>
                         @else
                             <p class="text-muted text-center mb-0 fs-12">
@@ -255,7 +267,14 @@
                                 </form>
                             @endif
 
-                            @if(in_array($dispute->status, ['open', 'vendor_response', 'under_review']))
+                            @if($dispute->status === 'pending_closure')
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fi fi-sr-triangle-warning me-2"></i>
+                                    {{ translate('Closure is awaiting buyer confirmation.') }}
+                                </div>
+                            @endif
+
+                            @if(in_array($dispute->status, ['open', 'vendor_response', 'under_review', 'pending_closure']))
                                 <form action="{{ route('admin.dispute.resolve-refund', $dispute->id) }}" method="POST" class="mb-3">
                                     @csrf
                                     <div class="mb-2">
@@ -281,16 +300,18 @@
                                     </button>
                                 </form>
 
-                                <form action="{{ route('admin.dispute.close', $dispute->id) }}" method="POST">
-                                    @csrf
-                                    <div class="mb-2">
-                                        <textarea name="decision" class="form-control" rows="2"
-                                            placeholder="{{ translate('Reason for closing (optional)') }}"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-outline-secondary w-100">
-                                        <i class="fi fi-rr-cross"></i> {{ translate('Close Without Resolution') }}
-                                    </button>
-                                </form>
+                                @if($dispute->status !== 'pending_closure')
+                                    <form action="{{ route('admin.dispute.close', $dispute->id) }}" method="POST">
+                                        @csrf
+                                        <div class="mb-2">
+                                            <textarea name="note" class="form-control" rows="2"
+                                                placeholder="{{ translate('Reason for closing (optional)') }}"></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-outline-secondary w-100">
+                                            <i class="fi fi-rr-cross"></i> {{ translate('Request Closure (Buyer Must Confirm)') }}
+                                        </button>
+                                    </form>
+                                @endif
                             @endif
                         </div>
                     </div>

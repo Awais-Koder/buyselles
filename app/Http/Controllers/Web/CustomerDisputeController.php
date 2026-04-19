@@ -286,4 +286,33 @@ class CustomerDisputeController extends Controller
 
         return redirect()->route('account-dispute.details', $id);
     }
+
+    /**
+     * Buyer confirms the admin-requested closure, finalising the dispute as closed.
+     */
+    public function confirmClosure(int $id): RedirectResponse
+    {
+        if (! auth('customer')->check()) {
+            return redirect()->route('customer.auth.login');
+        }
+
+        $customerId = auth('customer')->id();
+
+        $dispute = Dispute::where('id', $id)
+            ->where('buyer_id', $customerId)
+            ->where('status', DisputeStatus::PENDING_CLOSURE)
+            ->first();
+
+        if (! $dispute) {
+            Toastr::error(translate('dispute_not_found_or_closure_not_pending'));
+
+            return redirect()->route('account-disputes');
+        }
+
+        $this->disputeService->closeDispute($dispute, $customerId, translate('Buyer_confirmed_closure'), DisputeUserType::BUYER);
+
+        Toastr::success(translate('dispute_closed_successfully'));
+
+        return redirect()->route('account-disputes');
+    }
 }

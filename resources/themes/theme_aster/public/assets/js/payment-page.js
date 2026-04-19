@@ -120,17 +120,14 @@ $(".digital-payment-card").on("click", function (e) {
 
 // proceed to next btn enable
 function updateProceedButtonState() {
+    var $btn = $("#proceed-to-payment-action, #proceed-to-next-action");
     if (
         $('[name="payment_method"]:checked').length > 0 &&
         $(".payment-input-checkbox:checked").length > 0
     ) {
-        $("#proceed-to-payment-action")
-            .removeClass("custom-disabled")
-            .removeAttr("disabled");
+        $btn.removeClass("custom-disabled").removeAttr("disabled");
     } else {
-        $("#proceed-to-payment-action")
-            .addClass("custom-disabled")
-            .attr("disabled", true);
+        $btn.addClass("custom-disabled").attr("disabled", true);
     }
 }
 
@@ -142,7 +139,7 @@ $(".payment-input-checkbox").on("change", updateProceedButtonState);
 updateProceedButtonState();
 
 $('.disabled-proceed-to-payment').on('click', function () {
-    $("#proceed-to-payment-action")
+    $("#proceed-to-payment-action, #proceed-to-next-action")
         .addClass("custom-disabled")
         .attr("disabled", true);
 });

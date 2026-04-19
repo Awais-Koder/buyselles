@@ -151,6 +151,11 @@
                                     <span class="badge bg-{{ $statusColors[$status] ?? 'secondary' }} text-white text-capitalize">
                                         {{ translate(str_replace('_', ' ', $status)) }}
                                     </span>
+                                    @if ($dispute->escalated_at)
+                                        <span class="badge bg-danger text-white ms-1">
+                                            <i class="fi fi-sr-triangle-warning me-1"></i>{{ translate('Escalated') }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td>{{ $dispute->created_at->format('d M Y') }}</td>
                                 <td class="text-center">

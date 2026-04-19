@@ -247,6 +247,7 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::post('account-dispute/{id}/message', 'sendMessage')->name('account-dispute.message');
         Route::post('account-dispute/{id}/evidence', 'uploadEvidence')->name('account-dispute.evidence');
         Route::post('account-dispute/{id}/escalate', 'escalate')->name('account-dispute.escalate');
+        Route::post('account-dispute/{id}/confirm-closure', 'confirmClosure')->name('account-dispute.confirm-closure');
     });
 
     Route::controller(ChattingController::class)->group(function () {

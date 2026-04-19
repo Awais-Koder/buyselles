@@ -17,4 +17,6 @@ enum DisputeStatus
     const CLOSED = 'closed';
 
     const AUTO_CLOSED = 'auto_closed';
+
+    const PENDING_CLOSURE = 'pending_closure';
 }

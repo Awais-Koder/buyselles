@@ -38,6 +38,7 @@
                                         'resolved_release' => 'badge-secondary',
                                         'closed'           => 'badge-secondary',
                                         'auto_closed'      => 'badge-secondary',
+                                        'pending_closure'  => 'badge-warning',
                                     ];
                                     $statusLabels = [
                                         'open'             => translate('open'),
@@ -47,6 +48,7 @@
                                         'resolved_release' => translate('resolved_released'),
                                         'closed'           => translate('closed'),
                                         'auto_closed'      => translate('auto_closed'),
+                                        'pending_closure'  => translate('closure_pending_your_confirmation'),
                                     ];
                                     $badgeClass = $statusColors[$dispute->status] ?? 'badge-secondary';
                                     $statusLabel = $statusLabels[$dispute->status] ?? translate($dispute->status);
@@ -54,6 +56,11 @@
                                 <span class="badge __badge rounded-full {{ $badgeClass }} fs-12 px-3 py-2">
                                     {{ $statusLabel }}
                                 </span>
+                                @if ($dispute->escalated_at)
+                                    <span class="badge __badge rounded-full badge-danger fs-12 px-3 py-2">
+                                        <i class="fi fi-sr-triangle-warning me-1"></i>{{ translate('escalated_to_admin') }}
+                                    </span>
+                                @endif
                                 <span class="fs-11 text-muted">
                                     {{ translate('opened') }}: {{ \Carbon\Carbon::parse($dispute->created_at)->format('d M Y, h:i A') }}
                                 </span>
@@ -78,6 +85,27 @@
                         @if ($isClosed && $dispute->admin_decision)
                             <div class="alert alert-info mt-3 mb-0 fs-13">
                                 <strong>{{ translate('admin_decision') }}:</strong> {{ $dispute->admin_decision }}
+                            </div>
+                        @endif
+
+                        {{-- Pending Closure — action required from buyer --}}
+                        @if ($dispute->status === 'pending_closure')
+                            <div class="alert alert-warning mt-3 mb-0 fs-13 d-flex align-items-start gap-2">
+                                <i class="fi fi-sr-triangle-warning mt-1 flex-shrink-0"></i>
+                                <div>
+                                    <strong class="d-block mb-2">{{ translate('admin_has_requested_to_close_this_dispute') }}</strong>
+                                    <p class="mb-2">{{ translate('please_confirm_closure_if_your_issue_is_resolved') }}</p>
+                                    <form action="{{ route('account-dispute.confirm-closure', $dispute->id) }}" method="POST"
+                                        id="confirm-closure-form-{{ $dispute->id }}" class="d-inline">
+                                        @csrf
+                                        <button type="button"
+                                            class="btn btn-sm btn-warning font-semibold confirm-closure-btn"
+                                            data-form-id="confirm-closure-form-{{ $dispute->id }}">
+                                            <i class="fi fi-sr-check me-1"></i>
+                                            {{ translate('confirm_i_am_satisfied_close_dispute') }}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -345,7 +373,29 @@
                     confirmButtonText: getText?.dataset.confirm || '{{ addslashes(translate('yes_escalate')) }}',
                     reverseButtons: true,
                 }).then((result) => {
-                    if (result.isConfirmed) {
+                    if (result.value) {
+                        const formId = btn.getAttribute('data-form-id');
+                        document.getElementById(formId).submit();
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.confirm-closure-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const getText = document.getElementById('get-confirm-and-cancel-button-text-for-delete');
+                Swal.fire({
+                    title: '{{ addslashes(translate('confirm_dispute_closure')) }}',
+                    text: '{{ addslashes(translate('by_confirming_you_agree_this_dispute_is_resolved_and_no_further_action_is_needed')) }}',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    cancelButtonText: getText?.dataset.cancel || '{{ addslashes(translate('cancel')) }}',
+                    confirmButtonText: '{{ addslashes(translate('yes_close_dispute')) }}',
+                    reverseButtons: true,
+                }).then((result) => {
+                    if (result.value) {
                         const formId = btn.getAttribute('data-form-id');
                         document.getElementById(formId).submit();
                     }

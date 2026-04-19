@@ -11,6 +11,13 @@ class DisputeMessageRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('dispute_id') && $this->route('id')) {
+            $this->merge(['dispute_id' => $this->route('id')]);
+        }
+    }
+
     public function rules(): array
     {
         return [

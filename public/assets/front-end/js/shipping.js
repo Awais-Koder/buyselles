@@ -1,14 +1,14 @@
 "use strict";
 
-$(document).ready(function() {
+$(document).ready(function () {
     let activeId = $('.select_shipping_address.active').attr('id');
-    if(activeId){
+    if (activeId) {
         let shipping_value = $('.selected_' + activeId).val();
         shipping_method_select(shipping_value)
     }
 
     let billingsActiveId = $('.select_billing_address.active').attr('id');
-    if(billingsActiveId){
+    if (billingsActiveId) {
         let billing_value = $('.selected_' + billingsActiveId).val();
         billing_method_select(billing_value)
     }
@@ -21,14 +21,14 @@ addressItems.forEach(item => {
         const selectedAddressId = item.id;
         let shipping_value = $('.selected_' + selectedAddressId).val();
         $('.select_shipping_address').removeClass('active');
-        $('#'+selectedAddressId).addClass('active')
+        $('#' + selectedAddressId).addClass('active')
         shipping_method_select(shipping_value)
     });
 });
 
-function shipping_method_select(get_value){
+function shipping_method_select(get_value) {
     let shipping_method_id = $('.select_shipping_address.active input[name="shipping_method_id"]').val()
-    let shipping_value= JSON.parse(get_value);
+    let shipping_value = JSON.parse(get_value);
     $('#name').val(shipping_value.contact_person_name);
     $('[name="phone"]').val(shipping_value.phone);
     $('#address').val(shipping_value.address);
@@ -51,14 +51,14 @@ addressItemsBilling.forEach(item => {
         const selectedBillingAddressId = item.id;
         let billing_value = $('.selected_' + selectedBillingAddressId).val();
         $('.select_billing_address').removeClass('active');
-        $('#'+selectedBillingAddressId).addClass('active')
+        $('#' + selectedBillingAddressId).addClass('active')
         billing_method_select(billing_value);
     });
 });
 
-function billing_method_select(get_billing_value){
+function billing_method_select(get_billing_value) {
 
-    let billing_value= JSON.parse(get_billing_value);
+    let billing_value = JSON.parse(get_billing_value);
     let billing_method_id = $('.select_billing_address.active input[name="billing_method_id"]').val()
     $('#billing_contact_person_name').val(billing_value.contact_person_name);
     $('[name="billing_phone"]').val(billing_value.phone);
@@ -69,14 +69,14 @@ function billing_method_select(get_billing_value){
     $('#billing_address_type').val(billing_value.address_type);
     let update_address_billing = `
                 <input type="hidden" name="billing_method_id" id="billing_method_id" value="${billing_method_id}">
-                <input type="checkbox" name="update_billing_address" id="update_billing_address">`+messageUpdateThisAddress;
+                <input type="checkbox" name="update_billing_address" id="update_billing_address">`+ messageUpdateThisAddress;
     $('#save-billing-address-label').html(update_address_billing);
 
     $('[name="billing_latitude"]').val(billing_value.latitude);
     $('[name="billing_longitude"]').val(billing_value.longitude);
 }
 
-$('.add-another-address').on('click', function (){
+$('.add-another-address').on('click', function () {
     $('#sh-0').prop('checked', true);
     $("#collapseThree").collapse();
 })
@@ -110,13 +110,13 @@ async function initAutocomplete() {
         var coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
         coordinates = JSON.parse(coordinates);
         var latlng = new google.maps.LatLng(coordinates['lat'], coordinates['lng']);
-        marker.position={lat:coordinates['lat'], lng:coordinates['lng']};
+        marker.position = { lat: coordinates['lat'], lng: coordinates['lng'] };
         map.panTo(latlng);
 
         document.getElementById('latitude').value = coordinates['lat'];
         document.getElementById('longitude').value = coordinates['lng'];
 
-        geocoder.geocode({'latLng': latlng}, function (results, status) {
+        geocoder.geocode({ 'latLng': latlng }, function (results, status) {
 
             if (status == google.maps.GeocoderStatus.OK) {
                 if (results[1]) {
@@ -212,13 +212,13 @@ async function initAutocompleteBilling() {
         var coordinates = JSON.stringify(mapsMouseEvent.latLng.toJSON(), null, 2);
         coordinates = JSON.parse(coordinates);
         var latlng = new google.maps.LatLng(coordinates['lat'], coordinates['lng']);
-        marker.position={lat:coordinates['lat'], lng:coordinates['lng']};
+        marker.position = { lat: coordinates['lat'], lng: coordinates['lng'] };
         map.panTo(latlng);
 
         document.getElementById('billing_latitude').value = coordinates['lat'];
         document.getElementById('billing_longitude').value = coordinates['lng'];
 
-        geocoder.geocode({'latLng': latlng}, function (results, status) {
+        geocoder.geocode({ 'latLng': latlng }, function (results, status) {
             if (status == google.maps.GeocoderStatus.OK) {
                 if (results[1]) {
                     document.getElementById('billing_address').value = results[1].formatted_address;
@@ -293,7 +293,7 @@ function checkoutFromShipping() {
     let physical_product = $('#physical_product').val();
     let billing_address_same_shipping;
 
-    if(physical_product === 'yes') {
+    if (physical_product === 'yes') {
         let sameAsShippingCheckbox = $('#same_as_shipping_address');
         billing_address_same_shipping = sameAsShippingCheckbox ? sameAsShippingCheckbox.is(":checked") : false;
 
@@ -327,7 +327,7 @@ function checkoutFromShipping() {
                 }
             });
         }
-    }else {
+    } else {
         billing_address_same_shipping = false;
     }
 
@@ -364,7 +364,7 @@ function checkoutFromShipping() {
                     });
                 }
             } else {
-                location.href = $('#route-checkout-payment').data('url');
+                checkoutFromPayment();
             }
         },
         complete: function () {

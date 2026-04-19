@@ -78,7 +78,7 @@ function billingMethodSelect(cardBody) {
     $('[name="billing_longitude"]').val(cardBody.find('.billing-contact-longitude-type').text());
 }
 
-function toggleBillingAddress(){
+function toggleBillingAddress() {
     let checkSameAsShipping = $('#same-as-shipping-address').is(":checked");
     if (checkSameAsShipping) {
         $('#hide-billing-address').slideUp();
@@ -87,10 +87,10 @@ function toggleBillingAddress(){
     }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     toggleBillingAddress();
 });
-$('#same-as-shipping-address').on('click', function() {
+$('#same-as-shipping-address').on('click', function () {
     toggleBillingAddress();
 });
 
@@ -354,7 +354,18 @@ $('#proceed-to-next-action').on('click', function () {
                     });
                 }
             } else {
-                location.href = redirectUrl;
+                let $checkedRadio = $(".payment-method-list-page")
+                    .find('input[type="radio"]:checked');
+                let formId = $checkedRadio.data("form");
+                let paymentValue = $checkedRadio.val();
+
+                if (paymentValue === "wallet_payment") {
+                    new bootstrap.Modal(document.getElementById('wallet_submit_button')).show();
+                } else if (paymentValue === "offline_payment") {
+                    new bootstrap.Modal(document.getElementById('offline_payment_submit_button')).show();
+                } else if (formId && formId !== "") {
+                    $(formId).submit();
+                }
             }
         },
         complete: function () {
@@ -370,8 +381,8 @@ $('#proceed-to-next-action').on('click', function () {
     });
 });
 
-$('#is_check_create_account').on('change', function() {
-    if($(this).is(':checked')) {
+$('#is_check_create_account').on('change', function () {
+    if ($(this).is(':checked')) {
         $('.is_check_create_account_password_group').fadeIn();
     } else {
         $('.is_check_create_account_password_group').fadeOut();

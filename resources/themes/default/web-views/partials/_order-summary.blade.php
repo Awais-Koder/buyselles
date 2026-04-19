@@ -217,7 +217,7 @@
         @endif
 
         <div class="pt-4">
-            @if (str_contains(request()->url(), 'checkout-payment'))
+            @if (str_contains(request()->url(), 'checkout-payment') || str_contains(request()->url(), 'checkout-details'))
                 <label class="custom-control custom-checkbox mb-3 d-flex user-select-none cursor-pointer">
                     <input type="checkbox" class="custom-control-input payment-input-checkbox">
                     <span class="custom-control-label">
@@ -267,7 +267,7 @@
         </strong>
     </div>
 
-    @if (str_contains(request()->url(), 'checkout-payment'))
+    @if (str_contains(request()->url(), 'checkout-payment') || str_contains(request()->url(), 'checkout-details'))
         <label class="custom-control custom-checkbox mb-3 d-flex user-select-none cursor-pointer">
             <input type="checkbox" class="custom-control-input payment-input-checkbox">
             <span class="custom-control-label">

@@ -78,7 +78,8 @@ $(".payment-method_parent").on("click", function (e) {
     $(this)
         .closest(".payment-method-form")
         .find("input[name='payment_method']")
-        .prop("checked", true);
+        .prop("checked", true)
+        .trigger("change");
 
     $(".payment-method_parent").removeClass("border-selected");
     $(this).addClass("border-selected");
@@ -107,7 +108,8 @@ $(".digital-payment-card").on("click", function (e) {
     $(this)
         .closest(".payment-method-form")
         .find("input[name='payment_method']")
-        .prop("checked", true);
+        .prop("checked", true)
+        .trigger("change");
 
     // Clear visual selection from all parent methods (COD, wallet, offline)
     $(".payment-method_parent").removeClass("border-selected");

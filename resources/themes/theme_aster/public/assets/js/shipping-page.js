@@ -360,7 +360,7 @@ $('#proceed-to-next-action').on('click', function () {
                 let paymentValue = $checkedRadio.val();
 
                 if (paymentValue === "wallet_payment") {
-                    new bootstrap.Modal(document.getElementById('wallet_submit_button')).show();
+                    $('#wallet_payment_form').submit();
                 } else if (paymentValue === "offline_payment") {
                     new bootstrap.Modal(document.getElementById('offline_payment_submit_button')).show();
                 } else if (formId && formId !== "") {

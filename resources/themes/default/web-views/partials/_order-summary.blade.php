@@ -172,6 +172,47 @@
                     {{ webCurrencyConverter(amount: $totalAmount - $referralAmount) }}
                 </span>
             </div>
+
+            {{-- Wallet balance breakdown — shown when wallet payment is selected --}}
+            @if (auth('customer')->check())
+                <?php
+                $walletBalance = auth('customer')->user()->wallet_balance ?? 0;
+                $orderTotal = $totalAmount - $referralAmount;
+                $walletRemaining = $walletBalance - $orderTotal;
+                ?>
+                <div id="wallet-balance-info" class="d-none mt-3">
+                    <hr class="my-2">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <img width="16" src="{{ theme_asset(path: 'public/assets/front-end/img/icons/wallet-sm.png') }}" alt="">
+                        <span class="fw-semibold fs-13">{{ translate('wallet_summary') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="cart_title">{{ translate('wallet_balance') }}</span>
+                        <span class="cart_value fw-semibold">{{ webCurrencyConverter(amount: $walletBalance) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="cart_title">{{ translate('order_amount') }}</span>
+                        <span class="cart_value">- {{ webCurrencyConverter(amount: $orderTotal) }}</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="cart_title fw-semibold {{ $walletRemaining >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ translate('remaining_balance') }}
+                        </span>
+                        <span class="cart_value fw-semibold {{ $walletRemaining >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ webCurrencyConverter(amount: $walletRemaining) }}
+                        </span>
+                    </div>
+                    @if ($walletRemaining < 0)
+                        <div class="mt-2 p-2 rounded" style="background: rgba(220,53,69,.08);">
+                            <small class="text-danger d-flex align-items-center gap-1">
+                                <i class="tio-warning-outlined"></i>
+                                {{ translate('you_do_not_have_sufficient_balance_for_pay_this_order') }}
+                            </small>
+                        </div>
+                    @endif
+                </div>
+            @endif
         </div>
         {{-- Digital product notice in checkout --}}
         @if ($hasDigitalInCart)
@@ -304,7 +345,19 @@
     <script>
         "use strict";
         $(document).ready(function() {
-            orderSummaryStickyFunction()
+            orderSummaryStickyFunction();
+
+            // Toggle wallet balance info in sidebar when wallet radio is selected/deselected
+            $(document).on('change', 'input[type="radio"]', function() {
+                var walletInfo = $('#wallet-balance-info');
+                if (walletInfo.length) {
+                    if ($('#wallet_payment').is(':checked')) {
+                        walletInfo.removeClass('d-none');
+                    } else {
+                        walletInfo.addClass('d-none');
+                    }
+                }
+            });
         });
     </script>
 @endpush

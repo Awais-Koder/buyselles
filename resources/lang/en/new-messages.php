@@ -11253,4 +11253,5 @@ return [
 	"response_submitted_successfully" => "Response submitted successfully",
 	"Under_Admin_Review" => "Under Admin Review",
 	"escalated_to_admin" => "Escalated to admin",
+	"wallet_summary" => "Wallet summary",
 ];

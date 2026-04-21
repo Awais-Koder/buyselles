@@ -69,6 +69,12 @@ updateProceedButtonState();
 
 function checkoutFromPayment() {
     let checked_button_id = $('input[type="radio"]:checked').attr("id");
+
+    if (!checked_button_id) {
+        toastr.error('Please select a payment method to proceed.');
+        return;
+    }
+
     $(".action-checkout-function").attr("disabled", true).addClass("disabled");
     // Wallet payment: submit hidden form directly — no modal.
     // Balance validation happens server-side in the controller.

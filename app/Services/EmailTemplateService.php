@@ -51,6 +51,8 @@ class EmailTemplateService
             EmailTemplateKey::ORDER_RECEIVED => ['icon', 'product_information', 'button_content', 'banner_image'],
             EmailTemplateKey::ADD_FUND_TO_WALLET => ['product_information', 'order_information', 'button_content', 'banner_image'],
             EmailTemplateKey::RESET_PASSWORD_VERIFICATION => ['product_information', 'order_information', 'button_content', 'banner_image'],
+            EmailTemplateKey::DISPUTE_ESCALATED => ['product_information', 'order_information', 'button_content', 'banner_image'],
+            EmailTemplateKey::DISPUTE_RESOLVED => ['product_information', 'order_information', 'button_content', 'banner_image'],
 
         ];
 
@@ -144,6 +146,8 @@ class EmailTemplateService
             EmailTemplateKey::ORDER_RECEIVED => 'New Order Received',
             EmailTemplateKey::ADD_FUND_TO_WALLET => 'Transaction Successful',
             EmailTemplateKey::RESET_PASSWORD_VERIFICATION => 'OTP Verification For Password Reset',
+            EmailTemplateKey::DISPUTE_ESCALATED => 'Dispute #{disputeId} Escalated to Admin',
+            EmailTemplateKey::DISPUTE_RESOLVED => 'Dispute #{disputeId} Has Been Resolved',
         ];
 
         return $titleData[$templateName];
@@ -182,6 +186,8 @@ class EmailTemplateService
             EmailTemplateKey::ORDER_RECEIVED => '<p><b>Hi ' . $userType . ',</b></p><p>We have sent you this email to notify that you have a new order.You will be able to see your orders after login to your panel.</p>',
             EmailTemplateKey::ADD_FUND_TO_WALLET => '<div style="text-align: center; ">Amount successfully credited to your wallet .</div><div style="text-align: center; "><br></div>',
             EmailTemplateKey::RESET_PASSWORD_VERIFICATION => '<p><b>Hi ' . $userType . ',</b></p><p>Your verification code is</p>',
+            EmailTemplateKey::DISPUTE_ESCALATED => '<p><b>Hi ' . $userType . ',</b></p><p>Dispute <b>#{disputeId}</b> on order <b>#{orderId}</b> has been escalated to admin and is now under review. Our team will carefully evaluate the case and notify both parties once a decision has been reached.</p>',
+            EmailTemplateKey::DISPUTE_RESOLVED => '<p><b>Hi ' . $userType . ',</b></p><p>Admin has made a final decision on dispute <b>#{disputeId}</b> (order <b>#{orderId}</b>). Please log in to your account to view the full resolution details.</p>',
         ];
 
         return $bodyData[$templateName];

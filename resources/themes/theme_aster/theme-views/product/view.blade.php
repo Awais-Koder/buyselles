@@ -36,6 +36,51 @@
                         'showProductsFilter' => true,
                     ])
 
+                    @php
+                        $showSubcatsOnly = isset($subCategories) && $subCategories->isNotEmpty()
+                            && !empty($data['category_id']) && empty($data['sub_category_id']);
+                    @endphp
+
+                    @if ($showSubcatsOnly)
+                        {{-- Top-level category: show full subcategory card grid; hide products --}}
+                        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3 mt-2 mb-4">
+                            @foreach ($subCategories as $sub)
+                                <div class="col">
+                                    <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                        class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card-aster"
+                                        style="transition: box-shadow .2s, transform .2s;">
+                                        <div class="d-flex justify-content-center mb-2">
+                                            <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                                alt="{{ $sub->name }}" width="64" height="64"
+                                                class="rounded-circle border p-1" style="object-fit: contain;">
+                                        </div>
+                                        <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                        <style>
+                            .sub-cat-card-aster:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); }
+                            .sub-cat-card-aster:hover span { color: var(--bs-primary) !important; }
+                        </style>
+                    @elseif (isset($subCategories) && $subCategories->isNotEmpty())
+                        {{-- Sub-category: show horizontal chip strip above products --}}
+                        <div class="d-flex gap-2 overflow-auto py-2 mb-2" style="scrollbar-width: thin;">
+                            @foreach ($subCategories as $sub)
+                                <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                    class="d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none sub-chip-aster"
+                                    style="min-width: fit-content; transition: all .2s;">
+                                    <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                        alt="{{ $sub->name }}" width="22" height="22"
+                                        class="rounded-circle border" style="object-fit: contain;">
+                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                        <style>.sub-chip-aster:hover { background-color: var(--bs-primary) !important; color: #fff !important; border-color: var(--bs-primary) !important; } .sub-chip-aster:hover span { color: #fff !important; }</style>
+                    @endif
+
+                    @if (!$showSubcatsOnly)
                     <div class="flexible-grid lg-down-1 gap-3 width--16rem">
                         <div class="card filter-toggle-aside mb-5">
                             <div class="d-flex d-lg-none pb-0 p-3 justify-content-end">
@@ -116,6 +161,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                 </form>
             </div>
         </section>

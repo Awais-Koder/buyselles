@@ -11,6 +11,8 @@ use App\Events\CustomerStatusUpdateEvent;
 use App\Events\DeliverymanPasswordResetEvent;
 use App\Events\DigitalProductDownloadEvent;
 use App\Events\DigitalProductOtpVerificationEvent;
+use App\Events\DisputeEscalatedEvent;
+use App\Events\DisputeResolvedEvent;
 use App\Events\EmailVerificationEvent;
 use App\Events\MaintenanceModeNotificationEvent;
 use App\Events\OrderEditDuePaymentEvent;
@@ -33,6 +35,8 @@ use App\Listeners\CustomerStatusUpdateListener;
 use App\Listeners\DeliverymanPasswordResetListener;
 use App\Listeners\DigitalProductDownloadListener;
 use App\Listeners\DigitalProductOtpVerificationListener;
+use App\Listeners\DisputeEscalatedListener;
+use App\Listeners\DisputeResolvedListener;
 use App\Listeners\EmailVerificationListener;
 use App\Listeners\MaintenanceModeNotificationListener;
 use App\Listeners\OrderEditDuePaymentListener;
@@ -126,6 +130,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         RestockProductNotificationEvent::class => [
             RestockProductNotificationListener::class,
+        ],
+        DisputeEscalatedEvent::class => [
+            DisputeEscalatedListener::class,
+        ],
+        DisputeResolvedEvent::class => [
+            DisputeResolvedListener::class,
         ],
     ];
 

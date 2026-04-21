@@ -274,12 +274,6 @@
                                     , {{ translate(str_replace('-', '_', $businessPage['slug'])) }}
                                 </a>
                             @endif
-                            @if ($businessPage['slug'] == 'refund-policy' && $hasPhysicalInCart)
-                                <a class="font-size-sm text-primary d-inline" target="_blank"
-                                    href="{{ route('business-page.view', ['slug' => $businessPage['slug']]) }}">
-                                    , {{ translate(str_replace('-', '_', $businessPage['slug'])) }}
-                                </a>
-                            @endif
                         @endforeach
                     </span>
                 </label>
@@ -319,12 +313,6 @@
                 </a>
                 @foreach ($web_config['business_pages']->where('default_status', 1) as $businessPage)
                     @if ($businessPage['slug'] == 'privacy-policy')
-                        <a class="font-size-sm text-primary d-inline" target="_blank"
-                            href="{{ route('business-page.view', ['slug' => $businessPage['slug']]) }}">
-                            , {{ translate(str_replace('-', '_', $businessPage['slug'])) }}
-                        </a>
-                    @endif
-                    @if ($businessPage['slug'] == 'refund-policy' && $hasPhysicalInCart)
                         <a class="font-size-sm text-primary d-inline" target="_blank"
                             href="{{ route('business-page.view', ['slug' => $businessPage['slug']]) }}">
                             , {{ translate(str_replace('-', '_', $businessPage['slug'])) }}

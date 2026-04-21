@@ -50,8 +50,13 @@ enum EmailTemplateKey
 
     const ORDER_CANCELED = 'order-canceled';
 
+    const DISPUTE_ESCALATED = 'dispute-escalated';
+
+    const DISPUTE_RESOLVED = 'dispute-resolved';
+
     const ADMIN_EMAIL_LIST = [
         EmailTemplateKey::ORDER_RECEIVED,
+        EmailTemplateKey::DISPUTE_ESCALATED,
     ];
 
     const VENDOR_EMAIL_LIST = [
@@ -62,6 +67,8 @@ enum EmailTemplateKey
         EmailTemplateKey::ACCOUNT_ACTIVATION,
         EmailTemplateKey::FORGET_PASSWORD,
         EmailTemplateKey::ORDER_RECEIVED,
+        EmailTemplateKey::DISPUTE_ESCALATED,
+        EmailTemplateKey::DISPUTE_RESOLVED,
     ];
 
     const CUSTOMER_EMAIL_LIST = [
@@ -81,6 +88,8 @@ enum EmailTemplateKey
         EmailTemplateKey::DIGITAL_PRODUCT_DOWNLOAD,
         EmailTemplateKey::DIGITAL_PRODUCT_OTP,
         EmailTemplateKey::ADD_FUND_TO_WALLET,
+        EmailTemplateKey::DISPUTE_ESCALATED,
+        EmailTemplateKey::DISPUTE_RESOLVED,
     ];
 
     const DELIVERY_MAN_EMAIL_LIST = [

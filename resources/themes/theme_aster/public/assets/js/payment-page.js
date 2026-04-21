@@ -129,7 +129,8 @@ function updateProceedButtonState() {
     ) {
         $btn.removeClass("custom-disabled").removeAttr("disabled");
     } else {
-        $btn.addClass("custom-disabled").attr("disabled", true);
+        // Keep only CSS class for styling; do NOT add disabled attr so click events still fire.
+        $btn.addClass("custom-disabled").removeAttr("disabled");
     }
 }
 
@@ -161,7 +162,26 @@ $("#bring_change_amount").on("hidden.bs.collapse", function () {
     $(document).off("click.outsideCollapse");
 });
 
+$("#proceed-to-next-action").on("click", function () {
+    if ($(this).hasClass("custom-disabled")) {
+        if ($('[name="payment_method"]:checked').length === 0) {
+            toastr.error('Please select a payment method to proceed.');
+        } else if ($(".payment-input-checkbox:checked").length === 0) {
+            toastr.error('Please agree to the terms and conditions to proceed.');
+        }
+        return;
+    }
+});
+
 $("#proceed-to-payment-action").on("click", function () {
+    if ($(this).hasClass("custom-disabled")) {
+        if ($('[name="payment_method"]:checked').length === 0) {
+            toastr.error('Please select a payment method to proceed.');
+        } else if ($(".payment-input-checkbox:checked").length === 0) {
+            toastr.error('Please agree to the terms and conditions to proceed.');
+        }
+        return;
+    }
     let getType = $(this).data("type");
     if (getType && getType.toString() === "checkout-payment") {
         let formId = $(".payment-method-list-page")

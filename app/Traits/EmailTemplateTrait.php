@@ -23,7 +23,8 @@ trait EmailTemplateTrait
         $deliveryManName = null,
         $orderId = null,
         $emailId = null,
-        $passwordResetURL = null
+        $passwordResetURL = null,
+        $disputeId = null,
     ) {
         $data = $value;
         if ($data) {
@@ -36,6 +37,7 @@ trait EmailTemplateTrait
             $data = $orderId ? str_replace('{orderId}', $orderId, $data) : $data;
             $data = $emailId ? str_replace('{emailId}', $emailId, $data) : $data;
             $data = $passwordResetURL ? str_replace('{passwordResetURL}', $passwordResetURL, $data) : $data;
+            $data = $disputeId ? str_replace('{disputeId}', $disputeId, $data) : $data;
         }
 
         return $data;
@@ -65,7 +67,8 @@ trait EmailTemplateTrait
                 deliveryManName: $data['deliveryManName'] ?? null,
                 orderId: $data['orderId'] ?? null,
                 emailId: $data['emailId'] ?? null,
-                passwordResetURL: $data['passwordResetURL'] ?? null
+                passwordResetURL: $data['passwordResetURL'] ?? null,
+                disputeId: $data['disputeId'] ?? null,
             );
             $template['title'] = $this->textVariableFormat(
                 value: $template['title'],
@@ -74,7 +77,8 @@ trait EmailTemplateTrait
                 vendorName: $data['vendorName'] ?? null,
                 shopName: $data['shopName'] ?? null,
                 deliveryManName: $data['deliveryManName'] ?? null,
-                orderId: $data['orderId'] ?? null
+                orderId: $data['orderId'] ?? null,
+                disputeId: $data['disputeId'] ?? null,
             );
             $data['send-mail'] = true;
             if ($template['status'] == 1) {

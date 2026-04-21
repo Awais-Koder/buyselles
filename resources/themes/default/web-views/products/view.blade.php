@@ -52,24 +52,54 @@
                 'showProductsFilter' => true,
             ])
 
-            {{-- Sub-category horizontal strip --}}
+            {{-- Sub-category section --}}
+            @php
+                $showSubcatsOnly = isset($subCategories) && $subCategories->isNotEmpty()
+                    && !empty($data['category_id']) && empty($data['sub_category_id']);
+            @endphp
             @if (isset($subCategories) && $subCategories->isNotEmpty())
-                <div class="sub-category-strip py-2 mt-2">
-                    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+                @if ($showSubcatsOnly)
+                    {{-- Top-level category: show full subcategory card grid; hide products --}}
+                    <div class="row g-3 mt-2 mb-4">
                         @foreach ($subCategories as $sub)
-                            <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
-                                class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
-                                style="min-width: fit-content; transition: all .2s;">
-                                <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
-                                    alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
-                                    style="object-fit: contain;">
-                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
-                            </a>
+                            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                                <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                    class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card"
+                                    style="transition: box-shadow .2s, transform .2s;">
+                                    <div class="d-flex justify-content-center mb-2">
+                                        <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                            alt="{{ $sub->name }}" width="60" height="60"
+                                            class="rounded-circle border p-1" style="object-fit: contain;">
+                                    </div>
+                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                </a>
+                            </div>
                         @endforeach
                     </div>
-                </div>
+                    <style>
+                        .sub-cat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); color: var(--primary-clr) !important; }
+                        .sub-cat-card:hover span { color: var(--primary-clr) !important; }
+                    </style>
+                @else
+                    {{-- Sub-category: show horizontal strip above products --}}
+                    <div class="sub-category-strip py-2 mt-2">
+                        <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
+                            @foreach ($subCategories as $sub)
+                                <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                    class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
+                                    style="min-width: fit-content; transition: all .2s;">
+                                    <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                        alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
+                                        style="object-fit: contain;">
+                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @endif
 
+            @if (!($showSubcatsOnly ?? false))
             <div class="py-3 mb-2 mb-md-4 rtl __inline-35" dir="{{ session('direction') }}">
                 <div class="row">
                     <aside class="col-lg-3 hidden-xs col-md-3 col-sm-4 SearchParameters __search-sidebar"
@@ -120,6 +150,7 @@
                     </section>
                 </div>
             </div>
+            @endif
 
         </form>
 

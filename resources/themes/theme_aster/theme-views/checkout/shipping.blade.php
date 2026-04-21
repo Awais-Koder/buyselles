@@ -1072,6 +1072,12 @@
                     emailField[0].reportValidity();
                     return;
                 }
+
+                var $checkedRadio = $(".payment-method-list-page").find('input[type="radio"]:checked');
+                if ($checkedRadio.length === 0) {
+                    toastr.error('Please select a payment method to proceed.');
+                    return;
+                }
                 $.ajaxSetup({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') }
                 });

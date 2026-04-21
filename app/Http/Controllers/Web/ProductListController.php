@@ -29,10 +29,10 @@ class ProductListController extends Controller
     {
         $pageTitle = translate('Products');
         if ($request->has('publishing_house_id')) {
-            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name.' '.translate('Products');
+            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name . ' ' . translate('Products');
         }
         if ($request->has('author_id')) {
-            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name.' '.translate('Products');
+            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name . ' ' . translate('Products');
         }
 
         return match (theme_root_path()) {
@@ -57,7 +57,7 @@ class ProductListController extends Controller
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])).' '.translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])) . ' ' . translate('products'),
             metaData: $brand?->seo
         );
     }
@@ -91,7 +91,7 @@ class ProductListController extends Controller
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])).' '.translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])) . ' ' . translate('products'),
             metaData: $category?->seo
         );
     }
@@ -309,6 +309,7 @@ class ProductListController extends Controller
             'productAuthors' => $productAuthors,
             'sort_by' => $request['sort_by'],
             'robotsMetaContentData' => $metaData,
+            'subCategories' => $request['_sub_categories'] ?? collect(),
         ]);
     }
 

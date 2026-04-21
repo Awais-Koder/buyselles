@@ -952,6 +952,10 @@
                     emailField[0].reportValidity();
                     return;
                 }
+                if ($('input[type="radio"]:checked').length === 0) {
+                    toastr.error('Please select a payment method to proceed.');
+                    return;
+                }
                 $.ajaxSetup({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="_token"]').attr('content') }
                 });

@@ -61,6 +61,44 @@
             </div>
         </div>
     </div>
+    {{-- AI Power Strip --}}
+    <div class="py-4" style="background:#f8f9fa; border-bottom:1px solid #e9ecef;">
+        <div class="container">
+            <div class="row g-4 justify-content-center">
+
+                <div class="col-6 col-md-4">
+                    <div class="d-flex flex-column align-items-center text-center gap-2 p-4 rounded-3 h-100" style="background:#fff; box-shadow:0 1px 8px rgba(0,0,0,.06);">
+                        <span class="text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        </span>
+                        <p class="fw-semibold mb-0 text-dark">{{ translate('AI Security') }}</p>
+                        <small class="text-muted d-none d-sm-block">{{ translate('Real-time fraud detection on every transaction') }}</small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4">
+                    <div class="d-flex flex-column align-items-center text-center gap-2 p-4 rounded-3 h-100" style="background:#fff; box-shadow:0 1px 8px rgba(0,0,0,.06);">
+                        <span class="text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z"/></svg>
+                        </span>
+                        <p class="fw-semibold mb-0 text-dark">{{ translate('Smart Recommendations') }}</p>
+                        <small class="text-muted d-none d-sm-block">{{ translate('Deals tailored to your preferences by AI') }}</small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-4">
+                    <div class="d-flex flex-column align-items-center text-center gap-2 p-4 rounded-3 h-100" style="background:#fff; box-shadow:0 1px 8px rgba(0,0,0,.06);">
+                        <span class="text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </span>
+                        <p class="fw-semibold mb-0 text-dark">{{ translate('Fast Dispute Resolution') }}</p>
+                        <small class="text-muted d-none d-sm-block">{{ translate('AI-assisted reviews for faster fair outcomes') }}</small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
     <div class="footer-main px-2  px-lg-0">
         <div class="container">
             <div class="row gy-5">

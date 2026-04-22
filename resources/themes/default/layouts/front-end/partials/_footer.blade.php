@@ -1,3 +1,58 @@
+{{-- AI Power Strip --}}
+<div class="__inline-9 rtl bk-ai-cards">
+    <div class="text-center pb-4 pt-0">
+        <div class="max-w-1160px mx-auto">
+            <div class="container">
+                <div class="row g-4">
+
+                    <div class="col-6 col-md-4">
+                        <div class="footer-slide-item bg-white">
+                            <div>
+                                <div class="text-center text-primary mb-lg-3 mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="m-0 mt-2 fw-semibold">{{ translate('AI Security') }}</p>
+                                    <small class="d-none d-sm-block">{{ translate('Real-time fraud detection on every transaction') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <div class="footer-slide-item bg-white">
+                            <div>
+                                <div class="text-center text-primary mb-lg-3 mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z"/></svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="m-0 mt-2 fw-semibold">{{ translate('Smart Recommendations') }}</p>
+                                    <small class="d-none d-sm-block">{{ translate('Deals tailored to your preferences by AI') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <div class="footer-slide-item bg-white">
+                            <div>
+                                <div class="text-center text-primary mb-lg-3 mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="m-0 mt-2 fw-semibold">{{ translate('Fast Dispute Resolution') }}</p>
+                                    <small class="d-none d-sm-block">{{ translate('AI-assisted reviews for faster fair outcomes') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="__inline-9 rtl">
     <div class="text-center pb-4">
         <div class="max-w-1160px mx-auto footer-slider-container">

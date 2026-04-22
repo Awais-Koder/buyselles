@@ -85,6 +85,64 @@
                         </div>
 
                         <div class="">
+                            @php
+                                $hasSubCats = isset($subCategories) && $subCategories->isNotEmpty();
+                                $catIsSelected = !empty($data['category_id']) || !empty($data['sub_category_id']);
+                                $showProducts = !$hasSubCats || $catIsSelected;
+                            @endphp
+                            @if ($hasSubCats)
+                                @php
+                                    $breadcrumbItems = [];
+                                    $selCatId = $data['category_id'] ?? ($data['sub_category_id'] ?? null);
+                                    if ($selCatId) {
+                                        $currentCat = App\Models\Category::find($selCatId);
+                                        if ($currentCat) {
+                                            array_unshift($breadcrumbItems, $currentCat->name);
+                                            if ($currentCat->parent_id) {
+                                                $parentCat = App\Models\Category::find($currentCat->parent_id);
+                                                if ($parentCat) {
+                                                    array_unshift($breadcrumbItems, $parentCat->name);
+                                                    if ($parentCat->parent_id) {
+                                                        $grandParent = App\Models\Category::find($parentCat->parent_id);
+                                                        if ($grandParent) {
+                                                            array_unshift($breadcrumbItems, $grandParent->name);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                @endphp
+                                <div class="mt-3 mb-4">
+                                    @if (!empty($breadcrumbItems))
+                                        <p class="text-muted fs-12 mb-1">
+                                            {{ translate('category') }}@foreach ($breadcrumbItems as $crumb) <span class="mx-1">&rarr;</span>{{ $crumb }}@endforeach
+                                        </p>
+                                    @endif
+                                    <h5 class="fw-bold mb-3">{{ empty($breadcrumbItems) ? translate('Categories') : end($breadcrumbItems) }}</h5>
+                                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+                                        @foreach ($subCategories as $sub)
+                                            <div class="col">
+                                                <a href="{{ route('vendor-shop', ['slug' => $slug, $subCatParam => $sub->id, 'data_from' => 'category', 'offer_type' => $data['offer_type'] ?? '', 'page' => 1]) }}"
+                                                    class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card-aster"
+                                                    style="transition: box-shadow .2s, transform .2s;">
+                                                    <div class="d-flex justify-content-center mb-2">
+                                                        <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                                            alt="{{ $sub->name }}" width="64" height="64"
+                                                            class="rounded-circle border p-1" style="object-fit: contain;">
+                                                    </div>
+                                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <style>
+                                    .sub-cat-card-aster:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); }
+                                    .sub-cat-card-aster:hover span { color: var(--bs-primary) !important; }
+                                </style>
+                            @endif
+                            @if ($showProducts)
                             <div class="d-flex flex-wrap flex-lg-nowrap align-items-start justify-content-between gap-3 mb-2">
 
                                 <div class="d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between gap-2 gap-md-3 flex-grow-1">
@@ -118,10 +176,11 @@
                                     </button>
                                 </div>
                             </div>
-                            @php($decimal_point_settings = getWebConfig(name: 'decimal_point_settings'))
+                            @php $decimal_point_settings = getWebConfig(name: 'decimal_point_settings'); @endphp
                             <div id="ajax-products-view">
                                 @include('theme-views.product._ajax-products',['products'=>$products,'decimal_point_settings'=>$decimal_point_settings])
                             </div>
+                            @endif
                         </div>
                     </div>
                 </form>

@@ -12,25 +12,8 @@
     <meta property="twitter:url" content="{{ env('APP_URL') }}">
     <meta property="twitter:description" content="{{ $web_config['meta_description'] }}">
     <style>
-        .sub-cat-chip:hover {
-            background-color: var(--primary-clr) !important;
-            color: #fff !important;
-            border-color: var(--primary-clr) !important;
-        }
-
-        .sub-cat-chip:hover span {
-            color: #fff !important;
-        }
-
-        .sub-category-strip::-webkit-scrollbar,
-        .sub-category-strip>div::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .sub-category-strip>div::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
+        .sub-cat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); color: var(--primary-clr) !important; }
+        .sub-cat-card:hover span { color: var(--primary-clr) !important; }
     </style>
 @endpush
 
@@ -52,54 +35,6 @@
                 'showProductsFilter' => true,
             ])
 
-            {{-- Sub-category section --}}
-            @php
-                $showSubcatsOnly = isset($subCategories) && $subCategories->isNotEmpty()
-                    && !empty($data['category_id']) && empty($data['sub_category_id']);
-            @endphp
-            @if (isset($subCategories) && $subCategories->isNotEmpty())
-                @if ($showSubcatsOnly)
-                    {{-- Top-level category: show full subcategory card grid; hide products --}}
-                    <div class="row g-3 mt-2 mb-4">
-                        @foreach ($subCategories as $sub)
-                            <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                                <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
-                                    class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card"
-                                    style="transition: box-shadow .2s, transform .2s;">
-                                    <div class="d-flex justify-content-center mb-2">
-                                        <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
-                                            alt="{{ $sub->name }}" width="60" height="60"
-                                            class="rounded-circle border p-1" style="object-fit: contain;">
-                                    </div>
-                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
-                                </a>
-                            </div>
-                        @endforeach
-                    </div>
-                    <style>
-                        .sub-cat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); color: var(--primary-clr) !important; }
-                        .sub-cat-card:hover span { color: var(--primary-clr) !important; }
-                    </style>
-                @else
-                    {{-- Sub-category: show horizontal strip above products --}}
-                    <div class="sub-category-strip py-2 mt-2">
-                        <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
-                            @foreach ($subCategories as $sub)
-                                <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
-                                    class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
-                                    style="min-width: fit-content; transition: all .2s;">
-                                    <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
-                                        alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
-                                        style="object-fit: contain;">
-                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            @endif
-
-            @if (!($showSubcatsOnly ?? false))
             <div class="py-3 mb-2 mb-md-4 rtl __inline-35" dir="{{ session('direction') }}">
                 <div class="row">
                     <aside class="col-lg-3 hidden-xs col-md-3 col-sm-4 SearchParameters __search-sidebar"
@@ -144,13 +79,67 @@
                     </aside>
 
                     <section class="col-lg-9">
-                        <div class="row" id="ajax-products-view">
-                            @include('web-views.products._ajax-products', ['products' => $products])
-                        </div>
+                        @php
+                            $hasSubCats = isset($subCategories) && $subCategories->isNotEmpty();
+                            $catIsSelected = !empty($data['category_id']) || !empty($data['sub_category_id']);
+                            $showProducts = !$hasSubCats || $catIsSelected;
+                        @endphp
+                        @if ($hasSubCats)
+                            @php
+                                $breadcrumbItems = [];
+                                $selCatId = $data['category_id'] ?? ($data['sub_category_id'] ?? null);
+                                if ($selCatId) {
+                                    $currentCat = App\Models\Category::find($selCatId);
+                                    if ($currentCat) {
+                                        array_unshift($breadcrumbItems, $currentCat->name);
+                                        if ($currentCat->parent_id) {
+                                            $parentCat = App\Models\Category::find($currentCat->parent_id);
+                                            if ($parentCat) {
+                                                array_unshift($breadcrumbItems, $parentCat->name);
+                                                if ($parentCat->parent_id) {
+                                                    $grandParent = App\Models\Category::find($parentCat->parent_id);
+                                                    if ($grandParent) {
+                                                        array_unshift($breadcrumbItems, $grandParent->name);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            @endphp
+                            <div class="mt-3 mb-4">
+                                @if (!empty($breadcrumbItems))
+                                    <p class="text-muted fs-12 mb-1">
+                                        {{ translate('category') }}@foreach ($breadcrumbItems as $crumb) <span class="mx-1">&rarr;</span>{{ $crumb }}@endforeach
+                                    </p>
+                                @endif
+                                <h5 class="fw-bold mb-3">{{ empty($breadcrumbItems) ? translate('Categories') : $pageTitleContent }}</h5>
+                                <div class="row g-3">
+                                    @foreach ($subCategories as $sub)
+                                        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                                            <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
+                                                class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card"
+                                                style="transition: box-shadow .2s, transform .2s;">
+                                                <div class="d-flex justify-content-center mb-2">
+                                                    <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                                        alt="{{ $sub->name }}" width="60" height="60"
+                                                        class="rounded-circle border p-1" style="object-fit: contain;">
+                                                </div>
+                                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @if ($showProducts)
+                            <div class="row" id="ajax-products-view">
+                                @include('web-views.products._ajax-products', ['products' => $products])
+                            </div>
+                        @endif
                     </section>
                 </div>
             </div>
-            @endif
 
         </form>
 

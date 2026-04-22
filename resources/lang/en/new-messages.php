@@ -11254,4 +11254,9 @@ return [
 	"Under_Admin_Review" => "Under Admin Review",
 	"escalated_to_admin" => "Escalated to admin",
 	"wallet_summary" => "Wallet summary",
+	"AI_pre-screens_every_dispute_to_prioritise_urgent_cases,_so_our_team_delivers_fair_resolutions_faster." => "AI pre-screens every dispute to prioritise urgent cases, so our team delivers fair resolutions faster.",
+	"Fast_Dispute_Resolution" => "Fast Dispute Resolution",
+	"Our_AI_analyses_your_preferences_and_shopping_history_to_surface_the_deals_most_relevant_to_you." => "Our AI analyses your preferences and shopping history to surface the deals most relevant to you.",
+	"AI-assisted_reviews_for_faster_fair_outcomes" => "AI-assisted reviews for faster fair outcomes",
+	"Deals_tailored_to_your_preferences_by_AI" => "Deals tailored to your preferences by AI",
 ];

@@ -28,30 +28,13 @@
     <meta property="og:description" content="{{ $web_config['meta_description'] }}">
     <meta property="twitter:description" content="{{ $web_config['meta_description'] }}">
     <style>
-        .sub-cat-chip:hover {
-            background-color: var(--primary-clr) !important;
-            color: #fff !important;
-            border-color: var(--primary-clr) !important;
-        }
-
-        .sub-cat-chip:hover span {
-            color: #fff !important;
-        }
-
-        .sub-category-strip::-webkit-scrollbar,
-        .sub-category-strip>div::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .sub-category-strip>div::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
+        .sub-cat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); transform: translateY(-2px); color: var(--primary-clr) !important; }
+        .sub-cat-card:hover span { color: var(--primary-clr) !important; }
     </style>
 @endpush
 
 @section('content')
-    @php($decimalPointSettings = getWebConfig(name: 'decimal_point_settings'))
+    @php $decimalPointSettings = getWebConfig(name: 'decimal_point_settings'); @endphp
 
     <div class="container py-4 __inline-67">
         <div class="rtl">
@@ -60,7 +43,7 @@
                     <img class="__shop-page-banner" alt=""
                         src="{{ getStorageImages(path: $shopInfoArray['banner_full_url'], type: 'wide-banner') }}">
                 @else
-                    @php($banner = getInHouseShopConfig(key: 'banner_full_url'))
+                    @php $banner = getInHouseShopConfig(key: 'banner_full_url'); @endphp
                     <img class="__shop-page-banner" alt=""
                         src="{{ getStorageImages(path: $banner, type: 'wide-banner') }}">
                 @endif
@@ -87,24 +70,6 @@
                 'showProductsFilter' => true,
                 'shopViewPageHeader' => true,
             ])
-
-            {{-- Sub-category horizontal strip --}}
-            @if (isset($subCategories) && $subCategories->isNotEmpty())
-                <div class="sub-category-strip py-2 mt-2">
-                    <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: thin;">
-                        @foreach ($subCategories as $sub)
-                            <a href="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug'], $subCatParam => $sub->id, 'data_from' => 'category', 'offer_type' => $data['offer_type'] ?? '', 'page' => 1]) }}"
-                                class="sub-cat-chip d-flex align-items-center gap-2 text-nowrap px-3 py-2 rounded-pill border bg-white text-decoration-none"
-                                style="min-width: fit-content; transition: all .2s;">
-                                <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
-                                    alt="{{ $sub->name }}" width="24" height="24" class="rounded-circle border"
-                                    style="object-fit: contain;">
-                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
 
             <div class="py-3 mb-2 mb-md-4 rtl __inline-35" dir="{{ session('direction') }}">
                 <div class="row">
@@ -154,9 +119,66 @@
                     </aside>
 
                     <section class="col-lg-9">
-                        <div class="row" id="ajax-products-view">
-                            @include('web-views.products._ajax-products', ['products' => $products])
-                        </div>
+                        @php
+                            $hasSubCats = isset($subCategories) && $subCategories->isNotEmpty();
+                            $catIsSelected = !empty($data['category_id']) || !empty($data['sub_category_id']);
+                            $showProducts = !$hasSubCats || $catIsSelected;
+                        @endphp
+                        @if ($hasSubCats)
+                            @php
+                                $selCatId = $data['category_id'] ?? ($data['sub_category_id'] ?? null);
+                                $catHeading = translate('Categories');
+                                $breadcrumbItems = [];
+                                if ($selCatId) {
+                                    $currentCat = App\Models\Category::find($selCatId);
+                                    if ($currentCat) {
+                                        $catHeading = $currentCat->name;
+                                        array_unshift($breadcrumbItems, $currentCat->name);
+                                        if ($currentCat->parent_id) {
+                                            $parentCat = App\Models\Category::find($currentCat->parent_id);
+                                            if ($parentCat) {
+                                                array_unshift($breadcrumbItems, $parentCat->name);
+                                                if ($parentCat->parent_id) {
+                                                    $grandParent = App\Models\Category::find($parentCat->parent_id);
+                                                    if ($grandParent) {
+                                                        array_unshift($breadcrumbItems, $grandParent->name);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            @endphp
+                            <div class="mb-4">
+                                @if (!empty($breadcrumbItems))
+                                    <p class="text-muted fs-12 mb-1">
+                                        {{ translate('category') }}@foreach ($breadcrumbItems as $crumb) <span class="mx-1">&rarr;</span>{{ $crumb }}@endforeach
+                                    </p>
+                                @endif
+                                <h5 class="fw-bold mb-3">{{ $catHeading }}</h5>
+                                <div class="row g-3">
+                                    @foreach ($subCategories as $sub)
+                                        <div class="col-6 col-sm-4 col-md-3">
+                                            <a href="{{ route('vendor-shop', ['slug' => $shopInfoArray['slug'], $subCatParam => $sub->id, 'data_from' => 'category', 'offer_type' => $data['offer_type'] ?? '', 'page' => 1]) }}"
+                                                class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card"
+                                                style="transition: box-shadow .2s, transform .2s;">
+                                                <div class="d-flex justify-content-center mb-2">
+                                                    <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
+                                                        alt="{{ $sub->name }}" width="60" height="60"
+                                                        class="rounded-circle border p-1" style="object-fit: contain;">
+                                                </div>
+                                                <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @if ($showProducts)
+                            <div class="row" id="ajax-products-view">
+                                @include('web-views.products._ajax-products', ['products' => $products])
+                            </div>
+                        @endif
                     </section>
                 </div>
             </div>

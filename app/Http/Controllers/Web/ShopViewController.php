@@ -108,20 +108,21 @@ class ShopViewController extends Controller
         }
         $data = self::getProductListRequestData(request: $request);
 
-        $subCategories = collect();
-        $subCatParam = 'sub_category_id';
+        $subCatParam = 'category_id';
         if ($request->has('category_id') && $request['category_id']) {
             $selectedCategory = Category::find($request['category_id']);
-            if ($selectedCategory) {
-                $subCategories = $selectedCategory->childes()->orderBy('priority')->get();
-                $subCatParam = 'sub_category_id';
-            }
+            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCatParam = 'sub_category_id';
         } elseif ($request->has('sub_category_id') && $request['sub_category_id']) {
             $selectedCategory = Category::find($request['sub_category_id']);
-            if ($selectedCategory) {
-                $subCategories = $selectedCategory->childes()->orderBy('priority')->get();
-                $subCatParam = 'sub_sub_category_id';
-            }
+            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCatParam = 'sub_sub_category_id';
+        } elseif ($request->has('sub_sub_category_id') && $request['sub_sub_category_id']) {
+            // Leaf level — show products, not categories
+            $subCategories = collect();
+        } else {
+            // No category selected — show the store's top-level categories as cards
+            $subCategories = $categories;
         }
 
         return view(VIEW_FILE_NAMES['shop_view_page'], [
@@ -251,6 +252,23 @@ class ShopViewController extends Controller
 
         $data = self::getProductListRequestData(request: $request);
 
+        $subCatParam = 'category_id';
+        if ($request->has('category_id') && $request['category_id']) {
+            $selectedCategory = Category::find($request['category_id']);
+            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCatParam = 'sub_category_id';
+        } elseif ($request->has('sub_category_id') && $request['sub_category_id']) {
+            $selectedCategory = Category::find($request['sub_category_id']);
+            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCatParam = 'sub_sub_category_id';
+        } elseif ($request->has('sub_sub_category_id') && $request['sub_sub_category_id']) {
+            // Leaf level — show products, not categories
+            $subCategories = collect();
+        } else {
+            // No category selected — show the store's top-level categories as cards
+            $subCategories = $categories;
+        }
+
         if ($request->ajax()) {
             return response()->json([
                 'total_product' => $products->total(),
@@ -284,6 +302,8 @@ class ShopViewController extends Controller
             'singlePageProductCount' => $singlePageProductCount,
             'page' => $request['page'] ?? 1,
             'total_order' => $totalOrder,
+            'subCategories' => $subCategories,
+            'subCatParam' => $subCatParam,
         ]);
     }
 

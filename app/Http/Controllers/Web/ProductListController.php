@@ -126,6 +126,10 @@ class ProductListController extends Controller
     {
         $request->merge(['data_from' => 'latest']);
 
+        if (! $request->has('category_id') && ! $request->has('sub_category_id') && ! $request->has('sub_sub_category_id')) {
+            $request->merge(['_sub_categories' => Category::where('position', 0)->orderBy('priority')->get()]);
+        }
+
         return self::getProductsListPage(
             request: $request,
             pageType: 'latest',

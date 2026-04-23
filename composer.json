@@ -48,6 +48,7 @@
         "paypal/rest-api-sdk-php": "^1.6",
         "phonepe/phonepe-pg-php-sdk": "^1.0",
         "phpoffice/phpspreadsheet": "^1.29",
+        "predis/predis": "*",
         "rap2hpoutre/fast-excel": "^5.3",
         "razorpay/razorpay": "^2.9",
         "rennokki/laravel-eloquent-query-cache": "^3.4",

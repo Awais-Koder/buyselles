@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use App\Traits\CalculatorTrait;
 use App\Traits\ResponseHandler;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -351,6 +352,30 @@ class ProductAddRequest extends Request
                         $validator->errors()->add(
                             'video_url',
                             translate('Please_provide_valid_youtube_embed_link')
+                        );
+                    }
+                }
+
+                $subSubCategoryId = $this->input('sub_sub_category_id');
+                $subCategoryId = $this->input('sub_category_id');
+                $categoryId = $this->input('category_id');
+
+                if (! empty($subSubCategoryId)) {
+                    // sub_sub_category is always a leaf — no further check needed
+                } elseif (! empty($subCategoryId)) {
+                    $hasChildren = Category::where('parent_id', $subCategoryId)->exists();
+                    if ($hasChildren) {
+                        $validator->errors()->add(
+                            'sub_category_id',
+                            translate('please_select_a_sub_sub_category_this_sub_category_has_nested_categories')
+                        );
+                    }
+                } elseif (! empty($categoryId)) {
+                    $hasChildren = Category::where('parent_id', $categoryId)->exists();
+                    if ($hasChildren) {
+                        $validator->errors()->add(
+                            'category_id',
+                            translate('please_select_a_sub_category_this_category_has_nested_sub_categories')
                         );
                     }
                 }

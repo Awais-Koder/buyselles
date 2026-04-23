@@ -123,6 +123,55 @@
                     });
                 }
             }
+
+            // Leaf-category enforcement: warn when a non-leaf category is selected
+            function checkLeafCategory() {
+                const $subCat = $('#sub-category-select');
+                const $subSubCat = $('#sub-sub-category-select');
+                const $warning = $('#leaf-category-warning');
+                const $msg = $('#leaf-category-warning-msg');
+
+                const subCatHasOptions = $subCat.find('option:not([disabled])').length > 0;
+                const subSubCatHasOptions = $subSubCat.find('option:not([disabled])').length > 0;
+                const subCatVal = $subCat.val();
+                const subSubCatVal = $subSubCat.val();
+
+                if (subCatHasOptions && !subSubCatHasOptions && subCatVal && subCatVal !== 'null') {
+                    // sub-category selected and no sub-sub available → leaf, OK
+                    $warning.addClass('d-none');
+                } else if (subSubCatHasOptions && !subSubCatVal) {
+                    // sub-sub-category options exist but none selected → require deeper selection
+                    $msg.text('{{ translate('please_select_a_sub_sub_category_this_sub_category_has_nested_categories') }}');
+                    $warning.removeClass('d-none');
+                } else if (subCatHasOptions && !subCatVal) {
+                    // sub-category options exist but none selected → require deeper selection
+                    $msg.text('{{ translate('please_select_a_sub_category_this_category_has_nested_sub_categories') }}');
+                    $warning.removeClass('d-none');
+                } else {
+                    $warning.addClass('d-none');
+                }
+            }
+
+            const subCatObserver = new MutationObserver(function() {
+                setTimeout(checkLeafCategory, 100);
+            });
+            const subSubCatObserver = new MutationObserver(function() {
+                setTimeout(checkLeafCategory, 100);
+            });
+
+            const $subCatEl = document.getElementById('sub-category-select');
+            const $subSubCatEl = document.getElementById('sub-sub-category-select');
+
+            if ($subCatEl) {
+                subCatObserver.observe($subCatEl, { childList: true, subtree: true });
+            }
+            if ($subSubCatEl) {
+                subSubCatObserver.observe($subSubCatEl, { childList: true, subtree: true });
+            }
+
+            $(document).on('change', '#sub-category-select, #sub-sub-category-select', function() {
+                setTimeout(checkLeafCategory, 150);
+            });
         });
     </script>
 @endpush

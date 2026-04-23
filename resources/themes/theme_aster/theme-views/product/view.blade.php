@@ -74,8 +74,7 @@
                         <div class="">
                             @php
                                 $hasSubCats = isset($subCategories) && $subCategories->isNotEmpty();
-                                $catIsSelected = !empty($data['category_id']) || !empty($data['sub_category_id']);
-                                $showProducts = !$hasSubCats || $catIsSelected;
+                                $showProducts = !$hasSubCats;
                             @endphp
                             @if ($hasSubCats)
                                 @php
@@ -107,18 +106,19 @@
                                         </p>
                                     @endif
                                     <h5 class="fw-bold mb-3">{{ empty($breadcrumbItems) ? translate('Categories') : $pageTitleContent }}</h5>
-                                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+                                    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3">
                                         @foreach ($subCategories as $sub)
                                             <div class="col">
                                                 <a href="{{ route('category-products', ['slug' => $sub->slug]) }}"
-                                                    class="card text-center text-decoration-none border rounded-3 p-3 h-100 sub-cat-card-aster"
+                                                    class="card text-center text-decoration-none border rounded-3 overflow-hidden h-100 sub-cat-card-aster"
                                                     style="transition: box-shadow .2s, transform .2s;">
-                                                    <div class="d-flex justify-content-center mb-2">
+                                                    <div style="aspect-ratio: 1/1; overflow: hidden;">
                                                         <img src="{{ getStorageImages(path: $sub->icon_full_url, type: 'category') }}"
-                                                            alt="{{ $sub->name }}" width="64" height="64"
-                                                            class="rounded-circle border p-1" style="object-fit: contain;">
+                                                            alt="{{ $sub->name }}" class="w-100 h-100" style="object-fit: cover;">
                                                     </div>
-                                                    <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                                    <div class="p-2">
+                                                        <span class="fs-13 text-dark fw-semibold">{{ $sub->name }}</span>
+                                                    </div>
                                                 </a>
                                             </div>
                                         @endforeach

@@ -3,7 +3,7 @@
     <div class="shipping-policy-web">
         <div class="footer-top-slider owl-theme owl-carousel" data-slide-items="4">
             @foreach ($companyReliability as $key=>$value)
-                @if ($value['status'] == 1 && !empty($value['title']))
+                @if ($value['status'] == 1 && !empty($value['title']) && $value['item'] !== 'return_policy')
                     <div class="footer-top-slide-item">
                         <div class="d-flex justify-content-center">
                             <div class="shipping-method-system">

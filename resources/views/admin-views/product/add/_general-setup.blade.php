@@ -96,6 +96,12 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-12 d-none" id="leaf-category-warning">
+                            <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-0">
+                                <i class="fi fi-sr-triangle-warning fs-6"></i>
+                                <span id="leaf-category-warning-msg"></span>
+                            </div>
+                        </div>
                         @if ($brandSetting)
                             <div class="col-md-6 col-lg-4 show-for-physical-product">
                                 <div class="form-group">

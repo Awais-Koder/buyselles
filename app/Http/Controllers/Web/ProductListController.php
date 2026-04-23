@@ -22,6 +22,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class ProductListController extends Controller
 {
@@ -64,7 +65,9 @@ class ProductListController extends Controller
 
     public function getCategoryProductsView(Request $request, $slug)
     {
-        $category = Category::where('slug', $slug)->with(['seo'])->first();
+        $category = Cache::remember('category_slug_' . $slug . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($slug) {
+            return Category::where('slug', $slug)->with(['seo'])->first();
+        });
         if (! $category) {
             Toastr::warning(translate('category_not_found'));
 
@@ -77,10 +80,14 @@ class ProductListController extends Controller
         $subCategories = collect();
 
         if ($category['position'] == 0) {
-            $subCategories = $category->childes()->orderBy('priority')->get();
+            $subCategories = Cache::remember('category_childes_' . $category['id'] . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+                return $category->childes()->orderBy('priority')->get();
+            });
             $request->merge(['category_id' => $category['id']]);
         } elseif ($category['position'] == 1) {
-            $subCategories = $category->childes()->orderBy('priority')->get();
+            $subCategories = Cache::remember('category_childes_' . $category['id'] . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+                return $category->childes()->orderBy('priority')->get();
+            });
             $request->merge(['sub_category_id' => $category['id']]);
         } elseif ($category['position'] == 2) {
             $request->merge(['sub_sub_category_id' => $category['id']]);
@@ -127,7 +134,9 @@ class ProductListController extends Controller
         $request->merge(['data_from' => 'latest']);
 
         if (! $request->has('category_id') && ! $request->has('sub_category_id') && ! $request->has('sub_sub_category_id')) {
-            $request->merge(['_sub_categories' => Category::where('position', 0)->orderBy('priority')->get()]);
+            $request->merge(['_sub_categories' => Cache::remember('top_level_categories_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () {
+                return Category::where('position', 0)->orderBy('priority')->get();
+            })]);
         }
 
         return self::getProductsListPage(

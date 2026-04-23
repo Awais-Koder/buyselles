@@ -909,7 +909,7 @@
                         @if ($companyReliability != null)
                             <div class="product-details-shipping-details">
                                 @foreach ($companyReliability as $key => $value)
-                                    @if ($value['status'] == 1 && !empty($value['title']))
+                                    @if ($value['status'] == 1 && !empty($value['title']) && $value['item'] !== 'return_policy')
                                         <div class="shipping-details-bottom-border">
                                             <div class="px-3 py-3">
                                                 <img class="{{ Session::get('direction') === 'rtl' ? 'float-right ml-2' : 'mr-2' }} __img-20"

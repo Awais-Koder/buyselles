@@ -244,7 +244,7 @@
                     </h5>
                     <div class="footer-sliders d-flex flex-wrap gap-2">
                         @foreach ($company_reliability as $key => $value)
-                            @if ($value['status'] == 1 && !empty($value['title']))
+                            @if ($value['status'] == 1 && !empty($value['title']) && $value['item'] !== 'return_policy')
                                 <div class="bg-white py-2 px-2 rounded d-flex align-items-center gap-2">
                                     <img class="order-summery-footer-image" alt=""
                                         src="{{ getStorageImages(path: imagePathProcessing(imageData: $value['image'], path: 'company-reliability'), type: 'source', source: theme_asset(path: 'public/assets/front-end/img') . '/' . $value['item'] . '.png') }}">

@@ -11259,4 +11259,10 @@ return [
 	"Our_AI_analyses_your_preferences_and_shopping_history_to_surface_the_deals_most_relevant_to_you." => "Our AI analyses your preferences and shopping history to surface the deals most relevant to you.",
 	"AI-assisted_reviews_for_faster_fair_outcomes" => "AI-assisted reviews for faster fair outcomes",
 	"Deals_tailored_to_your_preferences_by_AI" => "Deals tailored to your preferences by AI",
+	"Smart_Recommendations" => "Smart Recommendations",
+	"Real-time_fraud_detection_on_every_transaction" => "Real-time fraud detection on every transaction",
+	"AI_Security" => "AI Security",
+	"please_select_a_sub_category_this_category_has_nested_sub_categories" => "Please select a sub category this category has nested sub categories",
+	"please_select_a_sub_sub_category_this_sub_category_has_nested_categories" => "Please select a sub sub category this sub category has nested categories",
+	"category_image_must_not_exceed_" => "Category image must not exceed ",
 ];

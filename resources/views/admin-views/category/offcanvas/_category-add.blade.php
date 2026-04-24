@@ -217,12 +217,18 @@
                         @endif
                     @endif
 
-                    @if ($categoryType == 'category' || ($categoryType == 'sub_category' && theme_root_path() == 'theme_aster'))
+                    @if (in_array($categoryType, ['category', 'sub_category', 'sub_sub_category']))
                         <div class="d-flex flex-column gap-20">
                             <div class="text-center">
                                 <label for="" class="form-label fw-semibold mb-1">
-                                    {{ translate('category_Logo') }}
-                                    <span class="text-danger">*</span>
+                                    @if ($categoryType == 'sub_sub_category')
+                                        {{ translate('sub_sub_category_Image') }}
+                                    @elseif ($categoryType == 'sub_category')
+                                        {{ translate('sub_category_Image') }}
+                                    @else
+                                        {{ translate('category_Logo') }}
+                                    @endif
+                                    @if ($categoryType == 'category')<span class="text-danger">*</span>@endif
                                 </label>
                                 <p class="fs-12 mb-0"> {{ translate('Upload_image') }}</p>
                             </div>

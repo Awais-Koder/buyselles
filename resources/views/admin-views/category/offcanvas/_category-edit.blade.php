@@ -189,12 +189,18 @@
                         @endif
                     @endif
 
-                    @if ($category->position == 0 || ($category->position == 1 && theme_root_path() == 'theme_aster'))
+                    @if ($category->position == 0 || $category->position == 1 || $category->position == 2)
                         <div class="d-flex flex-column gap-20">
                             <div class="text-center">
                                 <label for="" class="form-label fw-semibold mb-1">
-                                    {{ translate('category_Logo') }}
-                                    <span class="text-danger">*</span>
+                                    @if ($category->position == 2)
+                                        {{ translate('sub_sub_category_Image') }}
+                                    @elseif ($category->position == 1)
+                                        {{ translate('sub_category_Image') }}
+                                    @else
+                                        {{ translate('category_Logo') }}
+                                    @endif
+                                    @if ($category->position == 0)<span class="text-danger">*</span>@endif
                                 </label>
                                 <p class="fs-12 mb-0"> {{ translate('Upload_image') }}</p>
                             </div>

@@ -11265,4 +11265,9 @@ return [
 	"please_select_a_sub_category_this_category_has_nested_sub_categories" => "Please select a sub category this category has nested sub categories",
 	"please_select_a_sub_sub_category_this_sub_category_has_nested_categories" => "Please select a sub sub category this sub category has nested categories",
 	"category_image_must_not_exceed_" => "Category image must not exceed ",
+	"Add_Sub_Category" => "Add Sub Category",
+	"Z_-_A" => "Z - A",
+	"A_-_Z" => "A - Z",
+	"sub_sub_category_Image" => "Sub sub category Image",
+	"Select_Main_Category" => "Select Main Category",
 ];

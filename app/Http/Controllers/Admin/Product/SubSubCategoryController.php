@@ -42,18 +42,21 @@ class SubSubCategoryController extends BaseController
             orderBy: ['updated_at' => 'desc'],
             searchValue: $request->get('searchValue'),
             filters: ['position' => 2],
-            dataLimit: getWebConfig(name: 'pagination_limit'));
+            dataLimit: getWebConfig(name: 'pagination_limit')
+        );
 
         $categoriesWithTrans = $this->categoryRepo->getListWhere(
             orderBy: ['updated_at' => 'desc'],
             searchValue: $request->get('searchValue'),
             filters: ['position' => 2],
             relations: ['translations', 'seo'],
-            dataLimit: getWebConfig(name: 'pagination_limit'));
+            dataLimit: getWebConfig(name: 'pagination_limit')
+        );
 
         $parentCategories = $this->categoryRepo->getListWhere(
             filters: ['position' => 0],
-            dataLimit: 'all');
+            dataLimit: 'all'
+        );
 
         $languages = getWebConfig(name: 'pnc_language') ?? null;
         $defaultLanguage = $languages[0];
@@ -81,7 +84,8 @@ class SubSubCategoryController extends BaseController
 
     public function update(CategoryUpdateRequest $request, CategoryService $categoryService): JsonResponse
     {
-        $dataArray = $categoryService->getUpdateData(request: $request, data: (object) []);
+        $category = $this->categoryRepo->getFirstWhere(params: ['id' => $request['id']]);
+        $dataArray = $categoryService->getUpdateData(request: $request, data: $category);
         $this->categoryRepo->update(id: $request['id'], data: $dataArray);
         $this->translationRepo->update(request: $request, model: 'App\Models\Category', id: $request['id']);
 
@@ -112,13 +116,15 @@ class SubSubCategoryController extends BaseController
         $active = $subSubCategories->where('home_status', 1)->count();
         $inactive = $subSubCategories->where('home_status', 0)->count();
 
-        return Excel::download(new CategoryListExport([
-            'categories' => $subSubCategories,
-            'title' => 'sub_sub_category',
-            'search' => $request['searchValue'],
-            'active' => $active,
-            'inactive' => $inactive,
-        ]), 'sub-sub-category-list.xlsx'
+        return Excel::download(
+            new CategoryListExport([
+                'categories' => $subSubCategories,
+                'title' => 'sub_sub_category',
+                'search' => $request['searchValue'],
+                'active' => $active,
+                'inactive' => $inactive,
+            ]),
+            'sub-sub-category-list.xlsx'
         );
     }
 }

@@ -51,6 +51,7 @@
                                 <thead class="text-capitalize">
                                 <tr>
                                     <th>{{ translate('SL') }}</th>
+                                    <th>{{ translate('sub_sub_category_Image') }}</th>
                                     <th>{{ translate('sub_sub_category_name') }}</th>
                                     <th>{{ translate('sub_category_name') }}</th>
                                     <th>{{ translate('category_name') }}</th>
@@ -62,6 +63,12 @@
                                 @foreach($categories as $key=>$category)
                                     <tr>
                                         <td>{{ $categories->firstItem() + $key }}</td>
+                                        <td class="text-center">
+                                            <div class="avatar-60 d-flex align-items-center rounded overflow-hidden">
+                                                <img class="w-100 h-100 object-fit-cover" alt=""
+                                                     src="{{ getStorageImages(path: $category->icon_full_url, type: 'backend-basic') }}">
+                                            </div>
+                                        </td>
                                         <td>
                                             <h6 class="fs-14">{{ $category['defaultname'] }}</h6>
                                             <span class="fs-12">{{ translate('ID') }}  #{{ $category['id'] }}</span>

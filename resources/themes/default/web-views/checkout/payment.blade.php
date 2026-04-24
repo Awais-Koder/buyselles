@@ -370,6 +370,10 @@
     @endif
 
     <span id="route-action-checkout-function" data-route="checkout-payment"></span>
+    <span id="payment-method-required-msg" class="d-none"
+        data-text="{{ translate('please_select_a_payment_method_to_proceed') }}"></span>
+    <span id="terms-required-msg" class="d-none"
+        data-text="{{ translate('please_accept_the_terms_and_conditions_to_proceed') }}"></span>
 @endsection
 
 @push('script')

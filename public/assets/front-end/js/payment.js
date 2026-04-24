@@ -6,7 +6,8 @@ setTimeout(function () {
 }, 10);
 
 $(function () {
-    $(".proceed_to_next_button").addClass("disabled");
+    $(".proceed_to_next_button").addClass("proceed-not-ready");
+    $('<style>').text('.proceed_to_next_button.proceed-not-ready{opacity:.65;cursor:not-allowed!important;pointer-events:auto!important}').appendTo('head');
 });
 
 const radioButtons = document.querySelectorAll('input[type="radio"]');
@@ -43,15 +44,15 @@ function updateProceedButtonState() {
     });
 
     if (paymentInputCheckbox && radioStatus) {
-        $(".proceed_to_next_button").removeClass("disabled");
+        $(".proceed_to_next_button").removeClass("proceed-not-ready");
     } else {
-        $(".proceed_to_next_button").addClass("disabled");
+        $(".proceed_to_next_button").addClass("proceed-not-ready");
     }
 
     // show/hide offline card
     if (payOfflineSelected) {
         $(".pay_offline_card").removeClass("d-none");
-        $(".proceed_to_next_button").addClass("disabled");
+        $(".proceed_to_next_button").addClass("proceed-not-ready");
     } else {
         $(".pay_offline_card").addClass("d-none");
     }
@@ -68,10 +69,21 @@ updateProceedButtonState();
 
 
 function checkoutFromPayment() {
+    // Show toast feedback when button is in not-ready state (pointer-events allow clicks but we guard here)
+    if ($('.proceed_to_next_button').hasClass('proceed-not-ready')) {
+        let paymentSelected = $('input[type="radio"]:checked').not('#pay_offline').length > 0;
+        if (!paymentSelected) {
+            toastr.error($('#payment-method-required-msg').data('text') || 'Please select a payment method to proceed.');
+        } else {
+            toastr.warning($('#terms-required-msg').data('text') || 'Please accept the terms and conditions to proceed.');
+        }
+        return;
+    }
+
     let checked_button_id = $('input[type="radio"]:checked').attr("id");
 
     if (!checked_button_id) {
-        toastr.error('Please select a payment method to proceed.');
+        toastr.error($('#payment-method-required-msg').data('text') || 'Please select a payment method to proceed.');
         return;
     }
 

@@ -315,7 +315,7 @@ class Order extends Model
     public function activeDispute(): HasOne
     {
         return $this->hasOne(Dispute::class, 'order_id')
-            ->whereIn('status', ['open', 'vendor_response', 'under_review']);
+            ->whereIn('status', ['open', 'vendor_response', 'under_review', 'pending_closure']);
     }
 
     public function escrow(): HasOne

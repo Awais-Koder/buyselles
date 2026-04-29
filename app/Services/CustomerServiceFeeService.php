@@ -66,4 +66,28 @@ class CustomerServiceFeeService
 
         return round(($orderTotal / 100) * $rate, 2);
     }
+
+    /**
+     * Calculate payable amount by applying service fee to the provided base amount,
+     * then subtracting referral discount.
+     *
+     * @param  float  $amountBeforeServiceFee  Amount before adding service fee
+     * @param  float  $referralDiscount  Referral discount to subtract at the end
+     * @return array{amount_before_service_fee: float, service_fee: float, referral_discount: float, payable_amount: float}
+     */
+    public function calculateCheckoutPayable(float $amountBeforeServiceFee, float $referralDiscount = 0): array
+    {
+        $normalizedAmount = round(max($amountBeforeServiceFee, 0), 2);
+        $normalizedReferralDiscount = round(max($referralDiscount, 0), 2);
+
+        $serviceFee = $this->calculate($normalizedAmount);
+        $payableAmount = round(max(($normalizedAmount + $serviceFee) - $normalizedReferralDiscount, 0), 2);
+
+        return [
+            'amount_before_service_fee' => $normalizedAmount,
+            'service_fee' => $serviceFee,
+            'referral_discount' => $normalizedReferralDiscount,
+            'payable_amount' => $payableAmount,
+        ];
+    }
 }

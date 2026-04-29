@@ -271,12 +271,14 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         });
 
         Route::controller(\App\Http\Controllers\Customer\DisputeController::class)->prefix('disputes')->group(function () {
+            Route::get('reasons', 'reasons');
             Route::get('/', 'index');
             Route::post('/', 'store');
             Route::get('{id}', 'show');
             Route::post('{id}/message', 'addMessage');
             Route::post('{id}/evidence', 'uploadEvidence');
             Route::post('{id}/escalate', 'escalate');
+            Route::post('{id}/confirm-closure', 'confirmClosure');
             Route::post('order/{orderId}/confirm-receipt', 'confirmReceipt');
         });
 
@@ -327,6 +329,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
                 Route::post('refund-store', 'store_refund');
                 Route::get('refund-details', 'refund_details');
                 Route::post('again', 'order_again');
+                Route::get('digital-codes/{orderId}', 'getOrderDigitalCodes');
             });
 
             Route::controller(CustomerController::class)->group(function () {

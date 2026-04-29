@@ -246,6 +246,9 @@ class ConfigController extends Controller
             'system_image_file_upload_max_size' => getFileUploadMaxSize(type: 'image'),
             'system_general_file_upload_max_size' => getFileUploadMaxSize(type: 'file'),
             'vendor_can_edit_order_status' => getWebConfig('vendor_can_edit_order') ?? 0,
+            'customer_service_fee_status' => (int) (getWebConfig(name: 'customer_service_fee_status') ?? 0),
+            'customer_service_fee' => (float) (getWebConfig(name: 'customer_service_fee') ?? 0),
+            'customer_service_fee_type' => getWebConfig(name: 'customer_service_fee_type') ?? 'percent',
         ]);
     }
 

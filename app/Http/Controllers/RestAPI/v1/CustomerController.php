@@ -11,7 +11,6 @@ use App\Models\DeliveryZipCode;
 use App\Models\GuestUser;
 use App\Models\Order;
 use App\Models\OrderDetail;
-use App\Models\Product;
 use App\Models\Review;
 use App\Models\ShippingAddress;
 use App\Models\SupportTicket;
@@ -27,6 +26,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\View;
 
 class CustomerController extends Controller
 {
@@ -207,7 +207,6 @@ class CustomerController extends Controller
             Wishlist::where(['customer_id' => $request->user()->id, 'product_id' => $request->product_id])->delete();
 
             return response()->json(['message' => translate('successfully removed!')], 200);
-
         }
 
         return response()->json(['message' => translate('No such data found!')], 404);
@@ -270,7 +269,6 @@ class CustomerController extends Controller
 
         if ($country_restrict_status && ! self::delivery_country_exist_check($request->input('country'))) {
             return response()->json(['message' => translate('Delivery_unavailable_for_this_country')], 403);
-
         } elseif ($zip_restrict_status && ! self::delivery_zipcode_exist_check($request->input('zip'))) {
             return response()->json(['message' => translate('Delivery_unavailable_for_this_zip_code_area')], 403);
         }
@@ -390,7 +388,18 @@ class CustomerController extends Controller
 
         $orders->map(function ($data) {
             $data->details->map(function ($query) {
-                $query['product'] = Helpers::product_data_formatting(json_decode($query['product'], true));
+                $product = json_decode($query['product_details'], true);
+
+                if (is_array($product)) {
+                    $currentThumbnailFullUrl = data_get($query, 'product.thumbnail_full_url');
+                    if (empty($product['thumbnail_full_url']) && $currentThumbnailFullUrl) {
+                        $product['thumbnail_full_url'] = $currentThumbnailFullUrl;
+                    }
+
+                    $query['product'] = Helpers::product_data_formatting_for_json_data($product);
+                } else {
+                    $query['product'] = Helpers::product_data_formatting(json_decode($query['product'], true));
+                }
 
                 return $query;
             });
@@ -432,11 +441,17 @@ class CustomerController extends Controller
 
         $detailsList->map(function ($query) use ($user) {
             $query['variation'] = is_array($query['variation']) ? $query['variation'] : json_decode($query['variation'], true);
-            $currentProduct = Product::with(['digitalVariation', 'clearanceSale' => function ($query) {
-                return $query->active();
-            }])->where('id', $query['product_id'])->first();
             $product = json_decode($query['product_details'], true);
-            $product['thumbnail_full_url'] = $currentProduct?->thumbnail_full_url;
+
+            if (! is_array($product)) {
+                $product = [];
+            }
+
+            $currentThumbnailFullUrl = data_get($query, 'productAllStatus.thumbnail_full_url');
+            if (empty($product['thumbnail_full_url']) && $currentThumbnailFullUrl) {
+                $product['thumbnail_full_url'] = $currentThumbnailFullUrl;
+            }
+
             if (isset($product['product_type']) && $product['product_type'] == 'digital' && $product['digital_product_type'] == 'ready_product' && $product['digital_file_ready']) {
                 $checkFilePath = storageLink('product/digital-product', $product['digital_file_ready'], ($product['storage_path'] ?? 'public'));
                 $product['digital_file_ready_full_url'] = $checkFilePath;
@@ -466,7 +481,7 @@ class CustomerController extends Controller
     {
         $order = Order::with('seller')->with('shipping')->where('id', $request['order_id'])->first();
         $invoiceSettings = json_decode(BusinessSetting::where(['type' => 'invoice_settings'])->first()?->value, true);
-        $mpdf_view = \View::make(VIEW_FILE_NAMES['order_invoice'], compact('order', 'invoiceSettings'));
+        $mpdf_view = View::make(VIEW_FILE_NAMES['order_invoice'], compact('order', 'invoiceSettings'));
         $mpdf = new \Mpdf\Mpdf(['default_font' => 'FreeSerif', 'mode' => 'utf-8', 'format' => [190, 250], 'autoLangToFont' => true]);
         $mpdf->autoScriptToLang = true;
         $mpdf->autoLangToFont = true;
@@ -493,7 +508,18 @@ class CustomerController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $order = Order::withCount('orderDetails')->with(['deliveryMan', 'offlinePayments', 'verificationImages', 'latestEditHistory', 'orderEditHistory'])->where(['id' => $request['order_id']])->first();
+        $order = Order::withCount('orderDetails')
+            ->with([
+                'deliveryMan',
+                'offlinePayments',
+                'verificationImages',
+                'latestEditHistory',
+                'orderEditHistory',
+                'escrow:id,order_id,status,auto_release_at,released_at,released_by,dispute_id',
+                'activeDispute:id,order_id,status',
+            ])
+            ->where(['id' => $request['order_id']])
+            ->first();
         if (isset($order['offlinePayments'])) {
             $order['offlinePayments']->payment_info = $order->offlinePayments->payment_info;
         }

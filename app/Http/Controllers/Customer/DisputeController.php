@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\OpenDisputeRequest;
 use App\Http\Requests\DisputeMessageRequest;
 use App\Models\Dispute;
-use App\Models\DisputeEvidence;
 use App\Models\DisputeMessage;
 use App\Models\Escrow;
 use App\Models\Order;
@@ -17,6 +16,7 @@ use App\Services\DisputeService;
 use App\Services\EscrowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class DisputeController extends Controller
 {
@@ -24,6 +24,43 @@ class DisputeController extends Controller
         private readonly DisputeService $disputeService,
         private readonly EscrowService $escrowService,
     ) {}
+
+    public function reasons(): JsonResponse
+    {
+        $reasons = $this->disputeService->getBuyerDisputeReasons();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'success',
+            'data' => $reasons,
+        ]);
+    }
+
+    public function confirmClosure(int $id): JsonResponse
+    {
+        $buyerId = auth('api')->id();
+
+        $dispute = Dispute::where('id', $id)
+            ->where('buyer_id', $buyerId)
+            ->where('status', DisputeStatus::PENDING_CLOSURE)
+            ->first();
+
+        if (! $dispute) {
+            return response()->json(['status' => 404, 'message' => translate('dispute_not_found_or_closure_not_pending')], 404);
+        }
+
+        $this->disputeService->closeDispute(
+            dispute: $dispute,
+            closedById: $buyerId,
+            note: translate('Buyer_confirmed_closure'),
+            closedByType: DisputeUserType::BUYER
+        );
+
+        return response()->json([
+            'status' => 200,
+            'message' => translate('dispute_closed_successfully'),
+        ]);
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -64,6 +101,7 @@ class DisputeController extends Controller
     public function store(OpenDisputeRequest $request): JsonResponse
     {
         $buyerId = auth('api')->id();
+        $files = $request->file('files', []);
 
         $order = Order::where('id', $request->order_id)
             ->where('customer_id', $buyerId)
@@ -79,10 +117,31 @@ class DisputeController extends Controller
             return response()->json(['status' => 422, 'message' => $check['reason']], 422);
         }
 
+        try {
+            $this->disputeService->validateEvidenceFiles($files);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'status' => 422,
+                'message' => collect($exception->errors())->flatten()->first() ?? translate('something_went_wrong'),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+
         $dispute = $this->disputeService->createDispute(
             array_merge($request->validated(), ['user_id' => $buyerId]),
             DisputeUserType::BUYER
         );
+
+        if (! empty($files)) {
+            $this->disputeService->uploadEvidenceFiles(
+                dispute: $dispute,
+                files: $files,
+                uploadedBy: $buyerId,
+                userType: DisputeUserType::BUYER,
+            );
+
+            $dispute->load('evidence');
+        }
 
         return response()->json([
             'status' => 201,
@@ -134,33 +193,19 @@ class DisputeController extends Controller
             'files.*' => 'file|mimes:jpg,jpeg,png,mp4',
         ]);
 
-        $uploaded = [];
-
-        foreach ($request->file('files', []) as $file) {
-            $mime = $file->getMimeType();
-            $isVideo = str_contains($mime, 'video');
-            $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
-
-            if ($file->getSize() > $maxBytes) {
-                $limit = $isVideo ? '50MB' : '5MB';
-
-                return response()->json([
-                    'status' => 422,
-                    'message' => translate('file_exceeds_maximum_allowed_size_of').' '.$limit,
-                ], 422);
-            }
-
-            $path = $file->store("dispute-evidence/{$id}", 'public');
-
-            $evidence = DisputeEvidence::create([
-                'dispute_id' => $dispute->id,
-                'uploaded_by' => $buyerId,
-                'user_type' => DisputeUserType::BUYER,
-                'file_path' => $path,
-                'file_type' => $isVideo ? 'video' : 'image',
-            ]);
-
-            $uploaded[] = $evidence;
+        try {
+            $uploaded = $this->disputeService->uploadEvidenceFiles(
+                dispute: $dispute,
+                files: $request->file('files', []),
+                uploadedBy: $buyerId,
+                userType: DisputeUserType::BUYER,
+            );
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'status' => 422,
+                'message' => collect($exception->errors())->flatten()->first() ?? translate('something_went_wrong'),
+                'errors' => $exception->errors(),
+            ], 422);
         }
 
         return response()->json([

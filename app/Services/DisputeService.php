@@ -9,6 +9,7 @@ use App\Enums\EscrowStatus;
 use App\Events\DisputeEscalatedEvent;
 use App\Events\DisputeResolvedEvent;
 use App\Models\Dispute;
+use App\Models\DisputeEvidence;
 use App\Models\DisputeMessage;
 use App\Models\DisputeReason;
 use App\Models\DisputeStatusLog;
@@ -16,14 +17,104 @@ use App\Models\Escrow;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Utils\Helpers;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class DisputeService
 {
     public function __construct(
         protected EscrowService $escrowService,
     ) {}
+
+    /**
+     * Get buyer-facing dispute reasons.
+     *
+     * Falls back to all reasons when no active reasons exist to keep older
+     * setups compatible with the mobile flow.
+     */
+    public function getBuyerDisputeReasons(): Collection
+    {
+        $baseQuery = DisputeReason::query()
+            ->orderBy('sort_order')
+            ->orderBy('title');
+
+        $activeReasons = (clone $baseQuery)
+            ->active()
+            ->get(['id', 'title', 'description', 'applicable_to', 'priority_default']);
+
+        if ($activeReasons->isNotEmpty()) {
+            return $activeReasons;
+        }
+
+        return $baseQuery->get(['id', 'title', 'description', 'applicable_to', 'priority_default']);
+    }
+
+    /**
+     * Validate dispute evidence files against image/video size limits.
+     *
+     * @param  array<int, UploadedFile>  $files
+     *
+     * @throws ValidationException
+     */
+    public function validateEvidenceFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $mime = $file->getMimeType() ?? '';
+            $isVideo = str_contains($mime, 'video');
+            $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+
+            if ($file->getSize() > $maxBytes) {
+                $limit = $isVideo ? '50MB' : '5MB';
+
+                throw ValidationException::withMessages([
+                    'files' => [translate('file_exceeds_maximum_allowed_size_of') . ' ' . $limit],
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Store dispute evidence files for buyer/vendor/admin participants.
+     *
+     * @param  array<int, UploadedFile>  $files
+     * @return array<int, DisputeEvidence>
+     */
+    public function uploadEvidenceFiles(Dispute $dispute, array $files, int $uploadedBy, string $userType): array
+    {
+        $this->validateEvidenceFiles($files);
+
+        $uploaded = [];
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+
+            $mime = $file->getMimeType() ?? '';
+            $isVideo = str_contains($mime, 'video');
+            $path = $file->store("dispute-evidence/{$dispute->id}", 'public');
+
+            $uploaded[] = DisputeEvidence::create([
+                'dispute_id' => $dispute->id,
+                'uploaded_by' => $uploadedBy,
+                'user_type' => $userType,
+                'file_path' => $path,
+                'file_type' => $isVideo ? 'video' : 'image',
+                'original_name' => $file->getClientOriginalName(),
+                'file_size' => $file->getSize(),
+                'created_at' => now(),
+            ]);
+        }
+
+        return $uploaded;
+    }
 
     /**
      * Check if a dispute can be opened for the given order.

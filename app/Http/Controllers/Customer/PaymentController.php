@@ -16,6 +16,7 @@ use App\Models\OrderEditHistory;
 use App\Models\ShippingAddress;
 use App\Models\ShippingType;
 use App\Models\User;
+use App\Services\CustomerServiceFeeService;
 use App\Services\DigitalProductCodeService;
 use App\Traits\OrderEditManager;
 use App\Traits\Payment;
@@ -343,8 +344,12 @@ class PaymentController extends Controller
             'requestObj' => $request,
         ]);
         $vendorCollection = collect($vendorWiseCartList);
-        $paymentAmount = $vendorCollection->sum('order_amount_with_tax')
-            + $vendorCollection->sum('customer_service_fee');
+        $amountBeforeServiceFee = (float) (
+            $vendorCollection->sum('order_amount_with_tax')
+            - $vendorCollection->sum('refer_and_earn_discount')
+        );
+        $paymentAmount = app(CustomerServiceFeeService::class)
+            ->calculateCheckoutPayable(amountBeforeServiceFee: $amountBeforeServiceFee)['payable_amount'];
 
         if ($customer == 'offline') {
             $address = ShippingAddress::where(['customer_id' => $request['customer_id'], 'is_guest' => 1])->latest()->first();

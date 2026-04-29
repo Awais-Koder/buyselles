@@ -33,6 +33,7 @@ use App\Models\SupplierOrder;
 use App\Models\SupplierProductMapping;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Services\CustomerServiceFeeService;
 use App\Services\ProductService;
 use App\Services\RecaptchaService;
 use App\Services\ShopService;
@@ -166,7 +167,7 @@ class WebController extends Controller
             }])
                 ->withCount('brandProducts')
                 ->when($request->has('search'), function ($query) use ($request) {
-                    $query->where('name', 'LIKE', '%' . $request['search'] . '%');
+                    $query->where('name', 'LIKE', '%'.$request['search'].'%');
                 });
 
             return view(VIEW_FILE_NAMES['all_brands'], [
@@ -219,7 +220,7 @@ class WebController extends Controller
             ?? $this->robotsMetaContentRepo->getFirstWhere(['page_name' => 'default']);
 
         if (getWebConfig('business_mode') === 'single') {
-            Toastr::warning(translate('access_denied') . ' !!');
+            Toastr::warning(translate('access_denied').' !!');
 
             return back();
         }
@@ -229,25 +230,25 @@ class WebController extends Controller
 
         $shopQuery = Shop::active()
             ->applyNameFilter($request->shop_name)
-            ->when($request->store_country_id, fn($q) => $q->where('store_country_id', $request->store_country_id))
-            ->when($request->store_city_id, fn($q) => $q->where('store_city_id', $request->store_city_id))
-            ->when($request->store_area_id, fn($q) => $q->where('store_area_id', $request->store_area_id))
+            ->when($request->store_country_id, fn ($q) => $q->where('store_country_id', $request->store_country_id))
+            ->when($request->store_city_id, fn ($q) => $q->where('store_city_id', $request->store_city_id))
+            ->when($request->store_area_id, fn ($q) => $q->where('store_area_id', $request->store_area_id))
             ->withCount(['products' => function ($query) {
                 return $query->active();
             }]);
 
         $vendorsList = $shopQuery
             ->with([
-                'seller' => fn($query) => $query->withCount('orders')
-                    ->with(['product.reviews' => fn($query) => $query->active()]),
+                'seller' => fn ($query) => $query->withCount('orders')
+                    ->with(['product.reviews' => fn ($query) => $query->active()]),
             ])
             ->get()
-            ->map(fn($shop) => $this->shopService::calculateReviews($shop));
+            ->map(fn ($shop) => $this->shopService::calculateReviews($shop));
 
         $inhouseShop = $this->shopService->getInhouseShopData($request);
         if ($inhouseShop) {
             $vendorsList = $vendorsList->reject(
-                fn($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
+                fn ($s) => $s->seller_id === $inhouseShop->seller_id && $s->author_type === $inhouseShop->author_type
             )->prepend($inhouseShop);
         }
         $vendorsList = $this->shopService->applyOrdering($vendorsList, $request);
@@ -559,8 +560,13 @@ class WebController extends Controller
 
         $vendorWiseCartListCollection = collect($vendorWiseCartList);
         $couponDiscount = $vendorWiseCartListCollection?->sum('coupon_discount') ?? 0;
-        $amount = ($vendorWiseCartListCollection?->sum('order_amount_with_tax') ?? 0)
-            + ($vendorWiseCartListCollection?->sum('customer_service_fee') ?? 0);
+        $amountBeforeServiceFee = (float) (
+            ($vendorWiseCartListCollection?->sum('order_amount_with_tax') ?? 0)
+            - ($vendorWiseCartListCollection?->sum('refer_and_earn_discount') ?? 0)
+        );
+        $checkoutAmounts = app(CustomerServiceFeeService::class)
+            ->calculateCheckoutPayable(amountBeforeServiceFee: $amountBeforeServiceFee);
+        $amount = $checkoutAmounts['payable_amount'];
 
         $inr = Currency::where(['symbol' => '₹'])->first();
         $usd = Currency::where(['code' => 'USD'])->first();
@@ -822,7 +828,7 @@ class WebController extends Controller
                 if (empty($customerName) && $record->order) {
                     $order = $record->order;
                     if ($order->customer) {
-                        $customerName = $order->customer->name ?? $order->customer->f_name . ' ' . $order->customer->l_name;
+                        $customerName = $order->customer->name ?? $order->customer->f_name.' '.$order->customer->l_name;
                     } else {
                         $billingAddress = is_object($order->billing_address_data)
                             ? $order->billing_address_data
@@ -868,7 +874,7 @@ class WebController extends Controller
             ->with('product')
             ->get();
 
-        $formattedCodes = $codes->map(fn(DigitalProductCode $code) => [
+        $formattedCodes = $codes->map(fn (DigitalProductCode $code) => [
             'orderId' => $code->order_id,
             'productName' => $code->product?->name ?? translate('Digital Product'),
             'code' => $code->decryptCode(),
@@ -1042,12 +1048,16 @@ class WebController extends Controller
             'requestObj' => $request,
         ]);
         $vendorCollection = collect($vendorWiseCartList);
-        $paymentAmount = $vendorCollection->sum('order_amount_with_tax')
-            + $vendorCollection->sum('customer_service_fee');
+        $amountBeforeServiceFee = (float) (
+            $vendorCollection->sum('order_amount_with_tax')
+            - $vendorCollection->sum('refer_and_earn_discount')
+        );
+        $paymentAmount = app(CustomerServiceFeeService::class)
+            ->calculateCheckoutPayable(amountBeforeServiceFee: $amountBeforeServiceFee)['payable_amount'];
 
         $user = Helpers::getCustomerInformation($request);
         if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {
-            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order') . '!!');
+            Toastr::warning(translate('Inefficient_balance_in_your_wallet_to_pay_for_this_order').'!!');
 
             return back();
         } else {
@@ -1505,7 +1515,7 @@ class WebController extends Controller
     public function deleteWishlist(Request $request): JsonResponse|RedirectResponse
     {
         $this->wishlist->where(['product_id' => $request['id'], 'customer_id' => auth('customer')->id()])->delete();
-        $data = translate('product_has_been_remove_from_wishlist') . '!';
+        $data = translate('product_has_been_remove_from_wishlist').'!';
         $wishlists = $this->wishlist->where('customer_id', auth('customer')->id())->paginate(15);
         $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
         session()->forget('wish_list');
@@ -1618,7 +1628,7 @@ class WebController extends Controller
             if ($orderDetailsData->order->payment_status !== 'paid') {
                 return response()->json([
                     'status' => 0,
-                    'message' => translate('Payment_must_be_confirmed_first') . ' !!',
+                    'message' => translate('Payment_must_be_confirmed_first').' !!',
                 ]);
             }
 
@@ -1668,7 +1678,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('order_Not_Found') . ' !',
+                'message' => translate('order_Not_Found').' !',
             ]);
         }
     }
@@ -1714,7 +1724,7 @@ class WebController extends Controller
         } else {
             return response()->json([
                 'status' => 0,
-                'message' => translate('the_OTP_is_incorrect') . ' !',
+                'message' => translate('the_OTP_is_incorrect').' !',
             ]);
         }
     }
@@ -1729,7 +1739,7 @@ class WebController extends Controller
             return response()->json([
                 'status' => 0,
                 'time_count' => CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
-                'message' => translate('Please_try_again_after') . ' ' . CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
+                'message' => translate('Please_try_again_after').' '.CarbonInterval::seconds($timeCount)->cascade()->forHumans(),
             ]);
         } else {
             $guestEmail = '';
@@ -1779,7 +1789,7 @@ class WebController extends Controller
                         'userType' => 'customer',
                         'templateName' => 'digital-product-otp',
                         'subject' => translate('verification_Code'),
-                        'title' => translate('verification_Code') . '!',
+                        'title' => translate('verification_Code').'!',
                         'verificationCode' => $token,
                     ];
                     event(new DigitalProductOtpVerificationEvent(email: $guestEmail, data: $data));
@@ -1867,7 +1877,7 @@ class WebController extends Controller
                             'userType' => 'customer',
                             'templateName' => 'digital-product-otp',
                             'subject' => translate('verification_Code'),
-                            'title' => translate('verification_Code') . '!',
+                            'title' => translate('verification_Code').'!',
                             'verificationCode' => $token,
                         ];
                         event(new DigitalProductOtpVerificationEvent(email: $customer['email'], data: $data));
@@ -1966,7 +1976,7 @@ class WebController extends Controller
         Session::put('product_view_style', $request['value']);
 
         return response()->json([
-            'message' => translate('View_style_updated') . '!',
+            'message' => translate('View_style_updated').'!',
         ]);
     }
 
@@ -2011,7 +2021,7 @@ class WebController extends Controller
                     'location_country_id' => $area->city->country_id,
                     'location_city_id' => $area->city_id,
                     'location_area_id' => $area->id,
-                    'location_label' => $area->name . ', ' . $area->city->name,
+                    'location_label' => $area->name.', '.$area->city->name,
                 ]);
             }
         } else {

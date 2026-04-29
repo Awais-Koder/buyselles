@@ -6,15 +6,14 @@ use App\Enums\DisputeStatus;
 use App\Enums\DisputeUserType;
 use App\Http\Controllers\Controller;
 use App\Models\Dispute;
-use App\Models\DisputeEvidence;
 use App\Models\DisputeMessage;
-use App\Models\DisputeReason;
 use App\Models\Order;
 use App\Services\DisputeService;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CustomerDisputeController extends Controller
 {
@@ -53,7 +52,7 @@ class CustomerDisputeController extends Controller
             return redirect()->route('account-order-details', ['id' => $orderId]);
         }
 
-        $reasons = DisputeReason::orderBy('title')->get();
+        $reasons = $this->disputeService->getBuyerDisputeReasons();
 
         return view(VIEW_FILE_NAMES['account_dispute_open_form'], compact('order', 'reasons'));
     }
@@ -80,18 +79,12 @@ class CustomerDisputeController extends Controller
             'files.*.mimes' => translate('Only_jpg,_jpeg,_png,_and_mp4_files_are_allowed'),
         ]);
 
-        // Per-type size validation (image ≤ 5 MB, video ≤ 50 MB)
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $isVideo = str_contains($file->getMimeType() ?? '', 'video');
-                $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
-                $maxLabel = $isVideo ? '50MB' : '5MB';
-                if ($file->getSize() > $maxBytes) {
-                    return back()
-                        ->withErrors(['files.*' => $file->getClientOriginalName().' exceeds the '.$maxLabel.' limit.'])
-                        ->withInput();
-                }
-            }
+        $files = $request->file('files', []);
+
+        try {
+            $this->disputeService->validateEvidenceFiles($files);
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors())->withInput();
         }
 
         $order = Order::where('id', $request->order_id)
@@ -119,22 +112,13 @@ class CustomerDisputeController extends Controller
         );
 
         // Upload optional evidence files
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $isVideo = str_contains($file->getMimeType() ?? '', 'video');
-                $path = $file->store("dispute-evidence/{$dispute->id}", 'public');
-
-                DisputeEvidence::create([
-                    'dispute_id' => $dispute->id,
-                    'uploaded_by' => $customerId,
-                    'user_type' => DisputeUserType::BUYER,
-                    'file_path' => $path,
-                    'file_type' => $isVideo ? 'video' : 'image',
-                    'original_name' => $file->getClientOriginalName(),
-                    'file_size' => $file->getSize(),
-                    'created_at' => now(),
-                ]);
-            }
+        if (! empty($files)) {
+            $this->disputeService->uploadEvidenceFiles(
+                dispute: $dispute,
+                files: $files,
+                uploadedBy: $customerId,
+                userType: DisputeUserType::BUYER,
+            );
         }
 
         Toastr::success(translate('dispute_opened_successfully'));
@@ -224,30 +208,17 @@ class CustomerDisputeController extends Controller
             return redirect()->route('account-dispute.details', $id);
         }
 
-        foreach ($request->file('files') as $file) {
-            $mime = $file->getMimeType();
-            $isVideo = str_contains($mime, 'video');
-            $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+        try {
+            $this->disputeService->uploadEvidenceFiles(
+                dispute: $dispute,
+                files: $request->file('files', []),
+                uploadedBy: $customerId,
+                userType: DisputeUserType::BUYER,
+            );
+        } catch (ValidationException $exception) {
+            Toastr::error(collect($exception->errors())->flatten()->first() ?? translate('something_went_wrong'));
 
-            if ($file->getSize() > $maxBytes) {
-                $limit = $isVideo ? '50MB' : '5MB';
-                Toastr::error(translate('file').' '.$file->getClientOriginalName().' '.translate('exceeds_maximum_size_of').' '.$limit);
-
-                return redirect()->route('account-dispute.details', $id);
-            }
-
-            $path = $file->store("dispute-evidence/{$id}", 'public');
-
-            DisputeEvidence::create([
-                'dispute_id' => $dispute->id,
-                'uploaded_by' => $customerId,
-                'user_type' => DisputeUserType::BUYER,
-                'file_path' => $path,
-                'file_type' => $isVideo ? 'video' : 'image',
-                'original_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize(),
-                'created_at' => now(),
-            ]);
+            return redirect()->route('account-dispute.details', $id);
         }
 
         Toastr::success(translate('evidence_uploaded_successfully'));

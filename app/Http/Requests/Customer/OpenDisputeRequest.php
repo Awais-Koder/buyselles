@@ -18,6 +18,8 @@ class OpenDisputeRequest extends FormRequest
             'order_detail_id' => 'nullable|integer|exists:order_details,id',
             'reason_id' => 'nullable|integer|exists:dispute_reasons,id',
             'description' => 'required|string|min:20|max:2000',
+            'files' => 'nullable|array|max:5',
+            'files.*' => 'file|mimes:jpg,jpeg,png,mp4',
         ];
     }
 
@@ -29,6 +31,8 @@ class OpenDisputeRequest extends FormRequest
             'description.required' => translate('description_is_required'),
             'description.min' => translate('description_must_be_at_least_20_characters'),
             'description.max' => translate('description_must_not_exceed_2000_characters'),
+            'files.max' => translate('can_not_select_more_than_5_files'),
+            'files.*.mimes' => translate('invalid_file_type'),
         ];
     }
 }

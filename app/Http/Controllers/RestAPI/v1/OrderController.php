@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\v1\RefundStoreRequest;
 use App\Models\Cart;
 use App\Models\Currency;
+use App\Models\DigitalProductCode;
 use App\Models\DigitalProductOtpVerification;
 use App\Models\OfflinePaymentMethod;
 use App\Models\Order;
@@ -17,6 +18,7 @@ use App\Models\RefundRequest;
 use App\Models\Setting;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use App\Services\CustomerServiceFeeService;
 use App\Services\OrderService;
 use App\Traits\CommonTrait;
 use App\Traits\FileManagerTrait;
@@ -337,8 +339,12 @@ class OrderController extends Controller
             'requestObj' => $request,
         ]);
         $vendorCollection = collect($vendorWiseCartList);
-        $paymentAmount = $vendorCollection->sum('order_amount_with_tax')
-            + $vendorCollection->sum('customer_service_fee');
+        $amountBeforeServiceFee = (float) (
+            $vendorCollection->sum('order_amount_with_tax')
+            - $vendorCollection->sum('refer_and_earn_discount')
+        );
+        $paymentAmount = app(CustomerServiceFeeService::class)
+            ->calculateCheckoutPayable(amountBeforeServiceFee: $amountBeforeServiceFee)['payable_amount'];
 
         $user = Helpers::getCustomerInformation($request);
         if (round($paymentAmount, 4) > round($user->wallet_balance, 4)) {
@@ -912,5 +918,41 @@ class OrderController extends Controller
         }
 
         return response()->json(['message' => 'Invalid Order Id or Phone Number'], 403);
+    }
+
+    /**
+     * GET /api/v1/customer/order/digital-codes/{orderId}
+     *
+     * Returns the decrypted digital codes that were assigned to a purchased order.
+     * Only accessible by the order's owner (auth:api required).
+     * Codes are decrypted only at the moment of this response — never stored plain.
+     */
+    public function getOrderDigitalCodes(int $orderId): JsonResponse
+    {
+        $customer = auth('api')->user();
+
+        $order = Order::where('id', $orderId)
+            ->where('customer_id', $customer->id)
+            ->first();
+
+        if (! $order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+        $codes = DigitalProductCode::query()
+            ->where('order_id', $orderId)
+            ->where('status', 'sold')
+            ->with('product')
+            ->get();
+
+        $formattedCodes = $codes->map(fn (DigitalProductCode $codeRecord) => [
+            'product_name' => $codeRecord->product?->name ?? 'Digital Product',
+            'code' => $codeRecord->decryptCode(),
+            'pin' => $codeRecord->decryptPin(),
+            'serial' => $codeRecord->serial_number,
+            'expiry' => $codeRecord->expiry_date?->format('Y-m-d'),
+        ])->values();
+
+        return response()->json(['codes' => $formattedCodes], 200);
     }
 }

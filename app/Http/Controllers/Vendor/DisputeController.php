@@ -8,7 +8,6 @@ use App\Enums\ViewPaths\Vendor\Dispute as DisputeViewPath;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\DisputeMessageRequest;
 use App\Models\Dispute;
-use App\Models\DisputeEvidence;
 use App\Services\DisputeService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
@@ -17,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class DisputeController extends BaseController
 {
@@ -41,7 +41,7 @@ class DisputeController extends BaseController
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
-                    ->orWhereHas('order', fn ($o) => $o->where('id', $search));
+                    ->orWhereHas('order', fn($o) => $o->where('id', $search));
             });
         }
 
@@ -109,27 +109,17 @@ class DisputeController extends BaseController
             'files.*' => 'file|mimes:jpg,jpeg,png,mp4',
         ]);
 
-        foreach ($request->file('files', []) as $file) {
-            $mime = $file->getMimeType();
-            $isVideo = str_contains($mime, 'video');
-            $maxBytes = $isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+        try {
+            $this->disputeService->uploadEvidenceFiles(
+                dispute: $dispute,
+                files: $request->file('files', []),
+                uploadedBy: (int) $seller->id,
+                userType: DisputeUserType::VENDOR,
+            );
+        } catch (ValidationException $exception) {
+            ToastMagic::error(collect($exception->errors())->flatten()->first() ?? translate('something_went_wrong'));
 
-            if ($file->getSize() > $maxBytes) {
-                $limit = $isVideo ? '50MB' : '5MB';
-                ToastMagic::error(translate('file_exceeds_maximum_allowed_size_of').' '.$limit);
-
-                return back();
-            }
-
-            $path = $file->store("dispute-evidence/{$id}", 'public');
-
-            DisputeEvidence::create([
-                'dispute_id' => $dispute->id,
-                'uploaded_by' => $seller->id,
-                'user_type' => DisputeUserType::VENDOR,
-                'file_path' => $path,
-                'file_type' => $isVideo ? 'video' : 'image',
-            ]);
+            return back();
         }
 
         ToastMagic::success(translate('evidence_uploaded_successfully'));

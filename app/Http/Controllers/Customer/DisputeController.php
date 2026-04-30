@@ -4,16 +4,13 @@ namespace App\Http\Controllers\Customer;
 
 use App\Enums\DisputeStatus;
 use App\Enums\DisputeUserType;
-use App\Enums\EscrowStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\OpenDisputeRequest;
 use App\Http\Requests\DisputeMessageRequest;
 use App\Models\Dispute;
 use App\Models\DisputeMessage;
-use App\Models\Escrow;
 use App\Models\Order;
 use App\Services\DisputeService;
-use App\Services\EscrowService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +19,6 @@ class DisputeController extends Controller
 {
     public function __construct(
         private readonly DisputeService $disputeService,
-        private readonly EscrowService $escrowService,
     ) {}
 
     public function reasons(): JsonResponse
@@ -82,10 +78,26 @@ class DisputeController extends Controller
     {
         $buyerId = auth('api')->id();
 
+        $with = ['reason', 'order', 'messages.buyerSender', 'messages.vendorSender', 'messages.adminSender', 'evidence', 'statusLogs'];
+
         $dispute = Dispute::where('id', $id)
             ->where('buyer_id', $buyerId)
-            ->with(['reason', 'order', 'messages.sender', 'evidence', 'statusLogs'])
+            ->with($with)
             ->first();
+
+        if (! $dispute) {
+            $dispute = Dispute::where('order_id', $id)
+                ->where('buyer_id', $buyerId)
+                ->whereIn('status', [
+                    DisputeStatus::OPEN,
+                    DisputeStatus::VENDOR_RESPONSE,
+                    DisputeStatus::UNDER_REVIEW,
+                    DisputeStatus::PENDING_CLOSURE,
+                ])
+                ->with($with)
+                ->latest('id')
+                ->first();
+        }
 
         if (! $dispute) {
             return response()->json(['status' => 404, 'message' => translate('dispute_not_found')], 404);
@@ -213,33 +225,6 @@ class DisputeController extends Controller
             'message' => translate('evidence_uploaded_successfully'),
             'data' => $uploaded,
         ], 201);
-    }
-
-    public function confirmReceipt(int $orderId): JsonResponse
-    {
-        $buyerId = auth('api')->id();
-
-        $order = Order::where('id', $orderId)->where('customer_id', $buyerId)->first();
-
-        if (! $order) {
-            return response()->json(['status' => 403, 'message' => translate('order_not_found')], 403);
-        }
-
-        $escrow = Escrow::where('order_id', $orderId)
-            ->where('status', EscrowStatus::HELD)
-            ->whereNull('dispute_id')
-            ->first();
-
-        if (! $escrow) {
-            return response()->json(['status' => 404, 'message' => translate('no_held_escrow_found_for_this_order')], 404);
-        }
-
-        $this->escrowService->releaseEscrow($escrow, 'buyer_confirm');
-
-        return response()->json([
-            'status' => 200,
-            'message' => translate('receipt_confirmed_funds_released_to_vendor'),
-        ]);
     }
 
     public function escalate(int $id): JsonResponse

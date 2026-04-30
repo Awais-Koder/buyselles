@@ -279,7 +279,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
             Route::post('{id}/evidence', 'uploadEvidence');
             Route::post('{id}/escalate', 'escalate');
             Route::post('{id}/confirm-closure', 'confirmClosure');
-            Route::post('order/{orderId}/confirm-receipt', 'confirmReceipt');
+            // Note: Receipt confirmation/escrow release is admin-only - no customer endpoint
         });
 
         Route::group(['prefix' => 'address'], function () {

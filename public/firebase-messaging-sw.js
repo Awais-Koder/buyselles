@@ -3,12 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-messaging.js');
 importScripts('https://www.gstatic.com/firebasejs/8.3.2/firebase-auth.js');
 
 firebase.initializeApp({
-    apiKey: "AIzaSyCFGqSEiWMItei_AFIUgdM53PWrvyGmjFY",
+    apiKey: "",
     authDomain: "",
-    projectId: "drivevalley-fdb7f",
+    projectId: "buyselles-dae62",
     storageBucket: "",
-    messagingSenderId: "76471554747",
-    appId: "1:76471554747:android:3aa5d58a094e2a036d0f9e",
+    messagingSenderId: "",
+    appId: "",
     measurementId: ""
 });
 

@@ -85,6 +85,14 @@ trait EmailTemplateTrait
                 try {
                     Mail::to($sendMailTo)->queue(new SendMail($data, $template, $socialMedia));
                 } catch (Exception $exception) {
+                    // Log the error for debugging
+                    \Log::error('Email queue failed: '.$exception->getMessage(), [
+                        'to' => $sendMailTo,
+                        'template' => $templateName,
+                        'userType' => $userType,
+                        'exception' => $exception->getTraceAsString(),
+                    ]);
+                    throw $exception;
                 }
             }
         }

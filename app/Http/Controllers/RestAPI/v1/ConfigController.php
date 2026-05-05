@@ -24,11 +24,17 @@ class ConfigController extends Controller
     public function configuration(): JsonResponse
     {
         $socialLoginConfig = [];
+        $googleClientId = null;
+
         foreach (getWebConfig(name: 'social_login') as $social) {
             $config = [
                 'login_medium' => $social['login_medium'],
                 'status' => (bool) $social['status'],
             ];
+            // Get Google Client ID for Flutter app (safe to expose - it's public)
+            if ($social['login_medium'] === 'google' && isset($social['client_id'])) {
+                $googleClientId = $social['client_id'];
+            }
             $socialLoginConfig[] = $config;
         }
 
@@ -89,6 +95,7 @@ class ConfigController extends Controller
         $customerLogin = [
             'login_option' => $loginOptions,
             'social_media_login_options' => $socialMediaLoginOptions,
+            'google_client_id' => $googleClientId, // Google Web Client ID for Flutter app
         ];
 
         $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;

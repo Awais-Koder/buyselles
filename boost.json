@@ -1,6 +1,6 @@
 {
     "agents": [
-        "copilot"
+        "gemini"
     ],
     "guidelines": true,
     "herd_mcp": false,

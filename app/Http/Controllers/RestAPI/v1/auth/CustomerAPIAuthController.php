@@ -908,6 +908,7 @@ class CustomerAPIAuthController extends Controller
                         'subject' => translate('password_reset'),
                         'title' => translate('password_reset'),
                         'passwordResetURL' => $resetUrl,
+                        'verificationCode' => $token,
                     ];
 
                     if (isset($emailServices['status']) && $emailServices['status'] == 1) {

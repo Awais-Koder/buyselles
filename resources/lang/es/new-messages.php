@@ -6151,4 +6151,18 @@ return [
     'want_to_turn_OFF_WhatsApp_as_social_media_chat_option' => 'Quiero apagar WhatsApp como opción de chat de redes sociales',
     'if_enabled WhatsApp_chatting_option_will_be_available_in_the_system' => 'Si la opción de chat de WhatsApp habilitada estará disponible en el sistema',
     'if_disabled _WhatsApp_chatting_option_will_be_hidden_from_the_system ' => 'Si la opción de chat de WhatsApp deshabilitada se ocultará al sistema',
+    // Digital Delivery & Order Complete Page Translations
+    'check_your_email_to_get_the_order_id_and_details' => 'Revisa tu correo electrónico para obtener el ID del pedido y los detalles',
+    'Codes_have_been_emailed_to_you_too._Keep_them_safe.' => 'Los códigos también te han sido enviados por correo electrónico. Guárdalos de forma segura.',
+    'Copy_or_print_your_codes_below._They_are_also_sent_to_your_email.' => 'Copia o imprime tus códigos a continuación. También se envían a tu correo electrónico.',
+    'Digital_Codes' => 'Códigos Digitales',
+    'I_confirm_I_have_successfully_copied_/_saved_my_code(s)' => 'Confirmo que he copiado / guardado exitosamente mi(s) código(s)',
+    'Keep_your_Order_ID_handy_for_tracking.' => 'Mantén tu ID de pedido a mano para el seguimiento.',
+    'Retrieving_your_digital_codes' => 'Recuperando tus códigos digitales',
+    'View_Your_Codes_&_Receipt' => 'Ver Tus Códigos y Recibo',
+    'View_Receipt' => 'Ver Recibo',
+    'Warning:_Do_not_share_your_codes_with_anyone.' => 'Advertencia: No compartas tus códigos con nadie.',
+    'Your_codes_are_taking_longer_than_expected._They_will_be_sent_to_your_email_shortly.' => 'Tus códigos están tardando más de lo esperado. Se enviarán a tu correo electrónico en breve.',
+    'Your_Digital_Codes' => 'Tus Códigos Digitales',
+    'Your_order_is_confirmed._You_will_receive_an_email_with_tracking_details.' => 'Tu pedido está confirmado. Recibirás un correo electrónico con los detalles de seguimiento.',
 ];

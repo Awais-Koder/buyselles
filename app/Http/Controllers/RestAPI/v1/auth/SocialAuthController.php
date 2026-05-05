@@ -184,6 +184,49 @@ class SocialAuthController extends Controller
         return $token;
     }
 
+    /**
+     * Verify Google ID Token and return user information
+     * This handles the newer google_sign_in package (v7+) which returns ID tokens
+     */
+    private function verifyGoogleIdToken(string $idToken): ?array
+    {
+        try {
+            // Check if it looks like an ID token (JWT format: header.payload.signature)
+            if (substr_count($idToken, '.') !== 2) {
+                return null;
+            }
+
+            $client = new Client;
+
+            // Verify the ID token with Google's tokeninfo endpoint
+            $res = $client->request('GET', 'https://oauth2.googleapis.com/tokeninfo?id_token='.$idToken);
+            $tokenInfo = json_decode($res->getBody()->getContents(), true);
+
+            // Check if token is valid and not expired
+            if (isset($tokenInfo['error']) || ! isset($tokenInfo['sub'])) {
+                return null;
+            }
+
+            // Get user info using the ID token
+            // Decode the ID token to get user information
+            $payload = explode('.', $idToken)[1];
+            $decodedPayload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $payload)), true);
+
+            if ($decodedPayload && isset($decodedPayload['email'])) {
+                return [
+                    'id' => $decodedPayload['sub'] ?? $tokenInfo['sub'],
+                    'email' => $decodedPayload['email'],
+                    'name' => $decodedPayload['name'] ?? ($decodedPayload['given_name'] ?? '').' '.($decodedPayload['family_name'] ?? ''),
+                    'verified_email' => $decodedPayload['email_verified'] ?? true,
+                ];
+            }
+
+            return null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
     public function update_phone(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -230,11 +273,18 @@ class SocialAuthController extends Controller
         $email = $request['email'];
         $uniqueId = $request['unique_id'];
         $socialResponse = [];
+        $data = null;
 
         try {
             if ($request['medium'] == 'google') {
-                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
-                $data = json_decode($res->getBody()->getContents(), true);
+                // Try ID token verification first (newer google_sign_in packages)
+                $data = $this->verifyGoogleIdToken($token);
+
+                // If ID token verification fails, try access token method (fallback)
+                if (! $data) {
+                    $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
+                    $data = json_decode($res->getBody()->getContents(), true);
+                }
             } elseif ($request['medium'] == 'facebook') {
                 $res = $client->request('GET', 'https://graph.facebook.com/'.$uniqueId.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
@@ -278,6 +328,15 @@ class SocialAuthController extends Controller
             return response()->json([
                 'errors' => $errors,
                 'message' => $exception->getMessage(),
+            ], 401);
+        }
+
+        if (! $data) {
+            $errors = [];
+            $errors[] = ['code' => 'auth-002', 'message' => 'Failed to retrieve Google user information'];
+
+            return response()->json([
+                'errors' => $errors,
             ], 401);
         }
 

@@ -128,7 +128,7 @@ class EmailVerificationController extends Controller
                         'userName' => $user['f_name'],
                         'subject' => translate('registration_Verification_Code'),
                         'title' => translate('registration_Verification_Code'),
-                        'verificationCode' => $token,
+                        'verificationCode' => $generate_new_token,
                         'userType' => 'customer',
                         'templateName' => 'registration-verification',
                     ];

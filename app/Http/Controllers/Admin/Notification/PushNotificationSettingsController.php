@@ -135,7 +135,7 @@ class PushNotificationSettingsController extends BaseController
      */
     public function getFirebaseConfigurationUpdate(Request $request): RedirectResponse
     {
-        $this->businessSettingRepo->updateOrInsert(type: 'fcm_project_id', value: $request['fcm_project_id']);
+        $this->businessSettingRepo->updateOrInsert(type: 'fcm_project_id', value: $request['projectId']);
         $this->businessSettingRepo->updateOrInsert(type: 'push_notification_key', value: $request['push_notification_key']);
 
         $configData = $this->pushNotificationService->getFCMCredentialsArray(request: $request);

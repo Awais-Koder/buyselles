@@ -445,6 +445,10 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         Route::get('faq', 'faq');
         Route::get('get-guest-id', 'get_guest_id');
         Route::post('contact-us', 'contact_store');
+        Route::get('get-countries', 'get_countries');
+        Route::get('get-countrie', 'get_countries');
+        Route::get('get-cities/{country_id}', 'get_cities');
+        Route::get('get-areas/{city_id}', 'get_areas');
     });
 });
 

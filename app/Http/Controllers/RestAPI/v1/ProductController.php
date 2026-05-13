@@ -203,6 +203,19 @@ class ProductController extends Controller
                         return $query->whereIn('sub_sub_category_id', $subSubCategoryIds);
                     });
             })
+            ->when($request->has('location_country_id') && ! empty($request->location_country_id), function ($query) use ($request) {
+                if ($request->location_country_id === 'global') {
+                    return $query->whereNull('location_country_id');
+                }
+
+                return $query->where('location_country_id', $request->location_country_id);
+            })
+            ->when($request->has('location_city_id') && ! empty($request->location_city_id), function ($query) use ($request) {
+                return $query->where('location_city_id', $request->location_city_id);
+            })
+            ->when($request->has('location_area_id') && ! empty($request->location_area_id), function ($query) use ($request) {
+                return $query->where('location_area_id', $request->location_area_id);
+            })
             ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($publishingHouses, $productIdsForUnknownPublisher) {
                 $publishingHouseList = PublishingHouse::whereIn('id', $publishingHouses)->with(['publishingHouseProducts'])->withCount(['publishingHouseProducts' => function ($query) {
                     return $query->whereHas('product', function ($query) {
@@ -258,6 +271,12 @@ class ProductController extends Controller
                     })
                     ->when($request['sort_by'] == 'z-a', function ($query) {
                         return $query->orderBy('name', 'DESC');
+                    })
+                    ->when($request['sort_by'] == 'rating-low-high', function ($query) {
+                        return $query->orderBy('reviews_avg_rating', 'ASC');
+                    })
+                    ->when($request['sort_by'] == 'rating-high-low', function ($query) {
+                        return $query->orderBy('reviews_avg_rating', 'DESC');
                     })
                     ->when($request['sort_by'] == 'latest', function ($query) {
                         return $query->latest();

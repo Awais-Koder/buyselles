@@ -58,4 +58,19 @@ class GeneralController extends Controller
 
         return response()->json(['message' => 'your_message_send_successfully'], 200);
     }
+
+    public function get_countries(): JsonResponse
+    {
+        return response()->json(\App\Models\LocationCountry::where('is_active', true)->orderBy('sort_order')->get(), 200);
+    }
+
+    public function get_cities($country_id): JsonResponse
+    {
+        return response()->json(\App\Models\LocationCity::where(['country_id' => $country_id, 'is_active' => true])->orderBy('sort_order')->get(), 200);
+    }
+
+    public function get_areas($city_id): JsonResponse
+    {
+        return response()->json(\App\Models\LocationArea::where(['city_id' => $city_id, 'is_active' => true])->orderBy('sort_order')->get(), 200);
+    }
 }

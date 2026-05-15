@@ -285,7 +285,7 @@ class Product extends Model
 
     public function shop(): BelongsTo
     {
-        return $this->belongsTo(Shop::class, 'seller_id');
+        return $this->belongsTo(Shop::class, 'shop_id');
     }
 
     public function seller(): BelongsTo
@@ -324,7 +324,7 @@ class Product extends Model
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
         } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-' . $this->id, 3600, function () {
+            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
                 return $this?->seller?->shop?->temporary_close ?? 0;
             });
         }

@@ -271,11 +271,11 @@ class SocialAuthController extends Controller
                 'referral_code' => Helpers::generate_referer_code(),
                 'login_medium' => $socialLoginNewCustomer['login_medium'] ?? null,
             ]);
-            $this->customerRepo->updateOrCreate(params: ['email' => $socialLoginNewCustomer['email']], data: session('social_login_new_customer'));
-            $user = $this->customerRepo->getFirstWhere(params: ['email' => $socialLoginNewCustomer['email']]);
             if (getLoginConfig(key: 'phone_verification') == 1) {
                 return $this->loginByOTP(request: $request);
             } else {
+                $this->customerRepo->updateOrCreate(params: ['email' => $socialLoginNewCustomer['email']], data: session('social_login_new_customer'));
+                $user = $this->customerRepo->getFirstWhere(params: ['email' => $socialLoginNewCustomer['email']]);
                 return self::actionCustomerLoginProcess($request, $user, $user['email']);
             }
         } else {
@@ -458,15 +458,27 @@ class SocialAuthController extends Controller
                 }
 
                 $user = $this->customerRepo->getByIdentity(filters: ['identity' => $identity]);
-                $this->customerRepo->updateWhere(params: ['phone' => $user['phone']], data: [
-                    'is_phone_verified' => 1,
-                ]);
-                $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $identity]);
 
-                auth('customer')->login($user);
-                CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
+                if (!$user && session()->has('social_login_new_customer')) {
+                    $socialLoginNewCustomer = session('social_login_new_customer');
+                    if ($socialLoginNewCustomer['phone'] == $identity) {
+                        $socialLoginNewCustomer['is_phone_verified'] = 1;
+                        $user = $this->customerRepo->add(data: $socialLoginNewCustomer);
+                        session()->forget('social_login_new_customer');
+                    }
+                }
 
-                return redirect($authAttemptRedirectUrl);
+                if ($user) {
+                    $this->customerRepo->updateWhere(params: ['phone' => $user['phone']], data: [
+                        'is_phone_verified' => 1,
+                    ]);
+                    $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $identity]);
+
+                    auth('customer')->login($user);
+                    CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
+
+                    return redirect($authAttemptRedirectUrl);
+                }
             }
         }
 

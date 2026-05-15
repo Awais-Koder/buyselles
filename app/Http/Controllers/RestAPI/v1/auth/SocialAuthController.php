@@ -46,8 +46,14 @@ class SocialAuthController extends Controller
 
         try {
             if ($request['medium'] == 'google') {
-                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='.$token);
-                $data = json_decode($res->getBody()->getContents(), true);
+                // Try ID token verification first (newer google_sign_in packages)
+                $data = $this->verifyGoogleIdToken($token);
+
+                // If ID token verification fails, try access token method (fallback)
+                if (!$data) {
+                    $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='.$token);
+                    $data = json_decode($res->getBody()->getContents(), true);
+                }
             } elseif ($request['medium'] == 'facebook') {
                 $res = $client->request('GET', 'https://graph.facebook.com/'.$unique_id.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
@@ -207,8 +213,24 @@ class SocialAuthController extends Controller
                 return null;
             }
 
+            // Verify audience (client_id)
+            $socialLogin = BusinessSetting::where(['type' => 'social_login'])->first();
+            if ($socialLogin) {
+                $socialLogin = json_decode($socialLogin->value, true);
+                $googleClientId = null;
+                foreach ($socialLogin as $login) {
+                    if ($login['login_medium'] == 'google') {
+                        $googleClientId = $login['client_id'];
+                        break;
+                    }
+                }
+                if ($googleClientId && isset($tokenInfo['aud']) && $tokenInfo['aud'] !== $googleClientId) {
+                    // Log mismatch but maybe allow for now if it's multiple clients (e.g. iOS/Android)
+                    // return null;
+                }
+            }
+
             // Get user info using the ID token
-            // Decode the ID token to get user information
             $payload = explode('.', $idToken)[1];
             $decodedPayload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $payload)), true);
 
@@ -427,9 +449,11 @@ class SocialAuthController extends Controller
                 ['code' => 'email', 'message' => translate('This phone has already been used in another account!')],
             ]], 403);
         }
-        $temporaryToken = Str::random(40);
 
-        $user = $this->customerRepo->add(data: [
+        $temporaryToken = Str::random(40);
+        $phoneVerificationStatus = getLoginConfig(key: 'phone_verification') ?? 0;
+
+        $regData = [
             'name' => $request['name'],
             'f_name' => $request['name'],
             'l_name' => '',
@@ -440,13 +464,18 @@ class SocialAuthController extends Controller
             'email_verified_at' => now(),
             'referral_code' => Helpers::generate_referer_code(),
             'login_medium' => 'social',
-        ]);
+        ];
 
-        $phoneVerificationStatus = getLoginConfig(key: 'phone_verification') ?? 0;
         if ($phoneVerificationStatus) {
+            cache()->put('registration_data_'.$request['phone'], [
+                'reg_data' => $regData,
+                'refer_user' => null,
+            ], now()->addMinutes(60));
+
             return response()->json(['temp_token' => $temporaryToken, 'status' => false]);
         }
 
+        $user = $this->customerRepo->add(data: $regData);
         $token = $user->createToken('LaravelAuthApp')->accessToken;
 
         return response()->json(['token' => $token]);

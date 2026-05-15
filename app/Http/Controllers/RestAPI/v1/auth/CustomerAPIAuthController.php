@@ -694,6 +694,8 @@ class CustomerAPIAuthController extends Controller
 
             $isUserExist = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
             if (! $isUserExist) {
+                cache()->put('otp_verified_'.$request['phone'], $temporaryToken, now()->addMinutes(15));
+
                 return response()->json(['temporary_token' => $temporaryToken, 'status' => false], 200);
             }
 
@@ -723,10 +725,18 @@ class CustomerAPIAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|max:255',
             'phone' => 'required|string|min:6|max:15',
+            'temporary_token' => 'required',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
+        }
+
+        $verifiedToken = cache()->get('otp_verified_'.$request['phone']);
+        if (! $verifiedToken || $verifiedToken != $request['temporary_token']) {
+            return response()->json(['errors' => [
+                ['code' => 'auth', 'message' => translate('OTP_verification_failed_or_expired')],
+            ]], 403);
         }
 
         if ($request['email']) {
@@ -739,7 +749,8 @@ class CustomerAPIAuthController extends Controller
             }
         }
 
-        $temporaryToken = Str::random(40);
+        $temporaryToken = $request['temporary_token'];
+        cache()->forget('otp_verified_'.$request['phone']);
 
         $user = $this->customerRepo->add([
             'name' => $request['name'],

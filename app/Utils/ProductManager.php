@@ -49,6 +49,19 @@ class ProductManager
     {
         $user = Helpers::getCustomerInformation($request);
         $paginator = Product::active()
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
+                $query->whereHas('shop', function ($q) use ($request) {
+                    if ($request->has('country_id')) {
+                        $q->where('store_country_id', $request['country_id']);
+                    }
+                    if ($request->has('city_id')) {
+                        $q->where('store_city_id', $request['city_id']);
+                    }
+                    if ($request->has('area_id')) {
+                        $q->where('store_area_id', $request['area_id']);
+                    }
+                });
+            })
             ->with(['rating', 'tags', 'seller.shop', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
                 return $query->active();
             }])
@@ -94,6 +107,19 @@ class ProductManager
     {
         $user = Helpers::getCustomerInformation($request);
         $products = Product::active()
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
+                $query->whereHas('shop', function ($q) use ($request) {
+                    if ($request->has('country_id')) {
+                        $q->where('store_country_id', $request['country_id']);
+                    }
+                    if ($request->has('city_id')) {
+                        $q->where('store_city_id', $request['city_id']);
+                    }
+                    if ($request->has('area_id')) {
+                        $q->where('store_area_id', $request['area_id']);
+                    }
+                });
+            })
             ->with(['rating', 'tags', 'seller.shop', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
                 return $query->active();
             }])
@@ -138,6 +164,19 @@ class ProductManager
         $products = Product::with(['seller.shop', 'rating', 'tags', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
             return $query->active();
         }])->active()
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
+                $query->whereHas('shop', function ($q) use ($request) {
+                    if ($request->has('country_id')) {
+                        $q->where('store_country_id', $request['country_id']);
+                    }
+                    if ($request->has('city_id')) {
+                        $q->where('store_city_id', $request['city_id']);
+                    }
+                    if ($request->has('area_id')) {
+                        $q->where('store_area_id', $request['area_id']);
+                    }
+                });
+            })
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user->id : '0');
             }])
@@ -189,9 +228,23 @@ class ProductManager
             $getReviewProductIds[] = $review['product_id'];
         }
 
-        $productListData = Product::active()->withSum('orderDetails', 'qty', function ($query) {
-            $query->where('delivery_status', 'delivered');
-        })
+        $productListData = Product::active()
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
+                $query->whereHas('shop', function ($q) use ($request) {
+                    if ($request->has('country_id')) {
+                        $q->where('store_country_id', $request['country_id']);
+                    }
+                    if ($request->has('city_id')) {
+                        $q->where('store_city_id', $request['city_id']);
+                    }
+                    if ($request->has('area_id')) {
+                        $q->where('store_area_id', $request['area_id']);
+                    }
+                });
+            })
+            ->withSum('orderDetails', 'qty', function ($query) {
+                $query->where('delivery_status', 'delivered');
+            })
             ->with([
                 'seller.shop',
                 'category',
@@ -257,9 +310,23 @@ class ProductManager
             $getOrderedProductIds[] = $detail['product_id'];
         }
 
-        $productListData = Product::active()->withSum('orderDetails', 'qty', function ($query) {
-            $query->where('delivery_status', 'delivered');
-        })
+        $productListData = Product::active()
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
+                $query->whereHas('shop', function ($q) use ($request) {
+                    if ($request->has('country_id')) {
+                        $q->where('store_country_id', $request['country_id']);
+                    }
+                    if ($request->has('city_id')) {
+                        $q->where('store_city_id', $request['city_id']);
+                    }
+                    if ($request->has('area_id')) {
+                        $q->where('store_area_id', $request['area_id']);
+                    }
+                });
+            })
+            ->withSum('orderDetails', 'qty', function ($query) {
+                $query->where('delivery_status', 'delivered');
+            })
             ->with([
                 'seller.shop',
                 'category',

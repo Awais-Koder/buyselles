@@ -83,59 +83,72 @@ class RegisterController extends Controller
         $referUser = $request['referral_code'] ? $this->customerRepo->getFirstWhere(params: ['referral_code' => $request['referral_code']]) : null;
         $referralConfig = getWebConfig(name: 'ref_earning_customer');
         $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
-        $user = $this->customerRepo->add(data: $this->customerAuthService->getCustomerRegisterData($request, $referUser));
+        $regData = $this->customerAuthService->getCustomerRegisterData($request, $referUser);
+
+        $phoneVerification = getLoginConfig(key: 'phone_verification');
+        $emailVerification = getLoginConfig(key: 'email_verification');
+
+        if ($phoneVerification || $emailVerification) {
+            $identity = ($phoneVerification ? $regData['phone'] : $regData['email']);
+            cache()->put('registration_data_'.$identity, [
+                'reg_data' => $regData,
+                'refer_user' => $referUser,
+            ], now()->addMinutes(60));
+
+            $user = (object) $regData; // Temporary object for verification check methods
+            $user->is_phone_verified = 0;
+            $user->is_email_verified = 0;
+
+            if ($request->ajax()) {
+                if ($phoneVerification) {
+                    $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user->phone]);
+                    $this->getCustomerVerificationCheck((array) $user, 'phone');
+
+                    return response()->json([
+                        'redirect_url' => route('customer.auth.check-verification', ['identity' => base64_encode($user->phone), 'type' => base64_encode('phone_verification')]),
+                    ]);
+                } elseif ($emailVerification) {
+                    $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user->email]);
+                    $this->getCustomerVerificationCheck((array) $user, 'email');
+
+                    return response()->json([
+                        'redirect_url' => route('customer.auth.check-verification', ['identity' => base64_encode($user->email), 'type' => base64_encode('email_verification')]),
+                    ]);
+                }
+            } else {
+                if ($phoneVerification) {
+                    $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user->phone]);
+                    $this->getCustomerVerificationCheck((array) $user, 'phone');
+
+                    return redirect(route('customer.auth.check-verification', ['identity' => base64_encode($user->phone), 'type' => base64_encode('phone_verification')]));
+                }
+                if ($emailVerification) {
+                    $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user->email]);
+                    $this->getCustomerVerificationCheck((array) $user, 'email');
+
+                    return redirect(route('customer.auth.check-verification', ['identity' => base64_encode($user->email), 'type' => base64_encode('email_verification')]));
+                }
+            }
+        }
+
+        $user = $this->customerRepo->add(data: $regData);
         if (! empty($referUser) && isset($referralConfig['ref_earning_discount_status']) && $referralConfig['ref_earning_discount_status'] == 1) {
             $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(referralData: $referralConfig, referralEarningRate: $referralEarningRate, referUser: $referUser, userId: $user->id);
             event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
         }
 
-        $phoneVerification = getLoginConfig(key: 'phone_verification');
-        $emailVerification = getLoginConfig(key: 'email_verification');
-
+        auth('customer')->login($user);
+        CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
         if ($request->ajax()) {
-            if ($phoneVerification && ! $user->is_phone_verified) {
-                $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user?->phone]);
-                $this->getCustomerVerificationCheck($user, 'phone');
-
-                return response()->json([
-                    'redirect_url' => route('customer.auth.check-verification', ['identity' => base64_encode($user['phone']), 'type' => base64_encode('phone_verification')]),
-                ]);
-            } elseif ($emailVerification && ! $user->is_email_verified) {
-                $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user?->email]);
-                $this->getCustomerVerificationCheck($user, 'email');
-
-                return response()->json([
-                    'redirect_url' => route('customer.auth.check-verification', ['identity' => base64_encode($user['email']), 'type' => base64_encode('email_verification')]),
-                ]);
-            }
-
-            auth('customer')->login($user);
-            CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
-
             return response()->json([
                 'status' => 1,
                 'message' => translate('registration_successful'),
                 'redirect_url' => $this->customerAuthService->getCustomerAuthReturnURL(),
             ]);
-        } else {
-            if ($phoneVerification && ! $user->is_phone_verified) {
-                $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user?->phone]);
-                $this->getCustomerVerificationCheck($user, 'phone');
-
-                return redirect(route('customer.auth.check-verification', ['identity' => base64_encode($user['phone']), 'type' => base64_encode('phone_verification')]));
-            }
-            if ($emailVerification && ! $user->is_email_verified) {
-                $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $user?->email]);
-                $this->getCustomerVerificationCheck($user, 'email');
-
-                return redirect(route('customer.auth.check-verification', ['identity' => base64_encode($user['email']), 'type' => base64_encode('email_verification')]));
-            }
-            auth('customer')->login($user);
-            CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
-            Toastr::success(translate('registration_successful'));
-
-            return redirect($this->customerAuthService->getCustomerAuthReturnURL());
         }
+        Toastr::success(translate('registration_successful'));
+
+        return redirect($this->customerAuthService->getCustomerAuthReturnURL());
     }
 
     public function getCustomerVerificationCheck($user, $type, $config = []): array|RedirectResponse|string|null
@@ -186,18 +199,25 @@ class RegisterController extends Controller
         $emailVerification = getLoginConfig(key: 'email_verification');
 
         $user = $this->customerRepo->getByIdentity(filters: ['identity' => base64_decode($request['identity'])]);
+        if (! $user) {
+            $cachedData = cache()->get('registration_data_'.base64_decode($request['identity']));
+            if ($cachedData) {
+                $user = $cachedData['reg_data'];
+            }
+        }
+
         $getTime = 0;
         $userVerify = 1;
         $verifyType = '';
-        if ($phoneVerification && ! $user['is_phone_verified']) {
+        if ($user && $phoneVerification && (! isset($user['is_phone_verified']) || ! $user['is_phone_verified'])) {
             $userVerify = 0;
             $verifyType = 'phone';
-        } elseif ($emailVerification && ! $user['is_email_verified']) {
+        } elseif ($user && $emailVerification && (! isset($user['is_email_verified']) || ! $user['is_email_verified'])) {
             $userVerify = 0;
             $verifyType = 'email';
         }
 
-        $OTPIdentity = $request['type'] && base64_decode($request['type']) == 'phone_verification' ? $user['phone'] : $user['email'];
+        $OTPIdentity = $request['type'] && base64_decode($request['type']) == 'phone_verification' ? ($user['phone'] ?? base64_decode($request['identity'])) : ($user['email'] ?? base64_decode($request['identity']));
         $token = $this->phoneOrEmailVerificationRepo->getFirstWhere(params: ['phone_or_email' => $OTPIdentity]);
         if ($token) {
             $otpResendTime = getWebConfig(name: 'otp_resend_time') > 0 ? getWebConfig(name: 'otp_resend_time') : 0;
@@ -300,11 +320,44 @@ class RegisterController extends Controller
             }
 
             if ($tokenVerifyStatus) {
-                $data = $verificationType == 'phone_verification' ? ['is_phone_verified' => 1] : ['is_email_verified' => 1];
-                $this->customerRepo->updateWhere(params: ['id' => $customer['id']], data: $data);
+                if ($customer) {
+                    $data = $verificationType == 'phone_verification' ? ['is_phone_verified' => 1] : ['is_email_verified' => 1];
+                    $this->customerRepo->updateWhere(params: ['id' => $customer['id']], data: $data);
+                    $user = $this->customerRepo->getFirstWhere(params: ['id' => $customer['id']]);
+                } else {
+                    $cachedData = cache()->get('registration_data_'.$identity);
+                    if ($cachedData) {
+                        $regData = $cachedData['reg_data'];
+                        $referUser = $cachedData['refer_user'];
+                        if ($verificationType == 'phone_verification') {
+                            $regData['is_phone_verified'] = 1;
+                        } else {
+                            $regData['email_verified_at'] = now();
+                            $regData['is_email_verified'] = 1;
+                        }
+                        $user = $this->customerRepo->add(data: $regData);
+
+                        $referralData = getWebConfig(name: 'ref_earning_customer');
+                        $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
+                        if (! empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
+                            $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(
+                                referralData: $referralData,
+                                referralEarningRate: $referralEarningRate,
+                                referUser: $referUser,
+                                userId: $user['id']
+                            );
+                            event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
+                        }
+                        cache()->forget('registration_data_'.$identity);
+                    } else {
+                        Toastr::error(translate('Registration data expired or not found.'));
+
+                        return redirect()->back();
+                    }
+                }
+
                 $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $identity]);
-                $customer = $this->customerRepo->getFirstWhere(params: ['id' => $customer['id']]);
-                auth('customer')->login($customer);
+                auth('customer')->login($user);
                 CustomerManager::updateCustomerSessionData(userId: auth('customer')->id());
                 Toastr::success(translate('verification_done_successfully'));
 

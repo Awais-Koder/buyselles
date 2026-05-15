@@ -46,17 +46,13 @@ class SocialAuthController extends Controller
 
         try {
             if ($request['medium'] == 'google') {
-                // Try ID token verification first (newer google_sign_in packages)
-                $data = $this->verifyGoogleIdToken($token);
-
-                // If ID token verification fails, try access token method (fallback)
-                if (!$data) {
-                    $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='.$token);
-                    $data = json_decode($res->getBody()->getContents(), true);
-                }
+                $data = $this->resolveGoogleUserData($token);
             } elseif ($request['medium'] == 'facebook') {
                 $res = $client->request('GET', 'https://graph.facebook.com/'.$unique_id.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
+                if (isset($data['id'])) {
+                    $data['id'] = $data['id'];
+                }
             } elseif ($request['medium'] == 'apple') {
                 $apple_login = BusinessSetting::where(['type' => 'apple_login'])->first();
                 if ($apple_login) {
@@ -130,7 +126,7 @@ class SocialAuthController extends Controller
 
             return response()->json(['error_message' => translate('customer_not_found_or_account_has_been_suspended')]);
 
-        } elseif (strcmp($email, $data['email']) === 0) {
+        } elseif (isset($data['email']) && strcasecmp($email, $data['email']) === 0) {
             $name = explode(' ', $data['name']);
             if (count($name) > 1) {
                 $fast_name = implode(' ', array_slice($name, 0, -1));
@@ -191,60 +187,81 @@ class SocialAuthController extends Controller
     }
 
     /**
+     * Resolve Google user data from either an ID token (JWT) or an access token.
+     * Tries ID token verification first, then falls back to the userinfo endpoint with the access token.
+     *
+     * @return array{id: string, email: string, name: ?string, picture: ?string}|null
+     */
+    private function resolveGoogleUserData(string $token): ?array
+    {
+        // Try ID token verification (JWT format: 3 parts separated by dots)
+        if (substr_count($token, '.') === 2) {
+            $data = $this->verifyGoogleIdToken($token);
+            if ($data) {
+                return $data;
+            }
+        }
+
+        // Fallback: use as access token against userinfo endpoint (v1 returns `id`, v3 returns `sub`)
+        try {
+            $client = new Client;
+
+            // Try v1 first (returns `id` field directly)
+            $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='.$token);
+            $data = json_decode($res->getBody()->getContents(), true);
+
+            if (isset($data['error'])) {
+                // If v1 fails, try v3 which uses `sub` for the user id
+                $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
+                $data = json_decode($res->getBody()->getContents(), true);
+            }
+
+            if (! $data || (isset($data['error']) && ! isset($data['email']))) {
+                return null;
+            }
+
+            // Normalize: ensure `id` field is always set (v3 uses `sub`)
+            if (! isset($data['id']) && isset($data['sub'])) {
+                $data['id'] = $data['sub'];
+            }
+
+            return [
+                'id' => $data['id'] ?? $data['sub'] ?? null,
+                'email' => $data['email'] ?? null,
+                'name' => $data['name'] ?? null,
+                'picture' => $data['picture'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Verify Google ID Token and return user information
      * This handles the newer google_sign_in package (v7+) which returns ID tokens
+     *
+     * @return array{id: string, email: string, name: ?string, picture: ?string}|null
      */
     private function verifyGoogleIdToken(string $idToken): ?array
     {
         try {
-            // Check if it looks like an ID token (JWT format: header.payload.signature)
-            if (substr_count($idToken, '.') !== 2) {
-                return null;
-            }
-
             $client = new Client;
 
             // Verify the ID token with Google's tokeninfo endpoint
             $res = $client->request('GET', 'https://oauth2.googleapis.com/tokeninfo?id_token='.$idToken);
             $tokenInfo = json_decode($res->getBody()->getContents(), true);
 
-            // Check if token is valid and not expired
             if (isset($tokenInfo['error']) || ! isset($tokenInfo['sub'])) {
                 return null;
             }
 
-            // Verify audience (client_id)
-            $socialLogin = BusinessSetting::where(['type' => 'social_login'])->first();
-            if ($socialLogin) {
-                $socialLogin = json_decode($socialLogin->value, true);
-                $googleClientId = null;
-                foreach ($socialLogin as $login) {
-                    if ($login['login_medium'] == 'google') {
-                        $googleClientId = $login['client_id'];
-                        break;
-                    }
-                }
-                if ($googleClientId && isset($tokenInfo['aud']) && $tokenInfo['aud'] !== $googleClientId) {
-                    // Log mismatch but maybe allow for now if it's multiple clients (e.g. iOS/Android)
-                    // return null;
-                }
-            }
-
-            // Get user info using the ID token
-            $payload = explode('.', $idToken)[1];
-            $decodedPayload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $payload)), true);
-
-            if ($decodedPayload && isset($decodedPayload['email'])) {
-                return [
-                    'id' => $decodedPayload['sub'] ?? $tokenInfo['sub'],
-                    'email' => $decodedPayload['email'],
-                    'name' => $decodedPayload['name'] ?? ($decodedPayload['given_name'] ?? '').' '.($decodedPayload['family_name'] ?? ''),
-                    'verified_email' => $decodedPayload['email_verified'] ?? true,
-                ];
-            }
-
-            return null;
-        } catch (Exception $e) {
+            return [
+                'id' => $tokenInfo['sub'],
+                'email' => $tokenInfo['email'] ?? null,
+                'name' => $tokenInfo['name'] ?? null,
+                'picture' => $tokenInfo['picture'] ?? null,
+            ];
+        } catch (\Exception $e) {
             return null;
         }
     }
@@ -299,14 +316,7 @@ class SocialAuthController extends Controller
 
         try {
             if ($request['medium'] == 'google') {
-                // Try ID token verification first (newer google_sign_in packages)
-                $data = $this->verifyGoogleIdToken($token);
-
-                // If ID token verification fails, try access token method (fallback)
-                if (! $data) {
-                    $res = $client->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo?access_token='.$token);
-                    $data = json_decode($res->getBody()->getContents(), true);
-                }
+                $data = $this->resolveGoogleUserData($token);
             } elseif ($request['medium'] == 'facebook') {
                 $res = $client->request('GET', 'https://graph.facebook.com/'.$uniqueId.'?access_token='.$token.'&&fields=name,email');
                 $data = json_decode($res->getBody()->getContents(), true);
@@ -362,13 +372,9 @@ class SocialAuthController extends Controller
             ], 401);
         }
 
-        if (! isset($claims) && isset($data)) {
-            if (strcmp($email, $data['email']) != 0) {
-                if ($request['medium'] == 'apple' && (! isset($data['id']) && ! isset($data['kid']))) {
-                    return response()->json(['error' => translate('email_does_not_match')], 403);
-                } else {
-                    return response()->json(['error' => translate('email_does_not_match')], 403);
-                }
+        if (! isset($claims) && isset($data) && isset($data['email'])) {
+            if (strcasecmp($email, $data['email']) != 0) {
+                return response()->json(['error' => translate('email_does_not_match')], 403);
             }
         }
 

@@ -73,4 +73,77 @@ class GeneralController extends Controller
     {
         return response()->json(\App\Models\LocationArea::where(['city_id' => $city_id, 'is_active' => true])->orderBy('sort_order')->get(), 200);
     }
+
+    public function get_discovery_vendors(Request $request): JsonResponse
+    {
+        $limit = $request->get('limit', 10);
+        $offset = $request->get('offset', 1);
+
+        $vendors = \App\Models\Seller::approved()
+            ->with(['shop'])
+            ->whereHas('shop', function ($query) use ($request) {
+                if ($request->has('country_id')) {
+                    $query->where('store_country_id', $request['country_id']);
+                }
+                if ($request->has('city_id')) {
+                    $query->where('store_city_id', $request['city_id']);
+                }
+                if ($request->has('area_id')) {
+                    $query->where('store_area_id', $request['area_id']);
+                }
+            })
+            ->withCount(['product' => function ($query) {
+                $query->active();
+            }])
+            ->paginate($limit, ['*'], 'page', $offset);
+
+        $vendors->getCollection()->transform(function ($seller) {
+            $seller['average_rating'] = \App\Models\Review::active()->whereHas('product', function ($query) use ($seller) {
+                $query->where('user_id', $seller->id)->where('added_by', 'seller');
+            })->avg('rating') ?? 0;
+            $seller['rating_count'] = \App\Models\Review::active()->whereHas('product', function ($query) use ($seller) {
+                $query->where('user_id', $seller->id)->where('added_by', 'seller');
+            })->count();
+            return $seller;
+        });
+
+        return response()->json([
+            'total_size' => $vendors->total(),
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'sellers' => $vendors->values(),
+        ], 200);
+    }
+
+    public function get_discovery_products(Request $request): JsonResponse
+    {
+        $limit = $request->get('limit', 10);
+        $offset = $request->get('offset', 1);
+
+        $products = \App\Models\Product::active()
+            ->when($request->has('category_id'), function ($query) use ($request) {
+                $query->where('category_id', $request['category_id']);
+            })
+            ->whereHas('seller.shop', function ($query) use ($request) {
+                if ($request->has('country_id')) {
+                    $query->where('store_country_id', $request['country_id']);
+                }
+                if ($request->has('city_id')) {
+                    $query->where('store_city_id', $request['city_id']);
+                }
+                if ($request->has('area_id')) {
+                    $query->where('store_area_id', $request['area_id']);
+                }
+            })
+            ->with(['reviews', 'rating'])
+            ->latest()
+            ->paginate($limit, ['*'], 'page', $offset);
+
+        return response()->json([
+            'total_size' => $products->total(),
+            'limit' => (int) $limit,
+            'offset' => (int) $offset,
+            'products' => Helpers::product_data_formatting($products->items(), true),
+        ], 200);
+    }
 }

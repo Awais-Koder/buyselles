@@ -60,7 +60,10 @@ class CustomerAPIAuthController extends Controller
 
         $temporaryToken = Str::random(40);
 
-        $user = $this->customerRepo->add([
+        $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
+        $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
+
+        $regData = [
             'name' => $request['f_name'].' '.$request['l_name'],
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
@@ -70,7 +73,29 @@ class CustomerAPIAuthController extends Controller
             'temporary_token' => $temporaryToken,
             'referral_code' => Helpers::generate_referer_code(),
             'referred_by' => $referUser?->id ?? null,
-        ]);
+            'is_phone_verified' => 0,
+            'is_email_verified' => 0,
+        ];
+
+        if ($phoneVerification) {
+            cache()->put('registration_data_'.$request['phone'], [
+                'reg_data' => $regData,
+                'refer_user' => $referUser,
+            ], now()->addHours(1));
+
+            return response()->json(['temporary_token' => $temporaryToken], 200);
+        }
+
+        if ($emailVerification) {
+            cache()->put('registration_data_'.$request['email'], [
+                'reg_data' => $regData,
+                'refer_user' => $referUser,
+            ], now()->addHours(1));
+
+            return response()->json(['temporary_token' => $temporaryToken], 200);
+        }
+
+        $user = $this->customerRepo->add($regData);
 
         $referralData = getWebConfig(name: 'ref_earning_customer');
         $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
@@ -82,16 +107,6 @@ class CustomerAPIAuthController extends Controller
                 userId: $user['id']
             );
             event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
-        }
-
-        $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
-        $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
-
-        if ($phoneVerification && ! $user->is_phone_verified) {
-            return response()->json(['temporary_token' => $temporaryToken], 200);
-        }
-        if ($emailVerification && $user->email_verified_at == null) {
-            return response()->json(['temporary_token' => $temporaryToken], 200);
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;
@@ -362,11 +377,41 @@ class CustomerAPIAuthController extends Controller
         }
 
         if (isset($verify)) {
-            $this->customerRepo->updateWhere(params: ['phone' => $request['phone']], data: [
-                'is_phone_verified' => 1,
-            ]);
-
             $user = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
+
+            if (! $user) {
+                $cachedData = cache()->get('registration_data_'.$request['phone']);
+                if ($cachedData) {
+                    $regData = $cachedData['reg_data'];
+                    $referUser = $cachedData['refer_user'];
+                    $regData['is_phone_verified'] = 1;
+
+                    $user = $this->customerRepo->add(data: $regData);
+
+                    $referralData = getWebConfig(name: 'ref_earning_customer');
+                    $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
+                    if (! empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
+                        $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(
+                            referralData: $referralData,
+                            referralEarningRate: $referralEarningRate,
+                            referUser: $referUser,
+                            userId: $user['id']
+                        );
+                        event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
+                    }
+                    cache()->forget('registration_data_'.$request['phone']);
+                } else {
+                    return response()->json(['errors' => [
+                        ['code' => 'not_found', 'message' => translate('Registration data expired or not found.')],
+                    ]], 403);
+                }
+            } else {
+                $this->customerRepo->updateWhere(params: ['phone' => $request['phone']], data: [
+                    'is_phone_verified' => 1,
+                ]);
+                $user = $this->customerRepo->getFirstWhere(params: ['phone' => $request['phone']]);
+            }
+
             $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $request['phone']]);
             if ($user['is_active'] != 1) {
                 return response()->json(['errors' => [
@@ -412,11 +457,43 @@ class CustomerAPIAuthController extends Controller
         }
 
         if (isset($verify)) {
-            $this->customerRepo->updateWhere(params: ['email' => $request['email']], data: [
-                'email_verified_at' => now(),
-                'is_email_verified' => 1,
-            ]);
             $user = $this->customerRepo->getFirstWhere(params: ['email' => $request['email']]);
+
+            if (! $user) {
+                $cachedData = cache()->get('registration_data_'.$request['email']);
+                if ($cachedData) {
+                    $regData = $cachedData['reg_data'];
+                    $referUser = $cachedData['refer_user'];
+                    $regData['email_verified_at'] = now();
+                    $regData['is_email_verified'] = 1;
+
+                    $user = $this->customerRepo->add(data: $regData);
+
+                    $referralData = getWebConfig(name: 'ref_earning_customer');
+                    $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
+                    if (! empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
+                        $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(
+                            referralData: $referralData,
+                            referralEarningRate: $referralEarningRate,
+                            referUser: $referUser,
+                            userId: $user['id']
+                        );
+                        event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
+                    }
+                    cache()->forget('registration_data_'.$request['email']);
+                } else {
+                    return response()->json(['errors' => [
+                        ['code' => 'not_found', 'message' => translate('Registration data expired or not found.')],
+                    ]], 403);
+                }
+            } else {
+                $this->customerRepo->updateWhere(params: ['email' => $request['email']], data: [
+                    'email_verified_at' => now(),
+                    'is_email_verified' => 1,
+                ]);
+                $user = $this->customerRepo->getFirstWhere(params: ['email' => $request['email']]);
+            }
+
             $this->phoneOrEmailVerificationRepo->delete(params: ['phone_or_email' => $request['email']]);
 
             if ($user['is_active'] != 1) {
@@ -452,13 +529,15 @@ class CustomerAPIAuthController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        if ($request['referral_code']) {
-            $refer_user = $this->customerRepo->getFirstWhere(params: ['referral_code' => $request['referral_code']]);
-        }
+        $referUser = $request['referral_code'] ? $this->customerRepo->getFirstWhere(params: ['referral_code' => $request['referral_code']]) : null;
 
         $temporaryToken = Str::random(40);
 
-        $user = $this->customerRepo->add([
+        $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
+        $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
+
+        $regData = [
+            'name' => $request['f_name'].' '.$request['l_name'],
             'f_name' => $request['f_name'],
             'l_name' => $request['l_name'],
             'email' => $request['email'],
@@ -466,17 +545,41 @@ class CustomerAPIAuthController extends Controller
             'password' => bcrypt($request['password']),
             'temporary_token' => $temporaryToken,
             'referral_code' => Helpers::generate_referer_code(),
-            'referred_by' => $refer_user->id ?? null,
-        ]);
+            'referred_by' => $referUser?->id ?? null,
+            'is_phone_verified' => 0,
+            'is_email_verified' => 0,
+        ];
 
-        $emailVerification = getLoginConfig(key: 'email_verification') ?? 0;
-        $phoneVerification = getLoginConfig(key: 'phone_verification') ?? 0;
+        if ($phoneVerification) {
+            cache()->put('registration_data_'.$request['phone'], [
+                'reg_data' => $regData,
+                'refer_user' => $referUser,
+            ], now()->addHours(1));
 
-        if ($phoneVerification && ! $user->is_phone_verified) {
             return response()->json(['temporary_token' => $temporaryToken], 200);
         }
-        if ($emailVerification && $user->email_verified_at == null) {
+
+        if ($emailVerification) {
+            cache()->put('registration_data_'.$request['email'], [
+                'reg_data' => $regData,
+                'refer_user' => $referUser,
+            ], now()->addHours(1));
+
             return response()->json(['temporary_token' => $temporaryToken], 200);
+        }
+
+        $user = $this->customerRepo->add($regData);
+
+        $referralData = getWebConfig(name: 'ref_earning_customer');
+        $referralEarningRate = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'ref_earning_exchange_rate']);
+        if (! empty($referUser) && isset($referralData['ref_earning_discount_status']) && $referralData['ref_earning_discount_status'] == 1) {
+            $referralCustomer = $this->referByEarnCustomerService->addReferralCustomerData(
+                referralData: $referralData,
+                referralEarningRate: $referralEarningRate,
+                referUser: $referUser,
+                userId: $user['id']
+            );
+            event(new CustomerRegisteredViaReferralEvent($referralCustomer, $referUser));
         }
 
         $token = $user->createToken('LaravelAuthApp')->accessToken;

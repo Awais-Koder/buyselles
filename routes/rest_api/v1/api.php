@@ -449,6 +449,8 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         Route::get('get-countrie', 'get_countries');
         Route::get('get-cities/{country_id}', 'get_cities');
         Route::get('get-areas/{city_id}', 'get_areas');
+        Route::get('discovery-vendors', 'get_discovery_vendors');
+        Route::get('discovery-products', 'get_discovery_products');
     });
 });
 

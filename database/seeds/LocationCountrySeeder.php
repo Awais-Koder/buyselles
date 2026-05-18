@@ -9,22 +9,33 @@ class LocationCountrySeeder extends Seeder
 {
     public function run(): void
     {
-        $existing = LocationCountry::pluck('code')->filter()->map(fn ($c) => strtoupper($c))->toArray();
+        $existingCountries = LocationCountry::all()->keyBy(function ($country) {
+            return strtoupper(trim($country->code));
+        });
 
         $toInsert = [];
         $now = now();
 
         foreach (COUNTRIES as $country) {
-            if (in_array(strtoupper($country['code']), $existing, true)) {
-                continue;
+            $code = strtoupper(trim($country['code']));
+            $name = trim($country['name']);
+
+            if ($existingCountries->has($code)) {
+                $existingCountry = $existingCountries->get($code);
+                if ($existingCountry->name !== $name) {
+                    $existingCountry->update([
+                        'name' => $name,
+                    ]);
+                }
+            } else {
+                $toInsert[] = [
+                    'name' => $name,
+                    'code' => $country['code'],
+                    'is_active' => 1,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
-            $toInsert[] = [
-                'name' => $country['name'],
-                'code' => $country['code'],
-                'is_active' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
         }
 
         if (! empty($toInsert)) {

@@ -148,6 +148,16 @@ class CategoryController extends BaseController
 
         $dataArray = $this->categoryService->getUpdateData(request: $request, data: $category);
         $this->categoryRepo->update(id: $request['id'], data: $dataArray);
+
+        if ($category['position'] == 0 && isset($dataArray['category_type'])) {
+            $categoryType = $dataArray['category_type'];
+            $subCategories = \App\Models\Category::where('parent_id', $category['id'])->get();
+            foreach ($subCategories as $subCategory) {
+                $subCategory->update(['category_type' => $categoryType]);
+                \App\Models\Category::where('parent_id', $subCategory['id'])->update(['category_type' => $categoryType]);
+            }
+        }
+
         $this->translationRepo->update(request: $request, model: 'App\Models\Category', id: $request['id']);
 
         $seoMetaData = $this->seoMetaInfoService->getModelSEOData(request: $request, seoMetaInfo: $category?->seo, type: 'App\Models\Category', modelId: $category->id, action: 'update');

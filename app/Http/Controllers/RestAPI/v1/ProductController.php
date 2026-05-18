@@ -204,16 +204,22 @@ class ProductController extends Controller
                     });
             })
             ->when($request->hasAny(['location_country_id', 'location_city_id', 'location_area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($query) use ($request) {
-                    if ($request->has('location_country_id') && $request->location_country_id !== 'global') {
-                        $query->where('store_country_id', $request->location_country_id);
-                    }
-                    if ($request->has('location_city_id') && ! empty($request->location_city_id)) {
-                        $query->where('store_city_id', $request->location_city_id);
-                    }
-                    if ($request->has('location_area_id') && ! empty($request->location_area_id)) {
-                        $query->where('store_area_id', $request->location_area_id);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($query) use ($request) {
+                        if ($request->has('location_country_id') && $request->location_country_id !== 'global') {
+                            $query->where('store_country_id', $request->location_country_id);
+                        }
+                        if ($request->has('location_city_id') && ! empty($request->location_city_id)) {
+                            $query->where('store_city_id', $request->location_city_id);
+                        }
+                        if ($request->has('location_area_id') && ! empty($request->location_area_id)) {
+                            $query->where('store_area_id', $request->location_area_id);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->when($request->has('publishing_houses') && $publishingHouses, function ($query) use ($publishingHouses, $productIdsForUnknownPublisher) {

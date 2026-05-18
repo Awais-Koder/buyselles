@@ -40,6 +40,7 @@ class CategoryAddRequest extends FormRequest
                 isDisallowed: true
             ),
             'priority' => 'required',
+            'category_type' => 'required_if:position,0|in:physical,digital',
         ];
     }
 

@@ -76,7 +76,18 @@
                                             </div>
                                             <div>
                                                 <div class="fs-14 line-1 max-w-200">{{ $category['defaultname'] }}</div>
-                                                <span class="fs-12 opacity-70">{{ translate('ID') }} #{{ $category['id'] }}</span>
+                                                <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                                    <span class="fs-12 opacity-70">{{ translate('ID') }} #{{ $category['id'] }}</span>
+                                                    @if(($category['category_type'] ?? 'physical') == 'digital')
+                                                        <span class="badge badge-soft-info border-info-light fs-10 px-2 py-1 rounded d-inline-flex align-items-center gap-1">
+                                                            <i class="fi fi-sr-computer fs-8"></i> {{ translate('Digital') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge badge-soft-secondary border-secondary-light fs-10 px-2 py-1 rounded d-inline-flex align-items-center gap-1">
+                                                            <i class="fi fi-sr-box-open fs-8"></i> {{ translate('Physical') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                         @if ($categoryWiseTax)

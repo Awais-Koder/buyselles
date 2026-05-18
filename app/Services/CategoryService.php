@@ -13,6 +13,17 @@ class CategoryService
     {
         $storage = config('filesystems.disks.default') ?? 'public';
         $name = $request['name'][array_search('en', $request['lang'])];
+        $position = $request['position'] ?? 0;
+
+        $categoryType = 'physical';
+        if ($position == 0) {
+            $categoryType = $request->get('category_type', 'physical');
+        } elseif ($request->has('parent_id') && $request['parent_id'] > 0) {
+            $parent = \App\Models\Category::find($request['parent_id']);
+            if ($parent) {
+                $categoryType = $parent->category_type;
+            }
+        }
 
         return [
             'name' => $name,
@@ -20,9 +31,10 @@ class CategoryService
             'icon' => $this->upload('category/', 'webp', $request->file('image')),
             'icon_storage_type' => $request->has('image') ? $storage : null,
             'parent_id' => $request->get('parent_id', 0),
-            'position' => $request['position'] ?? 0,
+            'position' => $position,
             'priority' => $request['priority'] ?? 0,
             'home_status' => 1,
+            'category_type' => $categoryType,
         ];
     }
 
@@ -45,6 +57,9 @@ class CategoryService
         }
         if ($data['position'] == 0) {
             $result['home_status'] = $request['home_status'] ?? 0;
+            if ($request->has('category_type')) {
+                $result['category_type'] = $request['category_type'];
+            }
         }
 
         return $result;

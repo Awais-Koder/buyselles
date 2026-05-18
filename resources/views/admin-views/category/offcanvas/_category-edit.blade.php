@@ -1,7 +1,7 @@
 <form
     action="{{ route('admin.category.update') }}"
 
-    method="POST" class="form-advance-validation form-advance-file-validation non-ajax-form-validate"
+    method="POST" class="form-advance-validation form-advance-file-validation form-advance-inputs-validation form-advance-inline-validation non-ajax-form-validate"
       enctype="multipart/form-data" novalidate="novalidate">
     @csrf
     <div class="offcanvas offcanvas-end" tabindex="-1" id="categoryEditOffcanvas-{{ $category['id'] }}"
@@ -27,9 +27,9 @@
                         <label for="" class="form-label mb-0 flex-grow-1 d-flex align-items-center gap-1">
                             {{ translate('availability') }}
                             <span class="tooltip-icon"
-                                      data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                      aria-label="{{ translate('turn_on_to_show_this_category_as_a_home_category,_or_turn_off_to_hide_it.') }}"
-                                      data-bs-title="{{ translate('turn_on_to_show_this_category_as_a_home_category,_or_turn_off_to_hide_it.') }}"
+                                       data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                       aria-label="{{ translate('turn_on_to_show_this_category_as_a_home_category,_or_turn_off_to_hide_it.') }}"
+                                       data-bs-title="{{ translate('turn_on_to_show_this_category_as_a_home_category,_or_turn_off_to_hide_it.') }}"
                                 >
                                 <i class="fi fi-sr-info d-flex"></i>
                             </span>
@@ -143,6 +143,42 @@
                         <input type="hidden" name="parent_id" value="{{ $category['parent_id'] }}">
                     @endif
 
+                    @if ($category['position'] == 0)
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-20 mt-20">
+                            <label for="" class="form-label mb-0 flex-grow-1 d-flex align-items-center gap-1">
+                                {{ translate('Category_Type') }} ({{ translate('Digital_Category') }})
+                                <span class="tooltip-icon"
+                                      data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                      aria-label="{{ translate('Turn_on_if_this_category_contains_digital_products,_or_leave_off_for_physical_products.') }}"
+                                      data-bs-title="{{ translate('Turn_on_if_this_category_contains_digital_products,_or_leave_off_for_physical_products.') }}"
+                                >
+                                    <i class="fi fi-sr-info d-flex"></i>
+                                </span>
+                            </label>
+                            <label
+                                class="d-flex justify-content-between align-items-center gap-2 border rounded px-3 py-10 user-select-none flex-grow-1">
+                                <span class="fw-medium text-dark">{{ translate('Digital') }}</span>
+                                <label class="switcher">
+                                    <input type="checkbox" class="switcher_input" id="category_type_toggle_{{ $category['id'] }}" value="1"
+                                        {{ ($category['category_type'] ?? 'physical') == 'digital' ? 'checked' : '' }}>
+                                    <span class="switcher_control"></span>
+                                </label>
+                            </label>
+                            <input type="hidden" name="category_type" id="category_type_{{ $category['id'] }}" value="{{ $category['category_type'] ?? 'physical' }}">
+                            <script>
+                                (function() {
+                                    const toggle = document.getElementById('category_type_toggle_{{ $category['id'] }}');
+                                    const hiddenInput = document.getElementById('category_type_{{ $category['id'] }}');
+                                    if (toggle && hiddenInput) {
+                                        toggle.addEventListener('change', function() {
+                                            hiddenInput.value = this.checked ? 'digital' : 'physical';
+                                        });
+                                    }
+                                })();
+                            </script>
+                        </div>
+                    @endif
+
                     <div class="form-group mb-20 mt-20">
                         <label class="form-label text-capitalize d-flex align-items-center gap-1" for="priority">
                             {{ translate('priority') }}<span class="text-danger">*</span>
@@ -205,7 +241,7 @@
                                 <p class="fs-12 mb-0"> {{ translate('Upload_image') }}</p>
                             </div>
                             <div class="upload-file">
-                                <input type="file" name="image" id="category-image"
+                                <input type="file" name="image" id="category-image-{{ $category['id'] }}"
                                        class="upload-file__input single_file_input"
                                        data-max-size="{{ getFileUploadMaxSize() }}"
                                        data-required-msg="{{ translate('category_Logo_is_required') }}"

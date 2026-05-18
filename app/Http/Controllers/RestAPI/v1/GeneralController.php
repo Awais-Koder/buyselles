@@ -88,16 +88,22 @@ class GeneralController extends Controller
                 $query->where('category_id', $request['category_id']);
             })
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($query) use ($request) {
-                    if ($request->has('country_id')) {
-                        $query->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $query->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $query->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($query) use ($request) {
+                        if ($request->has('country_id')) {
+                            $query->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $query->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $query->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->withCount(['orderDetails', 'reviews', 'wishList'])

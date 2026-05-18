@@ -6,7 +6,7 @@
     @else
         action="{{ route('admin.category.store') }}"
     @endif
-    method="POST" class="form-advance-validation form-advance-file-validation non-ajax-form-validate"
+    method="POST" class="form-advance-validation form-advance-file-validation form-advance-inputs-validation form-advance-inline-validation non-ajax-form-validate"
       enctype="multipart/form-data" >
     @csrf
     <div class="offcanvas offcanvas-end" tabindex="-1" id="categoryAddOffcanvas"
@@ -147,7 +147,7 @@
                                 <select class="form-select action-get-sub-category-onchange"
                                         data-required-msg="{{ translate('main_category_is_required') }}"
                                         id="main-category" data-route="{{ route('admin.sub-sub-category.getSubCategory') }}" required>
-                                    <option disabled
+                                    <option value="" disabled
                                             selected>{{ translate('Select_Main_Category') }}</option>
                                     @foreach($parentCategories as $category)
                                         <option
@@ -163,12 +163,48 @@
                                     class="text-danger">*</span>
                             </label>
                             <div class="select-wrapper">
-                                <select name="parent_id" id="parent_id" class="form-select">
+                                <select name="parent_id" id="parent_id" class="form-select"
+                                        data-required-msg="{{ translate('sub_category_is_required') }}" required>
                                     <option value="" disabled selected>
                                         {{ translate('Select_Sub_Category_First') }}
                                     </option>
                                 </select>
                             </div>
+                        </div>
+                    @endif
+
+                    @if ($categoryType == 'category')
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-20">
+                            <label for="" class="form-label mb-0 flex-grow-1 d-flex align-items-center gap-1">
+                                {{ translate('Category_Type') }} ({{ translate('Digital_Category') }})
+                                <span class="tooltip-icon"
+                                      data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                      aria-label="{{ translate('Turn_on_if_this_category_contains_digital_products,_or_leave_off_for_physical_products.') }}"
+                                      data-bs-title="{{ translate('Turn_on_if_this_category_contains_digital_products,_or_leave_off_for_physical_products.') }}"
+                                >
+                                    <i class="fi fi-sr-info d-flex"></i>
+                                </span>
+                            </label>
+                            <label
+                                class="d-flex justify-content-between align-items-center gap-2 border rounded px-3 py-10 user-select-none flex-grow-1">
+                                <span class="fw-medium text-dark">{{ translate('Digital') }}</span>
+                                <label class="switcher">
+                                    <input type="checkbox" class="switcher_input" id="category_type_toggle" value="1">
+                                    <span class="switcher_control"></span>
+                                </label>
+                            </label>
+                            <input type="hidden" name="category_type" id="category_type" value="physical">
+                            <script>
+                                (function() {
+                                    const toggle = document.getElementById('category_type_toggle');
+                                    const hiddenInput = document.getElementById('category_type');
+                                    if (toggle && hiddenInput) {
+                                        toggle.addEventListener('change', function() {
+                                            hiddenInput.value = this.checked ? 'digital' : 'physical';
+                                        });
+                                    }
+                                })();
+                            </script>
                         </div>
                     @endif
 
@@ -233,11 +269,12 @@
                                 <p class="fs-12 mb-0"> {{ translate('Upload_image') }}</p>
                             </div>
                             <div class="upload-file">
-                                <input type="file" name="image" id="category-image"
+                                <input type="file" name="image" id="category-image-add"
                                     class="upload-file__input single_file_input"
                                     data-max-size="{{ getFileUploadMaxSize() }}"
                                     data-required-msg="{{ translate('category_Logo_is_required') }}"
-                                    accept="{{getFileUploadFormats(skip: '.svg,.gif')}},image/*">
+                                    accept="{{getFileUploadFormats(skip: '.svg,.gif')}},image/*"
+                                    @if ($categoryType == 'category') required @endif>
                                 <label class="upload-file__wrapper">
                                     <div class="upload-file-textbox text-center">
                                         <img width="34" height="34" class="svg"

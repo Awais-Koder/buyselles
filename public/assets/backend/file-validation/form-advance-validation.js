@@ -13,19 +13,21 @@ function FormMagicValidation(form) {
     const validator = new window.JustValidate(form, {
         validateBeforeSubmitting: true,
         lockForm: false,
-        focusInvalidField: false,
+        focusInvalidField: true,
         errorFieldCssClass: '',
         errorLabelCssClass: 'just-validate-error-label',
-        errorLabelStyle: { color: 'red', fontSize: '0.85rem' },
+        errorLabelStyle: { color: '#ff3b30', fontSize: '12px', marginTop: '4px', display: 'block', fontWeight: '500' },
         successFieldCssClass: '',
     });
 
     // Remove all error/success labels dynamically
-    const observer = new MutationObserver(() => {
-        form.querySelectorAll('.just-validate-error-label, .just-validate-success-label')
-            .forEach(el => el.remove());
-    });
-    observer.observe(form, { childList: true, subtree: true });
+    if (!form.classList.contains('form-advance-inline-validation')) {
+        const observer = new MutationObserver(() => {
+            form.querySelectorAll('.just-validate-error-label, .just-validate-success-label')
+                .forEach(el => el.remove());
+        });
+        observer.observe(form, { childList: true, subtree: true });
+    }
 
     // Optional: live validation observer
     validator.onValidate(({ isValid, isSubmitted, fields }) => {
@@ -57,12 +59,17 @@ function FormMagicValidation(form) {
     const getFieldLabel = (input) => input.closest('.form-group')?.querySelector('label')?.textContent?.trim()
         || input.placeholder || 'This field';
 
+    const registeredSelectors = new Set();
+
     // Auto-add rules to inputs
     form.querySelectorAll('input, textarea, select').forEach(input => {
         if (!input.name || input.type === 'hidden' || input.hasAttribute('hidden')) return;
 
         const name = input.name;
         if (!name) return;
+        const selector = `[name="${name}"]`;
+        if (registeredSelectors.has(selector)) return;
+
         const rules = [];
         if (form.classList.contains('form-advance-inputs-validation')) {
             if (input.required && input.type === 'file') rules.push({ rule: 'required', errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required` });
@@ -75,59 +82,19 @@ function FormMagicValidation(form) {
             if (input.max) rules.push({ rule: 'maxNumber', value: parseFloat(input.max), errorMessage: input.dataset.maxMsg || `Maximum value is ${input.max}` });
             if (input.pattern) rules.push({ rule: 'customRegexp', value: new RegExp(input.pattern), errorMessage: input.dataset.patternMsg || 'Invalid format' });
 
-            // Standard rules
-            // if (input.required && !input.classList.contains('select2-hidden-accessible')) {
-            //     rules.push({
-            //         rule: 'required',
-            //         errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`
-            //     });
-            // }
-
-            // Select2 auto-detect
-            if (input.classList.contains('select2-hidden-accessible')) {
+            // Required rule for standard and select/Select2 elements
+            if (input.required && input.type !== 'file' && !name.endsWith('[]')) {
                 rules.push({
-                    rule: 'function',
-                    validator: (val, field) => {
-                        if (!field) return false;
-                        let value = $(field).val();
-
-                        // Ensure value is never undefined
-                        if (value === undefined || value === null) return false;
-
-                        // If it's an array (multi-select)
-                        if (Array.isArray(value)) return value.length > 0;
-
-                        // If it's a string
-                        if (typeof value === 'string') return value.trim() !== '';
-
-                        return false; // fallback for anything else
-                    },
+                    rule: 'required',
                     errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`
                 });
             }
 
-            // if (name.endsWith('[]')) {
-            //     // JustValidate will select all matching inputs
-            //     rules.push({
-            //         rule: 'function',
-            //         validator: (val, field) => {
-            //             // Get all inputs with this name
-            //             const inputs = form.querySelectorAll(`input[name="${name}"]`);
-            //             // Required: at least one filled
-            //             return Array.from(inputs).some(i => i.value && i.value.trim() !== '');
-            //         },
-            //         errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`
-            //     });
-            //     validator.addField(`[name="${name}"]`, rules);
-            // } else {
-            //     validator.addField(`[name="${name}"]`, rules);
-            // }
-
             if (name.endsWith('[]')) {
                 rules.push({
                     rule: 'function',
-                    validator: (val, field) => {
-                        const inputs = form.querySelectorAll(`input[name="${name}"]`);
+                    validator: (val, fields) => {
+                        const inputs = form.querySelectorAll(`[name="${name}"]`);
                         return Array.from(inputs).some(i => i.value && i.value.trim() !== '');
                     },
                     errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`
@@ -140,43 +107,14 @@ function FormMagicValidation(form) {
             if (input.type?.toString() === 'file') {
                 // Add required first
                 if (input.required) {
-                    const accept = (input.getAttribute('accept') || '')
-                        .replace(/\|/g, ',')
-                        .split(',')
-                        .map(t => t.trim())
-                        .filter(Boolean);
-
-                    const allowedExtensions = accept
-                        .filter(a => a.startsWith('.'))
-                        .map(a => a.replace('.', ''));
-
-                    const allowedTypes = accept
-                        .filter(a => a.includes('/'))
-                        .map(a => a.toLowerCase());
-
-                    const maxSizeMb = parseInt(input.dataset.maxSize, 10);
-                    const maxSizeBytes = !isNaN(maxSizeMb) ? maxSizeMb * 1024 * 1024 : 5 * 1024 * 1024;
-
                     rules.push({
-                            rule: 'minFilesCount',
-                            value: 1,
-                            errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`,
-                        },
-                        // {
-                        // rule: 'files',
-                        // value: {
-                        //     files: {
-                        //         extensions: allowedExtensions.length ? allowedExtensions : undefined,
-                        //         types: allowedTypes.length ? allowedTypes : undefined,
-                        //         maxSize: maxSizeBytes, // convert MB to bytes
-                        //     },
-                        // },
-                        // errorMessage: input.dataset.fileMsg || `${getFieldLabel(input)} is invalid`,
-                        // }
-                    );
+                        rule: 'minFilesCount',
+                        value: 1,
+                        errorMessage: input.dataset.requiredMsg || `${getFieldLabel(input)} is required`,
+                    });
                 }
 
-                // Optional: min/max files count (if you want to add)
+                // Optional: min/max files count
                 if (input.dataset.minFiles) {
                     rules.push({
                         rule: 'minFilesCount',
@@ -191,19 +129,28 @@ function FormMagicValidation(form) {
                         errorMessage: `Select at most ${input.dataset.maxFiles} file(s)`
                     });
                 }
-
             }
         }
 
         if (rules.length > 0) {
-            validator.addField(`[name="${name}"]`, rules);
-        }
-
-        if (!rules.length) {
-            console.warn(`Skipping "${name}" — no validation rules detected.`);
-            return;
+            const container = input.closest('.form-group') || input.parentElement;
+            validator.addField(selector, rules, {
+                errorsContainer: container
+            });
+            registeredSelectors.add(selector);
         }
     });
+
+    // Automatically revalidate select/Select2 elements on change
+    if (typeof $ !== 'undefined') {
+        $(form).on('change', 'select', function() {
+            try {
+                validator.revalidateField(`[name="${this.name}"]`);
+            } catch (e) {
+                // Ignore if field is not registered
+            }
+        });
+    }
 
     return {
         /** Run validation and return boolean */
@@ -290,7 +237,11 @@ document.addEventListener('submit', async function (e) {
     const errors = validator.errors();     // only works if you store lastResult inside check
 
     if (!valid && errors?.length > 0) {
-        validator.errors().forEach((err, i) => setTimeout(() => showErrorToast(err.message), i * 400));
+        if (form.classList.contains('form-advance-inline-validation')) {
+            showErrorToast('Please fill out all required fields.');
+        } else {
+            validator.errors().forEach((err, i) => setTimeout(() => showErrorToast(err.message), i * 400));
+        }
         formSubmitting.delete(form);
         return false;
     }
@@ -327,7 +278,11 @@ async function validateFormHelper(formElement) {
     const valid = await validator.check();
 
     if (!valid && validator.errors()?.length > 0) {
-        validator.errors().forEach((err, i) => setTimeout(() => showErrorToast(err.message), i * 400));
+        if (form[0].classList.contains('form-advance-inline-validation')) {
+            showErrorToast('Please fill out all required fields.');
+        } else {
+            validator.errors().forEach((err, i) => setTimeout(() => showErrorToast(err.message), i * 400));
+        }
         formSubmitting.delete(form);
         return false;
     }

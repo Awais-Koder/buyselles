@@ -50,16 +50,22 @@ class ProductManager
         $user = Helpers::getCustomerInformation($request);
         $paginator = Product::active()
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($q) use ($request) {
-                    if ($request->has('country_id')) {
-                        $q->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $q->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $q->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($q) use ($request) {
+                        if ($request->has('country_id')) {
+                            $q->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $q->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $q->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->with(['rating', 'tags', 'seller.shop', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
@@ -108,16 +114,22 @@ class ProductManager
         $user = Helpers::getCustomerInformation($request);
         $products = Product::active()
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($q) use ($request) {
-                    if ($request->has('country_id')) {
-                        $q->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $q->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $q->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($q) use ($request) {
+                        if ($request->has('country_id')) {
+                            $q->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $q->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $q->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->with(['rating', 'tags', 'seller.shop', 'flashDealProducts.flashDeal', 'clearanceSale' => function ($query) {
@@ -165,16 +177,22 @@ class ProductManager
             return $query->active();
         }])->active()
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($q) use ($request) {
-                    if ($request->has('country_id')) {
-                        $q->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $q->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $q->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($q) use ($request) {
+                        if ($request->has('country_id')) {
+                            $q->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $q->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $q->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
@@ -230,16 +248,22 @@ class ProductManager
 
         $productListData = Product::active()
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($q) use ($request) {
-                    if ($request->has('country_id')) {
-                        $q->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $q->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $q->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($q) use ($request) {
+                        if ($request->has('country_id')) {
+                            $q->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $q->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $q->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->withSum('orderDetails', 'qty', function ($query) {
@@ -312,16 +336,22 @@ class ProductManager
 
         $productListData = Product::active()
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->whereHas('shop', function ($q) use ($request) {
-                    if ($request->has('country_id')) {
-                        $q->where('store_country_id', $request['country_id']);
-                    }
-                    if ($request->has('city_id')) {
-                        $q->where('store_city_id', $request['city_id']);
-                    }
-                    if ($request->has('area_id')) {
-                        $q->where('store_area_id', $request['area_id']);
-                    }
+                $query->where(function ($subQuery) use ($request) {
+                    $subQuery->whereHas('shop', function ($q) use ($request) {
+                        if ($request->has('country_id')) {
+                            $q->where('store_country_id', $request['country_id']);
+                        }
+                        if ($request->has('city_id')) {
+                            $q->where('store_city_id', $request['city_id']);
+                        }
+                        if ($request->has('area_id')) {
+                            $q->where('store_area_id', $request['area_id']);
+                        }
+                    })
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
                 });
             })
             ->withSum('orderDetails', 'qty', function ($query) {
@@ -2208,17 +2238,35 @@ class ProductManager
                 return $query->where(['product_type' => $request['product_type']]);
             })
             ->when($request['country_id'], function ($query, $countryId) {
-                if ($countryId === 'global') {
-                    return $query->whereNull('location_country_id');
-                }
-
-                return $query->where('location_country_id', $countryId);
+                return $query->where(function ($subQuery) use ($countryId) {
+                    if ($countryId === 'global') {
+                        $subQuery->whereNull('location_country_id');
+                    } else {
+                        $subQuery->where('location_country_id', $countryId);
+                    }
+                    $subQuery->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
+                });
             })
             ->when($request['city_id'], function ($query, $cityId) {
-                return $query->where('location_city_id', $cityId);
+                return $query->where(function ($subQuery) use ($cityId) {
+                    $subQuery->where('location_city_id', $cityId)
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
+                });
             })
             ->when($request['area_id'], function ($query, $areaId) {
-                return $query->where('location_area_id', $areaId);
+                return $query->where(function ($subQuery) use ($areaId) {
+                    $subQuery->where('location_area_id', $areaId)
+                        ->orWhere('product_type', 'digital')
+                        ->orWhereHas('category', function ($categoryQuery) {
+                            $categoryQuery->where('category_type', 'digital');
+                        });
+                });
             })
             ->withCount(['reviews' => function ($query) {
                 $query->active();

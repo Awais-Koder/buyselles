@@ -114,7 +114,7 @@ class WithdrawController extends BaseController
                 )
             );
             $this->withdrawRequestRepo->delete(['id' => $withdrawRequest['id']]);
-            ToastMagic::success(message: translate('withdraw_request_closed') . '!');
+            ToastMagic::success(message: translate('withdraw_request_closed').'!');
         } else {
             ToastMagic::error(message: translate('invalid_withdraw_request'));
         }

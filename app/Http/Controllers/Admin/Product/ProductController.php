@@ -550,16 +550,28 @@ class ProductController extends BaseController
         $product = $this->productRepo->getFirstWhere(params: ['id' => $productId]);
 
         $success = 1;
-        if ($status == 1) {
-            $success = $product->added_by == 'seller' && ($product['request_status'] == 0 || $product['request_status'] == 2) ? 0 : 1;
-        }
         $updateData = ['status' => $status];
-        $data = $success ? $this->productRepo->update(id: $productId, data: $updateData) : null;
+
+        if ($status == 1 && $product && $product->added_by == 'seller' && ($product['request_status'] == 0 || $product['request_status'] == 2)) {
+            $updateData['request_status'] = 1;
+
+            $vendor = $this->sellerRepo->getFirstWhere(params: ['id' => $product['user_id']]);
+            if ($vendor && $vendor['cm_firebase_token']) {
+                ProductRequestStatusUpdateEvent::dispatch(
+                    'product_request_approved_message',
+                    'seller',
+                    $vendor['app_language'] ?? getDefaultLanguage(),
+                    $vendor['cm_firebase_token']
+                );
+            }
+        }
+
+        $data = $this->productRepo->update(id: $productId, data: $updateData);
 
         return response()->json([
             'status' => $success,
             'data' => $data,
-            'message' => $success ? translate('status_updated_successfully') : translate('status_updated_failed').' '.translate('Product_must_be_approved'),
+            'message' => translate('status_updated_successfully'),
         ], 200);
     }
 

@@ -290,7 +290,7 @@ class GenericRestDriver implements SupplierDriverInterface
      */
     private function makeRequest(string $method, string $endpoint, array $data = []): \Illuminate\Http\Client\Response
     {
-        $url = rtrim($this->supplier->base_url, '/') . '/' . ltrim($endpoint, '/');
+        $url = rtrim($this->supplier->base_url, '/').'/'.ltrim($endpoint, '/');
 
         $request = Http::timeout(30)
             ->acceptJson();
@@ -334,7 +334,7 @@ class GenericRestDriver implements SupplierDriverInterface
             ]),
             'hmac' => $request->withHeaders([
                 'X-API-KEY' => $apiKey,
-                'X-Signature' => hash_hmac('sha256', $apiKey . time(), $apiSecret),
+                'X-Signature' => hash_hmac('sha256', $apiKey.time(), $apiSecret),
                 'X-Timestamp' => (string) time(),
             ]),
             default => $request,

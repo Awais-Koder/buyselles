@@ -29,9 +29,9 @@ class PartnerApiController extends BaseController
 
         $recentLogs = $apiKey
             ? PartnerApiLog::where('reseller_api_key_id', $apiKey->id)
-            ->latest()
-            ->limit(10)
-            ->get()
+                ->latest()
+                ->limit(10)
+                ->get()
             : collect();
 
         return view('vendor-views.partner-api.index', compact('seller', 'apiKey', 'recentLogs'));
@@ -97,7 +97,7 @@ class PartnerApiController extends BaseController
 
         Cache::forget("reseller_key:{$apiKey->api_key}");
 
-        $rawKey = 'rslr_' . \Illuminate\Support\Str::random(40);
+        $rawKey = 'rslr_'.\Illuminate\Support\Str::random(40);
         $rawSecret = \Illuminate\Support\Str::random(48);
 
         $apiKey->update([
@@ -129,8 +129,8 @@ class PartnerApiController extends BaseController
         // Parse newline/comma-separated IPs, strip empties
         $rawIps = $request->input('allowed_ips', '');
         $ips = collect(preg_split('/[\r\n,]+/', $rawIps))
-            ->map(fn($ip) => trim($ip))
-            ->filter(fn($ip) => filter_var($ip, FILTER_VALIDATE_IP) !== false)
+            ->map(fn ($ip) => trim($ip))
+            ->filter(fn ($ip) => filter_var($ip, FILTER_VALIDATE_IP) !== false)
             ->values()
             ->all();
 
@@ -174,9 +174,9 @@ class PartnerApiController extends BaseController
 
         $logs = $apiKey
             ? PartnerApiLog::where('reseller_api_key_id', $apiKey->id)
-            ->when($request->get('status'), fn($q, $s) => $q->where('http_status', $s))
-            ->latest()
-            ->paginate(getWebConfig('pagination_limit'))
+                ->when($request->get('status'), fn ($q, $s) => $q->where('http_status', $s))
+                ->latest()
+                ->paginate(getWebConfig('pagination_limit'))
             : collect()->paginate(getWebConfig('pagination_limit'));
 
         return view('vendor-views.partner-api.logs', compact('apiKey', 'logs'));

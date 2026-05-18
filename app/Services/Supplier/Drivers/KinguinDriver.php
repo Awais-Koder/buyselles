@@ -264,7 +264,7 @@ class KinguinDriver implements SupplierDriverInterface
 
     private function makeRequest(string $method, string $endpoint, array $data = []): \Illuminate\Http\Client\Response
     {
-        $url = rtrim($this->supplier->base_url, '/') . '/' . ltrim($endpoint, '/');
+        $url = rtrim($this->supplier->base_url, '/').'/'.ltrim($endpoint, '/');
 
         $request = Http::timeout(30)
             ->acceptJson()

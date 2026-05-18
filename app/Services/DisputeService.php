@@ -74,7 +74,7 @@ class DisputeService
                 $limit = $isVideo ? '50MB' : '5MB';
 
                 throw ValidationException::withMessages([
-                    'files' => [translate('file_exceeds_maximum_allowed_size_of') . ' ' . $limit],
+                    'files' => [translate('file_exceeds_maximum_allowed_size_of').' '.$limit],
                 ]);
             }
         }
@@ -178,7 +178,7 @@ class DisputeService
         $deliveredAt = $order->updated_at;
         $daysSinceDelivery = $deliveredAt ? (int) abs(now()->diffInDays($deliveredAt)) : 0;
         if ($deliveredAt && $daysSinceDelivery > $disputeWindowDays) {
-            return ['allowed' => false, 'reason' => translate('dispute_window_has_expired') . '. ' . translate('disputes_must_be_opened_within') . ' ' . $disputeWindowDays . ' ' . translate('days_of_delivery')];
+            return ['allowed' => false, 'reason' => translate('dispute_window_has_expired').'. '.translate('disputes_must_be_opened_within').' '.$disputeWindowDays.' '.translate('days_of_delivery')];
         }
 
         // COD/offline orders — no escrow, so disputes go through standard refund flow
@@ -249,7 +249,7 @@ class DisputeService
             if ($seller && $seller->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($seller->cm_firebase_token, [
                     'title' => translate('New Dispute Opened'),
-                    'description' => translate('A buyer has opened dispute #') . $dispute->id . translate(' on order #') . $order->id,
+                    'description' => translate('A buyer has opened dispute #').$dispute->id.translate(' on order #').$order->id,
                     'order_id' => $order->id,
                     'type' => 'dispute',
                 ]);
@@ -294,7 +294,7 @@ class DisputeService
             if ($buyer && $buyer->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($buyer->cm_firebase_token, [
                     'title' => translate('Vendor Responded to Dispute'),
-                    'description' => translate('The vendor has responded to your dispute #') . $dispute->id,
+                    'description' => translate('The vendor has responded to your dispute #').$dispute->id,
                     'order_id' => $dispute->order_id,
                     'type' => 'dispute',
                 ]);
@@ -332,7 +332,7 @@ class DisputeService
                 'dispute_id' => $dispute->id,
                 'sender_id' => $userId,
                 'sender_type' => 'system',
-                'message' => translate('dispute_escalated_to_admin_for_review_by') . ' ' . translate($userType),
+                'message' => translate('dispute_escalated_to_admin_for_review_by').' '.translate($userType),
                 'created_at' => now(),
             ]);
 
@@ -341,7 +341,7 @@ class DisputeService
                 'sent_by' => 'system',
                 'sent_to' => 'admin',
                 'title' => translate('Dispute Escalated'),
-                'description' => translate('Dispute #') . $dispute->id . translate(' has been escalated to admin review by the ') . translate($userType) . '.',
+                'description' => translate('Dispute #').$dispute->id.translate(' has been escalated to admin review by the ').translate($userType).'.',
                 'status' => 1,
             ]);
 
@@ -351,7 +351,7 @@ class DisputeService
                 if ($buyer && $buyer->cm_firebase_token) {
                     Helpers::send_push_notif_to_device($buyer->cm_firebase_token, [
                         'title' => translate('Dispute Escalated to Admin'),
-                        'description' => translate('Your dispute #') . $dispute->id . translate(' has been escalated to admin review by the vendor.'),
+                        'description' => translate('Your dispute #').$dispute->id.translate(' has been escalated to admin review by the vendor.'),
                         'order_id' => $dispute->order_id,
                         'type' => 'dispute',
                     ]);
@@ -364,7 +364,7 @@ class DisputeService
                 if ($seller && $seller->cm_firebase_token) {
                     Helpers::send_push_notif_to_device($seller->cm_firebase_token, [
                         'title' => translate('Dispute Escalated to Admin'),
-                        'description' => translate('Dispute #') . $dispute->id . translate(' has been escalated to admin review by the buyer.'),
+                        'description' => translate('Dispute #').$dispute->id.translate(' has been escalated to admin review by the buyer.'),
                         'order_id' => $dispute->order_id,
                         'type' => 'dispute',
                     ]);
@@ -422,7 +422,7 @@ class DisputeService
             if ($buyer && $buyer->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($buyer->cm_firebase_token, [
                     'title' => translate('Dispute Resolved – Refund Approved'),
-                    'description' => translate('Admin resolved dispute #') . $dispute->id . translate(' in your favour. Refund is being processed.'),
+                    'description' => translate('Admin resolved dispute #').$dispute->id.translate(' in your favour. Refund is being processed.'),
                     'order_id' => $dispute->order_id,
                     'type' => 'dispute',
                 ]);
@@ -433,7 +433,7 @@ class DisputeService
             if ($vendor && $vendor->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($vendor->cm_firebase_token, [
                     'title' => translate('Dispute Resolved'),
-                    'description' => translate('Admin resolved dispute #') . $dispute->id . translate(' – refund issued to buyer.'),
+                    'description' => translate('Admin resolved dispute #').$dispute->id.translate(' – refund issued to buyer.'),
                     'order_id' => $dispute->order_id,
                     'type' => 'dispute',
                 ]);
@@ -491,7 +491,7 @@ class DisputeService
             if ($vendor && $vendor->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($vendor->cm_firebase_token, [
                     'title' => translate('Dispute Resolved – Funds Released'),
-                    'description' => translate('Admin resolved dispute #') . $dispute->id . translate(' in your favour. Escrow funds have been released.'),
+                    'description' => translate('Admin resolved dispute #').$dispute->id.translate(' in your favour. Escrow funds have been released.'),
                     'order_id' => $dispute->order_id,
                     'type' => 'dispute',
                 ]);
@@ -502,7 +502,7 @@ class DisputeService
             if ($buyer && $buyer->cm_firebase_token) {
                 Helpers::send_push_notif_to_device($buyer->cm_firebase_token, [
                     'title' => translate('Dispute Resolved'),
-                    'description' => translate('Admin resolved dispute #') . $dispute->id . translate(' – payment released to vendor.'),
+                    'description' => translate('Admin resolved dispute #').$dispute->id.translate(' – payment released to vendor.'),
                     'order_id' => $dispute->order_id,
                     'type' => 'dispute',
                 ]);

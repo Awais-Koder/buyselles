@@ -281,14 +281,14 @@ class DashboardController extends BaseController
             $count = $products?->sum('restock_product_customers_count') ?? 0;
             $restockProduct = [
                 'title' => $firstProduct?->product?->name ?? '',
-                'body' => $count < 100 ? translate('This_product_has') . ' ' . $count . ' ' . translate('restock_request') : translate('This_product_has') . ' 99+ ' . translate('restock_request'),
+                'body' => $count < 100 ? translate('This_product_has').' '.$count.' '.translate('restock_request') : translate('This_product_has').' 99+ '.translate('restock_request'),
                 'image' => getStorageImages(path: $firstProduct?->product?->thumbnail_full_url ?? '', type: 'product'),
                 'route' => route('admin.products.request-restock-list'),
             ];
         } elseif (count($restockProductList) > 1) {
             $restockProduct = [
                 'title' => translate('Restock_Request'),
-                'body' => count($restockProductList) < 100 ? (count($restockProductList) . ' ' . translate('products_have_restock_request')) : ('99 +' . ' ' . translate('more_products_have_restock_request')),
+                'body' => count($restockProductList) < 100 ? (count($restockProductList).' '.translate('products_have_restock_request')) : ('99 +'.' '.translate('more_products_have_restock_request')),
                 'image' => dynamicAsset(path: 'public/assets/back-end/img/icons/restock-request-icon.svg'),
                 'route' => route('admin.products.request-restock-list'),
             ];
@@ -329,7 +329,7 @@ class DashboardController extends BaseController
             'restockProductCount' => $restockProductList->count(),
             'restockProduct' => $restockProduct,
             'newMessagesExist' => $chatting,
-            'message' => $chatting > 1 ? $chatting . ' ' . translate('New_Message') : translate('New_Message'),
+            'message' => $chatting > 1 ? $chatting.' '.translate('New_Message') : translate('New_Message'),
             'pending_order_count' => $pendingOrderCount,
             'confirmed_order_count' => $confirmedOrderCount,
             'processing_order_count' => $processingOrderCount,

@@ -24,7 +24,7 @@ class LocationController extends BaseController
         $searchValue = $request?->get('searchValue');
 
         $countries = LocationCountry::query()
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('cities')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -56,7 +56,7 @@ class LocationController extends BaseController
     public function updateCountry(Request $request, int $id): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:100|unique:location_countries,name,' . $id,
+            'name' => 'required|string|max:100|unique:location_countries,name,'.$id,
             'code' => 'nullable|string|max:10',
         ]);
 
@@ -96,7 +96,7 @@ class LocationController extends BaseController
 
         $cities = LocationCity::query()
             ->where('country_id', $countryId)
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('areas')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -160,7 +160,7 @@ class LocationController extends BaseController
 
         $areas = LocationArea::query()
             ->where('city_id', $cityId)
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(getWebConfig(name: 'pagination_limit'));
@@ -264,8 +264,8 @@ class LocationController extends BaseController
 
         $cityRequests = CityRequest::query()
             ->with(['seller', 'country', 'approvedCity'])
-            ->when($searchValue, fn($q) => $q->where('city_name', 'like', "%{$searchValue}%"))
-            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($searchValue, fn ($q) => $q->where('city_name', 'like', "%{$searchValue}%"))
+            ->when($status, fn ($q) => $q->where('status', $status))
             ->latest()
             ->paginate(getWebConfig(name: 'pagination_limit'));
 
@@ -338,8 +338,8 @@ class LocationController extends BaseController
 
         $areaRequests = AreaRequest::query()
             ->with(['seller', 'city.country', 'approvedArea'])
-            ->when($searchValue, fn($q) => $q->where('area_name', 'like', "%{$searchValue}%"))
-            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($searchValue, fn ($q) => $q->where('area_name', 'like', "%{$searchValue}%"))
+            ->when($status, fn ($q) => $q->where('status', $status))
             ->latest()
             ->paginate(getWebConfig(name: 'pagination_limit'));
 

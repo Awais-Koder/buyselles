@@ -77,7 +77,7 @@ class ProductCodeTemplateExport implements FromCollection, ShouldAutoSize, WithE
                 $lastRow = $sheet->getHighestRow();
 
                 // Borders on all cells
-                $sheet->getStyle('A1:C' . $lastRow)->applyFromArray([
+                $sheet->getStyle('A1:C'.$lastRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -100,7 +100,7 @@ class ProductCodeTemplateExport implements FromCollection, ShouldAutoSize, WithE
 
                 // Highlight PIN column for data rows
                 if ($lastRow > 2) {
-                    $sheet->getStyle('A3:A' . $lastRow)->getFill()->applyFromArray([
+                    $sheet->getStyle('A3:A'.$lastRow)->getFill()->applyFromArray([
                         'fillType' => Fill::FILL_SOLID,
                         'color' => ['rgb' => 'FFF3CD'],
                     ]);
@@ -121,7 +121,7 @@ class ProductCodeTemplateExport implements FromCollection, ShouldAutoSize, WithE
                 if ($this->productName !== '') {
                     $sheet->insertNewRowBefore(1);
                     $sheet->mergeCells('A1:C1');
-                    $sheet->setCellValue('A1', 'Product: ' . $this->productName . ' — Fill in one code per row. Delete the green example row before uploading.');
+                    $sheet->setCellValue('A1', 'Product: '.$this->productName.' — Fill in one code per row. Delete the green example row before uploading.');
                     $sheet->getStyle('A1')->applyFromArray([
                         'font' => ['bold' => true, 'color' => ['rgb' => '063C93']],
                         'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => 'EBF3FF']],

@@ -191,11 +191,17 @@ class Shop extends Model
         static::saved(function ($model) {
             cacheRemoveByType(type: 'shops');
             cacheRemoveByType(type: 'in_house_shop');
+            if ($model->seller_id) {
+                \Illuminate\Support\Facades\Cache::forget('seller-shop-close-'.$model->seller_id);
+            }
         });
 
         static::deleted(function ($model) {
             cacheRemoveByType(type: 'shops');
             cacheRemoveByType(type: 'in_house_shop');
+            if ($model->seller_id) {
+                \Illuminate\Support\Facades\Cache::forget('seller-shop-close-'.$model->seller_id);
+            }
         });
     }
 }

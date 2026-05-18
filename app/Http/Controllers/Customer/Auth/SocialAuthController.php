@@ -276,6 +276,7 @@ class SocialAuthController extends Controller
             } else {
                 $this->customerRepo->updateOrCreate(params: ['email' => $socialLoginNewCustomer['email']], data: session('social_login_new_customer'));
                 $user = $this->customerRepo->getFirstWhere(params: ['email' => $socialLoginNewCustomer['email']]);
+
                 return self::actionCustomerLoginProcess($request, $user, $user['email']);
             }
         } else {
@@ -459,7 +460,7 @@ class SocialAuthController extends Controller
 
                 $user = $this->customerRepo->getByIdentity(filters: ['identity' => $identity]);
 
-                if (!$user && session()->has('social_login_new_customer')) {
+                if (! $user && session()->has('social_login_new_customer')) {
                     $socialLoginNewCustomer = session('social_login_new_customer');
                     if ($socialLoginNewCustomer['phone'] == $identity) {
                         $socialLoginNewCustomer['is_phone_verified'] = 1;

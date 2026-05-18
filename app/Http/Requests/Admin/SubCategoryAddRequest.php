@@ -33,7 +33,7 @@ class SubCategoryAddRequest extends FormRequest
             'parent_id' => 'required',
         ];
         if (in_array((int) $this['position'], [1, 2])) {
-            $rules['image'] = 'nullable|mimes:jpeg,jpg,png,gif|max:' . getFileUploadMaxSize(unit: 'kb');
+            $rules['image'] = 'nullable|mimes:jpeg,jpg,png,gif|max:'.getFileUploadMaxSize(unit: 'kb');
         }
 
         return $rules;
@@ -57,14 +57,14 @@ class SubCategoryAddRequest extends FormRequest
                 if (
                     isset($this['name'][0]) &&
                     Category::where(['name' => $this['name'][0], 'position' => $this['position']])
-                    ->when(isset($this['parent_id']) && ! empty($this['parent_id']), function ($query) {
-                        return $query->where('parent_id', $this['parent_id']);
-                    })
-                    ->first()
+                        ->when(isset($this['parent_id']) && ! empty($this['parent_id']), function ($query) {
+                            return $query->where('parent_id', $this['parent_id']);
+                        })
+                        ->first()
                 ) {
                     $validator->errors()->add(
                         'name.unique',
-                        translate('The_category_has_already_been_taken') . '!'
+                        translate('The_category_has_already_been_taken').'!'
                     );
                 }
             },

@@ -30,10 +30,10 @@ class ProductListController extends Controller
     {
         $pageTitle = translate('Products');
         if ($request->has('publishing_house_id')) {
-            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name . ' ' . translate('Products');
+            $pageTitle = PublishingHouse::firstWhere('id', $request['publishing_house_id'])?->name.' '.translate('Products');
         }
         if ($request->has('author_id')) {
-            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name . ' ' . translate('Products');
+            $pageTitle = Author::firstWhere('id', $request['author_id'])?->name.' '.translate('Products');
         }
 
         return match (theme_root_path()) {
@@ -58,14 +58,14 @@ class ProductListController extends Controller
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])) . ' ' . translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $brand['name'])).' '.translate('products'),
             metaData: $brand?->seo
         );
     }
 
     public function getCategoryProductsView(Request $request, $slug)
     {
-        $category = Cache::remember('category_slug_' . $slug . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($slug) {
+        $category = Cache::remember('category_slug_'.$slug.'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($slug) {
             return Category::where('slug', $slug)->with(['seo'])->first();
         });
         if (! $category) {
@@ -80,12 +80,12 @@ class ProductListController extends Controller
         $subCategories = collect();
 
         if ($category['position'] == 0) {
-            $subCategories = Cache::remember('category_childes_' . $category['id'] . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+            $subCategories = Cache::remember('category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
                 return $category->childes()->orderBy('priority')->get();
             });
             $request->merge(['category_id' => $category['id']]);
         } elseif ($category['position'] == 1) {
-            $subCategories = Cache::remember('category_childes_' . $category['id'] . '_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+            $subCategories = Cache::remember('category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
                 return $category->childes()->orderBy('priority')->get();
             });
             $request->merge(['sub_category_id' => $category['id']]);
@@ -98,7 +98,7 @@ class ProductListController extends Controller
         return self::getProductsListPage(
             request: $request,
             pageType: $dataForm,
-            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])) . ' ' . translate('products'),
+            pageTitle: ucwords(str_replace(['-', '_'], ' ', $category['name'])).' '.translate('products'),
             metaData: $category?->seo
         );
     }
@@ -134,7 +134,7 @@ class ProductListController extends Controller
         $request->merge(['data_from' => 'latest']);
 
         if (! $request->has('category_id') && ! $request->has('sub_category_id') && ! $request->has('sub_sub_category_id')) {
-            $request->merge(['_sub_categories' => Cache::remember('top_level_categories_' . (getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () {
+            $request->merge(['_sub_categories' => Cache::remember('top_level_categories_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () {
                 return Category::where('position', 0)->orderBy('priority')->get();
             })]);
         }

@@ -47,7 +47,7 @@ class DisputeEscalatedListener
                     data: array_merge($sharedData, [
                         'userType' => 'admin',
                         'adminName' => $adminName,
-                        'subject' => 'Dispute #' . $disputeId . ' Escalated to Admin — Order #' . $orderId,
+                        'subject' => 'Dispute #'.$disputeId.' Escalated to Admin — Order #'.$orderId,
                     ]),
                 );
             } catch (\Throwable $e) {
@@ -65,7 +65,7 @@ class DisputeEscalatedListener
                     data: array_merge($sharedData, [
                         'userType' => 'customer',
                         'userName' => $buyer->name,
-                        'subject' => 'Dispute #' . $disputeId . ' is Now Under Admin Review',
+                        'subject' => 'Dispute #'.$disputeId.' is Now Under Admin Review',
                     ]),
                 );
             } catch (\Throwable $e) {
@@ -83,7 +83,7 @@ class DisputeEscalatedListener
                     data: array_merge($sharedData, [
                         'userType' => 'vendor',
                         'vendorName' => $vendor->name,
-                        'subject' => 'Dispute #' . $disputeId . ' Escalated to Admin — Order #' . $orderId,
+                        'subject' => 'Dispute #'.$disputeId.' Escalated to Admin — Order #'.$orderId,
                     ]),
                 );
             } catch (\Throwable $e) {

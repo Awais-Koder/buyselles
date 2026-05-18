@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\BaseController;
 use App\Models\AreaRequest;
 use App\Models\CityRequest;
-use App\Models\Notification;
 use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
+use App\Models\Notification;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -34,7 +34,7 @@ class LocationController extends BaseController
 
         $countries = LocationCountry::query()
             ->where('is_active', true)
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('cities')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -59,7 +59,7 @@ class LocationController extends BaseController
         $cities = LocationCity::query()
             ->where('country_id', $countryId)
             ->where('is_active', true)
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->withCount('areas')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -83,7 +83,7 @@ class LocationController extends BaseController
 
         $areas = LocationArea::query()
             ->where('city_id', $cityId)
-            ->when($searchValue, fn($q) => $q->where('name', 'like', "%{$searchValue}%"))
+            ->when($searchValue, fn ($q) => $q->where('name', 'like', "%{$searchValue}%"))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(getWebConfig(name: 'pagination_limit'));
@@ -127,12 +127,12 @@ class LocationController extends BaseController
             'status' => 'pending',
         ]);
 
-        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        $vendorName = auth('seller')->user()->f_name.' '.auth('seller')->user()->l_name;
         Notification::create([
             'sent_by' => 'system',
             'sent_to' => 'admin',
             'title' => translate('new_city_request'),
-            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'description' => translate('vendor').' '.$vendorName.' '.translate('requested_a_new_city').': '.$cityRequest->city_name,
             'notification_count' => 1,
             'status' => 1,
         ]);
@@ -305,12 +305,12 @@ class LocationController extends BaseController
             'status' => 'pending',
         ]);
 
-        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        $vendorName = auth('seller')->user()->f_name.' '.auth('seller')->user()->l_name;
         Notification::create([
             'sent_by' => 'system',
             'sent_to' => 'admin',
             'title' => translate('new_city_request'),
-            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'description' => translate('vendor').' '.$vendorName.' '.translate('requested_a_new_city').': '.$cityRequest->city_name,
             'notification_count' => 1,
             'status' => 1,
         ]);
@@ -352,12 +352,12 @@ class LocationController extends BaseController
             'status' => 'pending',
         ]);
 
-        $vendorName = auth('seller')->user()->f_name . ' ' . auth('seller')->user()->l_name;
+        $vendorName = auth('seller')->user()->f_name.' '.auth('seller')->user()->l_name;
         Notification::create([
             'sent_by' => 'system',
             'sent_to' => 'admin',
             'title' => translate('new_area_request'),
-            'description' => translate('vendor') . ' ' . $vendorName . ' ' . translate('requested_a_new_area') . ': ' . $areaRequest->area_name,
+            'description' => translate('vendor').' '.$vendorName.' '.translate('requested_a_new_area').': '.$areaRequest->area_name,
             'notification_count' => 1,
             'status' => 1,
         ]);

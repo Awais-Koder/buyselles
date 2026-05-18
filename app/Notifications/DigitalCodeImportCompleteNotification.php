@@ -28,20 +28,20 @@ class DigitalCodeImportCompleteNotification extends Notification
     {
         $message = (new MailMessage)
             ->subject('Digital Code Import Completed — Buyselles')
-            ->greeting('Hello, ' . $notifiable->name . '!')
+            ->greeting('Hello, '.$notifiable->name.'!')
             ->line('A digital product code import job has finished.')
-            ->line('**Imported by:** ' . $this->importedBy)
-            ->line('**Processed (saved):** ' . $this->summary['processed'])
-            ->line('**Skipped (blank codes):** ' . $this->summary['skipped'])
-            ->line('**Failed:** ' . $this->summary['failed']);
+            ->line('**Imported by:** '.$this->importedBy)
+            ->line('**Processed (saved):** '.$this->summary['processed'])
+            ->line('**Skipped (blank codes):** '.$this->summary['skipped'])
+            ->line('**Failed:** '.$this->summary['failed']);
 
         if (! empty($this->summary['errors'])) {
             $message->line('**Errors:**');
             foreach (array_slice($this->summary['errors'], 0, 10) as $error) {
-                $message->line('- ' . $error);
+                $message->line('- '.$error);
             }
             if (count($this->summary['errors']) > 10) {
-                $message->line('...and ' . (count($this->summary['errors']) - 10) . ' more errors.');
+                $message->line('...and '.(count($this->summary['errors']) - 10).' more errors.');
             }
         }
 

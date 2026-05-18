@@ -29,10 +29,10 @@ class ResellerApiKeyController extends BaseController
             ->with('user', 'seller')
             ->when($search, function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
-                    ->orWhereHas('seller', fn($s) => $s->where('f_name', 'like', "%{$search}%")->orWhere('l_name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                    ->orWhereHas('seller', fn ($s) => $s->where('f_name', 'like', "%{$search}%")->orWhere('l_name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
             })
-            ->when($filterStatus, fn($q) => $q->where('status', $filterStatus))
+            ->when($filterStatus, fn ($q) => $q->where('status', $filterStatus))
             ->orderByDesc('id')
             ->paginate(getWebConfig(name: 'pagination_limit'));
 
@@ -140,7 +140,7 @@ class ResellerApiKeyController extends BaseController
         Cache::forget("reseller_key:{$key->api_key}");
 
         $label = $newStatus === 'active' ? translate('activated') : translate('deactivated');
-        Toastr::success(translate('API_key') . ' ' . $label);
+        Toastr::success(translate('API_key').' '.$label);
 
         return redirect()->back();
     }
@@ -200,8 +200,8 @@ class ResellerApiKeyController extends BaseController
         // Parse IPs — newline or comma separated, strip blanks, deduplicate
         $rawIps = (string) $request->input('allowed_ips', '');
         $allowedIps = collect(preg_split('/[\r\n,;\s]+/', $rawIps))
-            ->map(fn($ip) => trim($ip))
-            ->filter(fn($ip) => $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP))
+            ->map(fn ($ip) => trim($ip))
+            ->filter(fn ($ip) => $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP))
             ->unique()
             ->values()
             ->all();
@@ -232,7 +232,7 @@ class ResellerApiKeyController extends BaseController
 
         $logs = PartnerApiLog::query()
             ->where('reseller_api_key_id', $id)
-            ->when($request->method_filter, fn($q) => $q->where('method', strtoupper($request->method_filter)))
+            ->when($request->method_filter, fn ($q) => $q->where('method', strtoupper($request->method_filter)))
             ->when($request->status_filter, function ($q) use ($request) {
                 $range = $request->status_filter;
                 if ($range === '2xx') {
@@ -245,8 +245,8 @@ class ResellerApiKeyController extends BaseController
                     $q->where('http_status', (int) $range);
                 }
             })
-            ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
-            ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->date_from, fn ($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn ($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->orderByDesc('id')
             ->paginate(50);
 
@@ -268,7 +268,7 @@ class ResellerApiKeyController extends BaseController
     {
         $request->validate([
             'amount' => 'required|numeric|min:0.01|max:99999',
-            'note'   => 'nullable|string|max:255',
+            'note' => 'nullable|string|max:255',
         ]);
 
         $key = ResellerApiKey::findOrFail($id);

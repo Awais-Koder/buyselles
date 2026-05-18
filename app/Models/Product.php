@@ -323,9 +323,9 @@ class Product extends Model
         $inHouseTemporaryClose = Cache::get(IN_HOUSE_SHOP_TEMPORARY_CLOSE_STATUS) ?? 0;
         if ($this->added_by == 'admin') {
             return $inHouseTemporaryClose ?? 0;
-        } elseif ($this->added_by == 'seller') {
-            return Cache::remember('product-shop-close-'.$this->id, 3600, function () {
-                return $this?->seller?->shop?->temporary_close ?? 0;
+        } elseif ($this->added_by == 'seller' && $this->user_id) {
+            return Cache::remember('seller-shop-close-'.$this->user_id, 3600, function () {
+                return \App\Models\Shop::where('seller_id', $this->user_id)->value('temporary_close') ?? 0;
             });
         }
 

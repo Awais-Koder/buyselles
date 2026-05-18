@@ -41,7 +41,7 @@ class DisputeController extends BaseController
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
-                    ->orWhereHas('order', fn($o) => $o->where('id', $search));
+                    ->orWhereHas('order', fn ($o) => $o->where('id', $search));
             });
         }
 

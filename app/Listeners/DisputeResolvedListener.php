@@ -48,7 +48,7 @@ class DisputeResolvedListener
                     data: array_merge($sharedData, [
                         'userType' => 'customer',
                         'userName' => $buyer->name,
-                        'subject' => 'Dispute #' . $disputeId . ' Resolved — ' . $decisionLabel,
+                        'subject' => 'Dispute #'.$disputeId.' Resolved — '.$decisionLabel,
                     ]),
                 );
             } catch (\Throwable $e) {
@@ -66,7 +66,7 @@ class DisputeResolvedListener
                     data: array_merge($sharedData, [
                         'userType' => 'vendor',
                         'vendorName' => $vendor->name,
-                        'subject' => 'Dispute #' . $disputeId . ' Resolved — ' . $decisionLabel,
+                        'subject' => 'Dispute #'.$disputeId.' Resolved — '.$decisionLabel,
                     ]),
                 );
             } catch (\Throwable $e) {

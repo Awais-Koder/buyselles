@@ -124,7 +124,7 @@ class ReloadlyDriver implements SupplierDriverInterface
                     'productId' => (int) $supplierProductId,
                     'quantity' => 1,
                     'unitPrice' => $this->settings['unit_price'] ?? null,
-                    'customIdentifier' => 'BS-' . uniqid(),
+                    'customIdentifier' => 'BS-'.uniqid(),
                     'senderName' => $this->settings['sender_name'] ?? 'Buyselles',
                     'recipientEmail' => $this->settings['recipient_email'] ?? null,
                 ]);
@@ -140,7 +140,7 @@ class ReloadlyDriver implements SupplierDriverInterface
         }
 
         return new SupplierOrderResult(
-            supplierOrderId: 'reloadly-batch-' . uniqid(),
+            supplierOrderId: 'reloadly-batch-'.uniqid(),
             status: count($codes) >= $quantity ? 'fulfilled' : (count($codes) > 0 ? 'partial' : 'failed'),
             codes: $codes,
             rawResponse: ['total_requested' => $quantity, 'total_received' => count($codes)],
@@ -156,7 +156,7 @@ class ReloadlyDriver implements SupplierDriverInterface
             ->get($this->url("/giftcards/orders/transactions/{$supplierOrderId}/cards"));
 
         $data = $response->json();
-        $codes = array_map(fn($card) => $card['cardNumber'] ?? '', $data ?? []);
+        $codes = array_map(fn ($card) => $card['cardNumber'] ?? '', $data ?? []);
         $codes = array_filter($codes);
 
         return new SupplierOrderResult(
@@ -282,7 +282,7 @@ class ReloadlyDriver implements SupplierDriverInterface
         ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Reloadly OAuth2 authentication failed: HTTP ' . $response->status());
+            throw new \RuntimeException('Reloadly OAuth2 authentication failed: HTTP '.$response->status());
         }
 
         $this->accessToken = $response->json('access_token');
@@ -294,6 +294,6 @@ class ReloadlyDriver implements SupplierDriverInterface
 
     private function url(string $path): string
     {
-        return rtrim($this->supplier->base_url, '/') . '/' . ltrim($path, '/');
+        return rtrim($this->supplier->base_url, '/').'/'.ltrim($path, '/');
     }
 }

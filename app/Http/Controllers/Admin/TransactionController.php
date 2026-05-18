@@ -38,11 +38,11 @@ class TransactionController extends Controller
                 $query->whereBetween('created_at', [$from.' 00:00:00', $to.' 23:59:59']);
             })
             ->latest()->paginate(Helpers::pagination_limit())->appends([
-                            'customer_id' => $customer_id,
-                            'status' => $status,
-                            'from' => $from,
-                            'to' => $to,
-                            'search' => $search]);
+                'customer_id' => $customer_id,
+                'status' => $status,
+                'from' => $from,
+                'to' => $to,
+                'search' => $search]);
 
         return view('admin-views.transaction.list', compact('customers', 'transactions', 'search', 'status', 'from', 'to', 'customer_id'));
     }

@@ -31,7 +31,7 @@ class DigitalCodeImportController extends Controller
         $sellerId = (int) auth('seller')->id();
         $export = new DigitalProductCodeTemplateExport(sellerId: $sellerId);
 
-        return Excel::download($export, 'digital-code-template-' . now()->format('Y-m-d') . '.xlsx');
+        return Excel::download($export, 'digital-code-template-'.now()->format('Y-m-d').'.xlsx');
     }
 
     public function import(Request $request): RedirectResponse
@@ -41,7 +41,7 @@ class DigitalCodeImportController extends Controller
         ]);
 
         $storedPath = $request->file('excel_file')->store('digital-code-imports', 'local');
-        $absolutePath = storage_path('app/' . $storedPath);
+        $absolutePath = storage_path('app/'.$storedPath);
 
         /** @var \App\Models\Seller $seller */
         $seller = auth('seller')->user();
@@ -117,7 +117,7 @@ class DigitalCodeImportController extends Controller
 
         $export = new ProductCodeTemplateExport(productName: $product->name);
 
-        return Excel::download($export, 'codes-template-' . Str::slug($product->name) . '-' . now()->format('Y-m-d') . '.xlsx');
+        return Excel::download($export, 'codes-template-'.Str::slug($product->name).'-'.now()->format('Y-m-d').'.xlsx');
     }
 
     public function productImportUpload(Request $request, int $productId, DigitalProductCodeService $service): RedirectResponse

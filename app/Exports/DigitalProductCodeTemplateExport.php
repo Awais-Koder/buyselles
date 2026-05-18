@@ -44,7 +44,7 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
             $query->where('added_by', 'admin');
         }
 
-        $rows = $query->get()->map(fn(Product $product): array => [
+        $rows = $query->get()->map(fn (Product $product): array => [
             'product_id' => $product->id,
             'product_name' => $product->name,
             'price' => '',          // left blank — product already exists
@@ -120,7 +120,7 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
             AfterSheet::class => function (AfterSheet $event): void {
                 $sheet = $event->sheet;
                 $lastRow = $sheet->getHighestRow();
-                $lastRange = 'A1:G' . $lastRow;
+                $lastRange = 'A1:G'.$lastRow;
 
                 $sheet->getStyle($lastRange)->applyFromArray([
                     'borders' => [
@@ -146,7 +146,7 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
 
                     // Highlight PIN column (E) for all data rows — the most important field
                     if ($lastRow > 2) {
-                        $sheet->getStyle('E3:E' . $lastRow)->getFill()->applyFromArray([
+                        $sheet->getStyle('E3:E'.$lastRow)->getFill()->applyFromArray([
                             'fillType' => Fill::FILL_SOLID,
                             'color' => ['rgb' => 'FFF3CD'],
                         ]);
@@ -155,7 +155,7 @@ class DigitalProductCodeTemplateExport implements FromCollection, ShouldAutoSize
                     // Highlight new-product-only columns (C price, D category_id) lightly
                     if ($lastRow > 2) {
                         foreach (['C', 'D'] as $col) {
-                            $sheet->getStyle($col . '3:' . $col . $lastRow)->getFill()->applyFromArray([
+                            $sheet->getStyle($col.'3:'.$col.$lastRow)->getFill()->applyFromArray([
                                 'fillType' => Fill::FILL_SOLID,
                                 'color' => ['rgb' => 'EAF6FF'],
                             ]);

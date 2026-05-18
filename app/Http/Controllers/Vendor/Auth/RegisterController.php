@@ -55,7 +55,7 @@ class RegisterController extends BaseController
         $businessMode = getWebConfig(name: 'business_mode');
         $vendorRegistration = getWebConfig(name: 'seller_registration');
         if ((isset($businessMode) && $businessMode == 'single') || (isset($vendorRegistration) && $vendorRegistration == 0)) {
-            ToastMagic::warning(translate('access_denied') . '!!');
+            ToastMagic::warning(translate('access_denied').'!!');
 
             return redirect('/');
         }
@@ -174,7 +174,7 @@ class RegisterController extends BaseController
             'sent_by' => 'system',
             'sent_to' => 'admin',
             'title' => translate('new_city_request'),
-            'description' => translate('a_new_vendor_registration_requested_a_new_city') . ': ' . $cityRequest->city_name,
+            'description' => translate('a_new_vendor_registration_requested_a_new_city').': '.$cityRequest->city_name,
             'notification_count' => 1,
             'status' => 1,
         ]);
@@ -219,7 +219,7 @@ class RegisterController extends BaseController
             'sent_by' => 'system',
             'sent_to' => 'admin',
             'title' => translate('new_area_request'),
-            'description' => translate('a_new_vendor_registration_requested_a_new_area') . ': ' . $areaRequest->area_name,
+            'description' => translate('a_new_vendor_registration_requested_a_new_area').': '.$areaRequest->area_name,
             'notification_count' => 1,
             'status' => 1,
         ]);

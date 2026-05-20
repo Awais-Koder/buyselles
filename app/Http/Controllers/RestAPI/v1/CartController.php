@@ -162,6 +162,10 @@ class CartController extends Controller
 
         $cart = CartManager::add_to_cart($request);
 
+        if (($cart['status'] ?? 1) === 0) {
+            return response()->json($cart, 422);
+        }
+
         return response()->json($cart, 200);
     }
 

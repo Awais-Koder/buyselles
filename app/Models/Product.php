@@ -200,6 +200,44 @@ class Product extends Model
         return $this->morphMany('App\Models\Translation', 'translationable');
     }
 
+    /**
+     * Scope: only products that have available stock.
+     *
+     * For digital `ready_product` items the code pool drives stock (current_stock
+     * is synced via DigitalProductCodeService::syncStock). Every other digital
+     * sub-type is always considered in-stock from a listing perspective because
+     * fulfilment does not depend on a pre-loaded code pool.
+     */
+    public function scopeInStock(Builder $query): Builder
+    {
+        return $query->where(function (Builder $q): void {
+            // Digital: ready_product must have current_stock > 0; all other digital sub-types pass freely.
+            $q->where(function (Builder $inner): void {
+                $inner->where('product_type', 'digital')
+                    ->where(function (Builder $sub): void {
+                        $sub->where('digital_product_type', '!=', 'ready_product')
+                            ->orWhere('current_stock', '>', 0);
+                    });
+            })->orWhere(function (Builder $inner): void {
+                $inner->where('product_type', 'physical')
+                    ->where('current_stock', '>', 0);
+            });
+        });
+    }
+
+    /**
+     * Convenience collection-level helper that mirrors scopeInStock for use
+     * when you already have a hydrated Eloquent collection (not a query builder).
+     */
+    public static function isInStockItem(self $product): bool
+    {
+        if ($product->product_type === 'digital' && $product->digital_product_type === 'ready_product') {
+            return $product->current_stock > 0;
+        }
+
+        return $product->product_type === 'digital' || $product->current_stock > 0;
+    }
+
     public function scopeActive($query)
     {
         $brandSetting = getWebConfig(name: 'product_brand');

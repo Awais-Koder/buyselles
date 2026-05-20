@@ -165,6 +165,22 @@ class CartController extends BaseController
                             'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
                         ]);
                     }
+
+                    if ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+                        $available = \App\Utils\CartManager::getAvailableDigitalCodeCount((int) $product['id']);
+                        if ($available < $request['quantity_in_cart']) {
+                            $cartItems = $this->getCartData(cartName: $cartId);
+
+                            return response()->json([
+                                'data' => 'custom-error',
+                                'title' => translate('Out_of_Stock'),
+                                'text' => $available > 0
+                                    ? translate('Only').' '.$available.' '.translate('code(s)_in_stock')
+                                    : translate('out_of_stock!'),
+                                'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
+                            ]);
+                        }
+                    }
                     $cartItem = $this->cartService->addCartDataOnSession(
                         product: $product,
                         quantity: $request['quantity_in_cart'],
@@ -215,6 +231,23 @@ class CartController extends BaseController
                 'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
             ]);
         }
+
+        if ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+            $available = \App\Utils\CartManager::getAvailableDigitalCodeCount((int) $product['id']);
+            if ($available < (int) $request['quantity']) {
+                $cartItems = $this->getCartData(cartName: $cartId);
+
+                return response()->json([
+                    'data' => 'custom-error',
+                    'title' => translate('Out_of_Stock'),
+                    'text' => $available > 0
+                        ? translate('Only').' '.$available.' '.translate('code(s)_in_stock')
+                        : translate('out_of_stock!'),
+                    'view' => view('admin-views.pos.partials._cart', compact('cartId', 'cartItems'))->render(),
+                ]);
+            }
+        }
+
         $sessionData = $this->cartService->addCartDataOnSession(
             product: $product,
             quantity: $request['quantity'],

@@ -163,9 +163,7 @@ class CartController extends Controller
             'quantity' => $product['product_type'] == 'physical'
                 ? $quantity
                 : ($product['digital_product_type'] === 'ready_product'
-                    ? ($product['current_stock'] > 0
-                        ? $product['current_stock']
-                        : (\App\Models\SupplierProductMapping::hasActiveMapping($product['id']) ? 100 : 0))
+                    ? CartManager::getAvailableDigitalCodeCount((int) $product['id'])
                     : 100),
             'delivery_cost' => isset($deliveryInfo['delivery_cost']) ? webCurrencyConverter($deliveryInfo['delivery_cost']) : 0,
             'unit_price' => webCurrencyConverter($price), // fashion theme
@@ -508,10 +506,10 @@ class CartController extends Controller
 
     public function addToCartDigitalProduct($request, $product): array
     {
-        if ($product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request['quantity']) {
-            if ((int) $product['current_stock'] <= 0 && \App\Models\SupplierProductMapping::hasActiveMapping($product['id'])) {
-                // Supplier mapping exists — allow through for supplier fulfilment.
-            } else {
+        if ($product['digital_product_type'] === 'ready_product') {
+            $available = CartManager::getAvailableDigitalCodeCount((int) $product['id']);
+
+            if ($available < $request['quantity']) {
                 return ['status' => 0, 'message' => translate('out_of_stock!')];
             }
         }

@@ -30,7 +30,6 @@ use App\Models\ShippingType;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SupplierOrder;
-use App\Models\SupplierProductMapping;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\CustomerServiceFeeService;
@@ -1274,10 +1273,7 @@ class WebController extends Controller
             $firstVariationQuantity = json_decode($product['variation'], true)[0]['qty'];
         }
         if ($product['product_type'] === 'digital') {
-            $localStock = DigitalProductCode::where('product_id', $product['id'])->where('status', 'available')->where('is_active', true)->count();
-            $firstVariationQuantity = $localStock > 0
-                ? $localStock
-                : (SupplierProductMapping::hasActiveMapping($product['id']) ? 1 : 0);
+            $firstVariationQuantity = DigitalProductCode::where('product_id', $product['id'])->available()->count();
         }
 
         return response()->json([

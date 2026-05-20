@@ -2,14 +2,18 @@
 
 use App\Events\AddFundToWalletEvent;
 use App\Models\AdminWallet;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderEditHistory;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use App\Services\DigitalProductCodeService;
+use App\Utils\CartManager;
 use App\Utils\Convert;
 use App\Utils\CustomerManager;
 use App\Utils\OrderManager;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\TaxModule\app\Models\SystemTaxSetup;
 use Modules\TaxModule\app\Models\Tax;
 
@@ -64,6 +68,22 @@ if (! function_exists('digital_payment_success')) {
                 'payment_request_from' => $additionalData['payment_mode'] ?? 'web',
             ];
             request()->merge($requestObj);
+
+            $cartGroupIds = CartManager::get_cart_group_ids(request: request(), type: 'checked');
+            $carts = Cart::whereHas('product', function ($query) {
+                return $query->active();
+            })->with('product')->whereIn('cart_group_id', $cartGroupIds)->where(['is_checked' => 1])->get();
+
+            $digitalErrors = app(DigitalProductCodeService::class)->getDigitalStockErrors($carts);
+            if (! CartManager::product_stock_check($carts) || ! empty($digitalErrors)) {
+                Log::warning('Digital payment success blocked because cart stock is unavailable', [
+                    'payment_id' => $paymentData['id'] ?? null,
+                    'customer_id' => $additionalData['customer_id'] ?? null,
+                    'errors' => $digitalErrors,
+                ]);
+
+                return;
+            }
 
             $orderIds = OrderManager::generateOrder(data: [
                 'is_guest' => $additionalData['is_guest_in_order'] ?? 0,

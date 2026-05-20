@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\CategoryShippingCost;
 use App\Models\Color;
 use App\Models\DigitalProductAuthor;
+use App\Models\DigitalProductCode;
 use App\Models\DigitalProductPublishingHouse;
 use App\Models\DigitalProductVariation;
 use App\Models\FlashDeal;
@@ -1945,26 +1946,25 @@ class ProductManager
 
     public static function mergeStockAndOutOfStockProduct($query): mixed
     {
-        // Pre-fetch all product IDs that have an active supplier mapping so we
-        // can avoid per-product DB queries inside the filter closures below.
         $digitalReadyIds = $query
             ->filter(fn ($p) => $p->product_type === 'digital' && $p->digital_product_type === 'ready_product')
             ->pluck('id')
             ->toArray();
 
-        $supplierMappedIds = [];
+        $digitalReadyStockByProduct = [];
         if (! empty($digitalReadyIds)) {
-            $supplierMappedIds = \App\Models\SupplierProductMapping::query()
+            $digitalReadyStockByProduct = DigitalProductCode::query()
                 ->whereIn('product_id', $digitalReadyIds)
-                ->where('is_active', true)
-                ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
-                ->pluck('product_id')
+                ->available()
+                ->select('product_id', DB::raw('count(*) as available_codes_count'))
+                ->groupBy('product_id')
+                ->pluck('available_codes_count', 'product_id')
                 ->toArray();
         }
 
-        $isInStock = function ($product) use ($supplierMappedIds): bool {
+        $isInStock = function ($product) use ($digitalReadyStockByProduct): bool {
             if ($product->product_type == 'digital' && $product->digital_product_type == 'ready_product') {
-                return $product->current_stock > 0 || in_array($product->id, $supplierMappedIds);
+                return (int) ($digitalReadyStockByProduct[$product->id] ?? 0) > 0;
             }
 
             return $product->product_type == 'digital' || $product->current_stock > 0;

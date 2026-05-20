@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\API\v1\DeliveryManReviewSubmitRequest;
 use App\Models\Author;
 use App\Models\Category;
+use App\Models\DigitalProductCode;
 use App\Models\MostDemanded;
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -367,6 +368,17 @@ class ProductController extends Controller
             $product['reviews_count'] = $product->reviews->count();
             $product['digital_product_authors_names'] = $this->productService->getProductAuthorsInfo(product: $product)['names'];
             $product['digital_product_publishing_house_names'] = $this->productService->getProductPublishingHouseInfo(product: $product)['names'];
+
+            if ($product['product_type'] === 'digital' && $product['digital_product_type'] === 'ready_product') {
+                $availableDigitalCodesCount = DigitalProductCode::where('product_id', $product['id'])
+                    ->available()
+                    ->count();
+
+                $product['current_stock'] = $availableDigitalCodesCount;
+                $product['total_current_stock'] = $availableDigitalCodesCount;
+                $product['available_digital_codes_count'] = $availableDigitalCodesCount;
+                $product['can_add_to_cart'] = $availableDigitalCodesCount > 0;
+            }
 
             if ($user != 'offline' && count($restockRequestedIds) > 0) {
 

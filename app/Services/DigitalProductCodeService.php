@@ -6,7 +6,6 @@ use App\Mail\DigitalCodeDeliveryMail;
 use App\Models\DigitalProductCode;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\SupplierProductMapping;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -328,12 +327,6 @@ class DigitalProductCodeService
 
             $requested = (int) $cart->quantity;
             if ($available < $requested) {
-                // If a supplier mapping exists the order will be fulfilled via the
-                // supplier API — do not block checkout with a stock error.
-                if (SupplierProductMapping::hasActiveMapping($productId)) {
-                    continue;
-                }
-
                 $productName = $cart->name ?? ($cart->product?->name ?? translate('Product'));
                 $errors[] = translate('Only').' '.$available.' '.translate('code(s)_available_for').
                     ' "'.$productName.'". '.

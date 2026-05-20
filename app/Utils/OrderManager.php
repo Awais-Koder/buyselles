@@ -2306,13 +2306,15 @@ class OrderManager
             $response['redirect'] = route('shop-cart');
         }
 
-        if (! $productStockStatus) {
+        if (! $productStockStatus || ! empty($digitalStockErrors)) {
             if (! empty($digitalStockErrors)) {
                 // Include specific per-product messages so the user knows exactly how many to reduce
                 foreach ($digitalStockErrors as $digitalError) {
                     $message[] = $digitalError;
                 }
-            } else {
+            }
+
+            if (! $productStockStatus && empty($digitalStockErrors)) {
                 $message[] = translate('Please_remove_this_unavailable_product_for_continue');
             }
             $response['status'] = 0;

@@ -65,7 +65,14 @@ class ProductListController extends Controller
 
     public function getCategoryProductsView(Request $request, $slug)
     {
-        $category = Cache::remember('category_slug_'.$slug.'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($slug) {
+        $cacheKey = 'category_slug_'.$slug.'_'.(getDefaultLanguage() ?? 'en');
+        $cacheKeys = Cache::get(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, []);
+        if (! in_array($cacheKey, $cacheKeys)) {
+            $cacheKeys[] = $cacheKey;
+            Cache::put(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
+        }
+
+        $category = Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($slug) {
             return Category::where('slug', $slug)->with(['seo'])->first();
         });
         if (! $category) {
@@ -80,12 +87,24 @@ class ProductListController extends Controller
         $subCategories = collect();
 
         if ($category['position'] == 0) {
-            $subCategories = Cache::remember('category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+            $cacheKey = 'category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en');
+            $cacheKeys = Cache::get(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, []);
+            if (! in_array($cacheKey, $cacheKeys)) {
+                $cacheKeys[] = $cacheKey;
+                Cache::put(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
+            }
+            $subCategories = Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($category) {
                 return $category->childes()->orderBy('priority')->get();
             });
             $request->merge(['category_id' => $category['id']]);
         } elseif ($category['position'] == 1) {
-            $subCategories = Cache::remember('category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () use ($category) {
+            $cacheKey = 'category_childes_'.$category['id'].'_'.(getDefaultLanguage() ?? 'en');
+            $cacheKeys = Cache::get(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, []);
+            if (! in_array($cacheKey, $cacheKeys)) {
+                $cacheKeys[] = $cacheKey;
+                Cache::put(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
+            }
+            $subCategories = Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () use ($category) {
                 return $category->childes()->orderBy('priority')->get();
             });
             $request->merge(['sub_category_id' => $category['id']]);
@@ -134,7 +153,13 @@ class ProductListController extends Controller
         $request->merge(['data_from' => 'latest']);
 
         if (! $request->has('category_id') && ! $request->has('sub_category_id') && ! $request->has('sub_sub_category_id')) {
-            $request->merge(['_sub_categories' => Cache::remember('top_level_categories_'.(getDefaultLanguage() ?? 'en'), CACHE_FOR_3_HOURS, function () {
+            $cacheKey = 'top_level_categories_'.(getDefaultLanguage() ?? 'en');
+            $cacheKeys = Cache::get(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, []);
+            if (! in_array($cacheKey, $cacheKeys)) {
+                $cacheKeys[] = $cacheKey;
+                Cache::put(CACHE_CONTAINER_FOR_LANGUAGE_WISE_CACHE_KEYS, $cacheKeys, CACHE_FOR_3_HOURS);
+            }
+            $request->merge(['_sub_categories' => Cache::remember($cacheKey, CACHE_FOR_3_HOURS, function () {
                 return Category::where('position', 0)->orderBy('priority')->get();
             })]);
         }

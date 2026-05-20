@@ -13,7 +13,7 @@ class CategoryManager
 {
     public static function parents(): Collection|array
     {
-        return Category::with(['childes.childes'])->where('position', 0)->orderBy('priority', 'desc')->get();
+        return Category::with(['childes.childes'])->where('position', 0)->orderBy('priority', 'asc')->get();
     }
 
     public static function child($parent_id)
@@ -173,24 +173,53 @@ class CategoryManager
     public static function getPriorityWiseCategorySortQuery($query)
     {
         $categoryProductSortBy = getWebConfig(name: 'category_list_priority');
-        if ($categoryProductSortBy && ($categoryProductSortBy['custom_sorting_status'] == 1)) {
-            if ($categoryProductSortBy['sort_by'] == 'most_order') {
-                return $query->map(function ($category) {
-                    $category->order_count = $category?->product?->sum('order_details_count') ?? 0;
+        $customSorting = $categoryProductSortBy && ($categoryProductSortBy['custom_sorting_status'] == 1);
 
-                    return $category;
-                })->sortByDesc('order_count');
-            } elseif ($categoryProductSortBy['sort_by'] == 'latest_created') {
-                return $query->sortByDesc('id');
-            } elseif ($categoryProductSortBy['sort_by'] == 'first_created') {
-                return $query->sortBy('id');
-            } elseif ($categoryProductSortBy['sort_by'] == 'a_to_z') {
-                return $query->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
-            } elseif ($categoryProductSortBy['sort_by'] == 'z_to_a') {
-                return $query->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
+        $sortCollection = function ($collection) use (&$sortCollection, $customSorting, $categoryProductSortBy) {
+            $digitalSubCategories = collect();
+            $otherCategories = collect();
+
+            if ($customSorting) {
+                foreach ($collection as $category) {
+                    if ($category->position > 0 && ($category->category_type ?? 'physical') === 'digital') {
+                        $digitalSubCategories->push($category);
+                    } else {
+                        $otherCategories->push($category);
+                    }
+                }
+
+                if ($categoryProductSortBy['sort_by'] == 'most_order') {
+                    $otherCategories = $otherCategories->map(function ($category) {
+                        $category->order_count = $category?->product?->sum('order_details_count') ?? 0;
+
+                        return $category;
+                    })->sortByDesc('order_count');
+                } elseif ($categoryProductSortBy['sort_by'] == 'latest_created') {
+                    $otherCategories = $otherCategories->sortByDesc('id');
+                } elseif ($categoryProductSortBy['sort_by'] == 'first_created') {
+                    $otherCategories = $otherCategories->sortBy('id');
+                } elseif ($categoryProductSortBy['sort_by'] == 'a_to_z') {
+                    $otherCategories = $otherCategories->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
+                } elseif ($categoryProductSortBy['sort_by'] == 'z_to_a') {
+                    $otherCategories = $otherCategories->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
+                }
+
+                $digitalSubCategories = $digitalSubCategories->sortBy('priority');
+
+                $collection = $otherCategories->concat($digitalSubCategories);
+            } else {
+                $collection = $collection->sortBy('priority');
             }
-        }
 
-        return $query->sortByDesc('priority');
+            foreach ($collection as $item) {
+                if ($item->relationLoaded('childes') && $item->childes) {
+                    $item->setRelation('childes', $sortCollection($item->childes)->values());
+                }
+            }
+
+            return $collection->values();
+        };
+
+        return $sortCollection($query);
     }
 }

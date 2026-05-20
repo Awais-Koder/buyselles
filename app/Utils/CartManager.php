@@ -6,6 +6,7 @@ use App\Models\Cart;
 use App\Models\CartShipping;
 use App\Models\CategoryShippingCost;
 use App\Models\Color;
+use App\Models\DigitalProductCode;
 use App\Models\DigitalProductVariation;
 use App\Models\Product;
 use App\Models\ShippingMethod;
@@ -589,15 +590,14 @@ class CartManager
 
     public static function addToCartDigitalProduct($request, $product, $shippingType, $sellerShippingList): array
     {
-        if ($product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request['quantity']) {
-            $available = (int) $product['current_stock'];
-            if ($available <= 0) {
-                if (\App\Models\SupplierProductMapping::hasActiveMapping($product['id'])) {
-                    // Supplier can fulfil — treat local zero-stock as available.
-                } else {
+        if ($product['digital_product_type'] === 'ready_product') {
+            $available = self::getAvailableDigitalCodeCount((int) $product['id']);
+
+            if ($available < $request['quantity']) {
+                if ($available <= 0) {
                     return ['status' => 0, 'message' => translate('out_of_stock!')];
                 }
-            } else {
+
                 return [
                     'status' => 0,
                     'message' => translate('Only').' '.$available.' '.translate('code(s)_in_stock').'. '.translate('You_can_purchase_up_to').' '.$available.'.',
@@ -837,9 +837,10 @@ class CartManager
         } elseif (($product['product_type'] == 'physical') && $product['current_stock'] < $request->quantity) {
             $status = 0;
             $qty = $cart['quantity'];
-        } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product' && $product['current_stock'] < $request->quantity) {
-            // If a supplier can fulfil this product on-demand, skip stock limit
-            if (! \App\Models\SupplierProductMapping::hasActiveMapping($product['id'])) {
+        } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+            $available = self::getAvailableDigitalCodeCount((int) $product['id']);
+
+            if ($available < $request->quantity) {
                 $status = 0;
                 $qty = $cart['quantity'];
             }
@@ -967,18 +968,10 @@ class CartManager
                 } elseif ($product['product_type'] == 'physical' && $product['current_stock'] < $cart->quantity) {
                     $status = false;
                 } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
-                    // Hybrid inventory: local pool first, then supplier API fallback.
-                    // Only mark out-of-stock when both local AND supplier stock are unavailable.
-                    if ($product['current_stock'] < $cart->quantity) {
-                        $hasSupplierMapping = \App\Models\SupplierProductMapping::query()
-                            ->where('product_id', $product['id'])
-                            ->where('is_active', true)
-                            ->whereHas('supplierApi', fn ($q) => $q->where('is_active', true))
-                            ->exists();
+                    $available = self::getAvailableDigitalCodeCount((int) $product['id']);
 
-                        if (! $hasSupplierMapping) {
-                            $status = false;
-                        }
+                    if ($available < $cart->quantity) {
+                        $status = false;
                     }
                 }
             } else {
@@ -987,6 +980,14 @@ class CartManager
         }
 
         return $status;
+    }
+
+    public static function getAvailableDigitalCodeCount(int $productId): int
+    {
+        return DigitalProductCode::query()
+            ->available()
+            ->where('product_id', $productId)
+            ->count();
     }
 
     public static function getAppliedTaxIds($product = null, $taxConfig = []): array

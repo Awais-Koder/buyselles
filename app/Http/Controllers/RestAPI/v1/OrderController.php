@@ -113,7 +113,12 @@ class OrderController extends Controller
 
         $productStockCheck = CartManager::product_stock_check($carts);
         if (! $productStockCheck) {
-            return response()->json(['message' => translate('The_following_items_in_your_cart_are_currently_out_of_stock')], 403);
+            $digitalErrors = app(\App\Services\DigitalProductCodeService::class)->getDigitalStockErrors($carts);
+            $errorMsg = ! empty($digitalErrors)
+                ? implode(' | ', $digitalErrors)
+                : translate('The_following_items_in_your_cart_are_currently_out_of_stock');
+
+            return response()->json(['message' => $errorMsg], 403);
         }
 
         $verifyStatus = OrderManager::verifyCartListMinimumOrderAmount($request);
@@ -223,7 +228,12 @@ class OrderController extends Controller
 
         $productStockCheck = CartManager::product_stock_check($carts);
         if (! $productStockCheck) {
-            return response()->json(['message' => 'The following items in your cart are currently out of stock'], 403);
+            $digitalErrors = app(\App\Services\DigitalProductCodeService::class)->getDigitalStockErrors($carts);
+            $errorMsg = ! empty($digitalErrors)
+                ? implode(' | ', $digitalErrors)
+                : translate('The_following_items_in_your_cart_are_currently_out_of_stock');
+
+            return response()->json(['message' => $errorMsg], 403);
         }
 
         $verifyStatus = OrderManager::verifyCartListMinimumOrderAmount($request);
@@ -326,7 +336,12 @@ class OrderController extends Controller
 
         $product_stock = CartManager::product_stock_check($carts);
         if (! $product_stock) {
-            return response()->json(['message' => 'The following items in your cart are currently out of stock'], 403);
+            $digitalErrors = app(\App\Services\DigitalProductCodeService::class)->getDigitalStockErrors($carts);
+            $errorMsg = ! empty($digitalErrors)
+                ? implode(' | ', $digitalErrors)
+                : translate('The_following_items_in_your_cart_are_currently_out_of_stock');
+
+            return response()->json(['message' => $errorMsg], 403);
         }
 
         $verifyStatus = OrderManager::verifyCartListMinimumOrderAmount($request);

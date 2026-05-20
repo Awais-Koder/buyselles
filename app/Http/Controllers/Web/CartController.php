@@ -162,9 +162,7 @@ class CartController extends Controller
             'discount_amount' => $discount,
             'quantity' => $product['product_type'] == 'physical'
                 ? $quantity
-                : ($product['digital_product_type'] === 'ready_product'
-                    ? CartManager::getAvailableDigitalCodeCount((int) $product['id'])
-                    : 100),
+                : CartManager::getAvailableDigitalCodeCount((int) $product['id']),
             'delivery_cost' => isset($deliveryInfo['delivery_cost']) ? webCurrencyConverter($deliveryInfo['delivery_cost']) : 0,
             'unit_price' => webCurrencyConverter($price), // fashion theme
             'total_unit_price' => webCurrencyConverter($unit_price), // fashion theme

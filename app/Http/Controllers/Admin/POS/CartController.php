@@ -166,7 +166,7 @@ class CartController extends BaseController
                         ]);
                     }
 
-                    if ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+                    if ($product['product_type'] == 'digital') {
                         $available = \App\Utils\CartManager::getAvailableDigitalCodeCount((int) $product['id']);
                         if ($available < $request['quantity_in_cart']) {
                             $cartItems = $this->getCartData(cartName: $cartId);
@@ -232,7 +232,7 @@ class CartController extends BaseController
             ]);
         }
 
-        if ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+        if ($product['product_type'] == 'digital') {
             $available = \App\Utils\CartManager::getAvailableDigitalCodeCount((int) $product['id']);
             if ($available < (int) $request['quantity']) {
                 $cartItems = $this->getCartData(cartName: $cartId);

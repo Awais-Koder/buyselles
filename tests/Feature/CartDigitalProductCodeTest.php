@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Cart;
-use App\Models\DigitalProductCode;
 use App\Models\Product;
 use App\Utils\CartManager;
 use Illuminate\Database\Schema\Blueprint;
@@ -58,16 +57,40 @@ class CartDigitalProductCodeTest extends TestCase
 
     // ── Add-to-cart ───────────────────────────────────────────────────────────
 
-    public function test_ready_digital_product_without_available_codes_is_not_added_to_cart(): void
+    public function test_ready_product_without_available_codes_is_not_added_to_cart(): void
     {
         $request = Request::create('/api/v1/cart/add', 'POST', [
             'quantity' => 1,
         ]);
 
         $product = new Product([
+            'product_type' => 'digital',
             'digital_product_type' => 'ready_product',
         ]);
         $product->id = 123;
+
+        $response = CartManager::addToCartDigitalProduct(
+            request: $request,
+            product: $product,
+            shippingType: 'order_wise',
+            sellerShippingList: null,
+        );
+
+        $this->assertSame(0, $response['status']);
+        $this->assertSame(translate('out_of_stock!'), $response['message']);
+    }
+
+    public function test_ready_after_sell_without_available_codes_is_not_added_to_cart(): void
+    {
+        $request = Request::create('/api/v1/cart/add', 'POST', [
+            'quantity' => 1,
+        ]);
+
+        $product = new Product([
+            'product_type' => 'digital',
+            'digital_product_type' => 'ready_after_sell',
+        ]);
+        $product->id = 789;
 
         $response = CartManager::addToCartDigitalProduct(
             request: $request,
@@ -99,6 +122,7 @@ class CartDigitalProductCodeTest extends TestCase
         ]);
 
         $product = new Product([
+            'product_type' => 'digital',
             'digital_product_type' => 'ready_product',
         ]);
         $product->id = $productId;
@@ -114,32 +138,42 @@ class CartDigitalProductCodeTest extends TestCase
         $this->assertStringContainsString('1', $response['message']);
     }
 
-    public function test_ready_after_sell_digital_product_is_not_blocked_by_code_check(): void
+    public function test_ready_after_sell_with_enough_codes_can_be_added_to_cart(): void
     {
+        $productId = 790;
+
+        foreach (['RAS-CODE-1', 'RAS-CODE-2'] as $code) {
+            $this->app['db']->table('digital_product_codes')->insert([
+                'product_id' => $productId,
+                'code' => $code,
+                'status' => 'available',
+                'is_active' => true,
+                'expiry_date' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         $request = Request::create('/api/v1/cart/add', 'POST', [
             'quantity' => 1,
         ]);
 
         $product = new Product([
-            'digital_product_type' => 'ready_after_sell',
             'product_type' => 'digital',
-            'status' => 1,
+            'digital_product_type' => 'ready_after_sell',
+            'minimum_order_qty' => 1,
         ]);
-        $product->id = 789;
+        $product->id = $productId;
 
-        // The code-pool check must NOT run for ready_after_sell products
+        // With codes present the gate passes; the method may still fail further
+        // down (e.g. missing seller data) but the stock guard must NOT block it.
         $available = CartManager::getAvailableDigitalCodeCount((int) $product->id);
-        $this->assertSame(0, $available);
-
-        // addToCartDigitalProduct is not directly testable beyond code-pool here, but
-        // we verify the guard condition does not block by asserting the count method returns 0
-        // without triggering a rejection at the gate.
-        $this->assertSame(0, $available);
+        $this->assertSame(2, $available);
     }
 
     // ── product_stock_check ───────────────────────────────────────────────────
 
-    public function test_product_stock_check_returns_false_for_ready_product_with_no_codes(): void
+    public function test_product_stock_check_returns_false_for_digital_product_with_no_codes(): void
     {
         $productId = 101;
 
@@ -278,5 +312,59 @@ class CartDigitalProductCodeTest extends TestCase
 
         // Sold/reserved codes must not count as available
         $this->assertFalse(CartManager::product_stock_check(collect([$cart])));
+    }
+
+    public function test_product_stock_check_returns_false_for_ready_after_sell_with_no_codes(): void
+    {
+        $productId = 106;
+
+        $product = new Product([
+            'product_type' => 'digital',
+            'digital_product_type' => 'ready_after_sell',
+            'variation' => '[]',
+        ]);
+        $product->id = $productId;
+
+        $cart = new Cart([
+            'product_id' => $productId,
+            'quantity' => 1,
+            'variant' => null,
+        ]);
+        $cart->setRelation('product', $product);
+
+        $this->assertFalse(CartManager::product_stock_check(collect([$cart])));
+    }
+
+    public function test_product_stock_check_returns_true_for_ready_after_sell_with_codes(): void
+    {
+        $productId = 107;
+
+        foreach (['RAS-A', 'RAS-B'] as $code) {
+            $this->app['db']->table('digital_product_codes')->insert([
+                'product_id' => $productId,
+                'code' => $code,
+                'status' => 'available',
+                'is_active' => true,
+                'expiry_date' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $product = new Product([
+            'product_type' => 'digital',
+            'digital_product_type' => 'ready_after_sell',
+            'variation' => '[]',
+        ]);
+        $product->id = $productId;
+
+        $cart = new Cart([
+            'product_id' => $productId,
+            'quantity' => 2,
+            'variant' => null,
+        ]);
+        $cart->setRelation('product', $product);
+
+        $this->assertTrue(CartManager::product_stock_check(collect([$cart])));
     }
 }

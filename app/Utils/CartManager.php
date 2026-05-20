@@ -590,7 +590,7 @@ class CartManager
 
     public static function addToCartDigitalProduct($request, $product, $shippingType, $sellerShippingList): array
     {
-        if ($product['digital_product_type'] === 'ready_product') {
+        if ($product['product_type'] === 'digital') {
             $available = self::getAvailableDigitalCodeCount((int) $product['id']);
 
             if ($available < $request['quantity']) {
@@ -837,7 +837,7 @@ class CartManager
         } elseif (($product['product_type'] == 'physical') && $product['current_stock'] < $request->quantity) {
             $status = 0;
             $qty = $cart['quantity'];
-        } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+        } elseif ($product['product_type'] == 'digital') {
             $available = self::getAvailableDigitalCodeCount((int) $product['id']);
 
             if ($available < $request->quantity) {
@@ -968,7 +968,7 @@ class CartManager
                     }
                 } elseif ($product['product_type'] == 'physical' && $product['current_stock'] < $cart->quantity) {
                     $status = false;
-                } elseif ($product['product_type'] == 'digital' && $product['digital_product_type'] === 'ready_product') {
+                } elseif ($product['product_type'] == 'digital') {
                     $available = self::getAvailableDigitalCodeCount((int) $product['id']);
 
                     if ($available < $cart->quantity) {

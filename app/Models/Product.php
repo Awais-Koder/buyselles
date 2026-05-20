@@ -210,19 +210,7 @@ class Product extends Model
      */
     public function scopeInStock(Builder $query): Builder
     {
-        return $query->where(function (Builder $q): void {
-            // Digital: ready_product must have current_stock > 0; all other digital sub-types pass freely.
-            $q->where(function (Builder $inner): void {
-                $inner->where('product_type', 'digital')
-                    ->where(function (Builder $sub): void {
-                        $sub->where('digital_product_type', '!=', 'ready_product')
-                            ->orWhere('current_stock', '>', 0);
-                    });
-            })->orWhere(function (Builder $inner): void {
-                $inner->where('product_type', 'physical')
-                    ->where('current_stock', '>', 0);
-            });
-        });
+        return $query->where('current_stock', '>', 0);
     }
 
     /**
@@ -231,11 +219,7 @@ class Product extends Model
      */
     public static function isInStockItem(self $product): bool
     {
-        if ($product->product_type === 'digital' && $product->digital_product_type === 'ready_product') {
-            return $product->current_stock > 0;
-        }
-
-        return $product->product_type === 'digital' || $product->current_stock > 0;
+        return $product->current_stock > 0;
     }
 
     public function scopeActive($query)

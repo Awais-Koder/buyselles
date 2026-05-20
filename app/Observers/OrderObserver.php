@@ -79,7 +79,7 @@ class OrderObserver
                 $productType = $productDetails->product_type ?? null;
                 $digitalType = $productDetails->digital_product_type ?? null;
 
-                if ($productType !== 'digital' || $digitalType !== 'ready_product') {
+                if ($productType !== 'digital') {
                     continue;
                 }
 

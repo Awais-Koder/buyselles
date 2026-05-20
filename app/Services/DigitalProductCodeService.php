@@ -224,7 +224,7 @@ class DigitalProductCodeService
             $productType = $productDetails->product_type ?? null;
             $digitalType = $productDetails->digital_product_type ?? null;
 
-            if ($productType !== 'digital' || $digitalType !== 'ready_product') {
+            if ($productType !== 'digital') {
                 continue;
             }
 
@@ -303,10 +303,7 @@ class DigitalProductCodeService
         $errors = [];
 
         foreach ($carts as $cart) {
-            if (
-                ($cart->product_type ?? null) !== 'digital' ||
-                ($cart->digital_product_type ?? null) !== 'ready_product'
-            ) {
+            if (($cart->product_type ?? null) !== 'digital') {
                 continue;
             }
 

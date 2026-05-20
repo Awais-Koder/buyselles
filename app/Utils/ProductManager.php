@@ -1906,15 +1906,15 @@ class ProductManager
 
     public static function mergeStockAndOutOfStockProduct($query): mixed
     {
-        $digitalReadyIds = $query
-            ->filter(fn ($p) => $p->product_type === 'digital' && $p->digital_product_type === 'ready_product')
+        $digitalIds = $query
+            ->filter(fn ($p) => $p->product_type === 'digital')
             ->pluck('id')
             ->toArray();
 
-        $digitalReadyStockByProduct = [];
-        if (! empty($digitalReadyIds)) {
-            $digitalReadyStockByProduct = DigitalProductCode::query()
-                ->whereIn('product_id', $digitalReadyIds)
+        $digitalStockByProduct = [];
+        if (! empty($digitalIds)) {
+            $digitalStockByProduct = DigitalProductCode::query()
+                ->whereIn('product_id', $digitalIds)
                 ->available()
                 ->select('product_id', DB::raw('count(*) as available_codes_count'))
                 ->groupBy('product_id')
@@ -1922,12 +1922,12 @@ class ProductManager
                 ->toArray();
         }
 
-        $isInStock = function ($product) use ($digitalReadyStockByProduct): bool {
-            if ($product->product_type == 'digital' && $product->digital_product_type == 'ready_product') {
-                return (int) ($digitalReadyStockByProduct[$product->id] ?? 0) > 0;
+        $isInStock = function ($product) use ($digitalStockByProduct): bool {
+            if ($product->product_type == 'digital') {
+                return (int) ($digitalStockByProduct[$product->id] ?? 0) > 0;
             }
 
-            return $product->product_type == 'digital' || $product->current_stock > 0;
+            return $product->current_stock > 0;
         };
 
         $stockProduct = $query->filter($isInStock);

@@ -504,7 +504,7 @@ class CartController extends Controller
 
     public function addToCartDigitalProduct($request, $product): array
     {
-        if ($product['digital_product_type'] === 'ready_product') {
+        if ($product['product_type'] === 'digital') {
             $available = CartManager::getAvailableDigitalCodeCount((int) $product['id']);
 
             if ($available < $request['quantity']) {

@@ -369,7 +369,7 @@ class ProductController extends Controller
             $product['digital_product_authors_names'] = $this->productService->getProductAuthorsInfo(product: $product)['names'];
             $product['digital_product_publishing_house_names'] = $this->productService->getProductPublishingHouseInfo(product: $product)['names'];
 
-            if ($product['product_type'] === 'digital' && $product['digital_product_type'] === 'ready_product') {
+            if ($product['product_type'] === 'digital') {
                 $availableDigitalCodesCount = DigitalProductCode::where('product_id', $product['id'])
                     ->available()
                     ->count();

@@ -956,11 +956,12 @@ class CartManager
         foreach ($carts as $cart) {
             if ($cart->product) {
                 $product = $cart->product;
-                $count = count(json_decode($product->variation));
+                $variations = json_decode((string) ($product->variation ?? '[]')) ?? [];
+                $count = is_array($variations) ? count($variations) : 0;
                 if ($count) {
                     for ($i = 0; $i < $count; $i++) {
-                        if (json_decode($product->variation)[$i]->type == $cart['variant']) {
-                            if (json_decode($product->variation)[$i]->qty < $cart->quantity) {
+                        if ($variations[$i]->type == $cart['variant']) {
+                            if ($variations[$i]->qty < $cart->quantity) {
                                 $status = false;
                             }
                         }

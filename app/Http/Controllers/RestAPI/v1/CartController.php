@@ -94,7 +94,15 @@ class CartController extends Controller
 
                 $product = Product::active()->find($data->product_id);
                 if ($product) {
-                    $data['is_product_available'] = 1;
+                    $isDigitalReady = $product->product_type === 'digital'
+                        && $product->digital_product_type === 'ready_product';
+
+                    if ($isDigitalReady) {
+                        $availableCodes = CartManager::getAvailableDigitalCodeCount((int) $product->id);
+                        $data['is_product_available'] = $availableCodes >= $data->quantity ? 1 : 0;
+                    } else {
+                        $data['is_product_available'] = 1;
+                    }
                 } else {
                     $data['is_product_available'] = 0;
                 }

@@ -128,8 +128,23 @@ class CategoryManager
                         });
                 }])
                 ->with(['childes' => function ($query) use ($dataForm, $featuredDealProducts) {
-                    return $query->with(['childes' => function ($query) use ($featuredDealProducts) {
-                        return $query->withCount(['subSubCategoryProduct' => function ($query) use ($featuredDealProducts) {
+                    return $query->orderBy('priority', 'asc')
+                        ->with(['childes' => function ($query) use ($featuredDealProducts) {
+                            return $query->orderBy('priority', 'asc')
+                                ->withCount(['subSubCategoryProduct' => function ($query) use ($featuredDealProducts) {
+                                    return $query->active()->when(request('offer_type') == 'clearance_sale', function ($query) {
+                                        return $query->whereHas('clearanceSale', function ($query) {
+                                            return $query->active();
+                                        });
+                                    })
+                                        ->when(request('offer_type') == 'discounted', function ($query) {
+                                            return $query->where('discount', '>', 0);
+                                        })
+                                        ->when(request('offer_type') == 'featured_deal', function ($query) use ($featuredDealProducts) {
+                                            return $query->whereIn('id', $featuredDealProducts?->pluck('id')?->toArray() ?? [0]);
+                                        });
+                                }])->where('position', 2);
+                        }])->withCount(['subCategoryProduct' => function ($query) use ($dataForm, $featuredDealProducts) {
                             return $query->active()->when(request('offer_type') == 'clearance_sale', function ($query) {
                                 return $query->whereHas('clearanceSale', function ($query) {
                                     return $query->active();
@@ -140,26 +155,13 @@ class CategoryManager
                                 })
                                 ->when(request('offer_type') == 'featured_deal', function ($query) use ($featuredDealProducts) {
                                     return $query->whereIn('id', $featuredDealProducts?->pluck('id')?->toArray() ?? [0]);
+                                })
+                                ->when($dataForm == 'flash-deals', function ($query) {
+                                    return $query->whereHas('flashDealProducts.flashDeal');
                                 });
-                        }])->where('position', 2);
-                    }])->withCount(['subCategoryProduct' => function ($query) use ($dataForm, $featuredDealProducts) {
-                        return $query->active()->when(request('offer_type') == 'clearance_sale', function ($query) {
-                            return $query->whereHas('clearanceSale', function ($query) {
-                                return $query->active();
-                            });
-                        })
-                            ->when(request('offer_type') == 'discounted', function ($query) {
-                                return $query->where('discount', '>', 0);
-                            })
-                            ->when(request('offer_type') == 'featured_deal', function ($query) use ($featuredDealProducts) {
-                                return $query->whereIn('id', $featuredDealProducts?->pluck('id')?->toArray() ?? [0]);
-                            })
-                            ->when($dataForm == 'flash-deals', function ($query) {
-                                return $query->whereHas('flashDealProducts.flashDeal');
-                            });
-                    }])
+                        }])
                         ->where('position', 1);
-                }, 'childes.childes'])->where('position', 0)->get();
+                }])->where('position', 0)->get();
         });
 
         $categoriesProcessed = self::getPriorityWiseCategorySortQuery(query: $categories);
@@ -176,38 +178,30 @@ class CategoryManager
         $customSorting = $categoryProductSortBy && ($categoryProductSortBy['custom_sorting_status'] == 1);
 
         $sortCollection = function ($collection) use (&$sortCollection, $customSorting, $categoryProductSortBy) {
-            $digitalSubCategories = collect();
-            $otherCategories = collect();
+            // Sub-categories and sub-sub-categories (position > 0) always follow the
+            // admin-defined priority regardless of the global custom-sort setting.
+            // Custom sort only affects the top-level (position = 0) list.
+            $isSubLevel = ($collection->first()?->position ?? 0) > 0;
 
-            if ($customSorting) {
-                foreach ($collection as $category) {
-                    if ($category->position > 0 && ($category->category_type ?? 'physical') === 'digital') {
-                        $digitalSubCategories->push($category);
-                    } else {
-                        $otherCategories->push($category);
-                    }
-                }
-
+            if ($customSorting && ! $isSubLevel) {
                 if ($categoryProductSortBy['sort_by'] == 'most_order') {
-                    $otherCategories = $otherCategories->map(function ($category) {
+                    $collection = $collection->map(function ($category) {
                         $category->order_count = $category?->product?->sum('order_details_count') ?? 0;
 
                         return $category;
                     })->sortByDesc('order_count');
                 } elseif ($categoryProductSortBy['sort_by'] == 'latest_created') {
-                    $otherCategories = $otherCategories->sortByDesc('id');
+                    $collection = $collection->sortByDesc('id');
                 } elseif ($categoryProductSortBy['sort_by'] == 'first_created') {
-                    $otherCategories = $otherCategories->sortBy('id');
+                    $collection = $collection->sortBy('id');
                 } elseif ($categoryProductSortBy['sort_by'] == 'a_to_z') {
-                    $otherCategories = $otherCategories->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
+                    $collection = $collection->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE);
                 } elseif ($categoryProductSortBy['sort_by'] == 'z_to_a') {
-                    $otherCategories = $otherCategories->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
+                    $collection = $collection->sortByDesc('name', SORT_NATURAL | SORT_FLAG_CASE);
                 }
-
-                $digitalSubCategories = $digitalSubCategories->sortBy('priority');
-
-                $collection = $otherCategories->concat($digitalSubCategories);
             } else {
+                // Sub-categories (all types) and top-level when custom sort is off:
+                // always honour the admin-set priority field.
                 $collection = $collection->sortBy('priority');
             }
 

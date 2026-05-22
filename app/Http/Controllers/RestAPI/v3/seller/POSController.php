@@ -379,8 +379,22 @@ class POSController extends Controller
 
         $orders = Order::with('details', 'shipping')->where(['seller_id' => $seller['id']])->find($request['id']);
         if ($orders) {
-            foreach ($orders['details'] as $order) {
-                $order['product_details'] = Helpers::product_data_formatting(json_decode($order['product_details'], true));
+            foreach ($orders['details'] as $detail) {
+                $detail['product_details'] = Helpers::product_data_formatting(json_decode($detail['product_details'], true));
+
+                // Attach decrypted digital codes so the vendor app can print a
+                // separate ticket for every code the buyer received.
+                $detail['digital_codes'] = \App\Models\DigitalProductCode::where('order_detail_id', $detail->id)
+                    ->where('status', 'sold')
+                    ->get()
+                    ->map(function (\App\Models\DigitalProductCode $code): array {
+                        return [
+                            'code' => $code->decryptCode(),
+                            'pin' => $code->decryptPin(),
+                        ];
+                    })
+                    ->values()
+                    ->toArray();
             }
         }
 

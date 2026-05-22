@@ -459,7 +459,11 @@ class ProductController extends Controller
                 return $query->active()->with(['clearanceSale' => function ($query) {
                     return $query->active();
                 }]);
-            })->where('home_status', true)->get();
+            })->where('home_status', true)
+                ->orderBy('priority', 'asc')
+                ->get();
+
+            $getCategories = CategoryManager::getPriorityWiseCategorySortQuery(query: $getCategories);
 
             $getCategories->map(function ($data) use ($request) {
                 $data['products'] = Helpers::product_data_formatting(CategoryManager::products($data['id'], $request, 8), true);

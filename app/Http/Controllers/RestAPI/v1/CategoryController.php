@@ -39,14 +39,16 @@ class CategoryController extends Controller
                     return $query->where(['added_by' => 'seller', 'user_id' => $shop['seller_id'], 'status' => '1']);
                 });
             }])->with(['childes' => function ($query) {
-                return $query->with(['childes' => function ($query) {
-                    return $query->withCount(['subSubCategoryProduct' => function ($query) {
+                return $query->orderBy('priority', 'asc')
+                    ->with(['childes' => function ($query) {
+                        return $query->orderBy('priority', 'asc')
+                            ->withCount(['subSubCategoryProduct' => function ($query) {
+                                return $query->active();
+                            }])->where('position', 2);
+                    }])->withCount(['subCategoryProduct' => function ($query) {
                         return $query->active();
-                    }])->where('position', 2);
-                }])->withCount(['subCategoryProduct' => function ($query) {
-                    return $query->active();
-                }])->where('position', 1);
-            }, 'childes.childes'])
+                    }])->where('position', 1);
+            }])
             ->where(['position' => 0])->get();
 
         $categories = CategoryManager::getPriorityWiseCategorySortQuery(query: $categories);
@@ -74,22 +76,26 @@ class CategoryController extends Controller
 
     public function find_what_you_need(): JsonResponse
     {
-        $find_what_you_need_categories = Category::where('parent_id', 0)
+        $find_what_you_need_categories = Category::where('position', 0)
             ->with(['childes' => function ($query) {
-                $query->withCount(['subCategoryProduct' => function ($query) {
-                    return $query->active();
-                }]);
+                $query->orderBy('priority', 'asc')
+                    ->withCount(['subCategoryProduct' => function ($query) {
+                        return $query->active();
+                    }]);
             }])
             ->withCount(['product' => function ($query) {
                 return $query->active();
             }])
-            ->get()->toArray();
+            ->orderBy('priority', 'asc')
+            ->get();
+
+        $find_what_you_need_categories = CategoryManager::getPriorityWiseCategorySortQuery(query: $find_what_you_need_categories);
 
         $getCategories = [];
         foreach ($find_what_you_need_categories as $category) {
-            $slice = array_slice($category['childes'], 0, 4);
-            $category['childes'] = $slice;
-            $getCategories[] = $category;
+            $categoryArray = $category->toArray();
+            $categoryArray['childes'] = array_slice($categoryArray['childes'], 0, 4);
+            $getCategories[] = $categoryArray;
         }
 
         $final_category = [];

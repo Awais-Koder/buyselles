@@ -42,16 +42,11 @@ class GeneralController extends Controller
         return response()->json($countries, 200);
     }
 
-    public function get_cities(Request $request): JsonResponse
+    public function get_cities(Request $request, int $country_id): JsonResponse
     {
-        $country_id = $request->get('country_id');
         $search = $request->get('search');
 
-        $query = LocationCity::query();
-
-        if ($country_id) {
-            $query->where('country_id', $country_id);
-        }
+        $query = LocationCity::query()->where('country_id', $country_id);
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%");
@@ -60,16 +55,11 @@ class GeneralController extends Controller
         return response()->json($query->orderBy('name')->get(), 200);
     }
 
-    public function get_areas(Request $request): JsonResponse
+    public function get_areas(Request $request, int $city_id): JsonResponse
     {
-        $city_id = $request->get('city_id');
         $search = $request->get('search');
 
-        $query = LocationArea::query();
-
-        if ($city_id) {
-            $query->where('city_id', $city_id);
-        }
+        $query = LocationArea::query()->where('city_id', $city_id);
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%");

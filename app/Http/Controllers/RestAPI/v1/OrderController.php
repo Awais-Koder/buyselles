@@ -54,9 +54,22 @@ class OrderController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
 
-        $data = Order::with(['deliveryMan', 'orderStatusHistory' => function ($query) {
+        $user = Helpers::getCustomerInformation($request);
+        $orderQuery = Order::with(['deliveryMan', 'orderStatusHistory' => function ($query) {
             return $query->latest();
-        }])->where(['id' => $request['order_id']])->first();
+        }])->where(['id' => $request['order_id']]);
+
+        if ($user != 'offline') {
+            $orderQuery->where('customer_id', $user->id);
+        } else {
+            $orderQuery->where('is_guest', 1)->where('customer_id', $request->guest_id);
+        }
+
+        $data = $orderQuery->first();
+
+        if (! $data) {
+            return response()->json(['message' => translate('order_not_found')], 404);
+        }
 
         $data = json_decode(json_encode($data), true);
 
@@ -72,7 +85,22 @@ class OrderController extends Controller
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
         $orderId = $request['order_id'];
-        $order = Order::find($orderId);
+
+        $user = Helpers::getCustomerInformation($request);
+        $order = Order::where('id', $orderId);
+
+        if ($user != 'offline') {
+            $order->where('customer_id', $user->id);
+        } else {
+            $order->where('is_guest', 1)->where('customer_id', $request->guest_id);
+        }
+
+        $order = $order->first();
+
+        if (! $order) {
+            return response()->json(['message' => translate('order_not_found')], 404);
+        }
+
         $isOrderOnlyDigital = $this->orderService->getCheckIsOrderOnlyDigital(order: $order);
         $getTrackOrderHistory = OrderManager::getTrackOrderStatusHistory(orderId: $orderId, isOrderOnlyDigital: $isOrderOnlyDigital);
 
@@ -88,7 +116,21 @@ class OrderController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => Helpers::validationErrorProcessor($validator)], 403);
         }
-        $order = Order::where(['id' => $request->order_id])->first();
+
+        $user = Helpers::getCustomerInformation($request);
+        $orderQuery = Order::where(['id' => $request->order_id]);
+
+        if ($user != 'offline') {
+            $orderQuery->where('customer_id', $user->id);
+        } else {
+            $orderQuery->where('is_guest', 1)->where('customer_id', $request->guest_id);
+        }
+
+        $order = $orderQuery->first();
+
+        if (! $order) {
+            return response()->json(['message' => translate('order_not_found')], 404);
+        }
 
         if ($order['payment_method'] == 'cash_on_delivery' && $order['order_status'] == 'pending') {
             OrderManager::getStockUpdateOnOrderStatusChange($order, 'canceled');

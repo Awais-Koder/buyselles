@@ -54,6 +54,9 @@ class ShopInfoUpdateRequest extends FormRequest
                 isDisallowed: true
             ),
             'tin_certificate' => 'nullable|mimes:pdf,doc,docx,jpg|max:'.$maxFileSize,
+            'store_country_id' => 'nullable|integer|exists:location_countries,id',
+            'store_city_id' => 'nullable|integer|exists:location_cities,id',
+            'store_area_id' => 'nullable|integer|exists:location_areas,id',
         ];
     }
 

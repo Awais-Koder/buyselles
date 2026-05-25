@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cart;
+use App\Models\GuestUser;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -10,13 +12,26 @@ class APIGuestMiddleware
     public function handle(Request $request, Closure $next): mixed
     {
         if ($request->header('Authorization') && app('auth')->guard('api')) {
-            $request->merge(['user' => auth('api')->user()]);
+            $user = auth('api')->user();
 
-            return $next($request);
-        } elseif ($request->guest_id) {
-            return $next($request);
+            if ($user) {
+                $request->merge(['user' => $user]);
+
+                return $next($request);
+            }
         }
 
-        return response()->json(['Unauthorized', 401]);
+        if ($request->guest_id) {
+            $guestExists = GuestUser::where('id', $request->guest_id)->exists()
+                || Cart::where('customer_id', $request->guest_id)->where('is_guest', 1)->exists();
+
+            if ($guestExists) {
+                return $next($request);
+            }
+
+            return response()->json(['message' => 'Invalid guest session'], 401);
+        }
+
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
 }

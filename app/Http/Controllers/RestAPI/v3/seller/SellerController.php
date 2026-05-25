@@ -274,7 +274,7 @@ class SellerController extends Controller
             ]);
         }
 
-        Shop::where(['seller_id' => $seller['id']])->update([
+        $shopUpdateData = [
             'name' => $request['name'],
             'address' => $request['address'],
             'contact' => $request['contact'],
@@ -285,7 +285,15 @@ class SellerController extends Controller
             'tax_identification_number' => $request['tax_identification_number'],
             'tin_expire_date' => $request['tin_expire_date'],
             'updated_at' => now(),
-        ]);
+        ];
+
+        if ($request->has('store_country_id')) {
+            $shopUpdateData['store_country_id'] = $request['store_country_id'] ?: null;
+            $shopUpdateData['store_city_id'] = $request['store_city_id'] ?: null;
+            $shopUpdateData['store_area_id'] = $request['store_area_id'] ?: null;
+        }
+
+        Shop::where(['seller_id' => $seller['id']])->update($shopUpdateData);
 
         return response()->json(translate('Shop_info_updated_successfully'), 200);
     }

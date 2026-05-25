@@ -73,6 +73,13 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id')->orderBy('priority', 'asc');
     }
 
+    public function displayBlocks(): HasMany
+    {
+        return $this->hasMany(CategoryDisplayBlock::class)
+            ->where('is_active', true)
+            ->orderBy('position');
+    }
+
     public function product(): HasMany
     {
         return $this->hasMany(Product::class, 'category_id', 'id');

@@ -49,7 +49,12 @@ class CategoryController extends Controller
                         return $query->active();
                     }])->where('position', 1);
             }])
-            ->where(['position' => 0])->get();
+            ->when($request->has('parent_id'), function ($query) use ($request) {
+                $query->where('parent_id', (int) $request['parent_id']);
+            }, function ($query) {
+                $query->where('position', 0);
+            })
+            ->get();
 
         $categories = CategoryManager::getPriorityWiseCategorySortQuery(query: $categories);
 
@@ -106,5 +111,15 @@ class CategoryController extends Controller
         }
 
         return response()->json(['find_what_you_need' => $final_category], 200);
+    }
+
+    public function getDisplayBlocks(string $id): JsonResponse
+    {
+        $category = Category::with('displayBlocks')->findOrFail($id);
+
+        return response()->json([
+            'category' => $category,
+            'blocks' => $category->displayBlocks,
+        ]);
     }
 }

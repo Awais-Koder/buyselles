@@ -217,6 +217,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
                 Route::get('/', 'get_categories');
                 Route::get('products/{category_id}', 'get_products');
                 Route::get('/find-what-you-need', 'find_what_you_need');
+                Route::get('{id}/display-blocks', 'getDisplayBlocks');
             });
         });
 
@@ -387,7 +388,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
         Route::post('/', [PaymentController::class, 'customer_add_to_fund_request']);
     });
 
-    Route::group(['prefix' => 'order'], function () {
+    Route::group(['prefix' => 'order', 'middleware' => 'apiGuestCheck'], function () {
         Route::controller(OrderController::class)->group(function () {
             Route::get('track', 'track_by_order_id');
             Route::get('track-order-details', 'track_order_details_history');

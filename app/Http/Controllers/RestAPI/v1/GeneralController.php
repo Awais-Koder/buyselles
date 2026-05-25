@@ -77,6 +77,9 @@ class GeneralController extends Controller
             ->when($request->has('category_id'), function ($query) use ($request) {
                 $query->where('category_id', $request['category_id']);
             })
+            ->when($request->has('search'), function ($query) use ($request) {
+                $query->where('name', 'like', "%{$request['search']}%");
+            })
             ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
                 $query->where(function ($subQuery) use ($request) {
                     $subQuery->whereHas('shop', function ($query) use ($request) {
@@ -126,6 +129,15 @@ class GeneralController extends Controller
                 if ($request->has('area_id')) {
                     $query->where('store_area_id', $request['area_id']);
                 }
+                if ($request->has('search')) {
+                    $query->where('name', 'like', "%{$request['search']}%");
+                }
+            })
+            ->when($request->has('category_id'), function ($query) use ($request) {
+                $query->whereHas('product', function ($productQuery) use ($request) {
+                    $productQuery->active()
+                        ->where('category_id', $request['category_id']);
+                });
             })
             ->withCount(['product' => function ($query) {
                 $query->active();

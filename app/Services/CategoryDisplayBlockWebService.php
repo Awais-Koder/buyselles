@@ -10,6 +10,7 @@ use App\Models\Review;
 use App\Models\Seller;
 use App\Utils\CategoryManager;
 use App\Utils\ProductManager;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -96,14 +97,44 @@ class CategoryDisplayBlockWebService
             'data_from' => 'category',
             'category_id' => $categoryId,
             'product_name' => $request->input('search', $request->input('product_name')),
-            'country_id' => $request->input('country_id'),
-            'city_id' => $request->input('city_id'),
-            'area_id' => $request->input('area_id'),
         ]);
 
-        return ProductManager::getProductListData(request: $filterRequest)
+        $query = ProductManager::getProductListData(request: $filterRequest);
+        $this->applyShopLocationFilter($query, $request);
+
+        return $query
             ->paginate($perPage)
             ->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
+    }
+
+    /**
+     * Filter by vendor shop location (store country / city / area).
+     *
+     * @param  Builder<Product>  $query
+     */
+    public function applyShopLocationFilter(Builder $query, Request $request): void
+    {
+        if (! $request->hasAny(['country_id', 'city_id', 'area_id'])) {
+            return;
+        }
+
+        $query->where(function ($subQuery) use ($request) {
+            $subQuery->whereHas('shop', function ($shopQuery) use ($request) {
+                if ($request->filled('country_id')) {
+                    $shopQuery->where('store_country_id', $request->integer('country_id'));
+                }
+                if ($request->filled('city_id')) {
+                    $shopQuery->where('store_city_id', $request->integer('city_id'));
+                }
+                if ($request->filled('area_id')) {
+                    $shopQuery->where('store_area_id', $request->integer('area_id'));
+                }
+            })
+                ->orWhere('product_type', 'digital')
+                ->orWhereHas('category', function ($categoryQuery) {
+                    $categoryQuery->where('category_type', 'digital');
+                });
+        });
     }
 
     /**
@@ -128,7 +159,8 @@ class CategoryDisplayBlockWebService
                 }
             })
             ->whereHas('product', function ($productQuery) use ($categoryId) {
-                $productQuery->active()->where('category_id', $categoryId);
+                $categoryIdFragment = '"'.$categoryId.'"';
+                $productQuery->active()->where('category_ids', 'like', '%'.$categoryIdFragment.'%');
             })
             ->withCount(['product' => function ($query) {
                 $query->active();
@@ -160,30 +192,17 @@ class CategoryDisplayBlockWebService
         $productRequest = clone $request;
         $productRequest->merge(['category_id' => $categoryId]);
 
+        $categoryIdFragment = '"'.$categoryId.'"';
+
         $products = Product::active()
-            ->where('category_id', $categoryId)
+            ->where('category_ids', 'like', '%'.$categoryIdFragment.'%')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where('name', 'like', '%'.$request->string('search').'%');
-            })
-            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->where(function ($subQuery) use ($request) {
-                    $subQuery->whereHas('shop', function ($shopQuery) use ($request) {
-                        if ($request->filled('country_id')) {
-                            $shopQuery->where('store_country_id', $request->integer('country_id'));
-                        }
-                        if ($request->filled('city_id')) {
-                            $shopQuery->where('store_city_id', $request->integer('city_id'));
-                        }
-                        if ($request->filled('area_id')) {
-                            $shopQuery->where('store_area_id', $request->integer('area_id'));
-                        }
-                    })
-                        ->orWhere('product_type', 'digital')
-                        ->orWhereHas('category', function ($categoryQuery) {
-                            $categoryQuery->where('category_type', 'digital');
-                        });
-                });
-            })
+            });
+
+        $this->applyShopLocationFilter($products, $request);
+
+        $products = $products
             ->withCount(['orderDetails', 'reviews', 'wishList'])
             ->with(['reviews', 'rating', 'shop'])
             ->orderBy('order_details_count', 'desc')
@@ -204,7 +223,8 @@ class CategoryDisplayBlockWebService
                 }
             })
             ->whereHas('product', function ($productQuery) use ($categoryId) {
-                $productQuery->active()->where('category_id', $categoryId);
+                $categoryIdFragment = '"'.$categoryId.'"';
+                $productQuery->active()->where('category_ids', 'like', '%'.$categoryIdFragment.'%');
             })
             ->withCount(['product' => function ($query) {
                 $query->active();

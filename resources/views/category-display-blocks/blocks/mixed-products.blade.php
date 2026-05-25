@@ -25,6 +25,12 @@
         'selectedArea' => request('area_id'),
     ])
 
+    <div class="d-flex justify-content-end mt-2">
+        <button type="button" class="btn btn-primary btn-sm cdb-apply-filter">
+            {{ translate('apply') }}
+        </button>
+    </div>
+
     <div class="cdb-ajax-content mt-3">
         @include('category-display-blocks._products-grid', [
             'products' => $products,

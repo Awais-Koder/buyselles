@@ -7,17 +7,13 @@
 <div class="category-display-ajax-block"
      data-ajax-url="{{ route('category-display.location-pipeline', ['categoryId' => $category->id]) }}"
      data-block-id="{{ $block->id }}">
-    @include('category-display-blocks._location-filters', [
-        'blockId' => $block->id,
-        'selectedCountry' => request('country_id'),
-        'selectedCity' => request('city_id'),
-        'selectedArea' => request('area_id'),
-    ])
-
-    <div class="d-flex justify-content-end mt-2 mb-2">
-        <button type="button" class="btn btn-primary btn-sm cdb-apply-filter">
-            {{ translate('apply') }}
-        </button>
+    <div class="mb-3">
+        @include('category-display-blocks._location-filters', [
+            'blockId' => $block->id,
+            'selectedCountry' => request('country_id'),
+            'selectedCity' => request('city_id'),
+            'selectedArea' => request('area_id'),
+        ])
     </div>
 
     <div class="cdb-ajax-content mt-3">

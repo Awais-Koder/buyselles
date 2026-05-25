@@ -13,6 +13,7 @@ use App\Utils\ProductManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 
 class CategoryDisplayBlockWebService
@@ -99,12 +100,82 @@ class CategoryDisplayBlockWebService
             'product_name' => $request->input('search', $request->input('product_name')),
         ]);
 
-        $query = ProductManager::getProductListData(request: $filterRequest);
-        $this->applyShopLocationFilter($query, $request);
+        $products = ProductManager::getProductListData(request: $filterRequest);
 
-        return $query
-            ->paginate($perPage)
-            ->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
+        if ($products instanceof Builder) {
+            $this->applyShopLocationFilter($products, $request);
+
+            return $products
+                ->paginate($perPage)
+                ->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
+        }
+
+        if (! $products instanceof Collection) {
+            $products = collect($products);
+        }
+
+        $products = $this->filterProductsCollectionByShopLocation($products, $request);
+
+        return $this->paginateProductCollection($products, $request, $perPage);
+    }
+
+    /**
+     * @param  Collection<int, Product>  $products
+     * @return Collection<int, Product>
+     */
+    public function filterProductsCollectionByShopLocation(Collection $products, Request $request): Collection
+    {
+        if (! $request->hasAny(['country_id', 'city_id', 'area_id'])) {
+            return $products;
+        }
+
+        return $products->filter(function (Product $product) use ($request) {
+            if ($product->product_type === 'digital') {
+                return true;
+            }
+
+            if ($product->category?->category_type === 'digital') {
+                return true;
+            }
+
+            $shop = $product->shop ?? $product->seller?->shop;
+
+            if ($shop === null) {
+                return false;
+            }
+
+            if ($request->filled('country_id') && (int) $shop->store_country_id !== $request->integer('country_id')) {
+                return false;
+            }
+
+            if ($request->filled('city_id') && (int) $shop->store_city_id !== $request->integer('city_id')) {
+                return false;
+            }
+
+            if ($request->filled('area_id') && (int) $shop->store_area_id !== $request->integer('area_id')) {
+                return false;
+            }
+
+            return true;
+        })->values();
+    }
+
+    /**
+     * @param  Collection<int, Product>  $products
+     * @return LengthAwarePaginator<int, Product>
+     */
+    public function paginateProductCollection(Collection $products, Request $request, int $perPage): LengthAwarePaginator
+    {
+        $page = max(1, $request->integer('page', 1));
+        $items = $products->forPage($page, $perPage)->values();
+
+        return (new LengthAwarePaginator(
+            $items,
+            $products->count(),
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath()],
+        ))->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
     }
 
     /**

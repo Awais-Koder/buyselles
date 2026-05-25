@@ -5,30 +5,26 @@
 <div class="category-display-ajax-block"
      data-ajax-url="{{ route('category-display.vendors', ['categoryId' => $category->id]) }}"
      data-block-id="{{ $block->id }}">
-    <div class="row g-2 mb-3">
-        <div class="col-md-8">
+    <div class="row g-2 mb-3 align-items-center">
+        <div class="col">
             <input type="search" class="form-control form-control-sm cdb-search-input"
                    placeholder="{{ translate('search_by_shop_name') }}"
                    value="{{ request('search') }}">
         </div>
-        <div class="col-md-4">
-            <button type="button" class="btn btn-primary btn-sm w-100 cdb-apply-filter">
+        <div class="col-auto flex-shrink-0" style="width: 5.5rem;">
+            <button type="button" class="btn btn--primary btn-sm w-100 text-nowrap cdb-apply-filter">
                 {{ translate('search') }}
             </button>
         </div>
     </div>
 
-    @include('category-display-blocks._location-filters', [
-        'blockId' => $block->id,
-        'selectedCountry' => request('country_id'),
-        'selectedCity' => request('city_id'),
-        'selectedArea' => request('area_id'),
-    ])
-
-    <div class="d-flex justify-content-end mt-2">
-        <button type="button" class="btn btn-primary btn-sm cdb-apply-filter">
-            {{ translate('apply') }}
-        </button>
+    <div class="mb-3">
+        @include('category-display-blocks._location-filters', [
+            'blockId' => $block->id,
+            'selectedCountry' => request('country_id'),
+            'selectedCity' => request('city_id'),
+            'selectedArea' => request('area_id'),
+        ])
     </div>
 
     <div class="cdb-ajax-content mt-3">

@@ -11,11 +11,10 @@ class AdminService implements AdminServiceInterface
 
     public function isLoginSuccessful(string $email, string $password, string|null|bool $rememberToken): bool
     {
-        if (auth('admin')->attempt(['email' => $email, 'password' => $password], $rememberToken)) {
-            return true;
-        }
-
-        return false;
+        return auth('admin')->attempt(
+            ['email' => $email, 'password' => $password],
+            filter_var($rememberToken, FILTER_VALIDATE_BOOLEAN)
+        );
     }
 
     public function logout(): void

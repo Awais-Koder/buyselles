@@ -73,19 +73,37 @@ class LoginController extends BaseController
         }
 
         $admin = $this->admin->where('email', $request['email'])->first();
-        if (isset($admin) && in_array($request['role'], [UserRole::ADMIN, UserRole::EMPLOYEE]) && $admin->status) {
-            if ($admin['id'] == 1 && $request['role'] != 'admin') {
-                return redirect()->back()->withInput($request->only('email', 'remember'))
-                    ->withErrors([translate('Please_login_from_the_admin_login_page')]);
-            }
-            if ($admin['id'] != 1 && $request['role'] != 'employee') {
-                return redirect()->back()
-                    ->withInput($request->only('email', 'remember'))
-                    ->withErrors([translate('Please_login_from_the_employee_login_page')]);
-            }
-            if ($this->adminService->isLoginSuccessful($request['email'], $request['password'], $request['remember'])) {
-                return redirect()->route('admin.dashboard.index');
-            }
+        if (! isset($admin)) {
+            ToastMagic::error(translate('credentials_does_not_match_or_your_account_has_been_suspended'));
+
+            return redirect()->back()->withInput($request->only('email', 'remember'));
+        }
+
+        if (! $admin->status) {
+            ToastMagic::error(translate('your_account_has_been_suspended'));
+
+            return redirect()->back()->withInput($request->only('email', 'remember'));
+        }
+
+        $isMasterAdmin = (int) $admin->admin_role_id === 1;
+
+        if ($isMasterAdmin && $request['role'] !== UserRole::ADMIN) {
+            return redirect()->back()->withInput($request->only('email', 'remember'))
+                ->withErrors([translate('Please_login_from_the_admin_login_page')]);
+        }
+
+        if (! $isMasterAdmin && $request['role'] !== UserRole::EMPLOYEE) {
+            return redirect()->back()
+                ->withInput($request->only('email', 'remember'))
+                ->withErrors([translate('Please_login_from_the_employee_login_page')]);
+        }
+
+        if ($this->adminService->isLoginSuccessful(
+            $request['email'],
+            $request['password'],
+            $request->boolean('remember')
+        )) {
+            return redirect()->route('admin.dashboard.index');
         }
 
         ToastMagic::error(translate('credentials_does_not_match_or_your_account_has_been_suspended'));
@@ -95,10 +113,10 @@ class LoginController extends BaseController
 
     public function logout(): RedirectResponse
     {
-        $authType = auth('admin')->id() == 1 ? 'admin' : 'employee';
+        $authType = (int) auth('admin')->user()?->admin_role_id === 1 ? UserRole::ADMIN : UserRole::EMPLOYEE;
         $this->adminService->logout();
         session()->flash('success', translate('logged out successfully'));
-        if ($authType == 'employee') {
+        if ($authType == UserRole::EMPLOYEE) {
             return redirect('login/'.getWebConfig(name: 'employee_login_url'));
         } else {
             return redirect('login/'.getWebConfig(name: 'admin_login_url'));

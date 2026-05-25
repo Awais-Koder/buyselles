@@ -47,6 +47,7 @@ return [
     'products_mobile_nav_partials' => 'theme-views.layouts.partials._app-bar',
     'products_floating_nav_partials' => '',
     'products_view_page' => 'theme-views.product.view',
+    'dynamic_category_page' => 'theme-views.product.dynamic-category',
     'products__ajax_partials' => 'theme-views.product._ajax-products',
     'all_brands' => 'theme-views.product.brands',
     'contacts' => 'theme-views.pages.contact-us',

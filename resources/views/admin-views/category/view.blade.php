@@ -134,6 +134,11 @@
                                         </td>
                                         <td>
                                             <div class="d-flex justify-content-center gap-3">
+                                                <a class="btn btn-outline-primary icon-btn"
+                                                   title="{{ translate('Category_Display_Blocks') }}"
+                                                   href="{{ route('admin.category.display-blocks', ['category_id' => $category['id']]) }}">
+                                                    <i class="fi fi-sr-layout-fluid"></i>
+                                                </a>
                                                 <a class="btn btn-outline-info icon-btn edit" title="{{ translate('Edit') }}"
                                                    data-bs-toggle="offcanvas" href="#categoryEditOffcanvas-{{ $category['id'] }}">
                                                     <i class="fi fi-sr-pencil"></i>

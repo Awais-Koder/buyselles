@@ -10,6 +10,7 @@ use App\Models\FlashDeal;
 use App\Models\PublishingHouse;
 use App\Models\RobotsMetaContent;
 use App\Models\StockClearanceSetup;
+use App\Services\CategoryDisplayBlockWebService;
 use App\Utils\BrandManager;
 use App\Utils\CategoryManager;
 use App\Utils\ProductManager;
@@ -26,6 +27,10 @@ use Illuminate\Support\Facades\Cache;
 
 class ProductListController extends Controller
 {
+    public function __construct(
+        private readonly CategoryDisplayBlockWebService $categoryDisplayBlockWebService,
+    ) {}
+
     public function products(Request $request)
     {
         $pageTitle = translate('Products');
@@ -83,6 +88,10 @@ class ProductListController extends Controller
 
         $dataForm = 'category';
         $request->merge(['data_from' => $dataForm]);
+
+        if ($category['position'] == 0 && $this->categoryDisplayBlockWebService->hasActiveBlocks($category['id'])) {
+            return $this->getDynamicCategoryView($request, $category);
+        }
 
         $subCategories = collect();
 
@@ -231,6 +240,31 @@ class ProductListController extends Controller
             pageTitle: translate('Clearance_Sale_Products'),
             metaData: $clearanceConfig?->seo
         );
+    }
+
+    protected function getDynamicCategoryView(Request $request, Category $category): View
+    {
+        $blocks = $this->categoryDisplayBlockWebService->getActiveBlocks($category->id);
+        $blockPayloads = [];
+
+        foreach ($blocks as $block) {
+            $blockPayloads[$block->id] = [
+                'block' => $block,
+                'title' => $this->categoryDisplayBlockWebService->blockTitle($block, $category),
+                'data' => $this->categoryDisplayBlockWebService->resolveBlockViewData($block, $category, $request),
+            ];
+        }
+
+        $pageTitle = ucwords(str_replace(['-', '_'], ' ', $category['name']));
+
+        return view(VIEW_FILE_NAMES['dynamic_category_page'], [
+            'category' => $category,
+            'blocks' => $blocks,
+            'blockPayloads' => $blockPayloads,
+            'pageTitleContent' => $pageTitle,
+            'robotsMetaContentData' => $category->seo,
+            'themeKey' => theme_root_path(),
+        ]);
     }
 
     public function getProductsListPage(object|array $request, string $pageType = 'default', string $offerType = '', string $pageTitle = '', object|array|null $metaData = null)

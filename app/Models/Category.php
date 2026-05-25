@@ -80,6 +80,11 @@ class Category extends Model
             ->orderBy('position');
     }
 
+    public function allDisplayBlocks(): HasMany
+    {
+        return $this->hasMany(CategoryDisplayBlock::class)->orderBy('position');
+    }
+
     public function product(): HasMany
     {
         return $this->hasMany(Product::class, 'category_id', 'id');

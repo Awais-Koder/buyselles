@@ -146,6 +146,12 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
         Route::get('/product/{slug}', 'index')->name('product');
     });
 
+    Route::controller(\App\Http\Controllers\Web\CategoryDisplayBlockController::class)->group(function () {
+        Route::get('category-display/{categoryId}/mixed-products', 'mixedProducts')->name('category-display.mixed-products');
+        Route::get('category-display/{categoryId}/vendors', 'vendors')->name('category-display.vendors');
+        Route::get('category-display/{categoryId}/location-pipeline', 'locationPipeline')->name('category-display.location-pipeline');
+    });
+
     Route::controller(ProductListController::class)->group(function () {
         Route::get('products', 'products')->name('products');
         Route::get('flash-deals/{id}', 'getFlashDealsView')->name('flash-deals');

@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\POS\POSOrderController;
 use App\Http\Controllers\Admin\Product\AttributeController;
 use App\Http\Controllers\Admin\Product\BrandController;
 use App\Http\Controllers\Admin\Product\CategoryController;
+use App\Http\Controllers\Admin\Product\CategoryDisplayBlockController;
 use App\Http\Controllers\Admin\Product\DigitalCodeImportController;
 use App\Http\Controllers\Admin\Product\ProductController;
 use App\Http\Controllers\Admin\Product\ReviewController;
@@ -340,6 +341,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
             Route::post('delete', 'delete')->name('delete');
             Route::post('status', 'updateStatus')->name('status');
             Route::get('export', 'getExportList')->name('export');
+        });
+
+        Route::controller(CategoryDisplayBlockController::class)->group(function () {
+            Route::get('display-blocks', 'index')->name('display-blocks');
+            Route::post('display-blocks/store', 'store')->name('display-blocks.store');
+            Route::post('display-blocks/reorder', 'reorder')->name('display-blocks.reorder');
+            Route::post('display-blocks/status', 'updateStatus')->name('display-blocks.status');
+            Route::post('display-blocks/settings', 'updateSettings')->name('display-blocks.settings');
+            Route::post('display-blocks/delete', 'delete')->name('display-blocks.delete');
         });
     });
 

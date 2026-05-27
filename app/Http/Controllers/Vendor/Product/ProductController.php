@@ -233,7 +233,12 @@ class ProductController extends BaseController
         $dataArray = $service->getAddProductData(request: $request, addedBy: 'seller', shopId: $shopId);
         $savedProduct = $this->productRepo->add(data: $dataArray);
         if ($request['product_type'] === 'digital' && ! empty($request['digital_product_code'])) {
-            app(DigitalProductCodeService::class)->addToPool($savedProduct->id, $request['digital_product_code']);
+            app(DigitalProductCodeService::class)->addToPool(
+                $savedProduct->id,
+                $request['digital_product_code'],
+                $request['digital_serial_number'] ?? null,
+                $request['digital_expiry_date'] ?? null,
+            );
         }
         $this->productRepo->addRelatedTags(request: $request, product: $savedProduct);
         $this->translationRepo->add(request: $request, model: 'App\Models\Product', id: $savedProduct->id);
@@ -310,7 +315,12 @@ class ProductController extends BaseController
 
         $this->productRepo->update(id: $id, data: $dataArray);
         if ($request['product_type'] === 'digital' && ! empty($request['digital_product_code'])) {
-            app(DigitalProductCodeService::class)->addToPool($id, $request['digital_product_code']);
+            app(DigitalProductCodeService::class)->addToPool(
+                $id,
+                $request['digital_product_code'],
+                $request['digital_serial_number'] ?? null,
+                $request['digital_expiry_date'] ?? null,
+            );
         }
         $this->productRepo->addRelatedTags(request: $request, product: $product);
         $this->translationRepo->update(request: $request, model: 'App\Models\Product', id: $id);

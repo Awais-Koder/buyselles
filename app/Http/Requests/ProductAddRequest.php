@@ -77,6 +77,7 @@ class ProductAddRequest extends Request
             // 'digital_file_ready' . '.' . 'required_if' => translate('ready_product_upload_is_required!'),
             // 'digital_file_ready' . '.' . 'mimes' => translate('ready_product_upload_must_be_a_file_of_type') . ':' . 'pdf, zip, jpg, jpeg, png, gif.',
             'digital_product_type'.'.'.'required_if' => translate('digital_product_type_is_required!'),
+
             'shipping_cost'.'.'.'required_if' => translate('shipping_cost_is_required!'),
             'video_url.url' => translate('please_provide_a_valid_video_url'),
             'location_country_id.required' => translate('country_is_required!'),
@@ -219,13 +220,6 @@ class ProductAddRequest extends Request
                             );
                         }
 
-                        if ($this['digital_product_type'] == 'ready_product' && empty($this['digital_files'])) {
-                            $validator->errors()->add(
-                                'files',
-                                translate('Digital_files_are_required').'!'
-                            );
-                        }
-
                         if ($this['digital_files'] && $digitalProductVariationCount != count($this['digital_files'])) {
                             $validator->errors()->add(
                                 'files',
@@ -275,11 +269,28 @@ class ProductAddRequest extends Request
                                 }
                             }
                         }
-                    } else {
-                        if ($this['digital_product_type'] == 'ready_product' && empty($this['digital_file_ready'])) {
+                    }
+
+                    if ($this['digital_product_type'] == 'ready_product') {
+                        $cardCode = is_string($this->input('digital_product_code'))
+                            ? trim($this->input('digital_product_code'))
+                            : '';
+
+                        if ($cardCode === '') {
                             $validator->errors()->add(
-                                'files',
-                                translate('Digital_files_are_required').'!'
+                                'digital_product_code',
+                                translate('Card_Code_is_required').'!'
+                            );
+                        }
+
+                        $expiryDate = is_string($this->input('digital_expiry_date'))
+                            ? trim($this->input('digital_expiry_date'))
+                            : '';
+
+                        if ($expiryDate === '') {
+                            $validator->errors()->add(
+                                'digital_expiry_date',
+                                translate('Expiration_Date_is_required').'!'
                             );
                         }
                     }

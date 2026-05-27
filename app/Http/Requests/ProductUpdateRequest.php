@@ -340,19 +340,6 @@ class ProductUpdateRequest extends FormRequest
                             }
                         }
 
-                        if (count($product?->digitalVariation) <= 0 && empty($product['digital_file_ready']) && empty($this['digital_file_ready']) && empty($this['digital_files'])) {
-                            $validator->errors()->add(
-                                'files',
-                                translate('Digital_files_are_required').'!'
-                            );
-                        }
-
-                        if (empty($this['digital_file_ready']) && empty($product['digital_file_ready']) && empty($this['extensions_type'])) {
-                            $validator->errors()->add(
-                                'files',
-                                translate('Digital_files_are_required').'!'
-                            );
-                        }
                     }
 
                     if ($this['product_type'] === 'digital' && $this['digital_product_type'] === 'ready_product' && $this->hasFile('digital_file_ready')) {

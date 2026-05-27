@@ -71,6 +71,8 @@
           data-no-word="{{ translate('no') }}"
     ></span>
     <span id="message-product-added-successfully" data-text="{{ translate('product_added_successfully') }}"></span>
+    <span id="message-digital-product-code-required"
+          data-text="{{ translate('A_digital_product_code_is_required_before_creating_a_ready_product') }}"></span>
     <span id="message-enter-choice-values" data-text="{{ translate('enter_choice_values') }}"></span>
     <span id="message-click-to-upload" data-text="{{ translate('click_to_upload') }}"></span>
     <span id="message-drag-and-drop" data-text="{{ translate('Or_drag_and_drop') }}"></span>

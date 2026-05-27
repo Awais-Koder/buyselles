@@ -111,6 +111,7 @@ document.addEventListener("click", async function(e) {
                     let formData = new FormData(
                         document.getElementById("product_form")
                     );
+                    if (!validateReadyProductDigitalCode()) return false;
                     if (!await validateFormHelper($("#product_form"))) return false;
 
                     renderProductAjaxSetup();
@@ -133,7 +134,6 @@ document.addEventListener("click", async function(e) {
                                     }, i * 500);
                                 }
                             } else {
-                                toastMagic.success($("#message-product-added-successfully").data("text"));
                                 $("#product_form").submit();
                             }
                         },

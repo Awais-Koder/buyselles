@@ -23,6 +23,7 @@ $("#product_type").on("change", function() {
 });
 
 $("#digital-product-type-input").on("change", function() {
+    updateDigitalProductCodeFieldState();
     getUpdateDigitalVariationFunctionality();
 });
 
@@ -177,6 +178,65 @@ document.querySelectorAll(".product-discount-type").forEach(function(select) {
     });
 });
 
+function updateDigitalProductCodeFieldState() {
+    const productType = $("#product_type").val();
+    const digitalType = $("#digital-product-type-input").val();
+    const $wrapper = $("#digital-product-code-wrapper");
+    const $input = $("#digital_product_code");
+
+    if (!$wrapper.length) {
+        return;
+    }
+
+    const isReadyProduct =
+        productType === "digital" && digitalType === "ready_product";
+    const isExistingProduct = $wrapper.find(".badge").length > 0;
+
+    if (isReadyProduct) {
+        $wrapper.show();
+        $input.prop("required", !isExistingProduct);
+    } else {
+        $wrapper.hide();
+        $input.prop("required", false).val("");
+    }
+}
+
+function hasDigitalExtensionSelections() {
+    const selected = $("#digital-product-type-select").val();
+
+    return Array.isArray(selected) ? selected.length > 0 : !!selected;
+}
+
+function validateReadyProductDigitalCode() {
+    const productType = $("#product_type").val();
+    const digitalType = $("#digital-product-type-input").val();
+
+    if (productType !== "digital" || digitalType !== "ready_product") {
+        return true;
+    }
+
+    const cardCode = ($("#digital_product_code").val() || "").trim();
+    const expiryDate = ($("#digital_expiry_date").val() || "").trim();
+
+    if (!cardCode) {
+        toastMagic.error(
+            $("#message-digital-product-code-required").data("text") ||
+                "Card Code is required."
+        );
+        return false;
+    }
+
+    if (!expiryDate) {
+        toastMagic.error(
+            $("#message-digital-product-code-required").data("text") ||
+                "Expiration Date is required."
+        );
+        return false;
+    }
+
+    return true;
+}
+
 function getProductTypeFunctionality() {
     let productType = $("#product_type").val();
     if (productType && productType.toString() === "physical") {
@@ -185,6 +245,7 @@ function getProductTypeFunctionality() {
         $(".show-for-digital-product").hide();
 
         $("#digital_file_ready").val("");
+        updateDigitalProductCodeFieldState();
     } else if (productType && productType.toString() === "digital") {
         elementProductColorSwitcherByIDFunctionality("reset");
         $(".show-for-physical-product").hide();
@@ -195,6 +256,7 @@ function getProductTypeFunctionality() {
         $("#color-wise-image-section")
             .empty()
             .html("");
+        updateDigitalProductCodeFieldState();
     }
 
     try {

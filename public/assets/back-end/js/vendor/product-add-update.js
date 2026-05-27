@@ -54,6 +54,7 @@ $(document).on("ready", function () {
     });
 
     getProductTypeFunctionality();
+    updateDigitalProductCodeFieldState();
     getDigitalProductTypeFunctionality();
 
     if ($("#product-color-switcher").prop("checked")) {
@@ -83,11 +84,70 @@ $(document).on("ready", function () {
     }
 });
 
+function updateDigitalProductCodeFieldState() {
+    const productType = $("#product_type").val();
+    const digitalType = elementDigitalProductTypeByID.val();
+    const $wrapper = $("#digital-product-code-wrapper");
+    const $input = $("#digital_product_code");
+
+    if (!$wrapper.length) {
+        return;
+    }
+
+    const isReadyProduct =
+        productType === "digital" && digitalType === "ready_product";
+    const isExistingProduct = $wrapper.find(".badge").length > 0;
+
+    if (isReadyProduct) {
+        $wrapper.show();
+        $input.prop("required", !isExistingProduct);
+    } else {
+        $wrapper.hide();
+        $input.prop("required", false).val("");
+    }
+}
+
+function hasDigitalExtensionSelections() {
+    const selected = $("#digital-product-type-select").val();
+
+    return Array.isArray(selected) ? selected.length > 0 : !!selected;
+}
+
+function validateReadyProductDigitalCode() {
+    const productType = $("#product_type").val();
+    const digitalType = elementDigitalProductTypeByID.val();
+
+    if (productType !== "digital" || digitalType !== "ready_product") {
+        return true;
+    }
+
+    const cardCode = ($("#digital_product_code").val() || "").trim();
+    const expiryDate = ($("#digital_expiry_date").val() || "").trim();
+
+    if (!cardCode) {
+        toastMagic.error(
+            $("#message-digital-product-code-required").data("text") ||
+                "Card Code is required."
+        );
+        return false;
+    }
+
+    if (!expiryDate) {
+        toastMagic.error(
+            $("#message-digital-product-code-required").data("text") ||
+                "Expiration Date is required."
+        );
+        return false;
+    }
+
+    return true;
+}
+
 function getProductTypeFunctionality() {
     let productType = $("#product_type").val();
     if (productType && productType.toString() === "physical") {
         $("#digital_product_type_show").hide();
-        $("#digital-product-code-wrapper").hide();
+        updateDigitalProductCodeFieldState();
         $(".physical_product_show").show();
         $("#product_location_city").prop("required", true);
         $("#product_location_area").prop("required", false);
@@ -101,7 +161,7 @@ function getProductTypeFunctionality() {
         elementProductColorSwitcherByIDFunctionality("reset");
     } else if (productType && productType.toString() === "digital") {
         $("#digital_product_type_show").show();
-        $("#digital-product-code-wrapper").show();
+        updateDigitalProductCodeFieldState();
         $(".physical_product_show").hide();
         $("#product_location_city").prop("required", false);
         $("#product_location_area").prop("required", false);
@@ -126,11 +186,13 @@ function getProductTypeFunctionality() {
 }
 
 function getDigitalProductTypeFunctionality() {
+    updateDigitalProductCodeFieldState();
     getUpdateDigitalVariationFunctionality();
 }
 
 $("#product_type").on("change", function () {
     getProductTypeFunctionality();
+    updateDigitalProductCodeFieldState();
 });
 
 elementDigitalProductTypeByID.on("change", () =>
@@ -543,6 +605,7 @@ $(".product-add-requirements-check").on("click", async function () {
                 let formData = new FormData(
                     document.getElementById("product_form")
                 );
+                if (!validateReadyProductDigitalCode()) return false;
                 if (!await validateFormHelper($("#product_form"))) return false;
 
                 $.ajaxSetup({
@@ -574,11 +637,6 @@ $(".product-add-requirements-check").on("click", async function () {
                                 }, index * 500);
                             }
                         } else {
-                            toastMagic.success(
-                                $("#message-product-added-successfully").data(
-                                    "text"
-                                )
-                            );
                             $("#product_form").submit();
                         }
                     },

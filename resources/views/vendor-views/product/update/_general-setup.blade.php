@@ -173,7 +173,7 @@
 
                         <div class="col-md-12" id="digital-product-code-wrapper" style="display:none">
                             <div class="form-group mb-0">
-                                <label class="title-color" for="digital_product_code">
+                                <label class="title-color">
                                     {{ translate('Add Code to Pool') }}
                                     <span class="input-label-secondary cursor-pointer" data-toggle="tooltip"
                                         title="{{ translate('Enter a code to add it to this product code pool. Each buyer receives a unique code from the pool.') }}">
@@ -196,10 +196,26 @@
                                     <span class="badge bg-info text-dark">{{ translate('Total') }}:
                                         {{ $poolStats['total'] }}</span>
                                 </div>
-                                <input type="text" id="digital_product_code" name="digital_product_code"
-                                    class="form-control"
-                                    placeholder="{{ translate('Enter a new code to add to the pool (e.g. XXXX-XXXX-XXXX-XXXX)') }}"
-                                    value="{{ old('digital_product_code') }}" autocomplete="off">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <input type="text" id="digital_product_code" name="digital_product_code"
+                                            class="form-control"
+                                            placeholder="{{ translate('Card Code') }} ({{ translate('required') }})"
+                                            value="{{ old('digital_product_code') }}" autocomplete="off" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" id="digital_serial_number" name="digital_serial_number"
+                                            class="form-control"
+                                            placeholder="{{ translate('Serial Number') }} ({{ translate('optional') }})"
+                                            value="{{ old('digital_serial_number') }}" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="date" id="digital_expiry_date" name="digital_expiry_date"
+                                            class="form-control"
+                                            value="{{ old('digital_expiry_date') }}" required>
+                                        <small class="text-muted">{{ translate('expiry_date') }}</small>
+                                    </div>
+                                </div>
                                 <small
                                     class="text-muted">{{ translate('Leave blank to keep existing pool unchanged. For bulk upload, use the Import tool.') }}</small>
                             </div>

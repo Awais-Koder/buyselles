@@ -92,6 +92,8 @@
     <span id="message-want-to-add-or-update-this-product" data-text="{{ translate('want_to_add_this_product') }}"></span>
     <span id="message-please-only-input-png-or-jpg" data-text="{{ translate('please_only_input_png_or_jpg_type_file') }}"></span>
     <span id="message-product-added-successfully" data-text="{{ translate('product_added_successfully') }}"></span>
+    <span id="message-digital-product-code-required"
+          data-text="{{ translate('A_digital_product_code_is_required_before_creating_a_ready_product') }}"></span>
     <span id="message-discount-will-not-larger-then-variant-price" data-text="{{ translate('the_discount_price_will_not_larger_then_Variant_Price') }}"></span>
     <span id="system-currency-code" data-value="{{ getCurrencySymbol(currencyCode: getCurrencyCode()) }}"></span>
     <span id="system-session-direction" data-value="{{ Session::get('direction') }}"></span>

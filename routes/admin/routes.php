@@ -260,6 +260,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::get('{productId}/codes', 'productCodes')->name('product-codes');
                 Route::get('{productId}/codes/import', 'productImportForm')->name('product-import');
                 Route::post('{productId}/codes/import', 'productImportUpload')->name('product-import-upload');
+                Route::post('{productId}/codes/manual', 'productImportManual')->name('product-import-manual');
                 Route::get('{productId}/codes/template', 'productTemplate')->name('product-template');
 
                 // Super-admin PIN decrypt (never shown in list — on-demand only)

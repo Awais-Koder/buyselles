@@ -152,6 +152,40 @@ class DigitalCodeImportController extends BaseController
     }
 
     /**
+     * Handle manual single-code entry from the product import form.
+     */
+    public function productImportManual(Request $request, int $productId, DigitalProductCodeService $service): RedirectResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string', 'max:255'],
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'expiry_date' => ['nullable', 'date'],
+        ]);
+
+        $product = Product::where('id', $productId)
+            ->where('product_type', 'digital')
+            ->firstOrFail();
+
+        $result = $service->addToPool(
+            productId: $product->id,
+            plainCode: $request->input('code'),
+            serialNumber: $request->input('serial_number') ?: null,
+            expiryDate: $request->input('expiry_date') ?: null,
+            source: 'manual',
+        );
+
+        if ($result === null) {
+            return redirect()
+                ->route('admin.products.digital-code-import.product-import', $productId)
+                ->with('error', translate('This_code_or_serial_number_already_exists'));
+        }
+
+        return redirect()
+            ->route('admin.products.digital-code-import.product-codes', $productId)
+            ->with('success', translate('Code_added_successfully'));
+    }
+
+    /**
      * Handle synchronous per-product code upload and return an immediate summary.
      */
     public function productImportUpload(Request $request, int $productId, DigitalProductCodeService $service): RedirectResponse

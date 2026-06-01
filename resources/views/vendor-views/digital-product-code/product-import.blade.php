@@ -159,6 +159,88 @@
             </div>
 
         </div>
+
+        <div class="row g-3 mt-0">
+
+            {{-- Step 3 — Manual Code Entry --}}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-info rounded-circle"
+                                style="width:28px;height:28px;line-height:28px;">3</span>
+                            {{ translate('Add Single Code Manually') }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form
+                            action="{{ route('vendor.products.digital-code-import.product-import-manual', $product->id) }}"
+                            method="POST" id="manualCodeForm">
+                            @csrf
+
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label for="code" class="form-label fw-semibold">
+                                        {{ translate('card_code') }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" id="code" name="code"
+                                        class="form-control @error('code') is-invalid @enderror"
+                                        placeholder="{{ translate('Card Code') }} ({{ translate('required') }})"
+                                        value="{{ old('code') }}" autocomplete="off" required>
+                                    @error('code')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="serial_number" class="form-label fw-semibold">
+                                        {{ translate('serial_number') }}
+                                        <span class="text-muted fw-normal">({{ translate('optional') }})</span>
+                                    </label>
+                                    <input type="text" id="serial_number" name="serial_number"
+                                        class="form-control @error('serial_number') is-invalid @enderror"
+                                        placeholder="{{ translate('Serial Number') }} ({{ translate('optional') }})"
+                                        value="{{ old('serial_number') }}" autocomplete="off">
+                                    @error('serial_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="expiry_date" class="form-label fw-semibold">
+                                        {{ translate('expiry_date') }}
+                                        <span class="text-muted fw-normal">({{ translate('optional') }})</span>
+                                    </label>
+                                    <input type="date" id="expiry_date" name="expiry_date"
+                                        class="form-control @error('expiry_date') is-invalid @enderror"
+                                        value="{{ old('expiry_date') }}">
+                                    @error('expiry_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2 small mt-3 mb-3">
+                                <i class="fi fi-sr-info me-1"></i>
+                                {{ translate('Add a single code directly. Duplicate PINs and serial numbers are rejected automatically.') }}
+                            </div>
+
+                            <button type="submit" class="btn btn-info w-100" id="manualSubmitBtn">
+                                <span class="normal-state">
+                                    <i class="fi fi-sr-plus me-2"></i>
+                                    {{ translate('Add Code to Pool') }}
+                                </span>
+                                <span class="loading-state d-none">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"
+                                        aria-hidden="true"></span>
+                                    {{ translate('Adding...') }}
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 @endsection
 
@@ -166,6 +248,13 @@
     <script>
         document.getElementById('importForm').addEventListener('submit', function() {
             const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.querySelector('.normal-state').classList.add('d-none');
+            btn.querySelector('.loading-state').classList.remove('d-none');
+        });
+
+        document.getElementById('manualCodeForm').addEventListener('submit', function() {
+            const btn = document.getElementById('manualSubmitBtn');
             btn.disabled = true;
             btn.querySelector('.normal-state').classList.add('d-none');
             btn.querySelector('.loading-state').classList.remove('d-none');

@@ -186,6 +186,41 @@ class DigitalCodeImportController extends Controller
             ]);
     }
 
+    public function productImportManual(Request $request, int $productId, DigitalProductCodeService $service): RedirectResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string', 'max:255'],
+            'serial_number' => ['nullable', 'string', 'max:255'],
+            'expiry_date' => ['nullable', 'date'],
+        ]);
+
+        $sellerId = (int) auth('seller')->id();
+
+        $product = Product::query()
+            ->where('product_type', 'digital')
+            ->where('added_by', 'seller')
+            ->where('user_id', $sellerId)
+            ->findOrFail($productId);
+
+        $result = $service->addToPool(
+            productId: $product->id,
+            plainCode: $request->input('code'),
+            serialNumber: $request->input('serial_number') ?: null,
+            expiryDate: $request->input('expiry_date') ?: null,
+            source: 'manual',
+        );
+
+        if ($result === null) {
+            return redirect()
+                ->route('vendor.products.digital-code-import.product-import', $productId)
+                ->with('error', translate('This_code_or_serial_number_already_exists'));
+        }
+
+        return redirect()
+            ->route('vendor.products.digital-code-import.product-codes', $productId)
+            ->with('success', translate('Code_added_successfully'));
+    }
+
     /**
      * Toggle the active/inactive status of a digital code.
      * Only the owning vendor can toggle their own codes.

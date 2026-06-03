@@ -50,67 +50,77 @@
                 </div>
             </div>
 
+            @php($currentLang = session('local') ?? getDefaultLanguage())
+            @php($currentCurr = session('currency_code') ?? 'USD')
+            @php($langLabel = strtoupper($currentLang))
+            @php($currLabel = $currentCurr)
+            @php($langList = $web_config['language'] ?? [])
+            @php($currList = $web_config['currencies'] ?? \App\Models\Currency::where('status', 1)->get())
             <div>
-                @php($currency_model = getWebConfig(name: 'currency_model'))
-                @if ($currency_model == 'multi_currency')
-                    <div class="topbar-text dropdown disable-autohide mr-4">
-                        <a class="topbar-link dropdown-toggle" href="#" data-toggle="dropdown">
-                            <span>{{ session('currency_code') }} {{ session('currency_symbol') }}</span>
-                        </a>
-                        <ul
-                            class="text-align-direction dropdown-menu dropdown-menu-{{ Session::get('direction') === 'rtl' ? 'right' : 'left' }} min-width-160px">
-                            @foreach (\App\Models\Currency::where('status', 1)->get() as $key => $currency)
-                                <li class="dropdown-item cursor-pointer get-currency-change-function"
-                                    data-code="{{ $currency['code'] }}">
-                                    {{ $currency->name }}
-                                </li>
-                            @endforeach
-                        </ul>
+                <style>
+                    .locale-pill {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 3px;
+                        padding: 5px 14px;
+                        background: white;
+                        color: #1a1a2e;
+                        border: none;
+                        border-radius: 22px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        font-weight: 500;
+                        letter-spacing: 0.3px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                        transition: all 0.25s;
+                        white-space: nowrap;
+                    }
+                    .locale-pill:hover { opacity: 0.85; }
+                    .locale-pill-lang { font-weight: 600; }
+                    .locale-pill-sep { opacity: 0.4; }
+                    .locale-pill-curr { opacity: 0.85; }
+                    .locale-dropdown { position: relative; display: inline-block; }
+                    .locale-dropdown-menu {
+                        display: none; position: absolute; top: 100%; right: 0; z-index: 1000;
+                        min-width: 260px; padding: 16px; background: #fff; border-radius: 8px;
+                        box-shadow: 0 8px 30px rgba(0,0,0,0.15); margin-top: 8px;
+                    }
+                    .locale-dropdown-menu.show { display: block; }
+                </style>
+                <div class="locale-dropdown" id="localeDropdown">
+                    <button class="locale-pill" type="button">
+                        <span class="locale-pill-lang">{{ $langLabel }}</span>
+                        <span class="locale-pill-sep">·</span>
+                        <span class="locale-pill-curr">{{ $currLabel }}</span>
+                    </button>
+                    <div class="locale-dropdown-menu" id="localeDropdownMenu">
+                        <div class="form-group mb-3">
+                            <label class="font-weight-semibold">{{ translate('Language') }}</label>
+                            <select class="form-control" id="localeLanguageSelect">
+                                @foreach ($langList as $lang)
+                                    @if (!empty($lang['status']) && $lang['status'] == 1)
+                                        <option value="{{ $lang['code'] }}" {{ $currentLang === $lang['code'] ? 'selected' : '' }}>
+                                            {{ $lang['name'] }}
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="font-weight-semibold">{{ translate('Currency') }}</label>
+                            <select class="form-control" id="localeCurrencySelect">
+                                @foreach ($currList as $cur)
+                                    <option value="{{ $cur['code'] }}" {{ $currentCurr === $cur['code'] ? 'selected' : '' }}>
+                                        {{ $cur['name'] ?? $cur['code'] }} ({{ $cur['symbol'] ?? $cur['code'] }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary flex-grow-1 locale-dropdown-cancel" style="flex:1;">{{ translate('Cancel') }}</button>
+                            <button type="button" class="btn flex-grow-1" style="background:{{ $web_config['primary_color'] }};color:#fff;flex:1;" id="localeSaveBtn">{{ translate('Save') }}</button>
+                        </div>
                     </div>
-                @endif
-
-
-                <div class="topbar-text dropdown disable-autohide  __language-bar text-capitalize">
-                    <a class="topbar-link dropdown-toggle" href="#" data-toggle="dropdown">
-                        @foreach ($web_config['language'] as $data)
-                            @if ($data['code'] == getDefaultLanguage())
-                                <?php
-                                $langFlagCode = $data['code'];
-                                if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                    $countryCodeArr = explode('-', $data['code']);
-                                    $langFlagCode = $countryCodeArr[0];
-                                }
-                                ?>
-                                <img class="mr-2" width="20"
-                                    src="{{ theme_asset(path: 'public/assets/front-end/img/flags/' . strtolower($langFlagCode) . '.png') }}"
-                                    alt="{{ $data['name'] }}">
-                                {{ $data['name'] }}
-                            @endif
-                        @endforeach
-                    </a>
-                    <ul
-                        class="text-align-direction dropdown-menu dropdown-menu-{{ Session::get('direction') === 'rtl' ? 'right' : 'left' }}">
-                        @foreach ($web_config['language'] as $key => $data)
-                            @if ($data['status'] == 1)
-                                <?php
-                                $langFlagCode = $data['code'];
-                                if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                    $countryCodeArr = explode('-', $data['code']);
-                                    $langFlagCode = $countryCodeArr[0];
-                                }
-                                ?>
-                                <li class="change-language" data-action="{{ route('change-language') }}"
-                                    data-language-code="{{ $data['code'] }}">
-                                    <a class="dropdown-item pb-1" href="javascript:">
-                                        <img class="mr-2" width="20"
-                                            src="{{ theme_asset(path: 'public/assets/front-end/img/flags/' . strtolower($langFlagCode) . '.png') }}"
-                                            alt="{{ $data['name'] }}" />
-                                        <span class="text-capitalize">{{ $data['name'] }}</span>
-                                    </a>
-                                </li>
-                            @endif
-                        @endforeach
-                    </ul>
                 </div>
             </div>
         </div>
@@ -736,7 +746,38 @@
             .addClass("has-sub-item").find("> a")
             .append("<i class='czi-arrow-{{ Session::get('direction') === 'rtl' ? 'left' : 'right' }}'></i>");
 
+        // Locale dropdown
+        (function() {
+            var btn = document.querySelector('.locale-pill');
+            var menu = document.getElementById('localeDropdownMenu');
+            var cancel = document.querySelector('.locale-dropdown-cancel');
+            var saveBtn = document.getElementById('localeSaveBtn');
+            if (!btn || !menu) return;
+            var hideTimer;
 
+            function show() { clearTimeout(hideTimer); menu.classList.add('show'); }
+            function hide() { hideTimer = setTimeout(function() { menu.classList.remove('show'); }, 200); }
+
+            btn.addEventListener('mouseenter', show);
+            btn.addEventListener('mouseleave', hide);
+            menu.addEventListener('mouseenter', function() { clearTimeout(hideTimer); });
+            menu.addEventListener('mouseleave', hide);
+
+            if (cancel) cancel.addEventListener('click', function() { menu.classList.remove('show'); });
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function () {
+                    var lang = document.getElementById('localeLanguageSelect').value;
+                    var curr = document.getElementById('localeCurrencySelect').value;
+                    var x = new XMLHttpRequest();
+                    x.open('POST', '{{ route('locale.switch') }}');
+                    x.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="_token"]').getAttribute('content'));
+                    x.setRequestHeader('Content-Type', 'application/json');
+                    x.onload = function () { if (x.status === 200) location.reload(); };
+                    x.send(JSON.stringify({ language_code: lang, currency_code: curr }));
+                });
+            }
+        })();
 
     </script>
 @endpush

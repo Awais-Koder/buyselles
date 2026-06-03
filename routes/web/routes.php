@@ -30,6 +30,7 @@ use App\Http\Controllers\Web\CurrencyController;
 use App\Http\Controllers\Web\CustomerDisputeController;
 use App\Http\Controllers\Web\DigitalProductDownloadController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\LocaleController;
 use App\Http\Controllers\Web\PageController;
 use App\Http\Controllers\Web\ProductCompareController;
 use App\Http\Controllers\Web\ProductDetailsController;
@@ -190,6 +191,10 @@ Route::group(['namespace' => 'Web', 'middleware' => ['maintenance_mode', 'guestC
 
     Route::controller(CurrencyController::class)->group(function () {
         Route::post('/currency', 'changeCurrency')->name('currency.change');
+    });
+
+    Route::controller(LocaleController::class)->group(function () {
+        Route::post('/locale/switch', 'switchLocale')->name('locale.switch');
     });
 
     Route::controller(UserProfileController::class)->group(function () {

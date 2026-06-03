@@ -28,24 +28,73 @@
                 </a>
 
                 <ul class="nav justify-content-center justify-content-sm-end align-items-center gap-4">
+                    @php
+                        $asterCurrentLang = session('local') ?? Helpers::default_lang();
+                        $asterCurrentCurr = session('currency_code') ?? 'USD';
+                        $asterLangLabel = strtoupper($asterCurrentLang);
+                        $asterCurrLabel = $asterCurrentCurr;
+                        $asterLangList = $web_config['language'] ?? [];
+                        $asterCurrList = $web_config['currencies'] ?? \App\Models\Currency::where('status', 1)->get();
+                    @endphp
                     <li>
-                        <div class="language-dropdown">
-                            @if ($web_config['currency_model'] == 'multi_currency')
-                                <button type="button"
-                                    class="border-0 bg-transparent d-flex gap-2 align-items-center dropdown-toggle text-dark p-0"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    {{ session('currency_code') }} {{ session('currency_symbol') }}
-                                </button>
-                                <ul class="dropdown-menu bs-dropdown-min-width--10rem">
-                                    @foreach ($web_config['currencies'] as $key => $currency)
-                                        <li class="currency-change" data-currency-code="{{ $currency['code'] }}">
-                                            <a href="javascript:">{{ $currency->name }}</a>
-                                        </li>
-                                    @endforeach
-                                    <span id="currency-route"
-                                        data-currency-route="{{ route('currency.change') }}"></span>
-                                </ul>
-                            @endif
+                        <style>
+                            .locale-pill {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 3px;
+                                padding: 5px 14px;
+                                background: var(--bs-primary, #1B7FED);
+                                color: white;
+                                border: none;
+                                border-radius: 22px;
+                                cursor: pointer;
+                                font-size: 12px;
+                                font-weight: 500;
+                                letter-spacing: 0.3px;
+                                box-shadow: 0 2px 8px rgba(27, 127, 237, 0.3);
+                                transition: all 0.25s;
+                                white-space: nowrap;
+                            }
+                            .locale-pill:hover { opacity: 0.85; }
+                            .locale-pill-lang { font-weight: 600; }
+                            .locale-pill-sep { opacity: 0.5; }
+                            .locale-pill-curr { opacity: 0.85; }
+                            .locale-pill::after { display: none; }
+                        </style>
+                        <div class="dropdown locale-dropdown">
+                            <button class="locale-pill" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <span class="locale-pill-lang">{{ $asterLangLabel }}</span>
+                                <span class="locale-pill-sep">·</span>
+                                <span class="locale-pill-curr">{{ $asterCurrLabel }}</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-3 bs-dropdown-min-width--22-5rem">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold fs-12">{{ translate('Language') }}</label>
+                                    <select class="form-select form-select-sm" id="localeLanguageSelect">
+                                        @foreach ($asterLangList as $lang)
+                                            @if (!empty($lang['status']) && $lang['status'] == 1)
+                                                <option value="{{ $lang['code'] }}" {{ $asterCurrentLang === $lang['code'] ? 'selected' : '' }}>
+                                                    {{ $lang['name'] }}
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold fs-12">{{ translate('Currency') }}</label>
+                                    <select class="form-select form-select-sm" id="localeCurrencySelect">
+                                        @foreach ($asterCurrList as $cur)
+                                            <option value="{{ $cur['code'] }}" {{ $asterCurrentCurr === $cur['code'] ? 'selected' : '' }}>
+                                                {{ $cur['name'] ?? $cur['code'] }} ({{ $cur['symbol'] ?? $cur['code'] }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-secondary flex-grow-1 locale-dropdown-cancel">{{ translate('Cancel') }}</button>
+                                    <button type="button" class="btn btn-sm btn-primary flex-grow-1" id="localeSaveBtn">{{ translate('Save') }}</button>
+                                </div>
+                            </div>
                         </div>
                     </li>
                     @php(
@@ -95,50 +144,6 @@
                             </div>
                         </li>
                     @endif
-                    <li>
-                        <div class="language-dropdown">
-                            <button type="button"
-                                class="border-0 bg-transparent d-flex gap-2 align-items-center dropdown-toggle text-dark p-0"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                @php($local = Helpers::default_lang())
-                                @foreach ($web_config['language'] as $data)
-                                    @if ($data['code'] == $local)
-                                        <?php
-                                        if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                            $countryCodeArr = explode('-', $data['code']);
-                                            $data['code'] = $countryCodeArr[0];
-                                        }
-                                        ?>
-                                        <img width="20"
-                                            src="{{ theme_asset('assets/img/flags/' . strtolower($data['code']) . '.png') }}"
-                                            class="dark-support" alt="{{ translate('Eng') }}" />
-                                        {{ ucwords($data['name']) }}
-                                    @endif
-                                @endforeach
-                            </button>
-                            <ul class="dropdown-menu bs-dropdown-min-width--10rem">
-                                @foreach ($web_config['language'] as $key => $data)
-                                    @if ($data['status'] == 1)
-                                        <?php
-                                        if (\Illuminate\Support\Str::contains($data['code'], '-')) {
-                                            $countryCodeArr = explode('-', $data['code']);
-                                            $data['code'] = $countryCodeArr[0];
-                                        }
-                                        ?>
-                                        <li class="change-language" data-action="{{ route('change-language') }}"
-                                            data-language-code="{{ $data['code'] }}">
-                                            <a class="d-flex gap-2 align-items-center" href="javascript:">
-                                                <img width="20"
-                                                    src="{{ theme_asset('assets/img/flags/' . strtolower($data['code']) . '.png') }}"
-                                                    loading="lazy" class="dark-support" alt="{{ $data['name'] }}" />
-                                                {{ ucwords($data['name']) }}
-                                            </a>
-                                        </li>
-                                    @endif
-                                @endforeach
-                            </ul>
-                        </div>
-                    </li>
                     @if ($web_config['business_mode'] == 'multi' && $web_config['seller_registration'])
                         <li class="d-none d-xl-block">
                             <a href="{{ route('vendor.auth.registration.index') }}" class="d-flex">
@@ -882,6 +887,28 @@
                     }).then(r => r.json()).then(() => window.location.reload());
                 });
             }
+        })();
+
+        // Locale dropdown
+        (function() {
+            var saveBtn = document.getElementById('localeSaveBtn');
+            if (!saveBtn) return;
+            saveBtn.addEventListener('click', function () {
+                var lang = document.getElementById('localeLanguageSelect').value;
+                var curr = document.getElementById('localeCurrencySelect').value;
+                var x = new XMLHttpRequest();
+                x.open('POST', '{{ route('locale.switch') }}');
+                x.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="_token"]').getAttribute('content'));
+                x.setRequestHeader('Content-Type', 'application/json');
+                x.onload = function () { if (x.status === 200) location.reload(); };
+                x.send(JSON.stringify({ language_code: lang, currency_code: curr }));
+            });
+            var drop = document.querySelector('.locale-dropdown');
+            if (!drop) return;
+            var dd = bootstrap.Dropdown.getOrCreateInstance(drop.querySelector('[data-bs-toggle="dropdown"]'));
+            document.querySelector('.locale-dropdown-cancel').addEventListener('click', function () { dd.hide(); });
+            drop.addEventListener('mouseenter', function () { dd.show(); });
+            drop.addEventListener('mouseleave', function () { dd.hide(); });
         })();
     </script>
 @endpush

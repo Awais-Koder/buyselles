@@ -96,6 +96,7 @@
     @include('theme-views.layouts.partials._alert-message')
     @include('theme-views.layouts.partials._header')
     @include('theme-views.layouts.partials._settings-sidebar')
+
     @yield('content')
     @include('theme-views.layouts.partials._feature')
     @include('theme-views.layouts.partials._footer')

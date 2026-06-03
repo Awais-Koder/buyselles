@@ -14,6 +14,7 @@ use App\Services\CategoryService;
 use App\Services\ProductService;
 use App\Services\SeoMetaInfoService;
 use App\Traits\PaginatorTrait;
+use Database\Seeders\CategoryDisplayBlockSeeder;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -115,6 +116,9 @@ class CategoryController extends BaseController
                 taxableId: $savedCategory->id,
                 taxIds: $request['tax_ids'] ?? []
             );
+
+            app(CategoryDisplayBlockSeeder::class)
+                ->seedCategories(categoryIds: [$savedCategory->id]);
         }
 
         updateSetupGuideCacheKey(key: 'category_setup', panel: 'admin');

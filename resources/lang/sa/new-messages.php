@@ -2669,7 +2669,7 @@ return [
     'No_review_yet' => 'No review yet',
     'save_this_address' => 'Save this address',
     'proceed_to_payment' => 'Proceed to payment',
-    'check_your_email_to_get_the_order_id_and_details' => 'Check your email to get the order id and details',
+    'check_your_email_to_get_the_order_id_and_details' => 'تحقق من بريدك الإلكتروني للحصول على معرف الطلب والتفاصيل',
     'show_order' => 'Show order',
     'change_the_status_paid_only_when_you_received_the_payment_from_customer' => 'Change the status paid only when you received the payment from customer',
     'confirm_payments_before_change_the_status' => 'Confirm payments before change the status',
@@ -11940,8 +11940,6 @@ return [
     'Language_field_is_required' => 'Language field is required',
     'want_to_remove_country_name?' => 'Want to remove country name ',
     'Order_Status_Changed' => 'Order Status Changed',
-    // Digital Delivery & Order Complete Page Translations
-    'check_your_email_to_get_the_order_id_and_details' => 'تحقق من بريدك الإلكتروني للحصول على معرف الطلب والتفاصيل',
     'Codes_have_been_emailed_to_you_too._Keep_them_safe.' => 'تم إرسال الأكواد إلى بريدك الإلكتروني أيضًا. احتفظ بها بأمان.',
     'Copy_or_print_your_codes_below._They_are_also_sent_to_your_email.' => 'انسخ أو اطبع أكوادك أدناه. يتم إرسالها أيضًا إلى بريدك الإلكتروني.',
     'Digital_Codes' => 'الأكواد الرقمية',
@@ -11954,4 +11952,7 @@ return [
     'Your_codes_are_taking_longer_than_expected._They_will_be_sent_to_your_email_shortly.' => 'تستغرق أكوادك وقتًا أطول من المتوقع. سيتم إرسالها إلى بريدك الإلكتروني قريبًا.',
     'Your_Digital_Codes' => 'أكوادك الرقمية',
     'Your_order_is_confirmed._You_will_receive_an_email_with_tracking_details.' => 'تم تأكيد طلبك. ستتلقى بريدًا إلكترونيًا يحتوي على تفاصيل التتبع.',
+    'AI-assisted_reviews_for_faster_fair_outcomes' => 'AI-assisted reviews for faster fair outcomes',
+    'Fast_Dispute_Resolution' => 'Fast Dispute Resolution',
+    'Deals_tailored_to_your_preferences_by_AI' => 'Deals tailored to your preferences by AI',
 ];

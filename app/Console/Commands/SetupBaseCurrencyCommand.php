@@ -10,7 +10,7 @@ class SetupBaseCurrencyCommand extends Command
 {
     protected $signature = 'currency:setup-base';
 
-    protected $description = 'Set USD as the absolute base currency with exchange_rate=1, switch to multi-currency mode, and add JOD with proper rate';
+    protected $description = 'Set USD as the absolute base currency with exchange_rate=1, switch to multi-currency mode, and add JOD, SAR, AED with proper rates';
 
     public function handle(): int
     {
@@ -48,6 +48,9 @@ class SetupBaseCurrencyCommand extends Command
             $this->info('Updated JOD exchange_rate to '.$jodExchangeRate.'.');
         }
 
+        $this->seedCurrency('SAR', 'Saudi Riyal', 'ر.س', 3.75);
+        $this->seedCurrency('AED', 'UAE Dirham', 'د.إ', 3.67);
+
         BusinessSetting::query()->updateOrInsert(
             ['type' => 'system_default_currency'],
             ['value' => $usd->id],
@@ -73,5 +76,24 @@ class SetupBaseCurrencyCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function seedCurrency(string $code, string $name, string $symbol, float $rate): void
+    {
+        $currency = Currency::query()->where('code', $code)->first();
+
+        if (! $currency) {
+            Currency::query()->create([
+                'name' => $name,
+                'symbol' => $symbol,
+                'code' => $code,
+                'exchange_rate' => $rate,
+                'status' => true,
+            ]);
+            $this->info("Created {$code} ({$name}) with exchange_rate {$rate}.");
+        } elseif (abs((float) $currency->exchange_rate - $rate) > 0.0001) {
+            $currency->update(['exchange_rate' => $rate, 'status' => true]);
+            $this->info("Updated {$code} exchange_rate to {$rate}.");
+        }
     }
 }

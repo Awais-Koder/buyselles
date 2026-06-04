@@ -860,6 +860,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                     Route::post('status', 'status')->name('status');
                     Route::post('check-currency-update', 'checkSystemCurrency')->name('check-currency-update');
                     Route::post('system-currency-update', 'updateSystemCurrency')->name('system-currency-update');
+                    Route::post('sync-rates', 'syncRates')->name('sync-rates');
                 });
             });
 

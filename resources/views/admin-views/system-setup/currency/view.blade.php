@@ -23,6 +23,32 @@
             </div>
         </div>
 
+        @if($currencyModel['value']=='multi_currency')
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h5 class="mb-1">{{ translate('Exchange_Rate_Sync') }}</h5>
+                        <p class="fs-12 text-muted mb-0">
+                            {{ translate('Last_synced') }}:
+                            @if($lastSyncTime)
+                                {{ $lastSyncTime->diffForHumans() }}
+                            @else
+                                {{ translate('Never') }}
+                            @endif
+                        </p>
+                    </div>
+                    <form action="{{ route('admin.system-setup.currency.sync-rates') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fi fi-sr-refresh mr-1"></i> {{ translate('Sync_Now') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="card">
             <div class="card-body">
                 <div class="mb-3 mb-sm-20">

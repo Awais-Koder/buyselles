@@ -8,6 +8,7 @@ use App\Contracts\Repositories\SettingRepositoryInterface;
 use App\Enums\GlobalConstant;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\Admin\CurrencyAddRequest;
+use App\Models\ExchangeRateLog;
 use App\Services\SettingService;
 use App\Traits\CalculatorTrait;
 use App\Traits\PaymentGatewayTrait;
@@ -63,8 +64,9 @@ class CurrencyController extends BaseController
         $digitalPaymentStatus = getWebConfig(name: 'digital_payment')['status'] ?? 0;
         $currencyModel = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'currency_model']);
         $default = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'system_default_currency']);
+        $lastSyncTime = ExchangeRateLog::query()->where('source', 'LIKE', 'api%')->latest('created_at')->value('created_at');
 
-        return view('admin-views.system-setup.currency.view', compact('activeCurrencies', 'currencies', 'currencyModel', 'default', 'paymentGatewayPublishedStatus', 'paymentGatewayUrl', 'digitalPaymentStatus'));
+        return view('admin-views.system-setup.currency.view', compact('activeCurrencies', 'currencies', 'currencyModel', 'default', 'lastSyncTime', 'paymentGatewayPublishedStatus', 'paymentGatewayUrl', 'digitalPaymentStatus'));
     }
 
     public function checkPaymentGatewaySupportedCurrencies($currencyCode, $currencyCodes, $paymentGateways): array
@@ -273,5 +275,23 @@ class CurrencyController extends BaseController
                 'message' => translate('System_default_currency_changed_successfully'),
             ]);
         }
+    }
+
+    public function syncRates(): RedirectResponse
+    {
+        try {
+            $service = app(\App\Services\ExchangeRateService::class);
+            $result = $service->syncAll('api_manual');
+
+            $updated = collect($result['results'])->where('status', 'updated')->count();
+            $unchanged = collect($result['results'])->where('status', 'unchanged')->count();
+            $skipped = collect($result['results'])->where('status', 'skipped')->count();
+
+            ToastMagic::success(translate('Exchange_rates_synced_successfully')." ({$updated} ".translate('updated').", {$unchanged} ".translate('unchanged').", {$skipped} ".translate('skipped').')');
+        } catch (\Throwable $e) {
+            ToastMagic::error(translate('Exchange_rate_sync_failed').': '.$e->getMessage());
+        }
+
+        return redirect()->route('admin.system-setup.currency.view');
     }
 }

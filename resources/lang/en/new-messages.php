@@ -11345,4 +11345,12 @@ return [
 	"Transaction_report" => "Transaction report",
 	"currency_symbol_is_required" => "Currency symbol is required",
 	"currency_name_is_required" => "Currency name is required",
+	"sales_and_Transaction_Report" => "Sales and Transaction Report",
+	"Sync_Now" => "Sync Now",
+	"Last_synced" => "Last synced",
+	"Exchange_Rate_Sync" => "Exchange Rate Sync",
+	"Exchange_rate_sync_dispatched_successfully" => "Exchange rate sync dispatched successfully",
+	"vendor_withdraw_method_infos" => "Vendor withdraw method infos",
+	"skipped" => "Skipped",
+	"unchanged" => "Unchanged",
 ];

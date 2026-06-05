@@ -113,9 +113,10 @@ class ProductController extends Controller
 
     public function getProductsFilter(Request $request): JsonResponse
     {
+        $request->mergeIfMissing(['limit' => 10, 'offset' => 1]);
         $search = [base64_decode($request->search)];
         $categories = json_decode($request->category);
-        $brand = json_decode($request->brand);
+        $brand = json_decode($request->brand) ?? [];
         $publishingHouses = $request->has('publishing_houses') ? json_decode($request['publishing_houses']) : [];
         $productAuthors = $request->has('product_authors') ? json_decode($request['product_authors']) : [];
 
@@ -163,6 +164,7 @@ class ProductController extends Controller
         }])->where(['product_type' => 'digital'])->whereNotIn('id', $productIdsForAuthor)->pluck('id')->toArray();
 
         $productsIDArray = [];
+        $categories = $categories ?? [];
         if ($request->has('search') && ! empty($request['search'])) {
             $productsIDArray = [0];
             $searchProducts = ProductManager::search_products($request, base64_decode($request->search), 'all', $request['limit'], $request['offset']);

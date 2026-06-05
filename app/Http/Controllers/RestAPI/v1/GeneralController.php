@@ -68,29 +68,41 @@ class GeneralController extends Controller
         return response()->json($query->orderBy('name')->get(), 200);
     }
 
+    public function get_guest_id(): JsonResponse
+    {
+        $guestUser = \App\Models\GuestUser::create([
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['guest_id' => $guestUser->id], 200);
+    }
+
     public function get_discovery_products(Request $request): JsonResponse
     {
         $limit = $request->get('limit', 10);
         $offset = $request->get('offset', 1);
 
+        // Build the product query with proper filters
         $products = Product::active()
-            ->when($request->has('category_id'), function ($query) use ($request) {
-                $query->where('category_id', $request['category_id']);
+            ->when($request->has('category_id'), function ($q) use ($request) {
+                // category_ids is stored as JSON array of ids
+                $q->whereJsonContains('category_ids', (string) $request->category_id);
             })
-            ->when($request->has('search'), function ($query) use ($request) {
-                $query->where('name', 'like', "%{$request['search']}%");
+            ->when($request->has('search'), function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%");
             })
-            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($query) use ($request) {
-                $query->where(function ($subQuery) use ($request) {
+            ->when($request->hasAny(['country_id', 'city_id', 'area_id']), function ($q) use ($request) {
+                $q->where(function ($subQuery) use ($request) {
                     $subQuery->whereHas('shop', function ($query) use ($request) {
                         if ($request->has('country_id')) {
-                            $query->where('store_country_id', $request['country_id']);
+                            $query->where('store_country_id', $request->country_id);
                         }
                         if ($request->has('city_id')) {
-                            $query->where('store_city_id', $request['city_id']);
+                            $query->where('store_city_id', $request->city_id);
                         }
                         if ($request->has('area_id')) {
-                            $query->where('store_area_id', $request['area_id']);
+                            $query->where('store_area_id', $request->area_id);
                         }
                     })
                         ->orWhere('product_type', 'digital')
@@ -101,7 +113,7 @@ class GeneralController extends Controller
             })
             ->withCount(['orderDetails', 'reviews', 'wishList'])
             ->with(['reviews', 'rating', 'shop'])
-            ->orderBy('order_details_count', 'desc') // Best Selling Priority
+            ->orderBy('order_details_count', 'desc')
             ->paginate($limit, ['*'], 'page', $offset);
 
         return response()->json([
@@ -136,7 +148,7 @@ class GeneralController extends Controller
             ->when($request->has('category_id'), function ($query) use ($request) {
                 $query->whereHas('product', function ($productQuery) use ($request) {
                     $productQuery->active()
-                        ->where('category_id', $request['category_id']);
+                        ->whereJsonContains('category_ids', (string) $request->category_id);
                 });
             })
             ->withCount(['product' => function ($query) {

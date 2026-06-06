@@ -11353,4 +11353,5 @@ return [
 	"vendor_withdraw_method_infos" => "Vendor withdraw method infos",
 	"skipped" => "Skipped",
 	"unchanged" => "Unchanged",
+	"updated" => "Updated",
 ];

@@ -86,8 +86,8 @@ class GeneralController extends Controller
         // Build the product query with proper filters
         $products = Product::active()
             ->when($request->has('category_id'), function ($q) use ($request) {
-                // category_ids is stored as JSON array of ids
-                $q->whereJsonContains('category_ids', (string) $request->category_id);
+                $categoryId = (int) $request->category_id;
+                $q->where('category_id', $categoryId);
             })
             ->when($request->has('search'), function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%");
@@ -148,7 +148,7 @@ class GeneralController extends Controller
             ->when($request->has('category_id'), function ($query) use ($request) {
                 $query->whereHas('product', function ($productQuery) use ($request) {
                     $productQuery->active()
-                        ->whereJsonContains('category_ids', (string) $request->category_id);
+                        ->where('category_id', (int) $request->category_id);
                 });
             })
             ->withCount(['product' => function ($query) {

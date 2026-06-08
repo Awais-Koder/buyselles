@@ -284,6 +284,63 @@
                             <div class="card card-sm shadow-1">
                                 <div class="card-body">
                                     <div class="pb-12 pb-sm-20">
+                                        <h3>{{ translate('Mobile_App_All_Products_Tab') }}</h3>
+                                        <p class="mb-0 fs-12 text-capitalize">
+                                            {{ translate('upload_a_custom_image_for_the_all_products_tab_in_the_mobile_app') }}
+                                        </p>
+                                    </div>
+                                    <div class="p-12 p-sm-20 bg-section rounded">
+                                        <div class="row g-4">
+                                            <div class="col-md-6">
+                                                <div class="card shadow-none">
+                                                    <div class="card-body">
+                                                        <div class="d-flex flex-column gap-20">
+                                                            <div>
+                                                                <label for="" class="form-label fw-semibold mb-1 text-capitalize">
+                                                                    {{ translate('all_products_tab_image') }}
+                                                                </label>
+                                                                <p class="fs-12 mb-0">{{ translate('this_image_will_appear_in_the_all_products_tab_in_the_mobile_app') }}</p>
+                                                            </div>
+                                                            <div class="upload-file">
+                                                                <input type="file" name="all_products_tab_image" class="upload-file__input single_file_input"
+                                                                       accept="{{ getFileUploadFormats(skip: '.svg') }}" data-max-size="{{ getFileUploadMaxSize() }}">
+                                                                <label class="upload-file__wrapper">
+                                                                    <div class="upload-file-textbox text-center {{ isset($businessSetting['all_products_tab_image']['path']) && $businessSetting['all_products_tab_image']['path'] ? 'd-none' : '' }}">
+                                                                        <img width="34" height="34" class="svg img-fluid" src="{{ getStorageImages(path: $businessSetting['all_products_tab_image'] ?? '', type: 'backend-placeholder') }}" alt="image upload">
+                                                                        <h6 class="mt-1 fw-medium lh-base text-center text-capitalize">
+                                                                            <span class="text-info">{{ translate('Click_to_upload') }}</span>
+                                                                            <br>
+                                                                            {{ translate('or_drag_and_drop') }}
+                                                                        </h6>
+                                                                    </div>
+                                                                    <img class="upload-file-img" loading="lazy" src="{{ !empty($businessSetting['all_products_tab_image']['path']) ? getStorageImages(path:$businessSetting['all_products_tab_image'],type: 'backend-placeholder') ?? '' : '' }}" alt="">
+                                                                </label>
+                                                                <div class="overlay">
+                                                                    <div class="d-flex gap-10 justify-content-center align-items-center h-100">
+                                                                        <button type="button" class="btn btn-outline-info icon-btn view_btn">
+                                                                            <i class="fi fi-sr-eye"></i>
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-outline-info icon-btn edit_btn">
+                                                                            <i class="fi fi-rr-camera"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <p class="fs-10 mb-0 text-center">
+                                                                {{ getFileUploadFormats(skip: '.svg,', asBladeMessage: true).' '. translate('Image_size'). ' : '. translate('Max').' '. getFileUploadMaxSize() . 'MB' }}
+                                                                <span class="fw-medium">{{ "(200 x 200 px)" }}</span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card card-sm shadow-1">
+                                <div class="card-body">
+                                    <div class="pb-12 pb-sm-20">
                                         <h3>{{ translate('Color_Settings') }}</h3>
                                         <p class="mb-0 fs-12 text-capitalize">
                                             {{ translate('select_the_primary_&_secondary_colors_for_the_website_&_panels') }}

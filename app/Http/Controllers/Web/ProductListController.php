@@ -89,7 +89,7 @@ class ProductListController extends Controller
         $dataForm = 'category';
         $request->merge(['data_from' => $dataForm]);
 
-        if ($category['position'] == 0 && $this->categoryDisplayBlockWebService->hasActiveBlocks($category['id'])) {
+        if ($category['position'] == 0) {
             return $this->getDynamicCategoryView($request, $category);
         }
 

@@ -54,6 +54,7 @@ class CategoryController extends Controller
             }, function ($query) {
                 $query->where('position', 0);
             })
+            ->orderBy('priority', 'asc')
             ->get();
 
         $categories = CategoryManager::getPriorityWiseCategorySortQuery(query: $categories);

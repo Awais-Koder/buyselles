@@ -1,176 +1,38 @@
-Another exception was thrown: RenderFlex children have non-zero flex but incoming width constraints are unbounded.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#47ba7 relayoutBoundary=up33 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#251be relayoutBoundary=up32 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderDecoratedBox#670c1 relayoutBoundary=up31 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#0575f relayoutBoundary=up30 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#49cd4 relayoutBoundary=up29 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderFlex#349f4 relayoutBoundary=up28 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#ff206 relayoutBoundary=up27 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#550af relayoutBoundary=up26 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#7ddbb relayoutBoundary=up25 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#18e82 relayoutBoundary=up24 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#2abb7 relayoutBoundary=up23 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#f5f30 relayoutBoundary=up22 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#38454 relayoutBoundary=up21 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#1a001 relayoutBoundary=up20 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#941b8 relayoutBoundary=up19 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#8acbf relayoutBoundary=up18 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#523f9 relayoutBoundary=up17 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderFlex#c3435 relayoutBoundary=up16 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderFlex#f8e4e relayoutBoundary=up15 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#e9a83 relayoutBoundary=up14 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPadding#e9a83 relayoutBoundary=up14 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: 'package:flutter/src/rendering/object.dart': Failed assertion: line 2709 pos 12: '!_debugDoingThisLayout': is not
-true.
-Another exception was thrown: RenderBox was not laid out: RenderFlex#57ddd relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: RenderPadding#40786 relayoutBoundary=up12 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderIgnorePointer#65cea relayoutBoundary=up10 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsAnnotations#0b2b1 relayoutBoundary=up9 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#afade relayoutBoundary=up8 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderSemanticsGestureHandler#73125 relayoutBoundary=up7 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderPointerListener#ff8c0 relayoutBoundary=up6 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderScrollSemantics#5649b relayoutBoundary=up5 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderCustomPaint#9c838 relayoutBoundary=up4 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _ImageFilterRenderObject#52fc9 relayoutBoundary=up3 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: RenderClipRect#6b70e relayoutBoundary=up2 NEEDS-PAINT
-Another exception was thrown: RenderBox was not laid out: _RenderSingleChildViewport#46312 relayoutBoundary=up11 NEEDS-PAINT
-Another exception was thrown: Cannot hit test a render box with no size.
-Another exception was thrown: Cannot hit test a render box with no size.
-Another exception was thrown: Cannot hit test a render box with no size.
-Another exception was thrown: Cannot hit test a render box with no size.
-Another exception was thrown: Cannot hit test a render box with no size.
+lib/features/home/widgets/locale_bottom_sheet_widget.dart:40:50: Error: The operator '[]' isn't defined for the type 'Language'.
+ - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
+Try correcting the operator to an existing operator, or defining a '[]' operator.
+        final String code = (lang is Map) ? (lang['code'] ?? '').toString() : (lang.code ?? '');
+                                                 ^
+lib/features/home/widgets/locale_bottom_sheet_widget.dart:149:18: Error: The getter 'textSemiBold' isn't defined for the type '_LocaleBottomSheetWidgetState'.
+ - '_LocaleBottomSheetWidgetState' is from 'package:flutter_sixvalley_ecommerce/features/home/widgets/locale_bottom_sheet_widget.dart' ('lib/features/home/widgets/locale_bottom_sheet_widget.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'textSemiBold'.
+          style: textSemiBold.copyWith(
+                 ^^^^^^^^^^^^
+lib/features/home/widgets/locale_bottom_sheet_widget.dart:337:33: Error: The operator '[]' isn't defined for the type 'Language'.
+ - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
+Try correcting the operator to an existing operator, or defining a '[]' operator.
+        langCode = (selectedLang['code'] ?? '').toString();
+                                ^
+lib/features/home/widgets/locale_bottom_sheet_widget.dart:338:36: Error: The operator '[]' isn't defined for the type 'Language'.
+ - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
+Try correcting the operator to an existing operator, or defining a '[]' operator.
+        countryCode = (selectedLang['code'] ?? '').toString().toUpperCase();
+                                   ^
+Target kernel_snapshot_program failed: Exception
+
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileFlutterBuildDebug'.
+> Process 'command '/home/awais-koder/flutter/bin/flutter'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 45s
+Running Gradle task 'assembleDebug'...                             46.0s
+Error: Gradle task assembleDebug failed with exit code 1

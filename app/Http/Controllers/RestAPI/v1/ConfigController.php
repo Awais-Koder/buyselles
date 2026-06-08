@@ -146,6 +146,7 @@ class ConfigController extends Controller
             'company_logo' => $companyLogo,
             'company_cover_image' => $companyShopBanner,
             'company_fav_icon' => $companyFavIcon,
+            'all_products_tab_image' => getWebConfig(name: 'all_products_tab_image') ?? '',
             'delivery_country_restriction' => (int) getWebConfig(name: 'delivery_country_restriction'),
             'delivery_zip_code_area_restriction' => (int) getWebConfig(name: 'delivery_zip_code_area_restriction'),
             'base_urls' => [

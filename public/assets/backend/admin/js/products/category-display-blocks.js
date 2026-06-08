@@ -15,6 +15,10 @@
     if (list) {
         let draggedItem = null;
 
+        list.addEventListener('drop', (e) => {
+            e.preventDefault();
+        });
+
         list.querySelectorAll('li[data-block-id]').forEach((li) => {
             const handle = li.querySelector('.category-display-block-drag-handle');
             if (!handle || handle.disabled) {
@@ -66,7 +70,11 @@
                     category_id: categoryId,
                     block_ids: blockIds,
                 },
-                success: function () {},
+                success: function () {
+                    if (typeof toastMagic !== 'undefined') {
+                        toastMagic.success('Block order saved');
+                    }
+                },
                 error: function () {
                     if (typeof toastMagic !== 'undefined') {
                         toastMagic.error('Failed to save block order');

@@ -58,7 +58,7 @@ if (! function_exists('clearWebConfigCacheKeys')) {
 
     function setWebConfigCache($name, $data)
     {
-        $arrayOfCompaniesValue = ['company_web_logo', 'company_web_logo_png', 'company_mobile_logo', 'company_footer_logo', 'company_fav_icon', 'loader_gif', 'blog_feature_download_app_icon', 'blog_feature_download_app_background'];
+        $arrayOfCompaniesValue = ['company_web_logo', 'company_web_logo_png', 'company_mobile_logo', 'company_footer_logo', 'company_fav_icon', 'loader_gif', 'blog_feature_download_app_icon', 'blog_feature_download_app_background', 'all_products_tab_image'];
         $arrayOfBanner = ['shop_banner', 'offer_banner', 'bottom_banner'];
         $mergeArray = array_merge($arrayOfCompaniesValue, $arrayOfBanner);
 

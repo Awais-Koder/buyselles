@@ -11354,4 +11354,8 @@ return [
 	"skipped" => "Skipped",
 	"unchanged" => "Unchanged",
 	"updated" => "Updated",
+	"displays_sub_categories_grid_under_main_category" => "Displays sub categories grid under main category",
+	"available_block_types" => "Available block types",
+	"all_block_types_have_been_added" => "All block types have been added",
+	"each_block_type_can_only_be_added_once_per_main_category" => "Each block type can only be added once per main category",
 ];

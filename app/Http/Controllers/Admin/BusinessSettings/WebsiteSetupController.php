@@ -48,6 +48,7 @@ class WebsiteSetupController extends BaseController
             'fav_icon' => getWebConfig(name: 'company_fav_icon') ?? '',
             'footer_logo' => getWebConfig(name: 'company_footer_logo') ?? '',
             'loader_gif' => getWebConfig(name: 'loader_gif') ?? '',
+            'all_products_tab_image' => getWebConfig(name: 'all_products_tab_image') ?? '',
         ];
 
         return view('admin-views.business-settings.website-setup', ['businessSetting' => $businessSetting]);
@@ -121,6 +122,19 @@ class WebsiteSetupController extends BaseController
             ];
             $this->businessSettingRepo->updateWhere(params: ['type' => 'company_mobile_logo'], data: ['value' => $mobileLogoImage]);
         }
+
+        $allProductsTabImage = $this->businessSettingRepo->getFirstWhere(params: ['type' => 'all_products_tab_image']);
+        if ($request->has('all_products_tab_image')) {
+            $allProductsTabImageData = $allProductsTabImage
+                ? $this->updateFile(dir: 'company/', oldImage: (is_array($allProductsTabImage['value']) ? $allProductsTabImage['value']['image_name'] : $allProductsTabImage['value']), format: 'webp', image: $request->file('all_products_tab_image'))
+                : $this->upload(dir: 'company/', format: 'webp', image: $request->file('all_products_tab_image'));
+            $allProductsTabImageArray = [
+                'image_name' => $allProductsTabImageData,
+                'storage' => config('filesystems.disks.default') ?? 'public',
+            ];
+            $this->businessSettingRepo->updateOrInsert(type: 'all_products_tab_image', value: json_encode($allProductsTabImageArray));
+        }
+
         ToastMagic::success(translate('Website_setup_updated_successfully'));
 
         return back();

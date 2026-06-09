@@ -9,6 +9,7 @@ use App\Models\Admin;
 use App\Services\AdminService;
 use App\Services\RecaptchaService;
 use App\Traits\RecaptchaTrait;
+use App\Utils\AdminLoginRedirect;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -103,7 +104,9 @@ class LoginController extends BaseController
             $request['password'],
             $request->boolean('remember')
         )) {
-            return redirect()->route('admin.dashboard.index');
+            AdminLoginRedirect::rememberLoginUrlForRole($request['role']);
+
+            return redirect()->intended(route('admin.dashboard.index'));
         }
 
         ToastMagic::error(translate('credentials_does_not_match_or_your_account_has_been_suspended'));
@@ -115,6 +118,7 @@ class LoginController extends BaseController
     {
         $authType = (int) auth('admin')->user()?->admin_role_id === 1 ? UserRole::ADMIN : UserRole::EMPLOYEE;
         $this->adminService->logout();
+        AdminLoginRedirect::forgetLoginUrl();
         session()->flash('success', translate('logged out successfully'));
         if ($authType == UserRole::EMPLOYEE) {
             return redirect('login/'.getWebConfig(name: 'employee_login_url'));

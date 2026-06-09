@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\SessionKey;
 use App\Models\Admin;
 use App\Models\BusinessSetting;
+use App\Utils\AdminLoginRedirect;
 use Brian2694\Toastr\Facades\Toastr;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -110,7 +111,9 @@ class LoginController extends Controller
         $data = $this->login_attemp($request->role, $request->email, $request->password, $request->remember);
 
         if ($data == 'admin' || $data == 'employee') {
-            return redirect()->route('admin.dashboard.index');
+            AdminLoginRedirect::rememberLoginUrlForRole($request['role']);
+
+            return redirect()->intended(route('admin.dashboard.index'));
         }
 
         return redirect()->back()->withInput($request->only('email', 'remember'))

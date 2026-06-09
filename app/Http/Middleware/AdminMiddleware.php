@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Utils\AdminLoginRedirect;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,12 +18,19 @@ class AdminMiddleware
             if (Auth::guard('admin')->check() && (Auth::guard('admin')->id() != 1 && Auth::guard('admin')->user()->status != 1)) {
                 Auth::guard('admin')->logout();
 
-                return redirect('login/'.getWebConfig(name: 'employee_login_url'));
+                return redirect('login/'.AdminLoginRedirect::resolveLoginUrl($request));
             }
 
             return $next($request);
-        } else {
-            abort(404);
         }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'code' => 'auth-001',
+                'message' => translate('Unauthorized'),
+            ], 401);
+        }
+
+        return AdminLoginRedirect::guestRedirect($request);
     }
 }

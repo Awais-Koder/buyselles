@@ -347,6 +347,80 @@ class CategoryDisplayBlockWebService
     }
 
     /**
+     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
+     */
+    public function getSubCategoryGroupedProducts(Category $category, Request $request, int $limit = self::PREVIEW_LIMIT): array
+    {
+        $subCategories = $this->getSubCategories($category);
+        $groupedProducts = [];
+
+        foreach ($subCategories as $subCategory) {
+            $products = $this->getProductsForSubCategoryOnly($subCategory->id, $request, $limit);
+            if ($products->isNotEmpty()) {
+                $groupedProducts[] = [
+                    'category' => $subCategory,
+                    'products' => $products,
+                ];
+            }
+        }
+
+        return $groupedProducts;
+    }
+
+    /**
+     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
+     */
+    public function getSubSubCategoryGroupedProducts(Category $category, Request $request, int $limit = self::PREVIEW_LIMIT): array
+    {
+        $subCategories = $this->getSubCategoriesWithSubSub($category);
+        $groupedProducts = [];
+
+        foreach ($subCategories as $subCategory) {
+            foreach ($subCategory->childes as $subSubCategory) {
+                $products = $this->getProductsForSubSubCategoryOnly($subSubCategory->id, $request, $limit);
+                if ($products->isNotEmpty()) {
+                    $groupedProducts[] = [
+                        'category' => $subSubCategory,
+                        'products' => $products,
+                    ];
+                }
+            }
+        }
+
+        return $groupedProducts;
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Product>|Collection<int, Product>
+     */
+    public function getProductsForSubCategoryOnly(int $subCategoryId, Request $request, int $limit = self::PREVIEW_LIMIT): LengthAwarePaginator|Collection
+    {
+        $scopedRequest = clone $request;
+        $scopedRequest->merge([
+            'limit' => $limit,
+            'offset' => $request->integer('page', 1),
+            'filter_by' => 'direct_sub_category',
+        ]);
+
+        return CategoryManager::products($subCategoryId, $scopedRequest, $limit);
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Product>|Collection<int, Product>
+     */
+    public function getProductsForSubSubCategoryOnly(int $subSubCategoryId, Request $request, int $limit = self::PREVIEW_LIMIT): LengthAwarePaginator|Collection
+    {
+        $scopedRequest = clone $request;
+        $scopedRequest->merge([
+            'limit' => $limit,
+            'offset' => $request->integer('page', 1),
+            'filter_by' => 'direct_sub_sub_category',
+        ]);
+
+        return CategoryManager::products($subSubCategoryId, $scopedRequest, $limit);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function resolveBlockViewData(CategoryDisplayBlock $block, Category $category, Request $request): array
@@ -355,9 +429,11 @@ class CategoryDisplayBlockWebService
             CategoryDisplayBlockType::SubCategories->value => [
                 'subCategories' => $this->getSubCategories($category),
             ],
-            CategoryDisplayBlockType::SubCategoryProducts->value,
+            CategoryDisplayBlockType::SubCategoryProducts->value => [
+                'groupedProducts' => $this->getSubCategoryGroupedProducts($category, $request),
+            ],
             CategoryDisplayBlockType::SubSubCategoryProducts->value => [
-                'products' => $this->getProductsForCategory($category->id, $request),
+                'groupedProducts' => $this->getSubSubCategoryGroupedProducts($category, $request),
             ],
             CategoryDisplayBlockType::SubSubCategories->value => [
                 'subCategoriesWithChildren' => $this->getSubCategoriesWithSubSub($category),

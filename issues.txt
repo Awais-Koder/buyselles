@@ -1,38 +1,18 @@
-lib/features/home/widgets/locale_bottom_sheet_widget.dart:40:50: Error: The operator '[]' isn't defined for the type 'Language'.
- - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
-Try correcting the operator to an existing operator, or defining a '[]' operator.
-        final String code = (lang is Map) ? (lang['code'] ?? '').toString() : (lang.code ?? '');
-                                                 ^
-lib/features/home/widgets/locale_bottom_sheet_widget.dart:149:18: Error: The getter 'textSemiBold' isn't defined for the type '_LocaleBottomSheetWidgetState'.
- - '_LocaleBottomSheetWidgetState' is from 'package:flutter_sixvalley_ecommerce/features/home/widgets/locale_bottom_sheet_widget.dart' ('lib/features/home/widgets/locale_bottom_sheet_widget.dart').
-Try correcting the name to the name of an existing getter, or defining a getter or field named 'textSemiBold'.
-          style: textSemiBold.copyWith(
-                 ^^^^^^^^^^^^
-lib/features/home/widgets/locale_bottom_sheet_widget.dart:337:33: Error: The operator '[]' isn't defined for the type 'Language'.
- - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
-Try correcting the operator to an existing operator, or defining a '[]' operator.
-        langCode = (selectedLang['code'] ?? '').toString();
-                                ^
-lib/features/home/widgets/locale_bottom_sheet_widget.dart:338:36: Error: The operator '[]' isn't defined for the type 'Language'.
- - 'Language' is from 'package:flutter_sixvalley_ecommerce/features/splash/domain/models/config_model.dart' ('lib/features/splash/domain/models/config_model.dart').
-Try correcting the operator to an existing operator, or defining a '[]' operator.
-        countryCode = (selectedLang['code'] ?? '').toString().toUpperCase();
-                                   ^
-Target kernel_snapshot_program failed: Exception
+Problem # 1 - Vendor Loop / Incorrect Routing: When a user goes to a Main Category (e.g., Gift Cards) and clicks on a specific Vendor (e.g., Deelatcom), the system incorrectly routes them back to select a Main Category again. Clicking a vendor must open that specific vendor's shop page directly, displaying only their inventory.
 
 
-FAILURE: Build failed with an exception.
 
-* What went wrong:
-Execution failed for task ':app:compileFlutterBuildDebug'.
-> Process 'command '/home/awais-koder/flutter/bin/flutter'' finished with non-zero exit value 1
+problem # 2 - Empty Sub-Categories Displayed:
+When inside a Vendor's shop, the system displays ALL Sub-Categories available on the entire platform. This is wrong. You must modify the query using whereHas('products') filtered by the vendor_id. Only display Sub-Categories that actually contain products belonging to this specific vendor. If the vendor has no products in "Xbox", the Xbox sub-category must not appear.
 
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
 
-BUILD FAILED in 45s
-Running Gradle task 'assembleDebug'...                             46.0s
-Error: Gradle task assembleDebug failed with exit code 1
+
+Empty Sub-Sub-Categories Displayed:
+The exact same issue occurs on the deeper level. When a user clicks a sub-category, the system shows all Sub-Sub-Categories (e.g., USA, UAE, KSA flags) even if the vendor has zero products listed under them. Filter the Sub-Sub-Categories query to only fetch rows that have active products by this specific vendor.
+
+
+
+problem # 3 - "Products in Sub Category" Block Bug:
+When we enable the "Products in Sub Category" layout block from the admin panel, the website incorrectly pulls and displays every single product under the entire Main Category globally. This defeats the purpose of the block. It must be updated so that it strictly groups and fetches products based on their specific Sub-Category, rather than dumping all products of the main category together in one chaotic list.
+
+These are fundamental multi-vendor database relation bugs (vendor_id checks are missing in your controllers/queries). Please update your Eloquent queries/SQL joins to fix this routing and filtering immediately.

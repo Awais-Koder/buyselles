@@ -7,7 +7,7 @@
         @foreach ($vendors as $vendorItem)
             <div class="col-lg-4 col-md-6 col-sm-12 px-2 pb-4 text-center">
                 @if ($themeKey === 'theme_aster')
-                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug ?? $vendorItem['slug']]) }}"
+                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug]) }}"
                        class="store-item d-flex flex-column text-center">
                         <img class="rounded-circle mb-2 mx-auto" width="72" height="72"
                              src="{{ getStorageImages(path: $vendorItem->shop?->image_full_url ?? $vendorItem->image_full_url, type: 'shop') }}"
@@ -16,7 +16,7 @@
                         <small class="text-muted">{{ number_format($vendorItem['average_rating'] ?? 0, 1) }} {{ translate('rating') }}</small>
                     </a>
                 @else
-                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug ?? $vendorItem['slug']]) }}"
+                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug]) }}"
                        class="others-store-card text-capitalize w-100">
                         <div class="overflow-hidden other-store-banner">
                             <img class="w-100 h-100 object-cover" alt=""

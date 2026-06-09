@@ -4,10 +4,10 @@ namespace App\Http\Controllers\RestAPI\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Product;
 use App\Models\Shop;
 use App\Utils\CategoryManager;
 use App\Utils\Helpers;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,45 +15,85 @@ class CategoryController extends Controller
 {
     public function get_categories(Request $request): JsonResponse
     {
-        $categoriesID = [];
-        $shop = $request->has('shop_slug') && empty($request['shop_slug']) ? Shop::where('slug', $request['shop_slug'])->first() : null;
+        $shop = $request->has('shop_slug') && ! empty($request['shop_slug'])
+            ? Shop::where('slug', $request['shop_slug'])->first()
+            : null;
 
-        if ($shop) {
-            $categoriesID = Product::active()
-                ->when($shop['author_type'] == 'admin', function ($query) {
-                    return $query->where(['added_by' => 'admin']);
-                })
-                ->when($shop['author_type'] != 'admin', function ($query) use ($shop) {
-                    return $query->where(['added_by' => 'seller'])->where('user_id', $shop['seller_id']);
-                })->pluck('category_id');
-        }
+        [$productAddedBy, $productUserId] = $shop
+            ? CategoryManager::resolveShopVendorContext($shop)
+            : ['admin', 0];
 
-        $categories = Category::when($shop, function ($query) use ($categoriesID) {
-            return $query->whereIn('id', $categoriesID);
-        })
+        $mainCategoryIds = $shop
+            ? CategoryManager::getVendorMainCategoryIds($productAddedBy, $productUserId)
+            : [];
+
+        $parentId = $request->has('parent_id') ? (int) $request['parent_id'] : null;
+        $parentCategory = $parentId ? Category::query()->find($parentId) : null;
+
+        $categories = Category::query()
+            ->when($shop && ! $parentId, function (Builder $query) use ($mainCategoryIds) {
+                $query->whereIn('id', $mainCategoryIds)->where('position', 0);
+            })
+            ->when($shop && $parentId, function (Builder $query) use ($parentId, $parentCategory, $productAddedBy, $productUserId) {
+                $query->where('parent_id', $parentId);
+
+                if ($parentCategory?->position === 0) {
+                    $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
+                        CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                    });
+                } elseif ($parentCategory?->position === 1) {
+                    $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
+                        CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                    });
+                }
+            })
+            ->when(! $shop && $parentId, function (Builder $query) use ($parentId) {
+                $query->where('parent_id', $parentId);
+            })
+            ->when(! $shop && ! $parentId, function (Builder $query) {
+                $query->where('position', 0);
+            })
             ->with(['product' => function ($query) {
                 return $query->active()->withCount(['orderDetails'])->latest()->limit(10);
             }])
-            ->withCount(['product' => function ($query) use ($shop) {
-                return $query->active()->when($shop && $shop['author_type'] != 'admin', function ($query) use ($shop) {
-                    return $query->where(['added_by' => 'seller', 'user_id' => $shop['seller_id'], 'status' => '1']);
-                });
-            }])->with(['childes' => function ($query) {
-                return $query->orderBy('priority', 'asc')
-                    ->with(['childes' => function ($query) {
-                        return $query->orderBy('priority', 'asc')
-                            ->withCount(['subSubCategoryProduct' => function ($query) {
-                                return $query->active();
-                            }])->where('position', 2);
-                    }])->withCount(['subCategoryProduct' => function ($query) {
-                        return $query->active();
-                    }])->where('position', 1);
+            ->withCount(['product' => function ($query) use ($shop, $productAddedBy, $productUserId) {
+                $query->active()
+                    ->when($shop, function ($productQuery) use ($productAddedBy, $productUserId) {
+                        CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                    });
             }])
-            ->when($request->has('parent_id'), function ($query) use ($request) {
-                $query->where('parent_id', (int) $request['parent_id']);
-            }, function ($query) {
-                $query->where('position', 0);
-            })
+            ->with(['childes' => function ($query) use ($shop, $productAddedBy, $productUserId) {
+                $query->orderBy('priority', 'asc')->where('position', 1);
+
+                if ($shop) {
+                    $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
+                        CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                    });
+                }
+
+                $query->with(['childes' => function ($query) use ($shop, $productAddedBy, $productUserId) {
+                    $query->orderBy('priority', 'asc')->where('position', 2);
+
+                    if ($shop) {
+                        $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
+                            CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                        });
+                    }
+
+                    $query->withCount(['subSubCategoryProduct' => function ($query) use ($shop, $productAddedBy, $productUserId) {
+                        $query->active()
+                            ->when($shop, function ($productQuery) use ($productAddedBy, $productUserId) {
+                                CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                            });
+                    }]);
+                }])
+                    ->withCount(['subCategoryProduct' => function ($query) use ($shop, $productAddedBy, $productUserId) {
+                        $query->active()
+                            ->when($shop, function ($productQuery) use ($productAddedBy, $productUserId) {
+                                CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
+                            });
+                    }]);
+            }])
             ->orderBy('priority', 'asc')
             ->get();
 

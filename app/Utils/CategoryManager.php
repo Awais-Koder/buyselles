@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\FlashDeal;
 use App\Models\FlashDealProduct;
 use App\Models\Product;
+use App\Models\Shop;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,36 +26,41 @@ class CategoryManager
     public static function products($category_id, $request = null, $dataLimit = null)
     {
         $user = Helpers::getCustomerInformation($request);
-        $id = '"'.$category_id.'"';
         $products = Product::with(['flashDealProducts.flashDeal', 'rating', 'seller.shop', 'tags', 'clearanceSale' => function ($query) {
             return $query->active();
         }])
             ->withCount(['reviews', 'wishList' => function ($query) use ($user) {
                 $query->where('customer_id', $user != 'offline' ? $user['id'] : '0');
             }])
-            ->active()
-            ->where('category_ids', 'like', "%{$id}%")
-            ->when($request->has('search') && ! empty($request['search']), function ($query) use ($request) {
-                $searchKey = $request['search'];
-                $productsIDArray = [];
-                $searchProducts = ProductManager::search_products($request, $searchKey);
-                if ($searchProducts['products'] == null || getDefaultLanguage() != 'en') {
-                    $searchProducts = ProductManager::translated_product_search(base64_encode($searchKey));
-                }
-                if ($searchProducts['products']) {
-                    foreach ($searchProducts['products'] as $product) {
-                        $productsIDArray[] = $product->id;
-                    }
-                }
+            ->active();
 
-                $searchName = str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', preg_replace('/\s\s+/', ' ', $searchKey));
+        self::applyCategoryProductScope(
+            query: $products,
+            categoryId: (int) $category_id,
+            filterBy: $request['filter_by'] ?? null,
+        );
 
-                return $query->when(! empty($productsIDArray), function ($query) use ($productsIDArray) {
-                    return $query->whereIn('id', $productsIDArray);
-                })->when(empty($productsIDArray), function ($query) {
-                    return $query->whereIn('id', [0]);
-                })->orderByRaw("CASE WHEN name LIKE '%{$searchName}%' THEN 1 ELSE 2 END, LOCATE('{$searchName}', name), name");
-            });
+        $products->when($request->has('search') && ! empty($request['search']), function ($query) use ($request) {
+            $searchKey = $request['search'];
+            $productsIDArray = [];
+            $searchProducts = ProductManager::search_products($request, $searchKey);
+            if ($searchProducts['products'] == null || getDefaultLanguage() != 'en') {
+                $searchProducts = ProductManager::translated_product_search(base64_encode($searchKey));
+            }
+            if ($searchProducts['products']) {
+                foreach ($searchProducts['products'] as $product) {
+                    $productsIDArray[] = $product->id;
+                }
+            }
+
+            $searchName = str_ireplace(['\'', '"', ',', ';', '<', '>', '?'], ' ', preg_replace('/\s\s+/', ' ', $searchKey));
+
+            return $query->when(! empty($productsIDArray), function ($query) use ($productsIDArray) {
+                return $query->whereIn('id', $productsIDArray);
+            })->when(empty($productsIDArray), function ($query) {
+                return $query->whereIn('id', [0]);
+            })->orderByRaw("CASE WHEN name LIKE '%{$searchName}%' THEN 1 ELSE 2 END, LOCATE('{$searchName}', name), name");
+        });
 
         $products = ProductManager::getPriorityWiseCategoryWiseProductsQuery(query: $products, dataLimit: $dataLimit ?? 'all', offset: $request['offset'] ?? 1);
 
@@ -82,6 +89,110 @@ class CategoryManager
         });
 
         return $products;
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    public static function applyCategoryProductScope(Builder $query, int $categoryId, ?string $filterBy = null): Builder
+    {
+        return match ($filterBy) {
+            'sub_categories' => self::applyMainCategorySubCategoryProductsScope($query, $categoryId),
+            'sub_sub_categories' => self::applyMainCategorySubSubCategoryProductsScope($query, $categoryId),
+            'direct_sub_category' => $query
+                ->where('sub_category_id', $categoryId)
+                ->where(fn (Builder $subQuery) => self::applyWithoutSubSubCategoryScope($subQuery)),
+            'direct_sub_sub_category' => $query->where('sub_sub_category_id', $categoryId),
+            default => $query->where('category_ids', 'like', '%"'.$categoryId.'"%'),
+        };
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    public static function applyWithoutSubSubCategoryScope(Builder $query): Builder
+    {
+        return $query->where(function (Builder $subQuery) {
+            $subQuery->whereNull('sub_sub_category_id')
+                ->orWhere('sub_sub_category_id', 0)
+                ->orWhere('sub_sub_category_id', '');
+        });
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    public static function applyVendorProductScope(Builder $query, string $productAddedBy, int $productUserId): Builder
+    {
+        return $query->active()
+            ->when($productAddedBy === 'admin', function (Builder $subQuery) {
+                return $subQuery->where('added_by', 'admin');
+            })
+            ->when($productAddedBy === 'seller', function (Builder $subQuery) use ($productUserId) {
+                return $subQuery->where('added_by', 'seller')->where('user_id', $productUserId);
+            });
+    }
+
+    /**
+     * @return array{0: string, 1: int}
+     */
+    public static function resolveShopVendorContext(Shop $shop): array
+    {
+        return [
+            $shop->author_type === 'admin' ? 'admin' : 'seller',
+            (int) $shop->seller_id,
+        ];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public static function getVendorMainCategoryIds(string $productAddedBy, int $productUserId): array
+    {
+        $query = Product::query()->select('category_id');
+        self::applyVendorProductScope($query, $productAddedBy, $productUserId);
+
+        return $query->pluck('category_id')
+            ->filter(fn ($id) => ! empty($id))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    private static function applyMainCategorySubCategoryProductsScope(Builder $query, int $mainCategoryId): Builder
+    {
+        $subCategoryIds = Category::query()
+            ->where('parent_id', $mainCategoryId)
+            ->where('position', 1)
+            ->pluck('id');
+
+        return $query
+            ->where('category_id', $mainCategoryId)
+            ->whereIn('sub_category_id', $subCategoryIds)
+            ->where(fn (Builder $subQuery) => self::applyWithoutSubSubCategoryScope($subQuery));
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    private static function applyMainCategorySubSubCategoryProductsScope(Builder $query, int $mainCategoryId): Builder
+    {
+        $subCategoryIds = Category::query()
+            ->where('parent_id', $mainCategoryId)
+            ->where('position', 1)
+            ->pluck('id');
+
+        $subSubCategoryIds = Category::query()
+            ->whereIn('parent_id', $subCategoryIds)
+            ->where('position', 2)
+            ->pluck('id');
+
+        return $query
+            ->where('category_id', $mainCategoryId)
+            ->whereIn('sub_sub_category_id', $subSubCategoryIds);
     }
 
     public static function getCategoriesWithCountingAndPriorityWiseSorting($dataLimit = null, $dataForm = null)

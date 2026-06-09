@@ -92,7 +92,7 @@ class ShopViewController extends Controller
         $shopId = $shop['author_type'] == 'admin' ? 0 : $shop['id'];
         $shopAllProducts = ProductManager::getAllProductsData($request, $productUserID, $productAddedBy);
         $productListData = ProductManager::getProductListData($request, $productUserID, $productAddedBy);
-        $categories = self::getShopCategoriesList(products: $shopAllProducts);
+        $categories = self::getShopCategoriesList(products: $shopAllProducts, productAddedBy: $productAddedBy, productUserID: $productUserID);
         $brands = self::getShopBrandsList(request: $request, products: $shopAllProducts, sellerType: $productAddedBy, sellerId: $productUserID);
         $shopPublishingHouses = ProductManager::getPublishingHouseList(productIds: $shopAllProducts->pluck('id')->toArray(), vendorId: $productUserID);
         $digitalProductAuthors = ProductManager::getProductAuthorList(productIds: $shopAllProducts->pluck('id')->toArray(), vendorId: $productUserID);
@@ -111,18 +111,38 @@ class ShopViewController extends Controller
         $subCatParam = 'category_id';
         if ($request->has('category_id') && $request['category_id']) {
             $selectedCategory = Category::find($request['category_id']);
-            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCategories = $selectedCategory ? $selectedCategory->childes()
+                ->whereHas('subCategoryProduct', function ($query) use ($productAddedBy, $productUserID) {
+                    $query->active()
+                        ->when($productAddedBy === 'admin', function ($q) {
+                            return $q->where('added_by', 'admin');
+                        })
+                        ->when($productAddedBy === 'seller', function ($q) use ($productUserID) {
+                            return $q->where('added_by', 'seller')->where('user_id', $productUserID);
+                        });
+                })
+                ->orderBy('priority')->get() : collect();
             $subCatParam = 'sub_category_id';
         } elseif ($request->has('sub_category_id') && $request['sub_category_id']) {
             $selectedCategory = Category::find($request['sub_category_id']);
-            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCategories = $selectedCategory ? $selectedCategory->childes()
+                ->whereHas('subSubCategoryProduct', function ($query) use ($productAddedBy, $productUserID) {
+                    $query->active()
+                        ->when($productAddedBy === 'admin', function ($q) {
+                            return $q->where('added_by', 'admin');
+                        })
+                        ->when($productAddedBy === 'seller', function ($q) use ($productUserID) {
+                            return $q->where('added_by', 'seller')->where('user_id', $productUserID);
+                        });
+                })
+                ->orderBy('priority')->get() : collect();
             $subCatParam = 'sub_sub_category_id';
         } elseif ($request->has('sub_sub_category_id') && $request['sub_sub_category_id']) {
             // Leaf level — show products, not categories
             $subCategories = collect();
         } else {
-            // No category selected — show the store's top-level categories as cards
-            $subCategories = $categories;
+            // No category selected — show vendor products directly; categories remain in the sidebar
+            $subCategories = collect();
         }
 
         return view(VIEW_FILE_NAMES['shop_view_page'], [
@@ -149,7 +169,7 @@ class ShopViewController extends Controller
         $shopId = $shop['author_type'] == 'admin' ? 0 : $shop['id'];
         $shopAllProducts = ProductManager::getAllProductsData($request, $productUserID, $productAddedBy);
         $productListData = ProductManager::getProductListData($request, $productUserID, $productAddedBy);
-        $categories = self::getShopCategoriesList(products: $shopAllProducts);
+        $categories = self::getShopCategoriesList(products: $shopAllProducts, productAddedBy: $productAddedBy, productUserID: $productUserID);
         $activeBrands = self::getShopBrandsList(request: $request, products: $shopAllProducts, sellerType: $productAddedBy, sellerId: $productUserID);
         $shopPublishingHouses = ProductManager::getPublishingHouseList(productIds: $shopAllProducts->pluck('id')->toArray(), vendorId: $productUserID);
         $digitalProductAuthors = ProductManager::getProductAuthorList(productIds: $shopAllProducts->pluck('id')->toArray(), vendorId: $productUserID);
@@ -255,18 +275,38 @@ class ShopViewController extends Controller
         $subCatParam = 'category_id';
         if ($request->has('category_id') && $request['category_id']) {
             $selectedCategory = Category::find($request['category_id']);
-            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCategories = $selectedCategory ? $selectedCategory->childes()
+                ->whereHas('subCategoryProduct', function ($query) use ($productAddedBy, $productUserID) {
+                    $query->active()
+                        ->when($productAddedBy === 'admin', function ($q) {
+                            return $q->where('added_by', 'admin');
+                        })
+                        ->when($productAddedBy === 'seller', function ($q) use ($productUserID) {
+                            return $q->where('added_by', 'seller')->where('user_id', $productUserID);
+                        });
+                })
+                ->orderBy('priority')->get() : collect();
             $subCatParam = 'sub_category_id';
         } elseif ($request->has('sub_category_id') && $request['sub_category_id']) {
             $selectedCategory = Category::find($request['sub_category_id']);
-            $subCategories = $selectedCategory ? $selectedCategory->childes()->orderBy('priority')->get() : collect();
+            $subCategories = $selectedCategory ? $selectedCategory->childes()
+                ->whereHas('subSubCategoryProduct', function ($query) use ($productAddedBy, $productUserID) {
+                    $query->active()
+                        ->when($productAddedBy === 'admin', function ($q) {
+                            return $q->where('added_by', 'admin');
+                        })
+                        ->when($productAddedBy === 'seller', function ($q) use ($productUserID) {
+                            return $q->where('added_by', 'seller')->where('user_id', $productUserID);
+                        });
+                })
+                ->orderBy('priority')->get() : collect();
             $subCatParam = 'sub_sub_category_id';
         } elseif ($request->has('sub_sub_category_id') && $request['sub_sub_category_id']) {
             // Leaf level — show products, not categories
             $subCategories = collect();
         } else {
-            // No category selected — show the store's top-level categories as cards
-            $subCategories = $categories;
+            // No category selected — show vendor products directly; categories remain in the sidebar
+            $subCategories = collect();
         }
 
         if ($request->ajax()) {
@@ -424,36 +464,50 @@ class ShopViewController extends Controller
                 });
             }])
             ->with(['childes' => function ($query) use ($id) {
-                $query->with(['childes' => function ($query) use ($id) {
-                    return $query->withCount(['subSubCategoryProduct' => function ($query) use ($id) {
-                        return $query->when($id == 0, function ($query) {
-                            return $query->where(['added_by' => 'admin', 'status' => '1']);
-                        })->when($id != 0, function ($query) use ($id) {
-                            return $query->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
-                        })->when(request('offer_type') == 'clearance_sale', function ($query) {
-                            return $query->whereHas('clearanceSale', function ($query) {
-                                return $query->active();
+                $query->where('position', 1)
+                    ->whereHas('subCategoryProduct', function ($productQuery) use ($id) {
+                        $productQuery->active()
+                            ->when($id == 0, function ($subQuery) {
+                                return $subQuery->where(['added_by' => 'admin', 'status' => '1']);
+                            })
+                            ->when($id != 0, function ($subQuery) use ($id) {
+                                return $subQuery->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
                             });
-                        });
-                    }])->where('position', 2);
-                }])
+                    })
+                    ->with(['childes' => function ($query) use ($id) {
+                        $query->where('position', 2)
+                            ->whereHas('subSubCategoryProduct', function ($productQuery) use ($id) {
+                                $productQuery->active()
+                                    ->when($id == 0, function ($subQuery) {
+                                        return $subQuery->where(['added_by' => 'admin', 'status' => '1']);
+                                    })
+                                    ->when($id != 0, function ($subQuery) use ($id) {
+                                        return $subQuery->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
+                                    });
+                            })
+                            ->withCount(['subSubCategoryProduct' => function ($query) use ($id) {
+                                return $query->when($id == 0, function ($subQuery) {
+                                    return $subQuery->where(['added_by' => 'admin', 'status' => '1']);
+                                })->when($id != 0, function ($subQuery) use ($id) {
+                                    return $subQuery->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
+                                })->when(request('offer_type') == 'clearance_sale', function ($subQuery) {
+                                    return $subQuery->whereHas('clearanceSale', function ($clearanceQuery) {
+                                        return $clearanceQuery->active();
+                                    });
+                                });
+                            }]);
+                    }])
                     ->withCount(['subCategoryProduct' => function ($query) use ($id) {
-                        return $query->when($id == 0, function ($query) {
-                            return $query->where(['added_by' => 'admin', 'status' => '1']);
-                        })->when($id != 0, function ($query) use ($id) {
-                            return $query->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
-                        })->when(request('offer_type') == 'clearance_sale', function ($query) {
-                            return $query->whereHas('clearanceSale', function ($query) {
-                                return $query->active();
+                        return $query->when($id == 0, function ($subQuery) {
+                            return $subQuery->where(['added_by' => 'admin', 'status' => '1']);
+                        })->when($id != 0, function ($subQuery) use ($id) {
+                            return $subQuery->where(['added_by' => 'seller', 'user_id' => $id, 'status' => '1']);
+                        })->when(request('offer_type') == 'clearance_sale', function ($subQuery) {
+                            return $subQuery->whereHas('clearanceSale', function ($clearanceQuery) {
+                                return $clearanceQuery->active();
                             });
                         });
-                    }])->where('position', 1);
-            }, 'childes.childes' => function ($query) {
-                return $query->when(request('offer_type') == 'clearance_sale', function ($query) {
-                    return $query->whereHas('clearanceSale', function ($query) {
-                        return $query->active();
-                    });
-                });
+                    }]);
             }])
             ->whereIn('id', $categoriesIdArray)
             ->where('position', 0)->get();
@@ -508,7 +562,7 @@ class ShopViewController extends Controller
         return true;
     }
 
-    public function getShopCategoriesList($products)
+    public function getShopCategoriesList($products, string $productAddedBy = 'admin', int $productUserID = 0)
     {
         $categoryInfoDecoded = [];
         foreach ($products->pluck('category_ids')->toArray() as $info) {
@@ -527,22 +581,72 @@ class ShopViewController extends Controller
         $categories = Category::with(['product' => function ($query) {
             return $query->active()->withCount(['orderDetails']);
         }])
-            ->with(['childes.childes' => function ($query) {
-                return $query->withCount(['product' => function ($query) {
-                    return $query->active()->when(request('offer_type') == 'clearance_sale', function ($query) {
+            ->with(['childes' => function ($query) use ($productAddedBy, $productUserID) {
+                $query->where('position', 1)
+                    ->whereHas('subCategoryProduct', function ($productQuery) use ($productAddedBy, $productUserID) {
+                        $productQuery->active()
+                            ->when($productAddedBy === 'admin', function ($subQuery) {
+                                return $subQuery->where('added_by', 'admin');
+                            })
+                            ->when($productAddedBy === 'seller', function ($subQuery) use ($productUserID) {
+                                return $subQuery->where('added_by', 'seller')->where('user_id', $productUserID);
+                            });
+                    })
+                    ->with(['childes' => function ($query) use ($productAddedBy, $productUserID) {
+                        $query->where('position', 2)
+                            ->whereHas('subSubCategoryProduct', function ($productQuery) use ($productAddedBy, $productUserID) {
+                                $productQuery->active()
+                                    ->when($productAddedBy === 'admin', function ($subQuery) {
+                                        return $subQuery->where('added_by', 'admin');
+                                    })
+                                    ->when($productAddedBy === 'seller', function ($subQuery) use ($productUserID) {
+                                        return $subQuery->where('added_by', 'seller')->where('user_id', $productUserID);
+                                    });
+                            })
+                            ->withCount(['product' => function ($query) use ($productAddedBy, $productUserID) {
+                                return $query->active()
+                                    ->when($productAddedBy === 'admin', function ($subQuery) {
+                                        return $subQuery->where('added_by', 'admin');
+                                    })
+                                    ->when($productAddedBy === 'seller', function ($subQuery) use ($productUserID) {
+                                        return $subQuery->where('added_by', 'seller')->where('user_id', $productUserID);
+                                    })
+                                    ->when(request('offer_type') == 'clearance_sale', function ($subQuery) {
+                                        return $subQuery->whereHas('clearanceSale', function ($clearanceQuery) {
+                                            return $clearanceQuery->active();
+                                        });
+                                    });
+                            }]);
+                    }])
+                    ->withCount(['product' => function ($query) use ($productAddedBy, $productUserID) {
+                        return $query->active()
+                            ->when($productAddedBy === 'admin', function ($subQuery) {
+                                return $subQuery->where('added_by', 'admin');
+                            })
+                            ->when($productAddedBy === 'seller', function ($subQuery) use ($productUserID) {
+                                return $subQuery->where('added_by', 'seller')->where('user_id', $productUserID);
+                            })
+                            ->when(request('offer_type') == 'clearance_sale', function ($subQuery) {
+                                return $subQuery->whereHas('clearanceSale', function ($clearanceQuery) {
+                                    return $clearanceQuery->active();
+                                });
+                            });
+                    }]);
+            }])->where('position', 0)
+            ->whereIn('id', $categoryIds)
+            ->withCount(['product' => function ($query) use ($productAddedBy, $productUserID) {
+                $query->active()
+                    ->when($productAddedBy === 'admin', function ($query) {
+                        return $query->where('added_by', 'admin');
+                    })
+                    ->when($productAddedBy === 'seller', function ($query) use ($productUserID) {
+                        return $query->where('added_by', 'seller')->where('user_id', $productUserID);
+                    })
+                    ->when(request('offer_type') == 'clearance_sale', function ($query) {
                         return $query->whereHas('clearanceSale', function ($query) {
                             return $query->active();
                         });
                     });
-                }]);
-            }])->where('position', 0)
-            ->whereIn('id', $categoryIds)
-            ->withCount(['product' => function ($query) {
-                $query->active()->when(request('offer_type') == 'clearance_sale', function ($query) {
-                    return $query->whereHas('clearanceSale', function ($query) {
-                        return $query->active();
-                    });
-                });
             }])
             ->get();
 

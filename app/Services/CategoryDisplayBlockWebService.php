@@ -392,10 +392,170 @@ class CategoryDisplayBlockWebService
     }
 
     /**
+     * @return array<int, string>
+     */
+    public function navigationBlockTypes(): array
+    {
+        return [
+            CategoryDisplayBlockType::SubCategories->value,
+            CategoryDisplayBlockType::SubCategoryProducts->value,
+            CategoryDisplayBlockType::SubSubCategories->value,
+            CategoryDisplayBlockType::SubSubCategoryProducts->value,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function terminalBlockTypes(): array
+    {
+        return [
+            CategoryDisplayBlockType::LocationPipeline->value,
+            CategoryDisplayBlockType::MixedProducts->value,
+            CategoryDisplayBlockType::VendorsList->value,
+        ];
+    }
+
+    public function isNavigationBlock(string $blockType): bool
+    {
+        return in_array($blockType, $this->navigationBlockTypes(), true);
+    }
+
+    public function isTerminalBlock(string $blockType): bool
+    {
+        return in_array($blockType, $this->terminalBlockTypes(), true);
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array<int, int>
+     */
+    public function getDataBlockIndices(Collection $blocks, Category $category, array $context = []): array
+    {
+        $indices = [];
+
+        foreach ($blocks as $index => $block) {
+            if ($this->blockHasData($block, $category, $context)) {
+                $indices[] = $index;
+            }
+        }
+
+        return $indices;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    public function hasNavigationBlockWithData(Collection $blocks, Category $category, array $context = []): bool
+    {
+        foreach ($blocks as $block) {
+            if ($this->isNavigationBlock($block->block_type)
+                && $this->blockHasData($block, $category, $context)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array{shouldExitToCategories: bool, stepIndex: int|null, dataBlockIndices: array<int, int>}
+     */
+    public function resolveInitialStep(Collection $blocks, Category $category, array $context = []): array
+    {
+        $dataBlockIndices = $this->getDataBlockIndices($blocks, $category, $context);
+
+        if ($dataBlockIndices === []) {
+            return [
+                'shouldExitToCategories' => true,
+                'stepIndex' => null,
+                'dataBlockIndices' => $dataBlockIndices,
+            ];
+        }
+
+        $hasNavigationData = $this->hasNavigationBlockWithData($blocks, $category, $context);
+        $firstIndex = $dataBlockIndices[0];
+        $firstBlock = $blocks[$firstIndex] ?? null;
+
+        if (! $hasNavigationData && $firstBlock && $this->isTerminalBlock($firstBlock->block_type)) {
+            return [
+                'shouldExitToCategories' => true,
+                'stepIndex' => null,
+                'dataBlockIndices' => $dataBlockIndices,
+            ];
+        }
+
+        return [
+            'shouldExitToCategories' => false,
+            'stepIndex' => $firstIndex,
+            'dataBlockIndices' => $dataBlockIndices,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    public function findPreviousDataStepIndex(Collection $blocks, Category $category, int $currentStep, array $context = []): ?int
+    {
+        for ($step = $currentStep - 1; $step >= 0; $step--) {
+            $block = $blocks[$step] ?? null;
+            if ($block && $this->blockHasData($block, $category, $context)) {
+                return $step;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    public function findNextDataStepIndex(Collection $blocks, Category $category, int $currentStep, array $context = []): ?int
+    {
+        for ($step = $currentStep + 1; $step < $blocks->count(); $step++) {
+            $block = $blocks[$step] ?? null;
+            if ($block && $this->blockHasData($block, $category, $context)) {
+                return $step;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array{parent_id?: int, parent_name?: string}
+     */
+    public function contextForStep(Collection $blocks, int $stepIndex, array $context = []): array
+    {
+        $block = $blocks[$stepIndex] ?? null;
+
+        if ($block === null) {
+            return $context;
+        }
+
+        if (in_array($block->block_type, [
+            CategoryDisplayBlockType::SubCategories->value,
+            CategoryDisplayBlockType::SubCategoryProducts->value,
+        ], true)) {
+            unset($context['parent_id'], $context['parent_name']);
+        }
+
+        return $context;
+    }
+
+    /**
      * Get the active block for a specific step, auto-skipping blocks that have no data.
      *
      * @param  array{parent_id?: int, parent_name?: string}  $context
-     * @return array{block: CategoryDisplayBlock|null, stepIndex: int, hasNext: bool, hasPrev: bool, totalSteps: int, title: string, data: array}
+     * @return array{block: CategoryDisplayBlock|null, stepIndex: int, hasNext: bool, hasPrev: bool, totalSteps: int, displayStepNumber: int, displayTotalSteps: int, dataBlockIndices: array<int, int>, previousStepIndex: int|null, nextStepIndex: int|null, backContext: array{parent_id?: int, parent_name?: string}, title: string, data: array}
      */
     public function getActiveBlockForStep(Category $category, int $step, Request $request, array $context = []): array
     {
@@ -408,6 +568,12 @@ class CategoryDisplayBlockWebService
                 'hasNext' => false,
                 'hasPrev' => false,
                 'totalSteps' => 0,
+                'displayStepNumber' => 0,
+                'displayTotalSteps' => 0,
+                'dataBlockIndices' => [],
+                'previousStepIndex' => null,
+                'nextStepIndex' => null,
+                'backContext' => [],
                 'title' => '',
                 'data' => [],
             ];
@@ -415,21 +581,56 @@ class CategoryDisplayBlockWebService
 
         $totalBlocks = $blocks->count();
         $step = max(0, min($step, $totalBlocks - 1));
+        $direction = $request->string('direction', 'next');
 
         $block = $blocks[$step] ?? null;
 
-        while ($block !== null && $step < $totalBlocks && ! $this->blockHasData($block, $category, $context)) {
-            $step++;
-            $block = $blocks[$step] ?? null;
+        if ($block !== null && ! $this->blockHasData($block, $category, $context)) {
+            if ($direction === 'back') {
+                $previousStep = $this->findPreviousDataStepIndex($blocks, $category, $step, $context);
+                if ($previousStep === null) {
+                    $block = null;
+                    $step = max(0, $step);
+                } else {
+                    $step = $previousStep;
+                    $block = $blocks[$step] ?? null;
+                    $context = $this->contextForStep($blocks, $step, $context);
+                }
+            } else {
+                $nextStep = $this->findNextDataStepIndex($blocks, $category, $step, $context);
+                if ($nextStep === null) {
+                    $block = null;
+                } else {
+                    $step = $nextStep;
+                    $block = $blocks[$step] ?? null;
+                }
+            }
         }
+
+        $dataBlockIndices = $this->getDataBlockIndices($blocks, $category, $context);
+        $displayStepNumber = $block === null ? 0 : (array_search($step, $dataBlockIndices, true) !== false
+            ? array_search($step, $dataBlockIndices, true) + 1
+            : $step + 1);
+        $displayTotalSteps = count($dataBlockIndices);
+        $previousStepIndex = $block === null ? null : $this->findPreviousDataStepIndex($blocks, $category, $step, $context);
+        $nextStepIndex = $block === null ? null : $this->findNextDataStepIndex($blocks, $category, $step, $context);
+        $backContext = $previousStepIndex !== null
+            ? $this->contextForStep($blocks, $previousStepIndex, $context)
+            : [];
 
         if ($block === null) {
             return [
                 'block' => null,
                 'stepIndex' => $step,
                 'hasNext' => false,
-                'hasPrev' => $step > 0,
+                'hasPrev' => $previousStepIndex !== null,
                 'totalSteps' => $totalBlocks,
+                'displayStepNumber' => $displayStepNumber,
+                'displayTotalSteps' => $displayTotalSteps,
+                'dataBlockIndices' => $dataBlockIndices,
+                'previousStepIndex' => $previousStepIndex,
+                'nextStepIndex' => $nextStepIndex,
+                'backContext' => $backContext,
                 'title' => '',
                 'data' => [],
             ];
@@ -438,9 +639,15 @@ class CategoryDisplayBlockWebService
         return [
             'block' => $block,
             'stepIndex' => $step,
-            'hasNext' => $step < $totalBlocks - 1,
-            'hasPrev' => $step > 0,
+            'hasNext' => $nextStepIndex !== null,
+            'hasPrev' => $previousStepIndex !== null,
             'totalSteps' => $totalBlocks,
+            'displayStepNumber' => $displayStepNumber,
+            'displayTotalSteps' => $displayTotalSteps,
+            'dataBlockIndices' => $dataBlockIndices,
+            'previousStepIndex' => $previousStepIndex,
+            'nextStepIndex' => $nextStepIndex,
+            'backContext' => $backContext,
             'title' => $this->blockTitle($block, $category),
             'data' => $this->resolveBlockViewData($block, $category, $request, $context),
         ];

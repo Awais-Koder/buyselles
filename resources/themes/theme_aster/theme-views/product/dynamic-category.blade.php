@@ -30,29 +30,34 @@
                 </div>
 
                 @php
-                    $contextParams = [];
+                    $backContextParams = $backContext ?? [];
+                    $backContextQuery = !empty($backContextParams) ? '&'.http_build_query($backContextParams) : '';
+                    $prevUrl = ($previousStepIndex ?? null) !== null
+                        ? url()->current().'?step='.$previousStepIndex.$backContextQuery.'&direction=back'
+                        : route('categories');
+
+                    $nextContextParams = [];
                     if (isset($context['parent_id'])) {
-                        $contextParams['parent_id'] = $context['parent_id'];
+                        $nextContextParams['parent_id'] = $context['parent_id'];
                     }
                     if (isset($context['parent_name'])) {
-                        $contextParams['parent_name'] = $context['parent_name'];
+                        $nextContextParams['parent_name'] = $context['parent_name'];
                     }
-                    $contextQuery = !empty($contextParams) ? '&'.http_build_query($contextParams) : '';
-                    $prevUrl = url()->current().'?step='.max(0, $currentStepIndex - 1).$contextQuery;
-                    $nextUrl = url()->current().'?step='.min($totalSteps - 1, $currentStepIndex + 1).$contextQuery;
+                    $nextContextQuery = !empty($nextContextParams) ? '&'.http_build_query($nextContextParams) : '';
+                    $nextUrl = ($nextStepIndex ?? null) !== null
+                        ? url()->current().'?step='.$nextStepIndex.$nextContextQuery.'&direction=next'
+                        : null;
                 @endphp
 
-                @if ($hasPrev || $hasNext)
+                @if (! ($hasNoContent ?? false))
                     <div class="d-flex justify-content-between mb-3">
                         <div>
-                            @if ($hasPrev)
-                                <a href="{{ $prevUrl }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-arrow-left"></i> {{ translate('back') }}
-                                </a>
-                            @endif
+                            <a href="{{ $prevUrl }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-left"></i> {{ translate('back') }}
+                            </a>
                         </div>
                         <div>
-                            @if ($hasNext)
+                            @if ($hasNext && $nextUrl)
                                 <a href="{{ $nextUrl }}" class="btn btn-primary btn-sm">
                                     {{ translate('next') }} <i class="bi bi-arrow-right"></i>
                                 </a>
@@ -61,18 +66,24 @@
                     </div>
                 @endif
 
-                @if ($totalSteps > 1)
+                @if (! ($hasNoContent ?? false) && ($displayTotalSteps ?? 0) > 1)
                     <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-                        @for ($i = 0; $i < $totalSteps; $i++)
-                            <span class="badge {{ $i === $currentStepIndex ? 'bg-primary' : 'bg-secondary' }}"
+                        @foreach ($dataBlockIndices ?? [] as $index)
+                            <span class="badge {{ $index === $currentStepIndex ? 'bg-primary' : 'bg-secondary' }}"
                                   style="width: 24px; height: 6px; border-radius: 3px; display: inline-block;"></span>
-                        @endfor
-                        <small class="text-muted ms-2">{{ translate('step') }} {{ $currentStepIndex + 1 }} {{ translate('of') }} {{ $totalSteps }}</small>
+                        @endforeach
+                        <small class="text-muted ms-2">{{ translate('step') }} {{ $displayStepNumber ?? ($currentStepIndex + 1) }} {{ translate('of') }} {{ $displayTotalSteps ?? $totalSteps }}</small>
                     </div>
                 @endif
 
-                @if (! $currentBlock)
-                    <div class="text-center py-5 text-muted">{{ translate('no_content_configured_for_this_category') }}</div>
+                @if (($hasNoContent ?? false) || ! $currentBlock)
+                    <div class="text-center py-5 px-3">
+                        <div class="mb-3">
+                            <i class="bi bi-inbox" style="font-size: 3.5rem; color: var(--bs-secondary);"></i>
+                        </div>
+                        <h5 class="text-muted mb-2">{{ translate('no_content_configured_for_this_category') }}</h5>
+                        <p class="text-muted mb-0 fs-14">{{ translate('not_found_anything') }}</p>
+                    </div>
                 @else
                     @php
                         $blockPayloads = [

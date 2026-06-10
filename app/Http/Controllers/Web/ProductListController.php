@@ -242,9 +242,10 @@ class ProductListController extends Controller
         );
     }
 
-    protected function getDynamicCategoryView(Request $request, Category $category): View
+    protected function getDynamicCategoryView(Request $request, Category $category): View|RedirectResponse
     {
         $step = max(0, $request->integer('step', 0));
+        $direction = $request->string('direction', 'next');
         $context = [];
 
         if ($request->filled('parent_id')) {
@@ -254,7 +255,40 @@ class ProductListController extends Controller
             $context['parent_name'] = $request->string('parent_name');
         }
 
-        $stepData = $this->categoryDisplayBlockWebService->getActiveBlockForStep($category, $step, $request, $context);
+        $blocks = $this->categoryDisplayBlockWebService->getActiveBlocks($category->id);
+        $hasNoContent = $blocks->isEmpty();
+
+        if (! $hasNoContent && $step === 0 && $direction !== 'back' && ! isset($context['parent_id'])) {
+            $initialStep = $this->categoryDisplayBlockWebService->resolveInitialStep($blocks, $category, $context);
+
+            if ($initialStep['shouldExitToCategories']) {
+                $hasNoContent = true;
+            } else {
+                $step = $initialStep['stepIndex'] ?? 0;
+            }
+        }
+
+        $stepData = $hasNoContent
+            ? [
+                'block' => null,
+                'stepIndex' => 0,
+                'hasNext' => false,
+                'hasPrev' => false,
+                'totalSteps' => $blocks->count(),
+                'displayStepNumber' => 0,
+                'displayTotalSteps' => 0,
+                'dataBlockIndices' => [],
+                'previousStepIndex' => null,
+                'nextStepIndex' => null,
+                'backContext' => [],
+                'title' => '',
+                'data' => [],
+            ]
+            : $this->categoryDisplayBlockWebService->getActiveBlockForStep($category, $step, $request, $context);
+
+        if (! $hasNoContent && $stepData['block'] === null) {
+            $hasNoContent = true;
+        }
 
         $pageTitle = ucwords(str_replace(['-', '_'], ' ', $category['name']));
         if (! empty($context['parent_name'])) {
@@ -271,6 +305,13 @@ class ProductListController extends Controller
             'hasNext' => $stepData['hasNext'],
             'hasPrev' => $stepData['hasPrev'],
             'totalSteps' => $stepData['totalSteps'],
+            'displayStepNumber' => $stepData['displayStepNumber'],
+            'displayTotalSteps' => $stepData['displayTotalSteps'],
+            'dataBlockIndices' => $stepData['dataBlockIndices'],
+            'previousStepIndex' => $stepData['previousStepIndex'],
+            'nextStepIndex' => $stepData['nextStepIndex'],
+            'backContext' => $stepData['backContext'],
+            'hasNoContent' => $hasNoContent,
             'context' => $context,
             'breadcrumbs' => $breadcrumbs,
             'pageTitleContent' => $pageTitle,

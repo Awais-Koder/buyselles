@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RestAPI\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Shop;
+use App\Services\CategoryDisplayBlockWebService;
 use App\Utils\CategoryManager;
 use App\Utils\Helpers;
 use Illuminate\Database\Eloquent\Builder;
@@ -118,6 +119,49 @@ class CategoryController extends Controller
             'offset' => (int) $request['offset'],
             'products' => $productFinal,
         ], 200);
+    }
+
+    public function getGroupedProducts(Request $request, $id, CategoryDisplayBlockWebService $categoryDisplayBlockWebService): JsonResponse
+    {
+        $category = Category::query()->findOrFail($id);
+        $groupLevel = $request->string('group_level', 'sub_category');
+
+        if (! in_array($groupLevel, ['sub_category', 'sub_sub_category'], true)) {
+            return response()->json([
+                'errors' => [
+                    ['code' => 'group_level', 'message' => 'The group_level must be sub_category or sub_sub_category.'],
+                ],
+            ], 422);
+        }
+
+        $limit = max(1, min((int) ($request['limit'] ?? CategoryDisplayBlockWebService::PREVIEW_LIMIT), 50));
+
+        $context = [];
+        if ($request->filled('parent_id')) {
+            $context['parent_id'] = $request->integer('parent_id');
+        }
+
+        $groupedProducts = $groupLevel === 'sub_sub_category'
+            ? $categoryDisplayBlockWebService->getSubSubCategoryGroupedProducts($category, $request, $context, $limit)
+            : $categoryDisplayBlockWebService->getSubCategoryGroupedProducts($category, $request, $context, $limit);
+
+        $groups = [];
+        foreach ($groupedProducts as $groupedProduct) {
+            $products = Helpers::product_data_formatting($groupedProduct['products'], true);
+
+            $groups[] = [
+                'category_id' => $groupedProduct['category']->id,
+                'category_name' => $groupedProduct['category']->name,
+                'products' => $products,
+            ];
+        }
+
+        return response()->json([
+            'group_level' => $groupLevel,
+            'main_category_id' => (int) $category->id,
+            'parent_id' => $context['parent_id'] ?? null,
+            'groups' => $groups,
+        ]);
     }
 
     public function find_what_you_need(): JsonResponse

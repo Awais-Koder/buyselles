@@ -124,7 +124,7 @@ class CategoryController extends Controller
     public function getGroupedProducts(Request $request, $id, CategoryDisplayBlockWebService $categoryDisplayBlockWebService): JsonResponse
     {
         $category = Category::query()->findOrFail($id);
-        $groupLevel = $request->string('group_level', 'sub_category');
+        $groupLevel = (string) $request->input('group_level', 'sub_category');
 
         if (! in_array($groupLevel, ['sub_category', 'sub_sub_category'], true)) {
             return response()->json([

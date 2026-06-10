@@ -244,27 +244,58 @@ class ProductListController extends Controller
 
     protected function getDynamicCategoryView(Request $request, Category $category): View
     {
-        $blocks = $this->categoryDisplayBlockWebService->getActiveBlocks($category->id);
-        $blockPayloads = [];
+        $step = max(0, $request->integer('step', 0));
+        $context = [];
 
-        foreach ($blocks as $block) {
-            $blockPayloads[$block->id] = [
-                'block' => $block,
-                'title' => $this->categoryDisplayBlockWebService->blockTitle($block, $category),
-                'data' => $this->categoryDisplayBlockWebService->resolveBlockViewData($block, $category, $request),
-            ];
+        if ($request->filled('parent_id')) {
+            $context['parent_id'] = $request->integer('parent_id');
+        }
+        if ($request->filled('parent_name')) {
+            $context['parent_name'] = $request->string('parent_name');
         }
 
+        $stepData = $this->categoryDisplayBlockWebService->getActiveBlockForStep($category, $step, $request, $context);
+
         $pageTitle = ucwords(str_replace(['-', '_'], ' ', $category['name']));
+        if (! empty($context['parent_name'])) {
+            $pageTitle = $category->name.' — '.$context['parent_name'];
+        }
+
+        $breadcrumbs = $this->buildStepBreadcrumbs($category, $context);
 
         return view(VIEW_FILE_NAMES['dynamic_category_page'], [
             'category' => $category,
-            'blocks' => $blocks,
-            'blockPayloads' => $blockPayloads,
+            'currentBlock' => $stepData['block'],
+            'currentStepData' => $stepData,
+            'currentStepIndex' => $stepData['stepIndex'],
+            'hasNext' => $stepData['hasNext'],
+            'hasPrev' => $stepData['hasPrev'],
+            'totalSteps' => $stepData['totalSteps'],
+            'context' => $context,
+            'breadcrumbs' => $breadcrumbs,
             'pageTitleContent' => $pageTitle,
             'robotsMetaContentData' => $category->seo,
             'themeKey' => theme_root_path(),
         ]);
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array<int, array{label: string, url: string|null}>
+     */
+    private function buildStepBreadcrumbs(Category $category, array $context): array
+    {
+        $breadcrumbs = [
+            ['label' => translate('Home'), 'url' => route('home')],
+            ['label' => translate('categories'), 'url' => route('categories')],
+            ['label' => $category->name, 'url' => null],
+        ];
+
+        if (! empty($context['parent_name'])) {
+            $breadcrumbs[] = ['label' => $context['parent_name'], 'url' => null];
+        }
+
+        return $breadcrumbs;
     }
 
     public function getProductsListPage(object|array $request, string $pageType = 'default', string $offerType = '', string $pageTitle = '', object|array|null $metaData = null)

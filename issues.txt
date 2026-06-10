@@ -1,18 +1,40 @@
-Problem # 1 - Vendor Loop / Incorrect Routing: When a user goes to a Main Category (e.g., Gift Cards) and clicks on a specific Vendor (e.g., Deelatcom), the system incorrectly routes them back to select a Main Category again. Clicking a vendor must open that specific vendor's shop page directly, displaying only their inventory.
+Currently, the system treats each block as a hardcoded static scenario displayed on a single page. We need to shift this to a Nested/Step-by-Step Routing System controlled entirely by our admin layout sequence. Please implement the following architecture:
 
 
 
-problem # 2 - Empty Sub-Categories Displayed:
-When inside a Vendor's shop, the system displays ALL Sub-Categories available on the entire platform. This is wrong. You must modify the query using whereHas('products') filtered by the vendor_id. Only display Sub-Categories that actually contain products belonging to this specific vendor. If the vendor has no products in "Xbox", the Xbox sub-category must not appear.
+1. Dynamic Step-by-Step Routing (From Within)
+The Logic: The sequence of the blocks in the admin panel must dictate the actual customer journey (Step 1 $\rightarrow$ Step 2 $\rightarrow$ Step 3).
 
 
 
-Empty Sub-Sub-Categories Displayed:
-The exact same issue occurs on the deeper level. When a user clicks a sub-category, the system shows all Sub-Sub-Categories (e.g., USA, UAE, KSA flags) even if the vendor has zero products listed under them. Filter the Sub-Sub-Categories query to only fetch rows that have active products by this specific vendor.
+How it should work: When a user enters a Main Category, they should ONLY see the first block assigned in the admin layout (e.g., Sub Category). The page should not stack all other blocks vertically underneath it.
 
 
 
-problem # 3 - "Products in Sub Category" Block Bug:
-When we enable the "Products in Sub Category" layout block from the admin panel, the website incorrectly pulls and displays every single product under the entire Main Category globally. This defeats the purpose of the block. It must be updated so that it strictly groups and fetches products based on their specific Sub-Category, rather than dumping all products of the main category together in one chaotic list.
+When the user clicks an item inside the first block, the system must dynamically open/route them to the next block in the sequence (e.g., Sub-Sub Category).
 
-These are fundamental multi-vendor database relation bugs (vendor_id checks are missing in your controllers/queries). Please update your Eloquent queries/SQL joins to fix this routing and filtering immediately.
+
+
+If a block has no data (e.g., no sub-sub categories available), it should gracefully show an empty state or move forward naturally without creating broken layouts or extra static components.
+
+
+
+2. Exception: Full Location Filtering Pipeline
+All blocks should lose their hardcoded default behaviors and follow the dynamic routing mentioned above, EXCEPT for the "Full Location Filtering Pipeline" block.
+
+
+
+This block should keep its designated technical pipeline and default behavior. When we activate and position it in the admin panel, it should execute its specific filtering logic completely as intended.
+
+
+
+3. Mobile App Categories Sidebar Removal
+As shown in the attached mobile screenshot (WhatsApp Image 2026-06-09 at 7.12.45 PM.jpeg), when clicking a main category, the app displays a vertical sidebar on the left showing all other Main Categories.
+
+
+
+Please completely remove this left sidebar layout from the app. The app view must be clean and dedicated strictly to the layout blocks of the active category, navigating step-by-step based on our custom admin order.
+
+
+
+This architecture gives us the exact custom control over the pipeline and user experience we need. Please apply this query logic and routing refactor so we can proceed with testing the finalized APK.

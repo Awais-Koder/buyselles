@@ -17,25 +17,78 @@
                         <h3 class="mb-2">{{ $category->name }}</h3>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="{{ route('home') }}">{{ translate('home') }}</a></li>
-                                <li class="breadcrumb-item"><a href="{{ route('categories') }}">{{ translate('categories') }}</a></li>
-                                <li class="breadcrumb-item active">{{ $category->name }}</li>
+                                @foreach ($breadcrumbs as $crumb)
+                                    @if ($crumb['url'])
+                                        <li class="breadcrumb-item"><a href="{{ $crumb['url'] }}">{{ $crumb['label'] }}</a></li>
+                                    @else
+                                        <li class="breadcrumb-item active">{{ $crumb['label'] }}</li>
+                                    @endif
+                                @endforeach
                             </ol>
                         </nav>
                     </div>
                 </div>
 
-                @if ($blocks->isEmpty())
+                @php
+                    $contextParams = [];
+                    if (isset($context['parent_id'])) {
+                        $contextParams['parent_id'] = $context['parent_id'];
+                    }
+                    if (isset($context['parent_name'])) {
+                        $contextParams['parent_name'] = $context['parent_name'];
+                    }
+                    $contextQuery = !empty($contextParams) ? '&'.http_build_query($contextParams) : '';
+                    $prevUrl = url()->current().'?step='.max(0, $currentStepIndex - 1).$contextQuery;
+                    $nextUrl = url()->current().'?step='.min($totalSteps - 1, $currentStepIndex + 1).$contextQuery;
+                @endphp
+
+                @if ($hasPrev || $hasNext)
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            @if ($hasPrev)
+                                <a href="{{ $prevUrl }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-arrow-left"></i> {{ translate('back') }}
+                                </a>
+                            @endif
+                        </div>
+                        <div>
+                            @if ($hasNext)
+                                <a href="{{ $nextUrl }}" class="btn btn-primary btn-sm">
+                                    {{ translate('next') }} <i class="bi bi-arrow-right"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @if ($totalSteps > 1)
+                    <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                        @for ($i = 0; $i < $totalSteps; $i++)
+                            <span class="badge {{ $i === $currentStepIndex ? 'bg-primary' : 'bg-secondary' }}"
+                                  style="width: 24px; height: 6px; border-radius: 3px; display: inline-block;"></span>
+                        @endfor
+                        <small class="text-muted ms-2">{{ translate('step') }} {{ $currentStepIndex + 1 }} {{ translate('of') }} {{ $totalSteps }}</small>
+                    </div>
+                @endif
+
+                @if (! $currentBlock)
                     <div class="text-center py-5 text-muted">{{ translate('no_content_configured_for_this_category') }}</div>
                 @else
-                    @foreach ($blocks as $block)
-                        @include('category-display-blocks._block', [
-                            'block' => $block,
-                            'category' => $category,
-                            'blockPayloads' => $blockPayloads,
-                            'themeKey' => $themeKey,
-                        ])
-                    @endforeach
+                    @php
+                        $blockPayloads = [
+                            $currentBlock->id => [
+                                'block' => $currentBlock,
+                                'title' => $currentStepData['title'],
+                                'data' => $currentStepData['data'],
+                            ],
+                        ];
+                    @endphp
+                    @include('category-display-blocks._block', [
+                        'block' => $currentBlock,
+                        'category' => $category,
+                        'blockPayloads' => $blockPayloads,
+                        'themeKey' => $themeKey,
+                    ])
                 @endif
             </div>
         </section>

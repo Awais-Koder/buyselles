@@ -10,7 +10,7 @@
 
         @switch($block->block_type)
             @case('sub_categories')
-                @include('category-display-blocks.blocks.sub-categories', $data)
+                @include('category-display-blocks.blocks.sub-categories', $data + ['currentStepIndex' => $currentStepIndex ?? 0])
                 @break
             @case('sub_category_products')
                 @include('category-display-blocks.blocks.category-products-grouped', $data + ['themeKey' => $themeKey, 'category' => $category])
@@ -19,7 +19,7 @@
                 @include('category-display-blocks.blocks.category-products-grouped', $data + ['themeKey' => $themeKey, 'category' => $category])
                 @break
             @case('sub_sub_categories')
-                @include('category-display-blocks.blocks.sub-sub-categories', $data)
+                @include('category-display-blocks.blocks.sub-sub-categories', $data + ['currentStepIndex' => $currentStepIndex ?? 0])
                 @break
             @case('mixed_products')
                 @include('category-display-blocks.blocks.mixed-products', [

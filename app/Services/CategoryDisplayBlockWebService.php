@@ -61,21 +61,6 @@ class CategoryDisplayBlockWebService
     }
 
     /**
-     * @return Collection<int, Category>
-     */
-    public function getSubCategoriesWithSubSub(Category $category): Collection
-    {
-        return Category::query()
-            ->where('parent_id', $category->id)
-            ->where('position', 1)
-            ->with(['childes' => function ($query) {
-                $query->where('position', 2)->orderBy('priority');
-            }])
-            ->orderBy('priority')
-            ->get();
-    }
-
-    /**
      * @return LengthAwarePaginator<int, Product>|Collection<int, Product>
      */
     public function getProductsForCategory(int $categoryId, Request $request, int $limit = self::PREVIEW_LIMIT): LengthAwarePaginator|Collection
@@ -347,50 +332,6 @@ class CategoryDisplayBlockWebService
     }
 
     /**
-     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
-     */
-    public function getSubCategoryGroupedProducts(Category $category, Request $request, int $limit = self::PREVIEW_LIMIT): array
-    {
-        $subCategories = $this->getSubCategories($category);
-        $groupedProducts = [];
-
-        foreach ($subCategories as $subCategory) {
-            $products = $this->getProductsForSubCategoryOnly($subCategory->id, $request, $limit);
-            if ($products->isNotEmpty()) {
-                $groupedProducts[] = [
-                    'category' => $subCategory,
-                    'products' => $products,
-                ];
-            }
-        }
-
-        return $groupedProducts;
-    }
-
-    /**
-     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
-     */
-    public function getSubSubCategoryGroupedProducts(Category $category, Request $request, int $limit = self::PREVIEW_LIMIT): array
-    {
-        $subCategories = $this->getSubCategoriesWithSubSub($category);
-        $groupedProducts = [];
-
-        foreach ($subCategories as $subCategory) {
-            foreach ($subCategory->childes as $subSubCategory) {
-                $products = $this->getProductsForSubSubCategoryOnly($subSubCategory->id, $request, $limit);
-                if ($products->isNotEmpty()) {
-                    $groupedProducts[] = [
-                        'category' => $subSubCategory,
-                        'products' => $products,
-                    ];
-                }
-            }
-        }
-
-        return $groupedProducts;
-    }
-
-    /**
      * @return LengthAwarePaginator<int, Product>|Collection<int, Product>
      */
     public function getProductsForSubCategoryOnly(int $subCategoryId, Request $request, int $limit = self::PREVIEW_LIMIT): LengthAwarePaginator|Collection
@@ -421,22 +362,23 @@ class CategoryDisplayBlockWebService
     }
 
     /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
      * @return array<string, mixed>
      */
-    public function resolveBlockViewData(CategoryDisplayBlock $block, Category $category, Request $request): array
+    public function resolveBlockViewData(CategoryDisplayBlock $block, Category $category, Request $request, array $context = []): array
     {
         return match ($block->block_type) {
             CategoryDisplayBlockType::SubCategories->value => [
                 'subCategories' => $this->getSubCategories($category),
             ],
             CategoryDisplayBlockType::SubCategoryProducts->value => [
-                'groupedProducts' => $this->getSubCategoryGroupedProducts($category, $request),
+                'groupedProducts' => $this->getSubCategoryGroupedProducts($category, $request, $context),
             ],
             CategoryDisplayBlockType::SubSubCategoryProducts->value => [
-                'groupedProducts' => $this->getSubSubCategoryGroupedProducts($category, $request),
+                'groupedProducts' => $this->getSubSubCategoryGroupedProducts($category, $request, $context),
             ],
             CategoryDisplayBlockType::SubSubCategories->value => [
-                'subCategoriesWithChildren' => $this->getSubCategoriesWithSubSub($category),
+                'subCategoriesWithChildren' => $this->getSubCategoriesWithSubSub($category, $context),
             ],
             CategoryDisplayBlockType::MixedProducts->value => [
                 'products' => $this->getMixedProducts($category->id, $request),
@@ -447,5 +389,203 @@ class CategoryDisplayBlockWebService
             CategoryDisplayBlockType::LocationPipeline->value => $this->getLocationPipelineData($category->id, $request),
             default => [],
         };
+    }
+
+    /**
+     * Get the active block for a specific step, auto-skipping blocks that have no data.
+     *
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array{block: CategoryDisplayBlock|null, stepIndex: int, hasNext: bool, hasPrev: bool, totalSteps: int, title: string, data: array}
+     */
+    public function getActiveBlockForStep(Category $category, int $step, Request $request, array $context = []): array
+    {
+        $blocks = $this->getActiveBlocks($category->id);
+
+        if ($blocks->isEmpty()) {
+            return [
+                'block' => null,
+                'stepIndex' => 0,
+                'hasNext' => false,
+                'hasPrev' => false,
+                'totalSteps' => 0,
+                'title' => '',
+                'data' => [],
+            ];
+        }
+
+        $totalBlocks = $blocks->count();
+        $step = max(0, min($step, $totalBlocks - 1));
+
+        $block = $blocks[$step] ?? null;
+
+        while ($block !== null && $step < $totalBlocks && ! $this->blockHasData($block, $category, $context)) {
+            $step++;
+            $block = $blocks[$step] ?? null;
+        }
+
+        if ($block === null) {
+            return [
+                'block' => null,
+                'stepIndex' => $step,
+                'hasNext' => false,
+                'hasPrev' => $step > 0,
+                'totalSteps' => $totalBlocks,
+                'title' => '',
+                'data' => [],
+            ];
+        }
+
+        return [
+            'block' => $block,
+            'stepIndex' => $step,
+            'hasNext' => $step < $totalBlocks - 1,
+            'hasPrev' => $step > 0,
+            'totalSteps' => $totalBlocks,
+            'title' => $this->blockTitle($block, $category),
+            'data' => $this->resolveBlockViewData($block, $category, $request, $context),
+        ];
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    public function blockHasData(CategoryDisplayBlock $block, Category $category, array $context = []): bool
+    {
+        if ($block->block_type === CategoryDisplayBlockType::LocationPipeline->value) {
+            return true;
+        }
+
+        if (in_array($block->block_type, [
+            CategoryDisplayBlockType::MixedProducts->value,
+            CategoryDisplayBlockType::VendorsList->value,
+        ], true)) {
+            return true;
+        }
+
+        return match ($block->block_type) {
+            CategoryDisplayBlockType::SubCategories->value => $this->getSubCategories($category)->isNotEmpty(),
+            CategoryDisplayBlockType::SubCategoryProducts->value => $this->getSubCategories($category)->isNotEmpty(),
+            CategoryDisplayBlockType::SubSubCategories->value => $this->subSubCategoriesExist($category, $context),
+            CategoryDisplayBlockType::SubSubCategoryProducts->value => $this->subSubCategoriesExist($category, $context),
+            default => true,
+        };
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    private function subSubCategoriesExist(Category $category, array $context): bool
+    {
+        $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
+
+        if ($parentId) {
+            $parentCategory = Category::query()->find($parentId);
+
+            return $parentCategory && $parentCategory->childes()->where('position', 2)->exists();
+        }
+
+        foreach ($this->getSubCategories($category) as $subCategory) {
+            if ($subCategory->childes()->where('position', 2)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return Collection<int, Category>
+     */
+    public function getSubCategoriesWithSubSub(Category $category, array $context = []): Collection
+    {
+        $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
+
+        $query = Category::query()
+            ->where('parent_id', $category->id)
+            ->where('position', 1)
+            ->with(['childes' => function ($query) {
+                $query->where('position', 2)->orderBy('priority');
+            }])
+            ->orderBy('priority');
+
+        if ($parentId) {
+            $query->whereKey($parentId);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
+     */
+    public function getSubCategoryGroupedProducts(Category $category, Request $request, array $context = [], int $limit = self::PREVIEW_LIMIT): array
+    {
+        $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
+
+        if ($parentId) {
+            $subCategory = Category::query()->find($parentId);
+            if (! $subCategory) {
+                return [];
+            }
+            $products = $this->getProductsForSubCategoryOnly($subCategory->id, $request, $limit);
+            if ($products->isNotEmpty()) {
+                return [['category' => $subCategory, 'products' => $products]];
+            }
+
+            return [];
+        }
+
+        $subCategories = $this->getSubCategories($category);
+        $groupedProducts = [];
+
+        foreach ($subCategories as $subCategory) {
+            $products = $this->getProductsForSubCategoryOnly($subCategory->id, $request, $limit);
+            if ($products->isNotEmpty()) {
+                $groupedProducts[] = [
+                    'category' => $subCategory,
+                    'products' => $products,
+                ];
+            }
+        }
+
+        return $groupedProducts;
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     * @return array<int, array{category: Category, products: LengthAwarePaginator|Collection}>
+     */
+    public function getSubSubCategoryGroupedProducts(Category $category, Request $request, array $context = [], int $limit = self::PREVIEW_LIMIT): array
+    {
+        $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
+
+        if ($parentId) {
+            $parentCategory = Category::query()->find($parentId);
+            if (! $parentCategory) {
+                return [];
+            }
+            $subCategories = [$parentCategory];
+        } else {
+            $subCategories = $this->getSubCategories($category);
+        }
+
+        $groupedProducts = [];
+
+        foreach ($subCategories as $subCategory) {
+            $subSubCategories = $subCategory->childes()->where('position', 2)->get();
+            foreach ($subSubCategories as $subSubCategory) {
+                $products = $this->getProductsForSubSubCategoryOnly($subSubCategory->id, $request, $limit);
+                if ($products->isNotEmpty()) {
+                    $groupedProducts[] = [
+                        'category' => $subSubCategory,
+                        'products' => $products,
+                    ];
+                }
+            }
+        }
+
+        return $groupedProducts;
     }
 }

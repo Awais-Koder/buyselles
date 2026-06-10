@@ -11359,4 +11359,5 @@ return [
     'all_block_types_have_been_added' => 'All block types have been added',
     'each_block_type_can_only_be_added_once_per_main_category' => 'Each block type can only be added once per main category',
     'this_image_will_appear_in_the_all_products_tab_in_the_mobile_app' => 'This image will appear in the all products tab in the mobile app',
+    'Step' => 'Step',
 ];

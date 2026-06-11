@@ -31,6 +31,9 @@
         @include('category-display-blocks._vendors-grid', [
             'vendors' => $vendors,
             'themeKey' => $themeKey,
+            'currentStepIndex' => $currentStepIndex ?? 0,
+            'nextStepIndex' => $nextStepIndex ?? null,
+            'context' => $context ?? [],
         ])
     </div>
 </div>

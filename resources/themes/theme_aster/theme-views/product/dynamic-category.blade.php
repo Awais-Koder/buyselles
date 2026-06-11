@@ -43,6 +43,12 @@
                     if (isset($context['parent_name'])) {
                         $nextContextParams['parent_name'] = $context['parent_name'];
                     }
+                    if (isset($context['vendor_id'])) {
+                        $nextContextParams['vendor_id'] = $context['vendor_id'];
+                    }
+                    if (isset($context['vendor_name'])) {
+                        $nextContextParams['vendor_name'] = $context['vendor_name'];
+                    }
                     $nextContextQuery = !empty($nextContextParams) ? '&'.http_build_query($nextContextParams) : '';
                     $nextUrl = ($nextStepIndex ?? null) !== null
                         ? url()->current().'?step='.$nextStepIndex.$nextContextQuery.'&direction=next'
@@ -99,6 +105,9 @@
                         'category' => $category,
                         'blockPayloads' => $blockPayloads,
                         'themeKey' => $themeKey,
+                        'currentStepIndex' => $currentStepIndex,
+                        'nextStepIndex' => $nextStepIndex,
+                        'context' => $context,
                     ])
                 @endif
             </div>

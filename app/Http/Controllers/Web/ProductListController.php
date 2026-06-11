@@ -254,11 +254,17 @@ class ProductListController extends Controller
         if ($request->filled('parent_name')) {
             $context['parent_name'] = $request->string('parent_name');
         }
+        if ($request->filled('vendor_id')) {
+            $context['vendor_id'] = $request->integer('vendor_id');
+        }
+        if ($request->filled('vendor_name')) {
+            $context['vendor_name'] = $request->string('vendor_name');
+        }
 
         $blocks = $this->categoryDisplayBlockWebService->getActiveBlocks($category->id);
         $hasNoContent = $blocks->isEmpty();
 
-        if (! $hasNoContent && $step === 0 && $direction !== 'back' && ! isset($context['parent_id'])) {
+        if (! $hasNoContent && $step === 0 && $direction !== 'back' && ! isset($context['parent_id']) && ! isset($context['vendor_id'])) {
             $initialStep = $this->categoryDisplayBlockWebService->resolveInitialStep($blocks, $category, $context);
 
             if ($initialStep['shouldExitToCategories']) {
@@ -291,7 +297,9 @@ class ProductListController extends Controller
         }
 
         $pageTitle = ucwords(str_replace(['-', '_'], ' ', $category['name']));
-        if (! empty($context['parent_name'])) {
+        if (! empty($context['vendor_name'])) {
+            $pageTitle = $category->name.' — '.$context['vendor_name'];
+        } elseif (! empty($context['parent_name'])) {
             $pageTitle = $category->name.' — '.$context['parent_name'];
         }
 
@@ -331,6 +339,10 @@ class ProductListController extends Controller
             ['label' => translate('categories'), 'url' => route('categories')],
             ['label' => $category->name, 'url' => null],
         ];
+
+        if (! empty($context['vendor_name'])) {
+            $breadcrumbs[] = ['label' => $context['vendor_name'], 'url' => null];
+        }
 
         if (! empty($context['parent_name'])) {
             $breadcrumbs[] = ['label' => $context['parent_name'], 'url' => null];

@@ -1,13 +1,24 @@
 @php
     $themeKey = $themeKey ?? theme_root_path();
+    $nextStep = $nextStepIndex ?? (($currentStepIndex ?? 0) + 1);
 @endphp
 
 @if ($vendors->count() > 0)
     <div class="row mx-n2">
         @foreach ($vendors as $vendorItem)
+            @php
+                $vendorParams = array_filter([
+                    'step' => $nextStep,
+                    'vendor_id' => $vendorItem->id,
+                    'vendor_name' => $vendorItem->shop?->name ?? '',
+                    'parent_id' => $context['parent_id'] ?? null,
+                    'parent_name' => $context['parent_name'] ?? null,
+                ], fn ($value) => $value !== null && $value !== '');
+                $vendorUrl = url()->current().'?'.http_build_query($vendorParams);
+            @endphp
             <div class="col-lg-4 col-md-6 col-sm-12 px-2 pb-4 text-center">
                 @if ($themeKey === 'theme_aster')
-                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug]) }}"
+                    <a href="{{ $vendorUrl }}"
                        class="store-item d-flex flex-column text-center">
                         <img class="rounded-circle mb-2 mx-auto" width="72" height="72"
                              src="{{ getStorageImages(path: $vendorItem->shop?->image_full_url ?? $vendorItem->image_full_url, type: 'shop') }}"
@@ -16,7 +27,7 @@
                         <small class="text-muted">{{ number_format($vendorItem['average_rating'] ?? 0, 1) }} {{ translate('rating') }}</small>
                     </a>
                 @else
-                    <a href="{{ route('vendor-shop', ['slug' => $vendorItem->shop?->slug]) }}"
+                    <a href="{{ $vendorUrl }}"
                        class="others-store-card text-capitalize w-100">
                         <div class="overflow-hidden other-store-banner">
                             <img class="w-100 h-100 object-cover" alt=""

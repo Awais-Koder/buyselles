@@ -40,6 +40,10 @@ class CategoryManager
             filterBy: $request['filter_by'] ?? null,
         );
 
+        $products->when($request->filled('vendor_id'), function (Builder $query) use ($request) {
+            self::applyVendorProductScope($query, 'seller', (int) $request['vendor_id']);
+        });
+
         if (($request['filter_by'] ?? null) === 'mixed_all') {
             self::applyShopLocationFilter($products, $request);
         }

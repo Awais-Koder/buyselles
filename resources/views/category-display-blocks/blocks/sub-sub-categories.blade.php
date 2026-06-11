@@ -1,5 +1,6 @@
 @php
     $nextStep = ($currentStepIndex ?? 0) + 1;
+    $stepContext = $context ?? [];
     $hasSubSubCategories = false;
     if (($subCategoriesWithChildren ?? collect())->isNotEmpty()) {
         foreach ($subCategoriesWithChildren as $subCategory) {
@@ -18,8 +19,17 @@
                 <h6 class="fw-semibold mb-2">{{ $subCategory->name }}</h6>
                 <div class="row">
                     @foreach ($subCategory->childes as $subSub)
+                        @php
+                            $subSubParams = array_filter([
+                                'step' => $nextStep,
+                                'parent_id' => $subSub->id,
+                                'parent_name' => $subSub->name,
+                                'vendor_id' => $stepContext['vendor_id'] ?? null,
+                                'vendor_name' => $stepContext['vendor_name'] ?? null,
+                            ], fn ($value) => $value !== null && $value !== '');
+                        @endphp
                         <div class="col-lg-3 col-md-4 col-sm-6 col-6 p-2">
-                            <a href="{{ url()->current() }}?step={{ $nextStep }}&parent_id={{ $subSub->id }}&parent_name={{ urlencode($subSub->name) }}"
+                            <a href="{{ url()->current() }}?{{ http_build_query($subSubParams) }}"
                                class="card text-center text-decoration-none border rounded-3 overflow-hidden h-100">
                                 <div style="aspect-ratio: 1/1; overflow: hidden;">
                                     <img src="{{ getStorageImages(path: $subSub->icon_full_url, type: 'category') }}"

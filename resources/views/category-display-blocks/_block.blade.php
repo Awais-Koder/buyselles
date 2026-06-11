@@ -10,7 +10,10 @@
 
         @switch($block->block_type)
             @case('sub_categories')
-                @include('category-display-blocks.blocks.sub-categories', $data + ['currentStepIndex' => $currentStepIndex ?? 0])
+                @include('category-display-blocks.blocks.sub-categories', $data + [
+                    'currentStepIndex' => $currentStepIndex ?? 0,
+                    'context' => $context ?? [],
+                ])
                 @break
             @case('sub_category_products')
                 @include('category-display-blocks.blocks.category-products-grouped', $data + ['themeKey' => $themeKey, 'category' => $category])
@@ -19,7 +22,10 @@
                 @include('category-display-blocks.blocks.category-products-grouped', $data + ['themeKey' => $themeKey, 'category' => $category])
                 @break
             @case('sub_sub_categories')
-                @include('category-display-blocks.blocks.sub-sub-categories', $data + ['currentStepIndex' => $currentStepIndex ?? 0])
+                @include('category-display-blocks.blocks.sub-sub-categories', $data + [
+                    'currentStepIndex' => $currentStepIndex ?? 0,
+                    'context' => $context ?? [],
+                ])
                 @break
             @case('mixed_products')
                 @include('category-display-blocks.blocks.mixed-products', [
@@ -35,6 +41,9 @@
                     'category' => $category,
                     'data' => $data,
                     'themeKey' => $themeKey,
+                    'currentStepIndex' => $currentStepIndex ?? 0,
+                    'nextStepIndex' => $nextStepIndex ?? null,
+                    'context' => $context ?? [],
                 ])
                 @break
             @case('location_pipeline')

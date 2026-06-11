@@ -468,17 +468,7 @@ class CategoryDisplayBlockWebService
             ];
         }
 
-        $hasNavigationData = $this->hasNavigationBlockWithData($blocks, $category, $context);
         $firstIndex = $dataBlockIndices[0];
-        $firstBlock = $blocks[$firstIndex] ?? null;
-
-        if (! $hasNavigationData && $firstBlock && $this->isTerminalBlock($firstBlock->block_type)) {
-            return [
-                'shouldExitToCategories' => true,
-                'stepIndex' => null,
-                'dataBlockIndices' => $dataBlockIndices,
-            ];
-        }
 
         return [
             'shouldExitToCategories' => false,

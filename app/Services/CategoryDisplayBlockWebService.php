@@ -27,9 +27,188 @@ class CategoryDisplayBlockWebService
             ->exists();
     }
 
+    public function validateBlockStatusChange(CategoryDisplayBlock $block, bool $willBeActive): ?string
+    {
+        $blocks = $this->blocksForCategory($block->category_id);
+
+        return $this->validateActiveVendorsListLayout(
+            $this->simulateBlockStatusChange($blocks, $block->id, $willBeActive)
+        );
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     * @return Collection<int, CategoryDisplayBlock>
+     */
+    private function simulateBlockStatusChange(Collection $blocks, int $blockId, bool $willBeActive): Collection
+    {
+        return $blocks->map(function (CategoryDisplayBlock $block) use ($blockId, $willBeActive): CategoryDisplayBlock {
+            if ($block->id !== $blockId) {
+                return $block;
+            }
+
+            $simulated = clone $block;
+            $simulated->is_active = $willBeActive;
+
+            return $simulated;
+        });
+    }
+
+    /**
+     * @return Collection<int, CategoryDisplayBlock>
+     */
+    private function blocksForCategory(int $categoryId): Collection
+    {
+        return CategoryDisplayBlock::query()
+            ->where('category_id', $categoryId)
+            ->orderBy('position')
+            ->get();
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    public function validateActiveVendorsListLayout(Collection $blocks): ?string
+    {
+        $orderedBlocks = $blocks->sortBy('position')->values();
+        $activeBlocks = $orderedBlocks->filter(fn (CategoryDisplayBlock $block): bool => $block->is_active)->values();
+
+        $vendorsBlock = $activeBlocks->first(
+            fn (CategoryDisplayBlock $block): bool => $block->block_type === CategoryDisplayBlockType::VendorsList->value
+        );
+
+        if ($vendorsBlock === null) {
+            return null;
+        }
+
+        $orderError = $this->validateVendorsListBlockOrder($orderedBlocks)
+            ?? $this->validateActiveCompanionBlockOrder($orderedBlocks);
+
+        if ($orderError !== null) {
+            return $orderError;
+        }
+
+        if (! $this->activeBlockExists($activeBlocks, CategoryDisplayBlockType::SubCategories)) {
+            return translate('vendors_list_requires_sub_categories_block_after_it');
+        }
+
+        $hasSubCategoryProducts = $this->activeBlockExists($activeBlocks, CategoryDisplayBlockType::SubCategoryProducts);
+        $hasSubSubCategories = $this->activeBlockExists($activeBlocks, CategoryDisplayBlockType::SubSubCategories);
+        $hasSubSubCategoryProducts = $this->activeBlockExists($activeBlocks, CategoryDisplayBlockType::SubSubCategoryProducts);
+        $hasSubSubPath = $hasSubSubCategories && $hasSubSubCategoryProducts;
+
+        if (! $hasSubCategoryProducts && ! $hasSubSubPath) {
+            return translate('vendors_list_requires_products_in_sub_category_or_sub_sub_category_path');
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    public function validateVendorsListBlockOrder(Collection $blocks): ?string
+    {
+        $orderedBlocks = $blocks->sortBy('position')->values();
+
+        $hasActiveVendorsList = $orderedBlocks->contains(
+            fn (CategoryDisplayBlock $block): bool => $block->block_type === CategoryDisplayBlockType::VendorsList->value
+                && $block->is_active
+        );
+
+        if (! $hasActiveVendorsList) {
+            return null;
+        }
+
+        $firstBlock = $orderedBlocks->first();
+
+        if ($firstBlock === null || $firstBlock->block_type !== CategoryDisplayBlockType::VendorsList->value) {
+            return translate('vendors_list_must_be_the_first_block_in_the_layout');
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    private function validateActiveCompanionBlockOrder(Collection $blocks): ?string
+    {
+        $orderedBlocks = $blocks->sortBy('position')->values();
+        $activePositions = [];
+
+        foreach ($orderedBlocks as $position => $block) {
+            if ($block->is_active) {
+                $activePositions[$block->block_type] = $position;
+            }
+        }
+
+        if (! isset($activePositions[CategoryDisplayBlockType::VendorsList->value])) {
+            return null;
+        }
+
+        $vendorPosition = $activePositions[CategoryDisplayBlockType::VendorsList->value];
+
+        if (isset($activePositions[CategoryDisplayBlockType::SubCategories->value])
+            && $activePositions[CategoryDisplayBlockType::SubCategories->value] <= $vendorPosition) {
+            return translate('sub_categories_must_come_after_vendors_list');
+        }
+
+        if (isset($activePositions[CategoryDisplayBlockType::SubCategoryProducts->value])) {
+            $subCategoryPosition = $activePositions[CategoryDisplayBlockType::SubCategories->value] ?? null;
+
+            if ($subCategoryPosition === null
+                || $activePositions[CategoryDisplayBlockType::SubCategoryProducts->value] <= $subCategoryPosition) {
+                return translate('products_in_sub_category_must_come_after_sub_categories');
+            }
+        }
+
+        if (isset($activePositions[CategoryDisplayBlockType::SubSubCategories->value])) {
+            $subCategoryPosition = $activePositions[CategoryDisplayBlockType::SubCategories->value] ?? null;
+
+            if ($subCategoryPosition === null
+                || $activePositions[CategoryDisplayBlockType::SubSubCategories->value] <= $subCategoryPosition) {
+                return translate('sub_sub_categories_must_come_after_sub_categories');
+            }
+        }
+
+        if (isset($activePositions[CategoryDisplayBlockType::SubSubCategoryProducts->value])) {
+            $subSubCategoryPosition = $activePositions[CategoryDisplayBlockType::SubSubCategories->value] ?? null;
+
+            if ($subSubCategoryPosition === null
+                || $activePositions[CategoryDisplayBlockType::SubSubCategoryProducts->value] <= $subSubCategoryPosition) {
+                return translate('products_in_sub_sub_category_must_come_after_sub_sub_categories');
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $activeBlocks
+     */
+    private function activeBlockExists(Collection $activeBlocks, CategoryDisplayBlockType $type): bool
+    {
+        return $activeBlocks->contains(
+            fn (CategoryDisplayBlock $block): bool => $block->block_type === $type->value
+        );
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $activeBlocks
+     */
+    private function activeBlockIndex(Collection $activeBlocks, CategoryDisplayBlockType $type): ?int
+    {
+        $index = $activeBlocks->search(
+            fn (CategoryDisplayBlock $block): bool => $block->block_type === $type->value
+        );
+
+        return $index === false ? null : (int) $index;
+    }
+
     public function findVendorListBlockIndex(int $categoryId): ?int
     {
-        $blocks = $this->getActiveBlocks($categoryId);
+        $blocks = $this->getActiveBlocks($categoryId)->values();
 
         foreach ($blocks as $index => $block) {
             if ($block->block_type === CategoryDisplayBlockType::VendorsList->value) {
@@ -40,63 +219,95 @@ class CategoryDisplayBlockWebService
         return null;
     }
 
-    public function hasFollowingBlockAfterVendor(int $categoryId): bool
-    {
-        $vendorStepIndex = $this->findVendorListBlockIndex($categoryId);
-
-        if ($vendorStepIndex === null) {
-            return false;
-        }
-
-        return ($vendorStepIndex + 1) < $this->getActiveBlocks($categoryId)->count();
-    }
-
     public function resolveStepAfterVendorSelection(int $categoryId): int
     {
+        $blocks = $this->getActiveBlocks($categoryId)->values();
         $vendorStepIndex = $this->findVendorListBlockIndex($categoryId);
 
         if ($vendorStepIndex === null) {
             return 0;
         }
 
-        $blocks = $this->getActiveBlocks($categoryId);
         $nextStep = $vendorStepIndex + 1;
 
-        return min($nextStep, max(0, $blocks->count() - 1));
+        if ($nextStep < $blocks->count()) {
+            return $nextStep;
+        }
+
+        return $vendorStepIndex;
     }
 
     public function resolveStepAfterCategorySelection(int $categoryId, int $parentId): int
     {
-        $blocks = $this->getActiveBlocks($categoryId);
+        $blocks = $this->getActiveBlocks($categoryId)->values();
         $parentCategory = Category::query()->find($parentId);
 
-        if (! $parentCategory) {
+        if ($parentCategory === null) {
             return 0;
         }
 
-        $targetBlockType = match ((int) $parentCategory->position) {
-            0, 1 => CategoryDisplayBlockType::SubSubCategories->value,
-            2 => CategoryDisplayBlockType::SubSubCategoryProducts->value,
-            default => CategoryDisplayBlockType::SubCategoryProducts->value,
-        };
+        if ((int) $parentCategory->position === 2) {
+            return $this->findBlockIndexByType($blocks, CategoryDisplayBlockType::SubSubCategoryProducts)
+                ?? $this->findFirstCategoryProductBlockIndex($blocks)
+                ?? 0;
+        }
 
+        return $this->findNextCategoryStepAfterSubCategories($blocks);
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    private function findBlockIndexByType(Collection $blocks, CategoryDisplayBlockType $type): ?int
+    {
         foreach ($blocks as $index => $block) {
-            if ($block->block_type === $targetBlockType) {
-                return $index;
+            if ($block->block_type === $type->value) {
+                return (int) $index;
             }
         }
 
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    private function findFirstCategoryProductBlockIndex(Collection $blocks): ?int
+    {
         foreach ($blocks as $index => $block) {
             if (in_array($block->block_type, [
                 CategoryDisplayBlockType::SubCategoryProducts->value,
-                CategoryDisplayBlockType::SubSubCategoryProducts->value,
                 CategoryDisplayBlockType::SubSubCategories->value,
+                CategoryDisplayBlockType::SubSubCategoryProducts->value,
             ], true)) {
+                return (int) $index;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    private function findNextCategoryStepAfterSubCategories(Collection $blocks): int
+    {
+        $subCategoriesIndex = $this->findBlockIndexByType($blocks, CategoryDisplayBlockType::SubCategories);
+        $startIndex = $subCategoriesIndex !== null ? $subCategoriesIndex + 1 : 0;
+        $candidateTypes = [
+            CategoryDisplayBlockType::SubSubCategories->value,
+            CategoryDisplayBlockType::SubCategoryProducts->value,
+        ];
+
+        for ($index = $startIndex; $index < $blocks->count(); $index++) {
+            $block = $blocks[$index];
+
+            if (in_array($block->block_type, $candidateTypes, true)) {
                 return $index;
             }
         }
 
-        return min(1, max(0, $blocks->count() - 1));
+        return $this->findFirstCategoryProductBlockIndex($blocks) ?? min(1, max(0, $blocks->count() - 1));
     }
 
     /**
@@ -481,7 +692,6 @@ class CategoryDisplayBlockWebService
             ],
             CategoryDisplayBlockType::VendorsList->value => [
                 'vendors' => $this->getVendors($category->id, $request),
-                'canSelectVendor' => $this->hasFollowingBlockAfterVendor($category->id),
             ],
             CategoryDisplayBlockType::LocationPipeline->value => $this->getLocationPipelineData($category->id, $request),
             default => [],
@@ -763,7 +973,7 @@ class CategoryDisplayBlockWebService
 
         return match ($block->block_type) {
             CategoryDisplayBlockType::SubCategories->value => $this->getSubCategories($category, $context)->isNotEmpty(),
-            CategoryDisplayBlockType::SubCategoryProducts->value => $this->getSubCategories($category, $context)->isNotEmpty(),
+            CategoryDisplayBlockType::SubCategoryProducts->value => $this->getSubCategoryGroupedProducts($category, request(), $context, 1) !== [],
             CategoryDisplayBlockType::SubSubCategories->value => $this->subSubCategoriesExist($category, $context),
             CategoryDisplayBlockType::SubSubCategoryProducts->value => $this->subSubCategoryProductsHasData($category, $context),
             default => true,

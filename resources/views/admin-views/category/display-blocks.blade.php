@@ -27,6 +27,14 @@
             <span>{{ translate('drag_blocks_to_reorder_how_the_customer_app_and_web_render_this_main_category') }}</span>
         </div>
 
+        @if($blocks->contains(fn ($block) => $block->block_type === \App\Enums\CategoryDisplayBlockType::VendorsList->value))
+            <div class="bg-warning bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-2 align-items-start mb-3">
+                <i class="fi fi-sr-info text-warning mt-1"></i>
+                <span>{{ translate('vendors_list_layout_requirement_hint') }}</span>
+                <span class="d-block mt-1">{{ translate('drag_vendors_list_to_top_before_enabling_it') }}</span>
+            </div>
+        @endif
+
         <div class="row g-3">
             <div class="col-lg-8">
                 <div class="card">
@@ -82,6 +90,7 @@
                                                                type="checkbox"
                                                                id="block-status-{{ $block->id }}"
                                                                data-id="{{ $block->id }}"
+                                                               data-block-type="{{ $block->block_type }}"
                                                                {{ $block->is_active ? 'checked' : '' }}>
                                                         <span class="switcher_control"></span>
                                                     </label>
@@ -208,7 +217,11 @@
           data-category-id="{{ $category->id }}"
           data-reorder-url="{{ route('admin.category.display-blocks.reorder') }}"
           data-status-url="{{ route('admin.category.display-blocks.status') }}"
-          data-csrf="{{ csrf_token() }}"></span>
+          data-csrf="{{ csrf_token() }}"
+          data-status-updated-message="{{ translate('status_updated_successfully') }}"
+          data-status-failed-message="{{ translate('status_updated_failed') }}"
+          data-reorder-saved-message="{{ translate('block_order_updated_successfully') }}"
+          data-reorder-failed-message="{{ translate('failed_to_save_block_order') }}"></span>
 @endsection
 
 @push('script')

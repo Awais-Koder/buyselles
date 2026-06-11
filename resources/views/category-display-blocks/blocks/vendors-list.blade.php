@@ -32,7 +32,6 @@
             'vendors' => $vendors,
             'category' => $category,
             'themeKey' => $themeKey,
-            'canSelectVendor' => $data['canSelectVendor'] ?? true,
             'context' => $context ?? [],
         ])
     </div>

@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\CategoryDisplayBlockReorderRequest;
 use App\Http\Requests\Admin\CategoryDisplayBlockStoreRequest;
 use App\Models\Category;
 use App\Models\CategoryDisplayBlock;
+use App\Services\CategoryDisplayBlockWebService;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +19,10 @@ use Illuminate\Validation\Rule;
 
 class CategoryDisplayBlockController extends BaseController
 {
+    public function __construct(
+        private readonly CategoryDisplayBlockWebService $displayBlockWebService,
+    ) {}
+
     public function index(?Request $request, ?string $type = null): View|RedirectResponse
     {
         $request = $request ?? request();
@@ -93,7 +98,14 @@ class CategoryDisplayBlockController extends BaseController
         ]);
 
         $block = CategoryDisplayBlock::query()->findOrFail($request->integer('id'));
-        $block->update(['is_active' => $request->boolean('is_active')]);
+        $willBeActive = $request->boolean('is_active');
+        $validationError = $this->displayBlockWebService->validateBlockStatusChange($block, $willBeActive);
+
+        if ($validationError !== null) {
+            return response()->json(['message' => $validationError], 422);
+        }
+
+        $block->update(['is_active' => $willBeActive]);
 
         return response()->json(['message' => translate('status_updated_successfully')]);
     }

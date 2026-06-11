@@ -41,7 +41,6 @@ class CategoryDisplayBlockController extends Controller
                 'vendors' => $this->displayBlockService->getVendors($category->id, $request),
                 'category' => $category,
                 'themeKey' => theme_root_path(),
-                'canSelectVendor' => $this->displayBlockService->hasFollowingBlockAfterVendor($category->id),
                 'context' => $context,
             ])->render(),
         ]);

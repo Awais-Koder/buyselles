@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Review;
 use App\Models\Seller;
 use App\Utils\CategoryManager;
-use App\Utils\ProductManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -78,30 +77,42 @@ class CategoryDisplayBlockWebService
      */
     public function getMixedProducts(int $categoryId, Request $request, int $perPage = self::PREVIEW_LIMIT): LengthAwarePaginator
     {
-        $filterRequest = clone $request;
-        $filterRequest->merge([
-            'data_from' => 'category',
-            'category_id' => $categoryId,
-            'product_name' => $request->input('search', $request->input('product_name')),
-        ]);
+        $scopedRequest = clone $request;
+        $scopedRequest->replace(array_merge(
+            $request->except(['sub_category_id', 'sub_sub_category_id', 'parent_id', 'parent_name', 'data_from', 'category_id']),
+            [
+                'limit' => $perPage,
+                'offset' => max(1, $request->integer('page', $request->integer('offset', 1))),
+                'filter_by' => 'mixed_all',
+            ]
+        ));
 
-        $products = ProductManager::getProductListData(request: $filterRequest);
-
-        if ($products instanceof Builder) {
-            $this->applyShopLocationFilter($products, $request);
-
-            return $products
-                ->paginate($perPage)
-                ->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
+        if ($request->filled('search') || $request->filled('product_name')) {
+            $scopedRequest->merge([
+                'search' => $request->input('search', $request->input('product_name')),
+            ]);
         }
 
-        if (! $products instanceof Collection) {
-            $products = collect($products);
+        $products = CategoryManager::products($categoryId, $scopedRequest, $perPage);
+
+        if ($products instanceof LengthAwarePaginator) {
+            return $products->appends($request->only([
+                'search',
+                'product_name',
+                'country_id',
+                'city_id',
+                'area_id',
+                'location_country_id',
+                'location_city_id',
+                'location_area_id',
+                'page',
+                'offset',
+            ]));
         }
 
-        $products = $this->filterProductsCollectionByShopLocation($products, $request);
+        $collection = $products instanceof Collection ? $products : collect($products);
 
-        return $this->paginateProductCollection($products, $request, $perPage);
+        return $this->paginateProductCollection($collection, $request, $perPage);
     }
 
     /**
@@ -170,27 +181,7 @@ class CategoryDisplayBlockWebService
      */
     public function applyShopLocationFilter(Builder $query, Request $request): void
     {
-        if (! $request->hasAny(['country_id', 'city_id', 'area_id'])) {
-            return;
-        }
-
-        $query->where(function ($subQuery) use ($request) {
-            $subQuery->whereHas('shop', function ($shopQuery) use ($request) {
-                if ($request->filled('country_id')) {
-                    $shopQuery->where('store_country_id', $request->integer('country_id'));
-                }
-                if ($request->filled('city_id')) {
-                    $shopQuery->where('store_city_id', $request->integer('city_id'));
-                }
-                if ($request->filled('area_id')) {
-                    $shopQuery->where('store_area_id', $request->integer('area_id'));
-                }
-            })
-                ->orWhere('product_type', 'digital')
-                ->orWhereHas('category', function ($categoryQuery) {
-                    $categoryQuery->where('category_type', 'digital');
-                });
-        });
+        CategoryManager::applyShopLocationFilter($query, $request);
     }
 
     /**

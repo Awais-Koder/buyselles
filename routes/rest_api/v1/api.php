@@ -216,6 +216,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api_lang']], function () {
             Route::controller(CategoryController::class)->group(function () {
                 Route::get('/', 'get_categories');
                 Route::get('products/{category_id}/grouped', 'getGroupedProducts');
+                Route::get('products/{category_id}/mixed', 'getMixedProducts');
                 Route::get('products/{category_id}', 'get_products');
                 Route::get('/find-what-you-need', 'find_what_you_need');
                 Route::get('{id}/display-blocks', 'getDisplayBlocks');

@@ -40,6 +40,10 @@ class CategoryManager
             filterBy: $request['filter_by'] ?? null,
         );
 
+        if (($request['filter_by'] ?? null) === 'mixed_all') {
+            self::applyShopLocationFilter($products, $request);
+        }
+
         $products->when($request->has('search') && ! empty($request['search']), function ($query) use ($request) {
             $searchKey = $request['search'];
             $productsIDArray = [];
@@ -97,6 +101,7 @@ class CategoryManager
     public static function applyCategoryProductScope(Builder $query, int $categoryId, ?string $filterBy = null): Builder
     {
         return match ($filterBy) {
+            'mixed_all' => self::applyMainCategoryAllProductsScope($query, $categoryId),
             'sub_categories' => self::applyMainCategorySubCategoryProductsScope($query, $categoryId),
             'sub_sub_categories' => self::applyMainCategorySubSubCategoryProductsScope($query, $categoryId),
             'direct_sub_category' => $query
@@ -157,6 +162,67 @@ class CategoryManager
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    private static function applyMainCategoryAllProductsScope(Builder $query, int $mainCategoryId): Builder
+    {
+        $subCategoryIds = Category::query()
+            ->where('parent_id', $mainCategoryId)
+            ->where('position', 1)
+            ->pluck('id');
+
+        $subSubCategoryIds = Category::query()
+            ->whereIn('parent_id', $subCategoryIds)
+            ->where('position', 2)
+            ->pluck('id');
+
+        return $query->where(function (Builder $subQuery) use ($mainCategoryId, $subCategoryIds, $subSubCategoryIds) {
+            $subQuery->where('category_id', $mainCategoryId)
+                ->orWhere('category_ids', 'like', '%"'.$mainCategoryId.'"%');
+
+            if ($subCategoryIds->isNotEmpty()) {
+                $subQuery->orWhereIn('sub_category_id', $subCategoryIds);
+            }
+
+            if ($subSubCategoryIds->isNotEmpty()) {
+                $subQuery->orWhereIn('sub_sub_category_id', $subSubCategoryIds);
+            }
+        });
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    public static function applyShopLocationFilter(Builder $query, object|array $request): void
+    {
+        $countryId = $request['country_id'] ?? $request['location_country_id'] ?? null;
+        $cityId = $request['city_id'] ?? $request['location_city_id'] ?? null;
+        $areaId = $request['area_id'] ?? $request['location_area_id'] ?? null;
+
+        if (empty($countryId) && empty($cityId) && empty($areaId)) {
+            return;
+        }
+
+        $query->where(function (Builder $subQuery) use ($countryId, $cityId, $areaId) {
+            $subQuery->whereHas('shop', function (Builder $shopQuery) use ($countryId, $cityId, $areaId) {
+                if (! empty($countryId) && $countryId !== 'global') {
+                    $shopQuery->where('store_country_id', (int) $countryId);
+                }
+                if (! empty($cityId)) {
+                    $shopQuery->where('store_city_id', (int) $cityId);
+                }
+                if (! empty($areaId)) {
+                    $shopQuery->where('store_area_id', (int) $areaId);
+                }
+            })
+                ->orWhere('product_type', 'digital')
+                ->orWhereHas('category', function (Builder $categoryQuery) {
+                    $categoryQuery->where('category_type', 'digital');
+                });
+        });
     }
 
     /**

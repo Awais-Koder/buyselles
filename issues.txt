@@ -1,40 +1,6 @@
-Currently, the system treats each block as a hardcoded static scenario displayed on a single page. We need to shift this to a Nested/Step-by-Step Routing System controlled entirely by our admin layout sequence. Please implement the following architecture:
+Mixed Products from all vendors" Block Bug
+The Issue: When enabling this block, it always says "No Products Found".
 
 
 
-1. Dynamic Step-by-Step Routing (From Within)
-The Logic: The sequence of the blocks in the admin panel must dictate the actual customer journey (Step 1 $\rightarrow$ Step 2 $\rightarrow$ Step 3).
-
-
-
-How it should work: When a user enters a Main Category, they should ONLY see the first block assigned in the admin layout (e.g., Sub Category). The page should not stack all other blocks vertically underneath it.
-
-
-
-When the user clicks an item inside the first block, the system must dynamically open/route them to the next block in the sequence (e.g., Sub-Sub Category).
-
-
-
-If a block has no data (e.g., no sub-sub categories available), it should gracefully show an empty state or move forward naturally without creating broken layouts or extra static components.
-
-
-
-2. Exception: Full Location Filtering Pipeline
-All blocks should lose their hardcoded default behaviors and follow the dynamic routing mentioned above, EXCEPT for the "Full Location Filtering Pipeline" block.
-
-
-
-This block should keep its designated technical pipeline and default behavior. When we activate and position it in the admin panel, it should execute its specific filtering logic completely as intended.
-
-
-
-3. Mobile App Categories Sidebar Removal
-As shown in the attached mobile screenshot (WhatsApp Image 2026-06-09 at 7.12.45 PM.jpeg), when clicking a main category, the app displays a vertical sidebar on the left showing all other Main Categories.
-
-
-
-Please completely remove this left sidebar layout from the app. The app view must be clean and dedicated strictly to the layout blocks of the active category, navigating step-by-step based on our custom admin order.
-
-
-
-This architecture gives us the exact custom control over the pipeline and user experience we need. Please apply this query logic and routing refactor so we can proceed with testing the finalized APK.
+The Fix: This block is supposed to globally fetch ALL products listed under this specific Main Category from all vendors, ignoring any sub or sub-sub restrictions. It seems your query is enforcing a sub_category_id or vendor_id check, which returns an empty array. Please refactor this specific query to fetch directly using only the main_category_id

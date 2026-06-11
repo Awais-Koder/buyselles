@@ -121,6 +121,25 @@ class CategoryController extends Controller
         ], 200);
     }
 
+    public function getMixedProducts(Request $request, $id, CategoryDisplayBlockWebService $categoryDisplayBlockWebService): JsonResponse
+    {
+        $category = Category::query()
+            ->whereKey($id)
+            ->where('position', 0)
+            ->firstOrFail();
+
+        $limit = max(1, min((int) ($request['limit'] ?? CategoryDisplayBlockWebService::PREVIEW_LIMIT), 50));
+        $products = $categoryDisplayBlockWebService->getMixedProducts($category->id, $request, $limit);
+        $productFinal = Helpers::product_data_formatting($products->items(), true);
+
+        return response()->json([
+            'total_size' => $products->total(),
+            'limit' => $limit,
+            'offset' => (int) ($request['offset'] ?? 1),
+            'products' => $productFinal,
+        ], 200);
+    }
+
     public function getGroupedProducts(Request $request, $id, CategoryDisplayBlockWebService $categoryDisplayBlockWebService): JsonResponse
     {
         $category = Category::query()->findOrFail($id);

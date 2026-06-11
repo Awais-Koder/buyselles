@@ -27,6 +27,78 @@ class CategoryDisplayBlockWebService
             ->exists();
     }
 
+    public function findVendorListBlockIndex(int $categoryId): ?int
+    {
+        $blocks = $this->getActiveBlocks($categoryId);
+
+        foreach ($blocks as $index => $block) {
+            if ($block->block_type === CategoryDisplayBlockType::VendorsList->value) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    public function hasFollowingBlockAfterVendor(int $categoryId): bool
+    {
+        $vendorStepIndex = $this->findVendorListBlockIndex($categoryId);
+
+        if ($vendorStepIndex === null) {
+            return false;
+        }
+
+        return ($vendorStepIndex + 1) < $this->getActiveBlocks($categoryId)->count();
+    }
+
+    public function resolveStepAfterVendorSelection(int $categoryId): int
+    {
+        $vendorStepIndex = $this->findVendorListBlockIndex($categoryId);
+
+        if ($vendorStepIndex === null) {
+            return 0;
+        }
+
+        $blocks = $this->getActiveBlocks($categoryId);
+        $nextStep = $vendorStepIndex + 1;
+
+        return min($nextStep, max(0, $blocks->count() - 1));
+    }
+
+    public function resolveStepAfterCategorySelection(int $categoryId, int $parentId): int
+    {
+        $blocks = $this->getActiveBlocks($categoryId);
+        $parentCategory = Category::query()->find($parentId);
+
+        if (! $parentCategory) {
+            return 0;
+        }
+
+        $targetBlockType = match ((int) $parentCategory->position) {
+            0, 1 => CategoryDisplayBlockType::SubSubCategories->value,
+            2 => CategoryDisplayBlockType::SubSubCategoryProducts->value,
+            default => CategoryDisplayBlockType::SubCategoryProducts->value,
+        };
+
+        foreach ($blocks as $index => $block) {
+            if ($block->block_type === $targetBlockType) {
+                return $index;
+            }
+        }
+
+        foreach ($blocks as $index => $block) {
+            if (in_array($block->block_type, [
+                CategoryDisplayBlockType::SubCategoryProducts->value,
+                CategoryDisplayBlockType::SubSubCategoryProducts->value,
+                CategoryDisplayBlockType::SubSubCategories->value,
+            ], true)) {
+                return $index;
+            }
+        }
+
+        return min(1, max(0, $blocks->count() - 1));
+    }
+
     /**
      * @return Collection<int, CategoryDisplayBlock>
      */
@@ -409,6 +481,7 @@ class CategoryDisplayBlockWebService
             ],
             CategoryDisplayBlockType::VendorsList->value => [
                 'vendors' => $this->getVendors($category->id, $request),
+                'canSelectVendor' => $this->hasFollowingBlockAfterVendor($category->id),
             ],
             CategoryDisplayBlockType::LocationPipeline->value => $this->getLocationPipelineData($category->id, $request),
             default => [],

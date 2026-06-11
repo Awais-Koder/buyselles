@@ -39,8 +39,9 @@ class CategoryDisplayBlockController extends Controller
         return response()->json([
             'html' => view('category-display-blocks._vendors-grid', [
                 'vendors' => $this->displayBlockService->getVendors($category->id, $request),
+                'category' => $category,
                 'themeKey' => theme_root_path(),
-                'currentStepIndex' => max(0, $request->integer('step', 0)),
+                'canSelectVendor' => $this->displayBlockService->hasFollowingBlockAfterVendor($category->id),
                 'context' => $context,
             ])->render(),
         ]);

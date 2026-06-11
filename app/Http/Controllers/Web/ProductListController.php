@@ -264,6 +264,15 @@ class ProductListController extends Controller
         $blocks = $this->categoryDisplayBlockWebService->getActiveBlocks($category->id);
         $hasNoContent = $blocks->isEmpty();
 
+        if (! $hasNoContent && isset($context['vendor_id'])) {
+            $step = $this->categoryDisplayBlockWebService->resolveStepAfterVendorSelection($category->id);
+        } elseif (! $hasNoContent && isset($context['parent_id'])) {
+            $step = $this->categoryDisplayBlockWebService->resolveStepAfterCategorySelection(
+                $category->id,
+                (int) $context['parent_id'],
+            );
+        }
+
         if (! $hasNoContent && $step === 0 && $direction !== 'back' && ! isset($context['parent_id']) && ! isset($context['vendor_id'])) {
             $initialStep = $this->categoryDisplayBlockWebService->resolveInitialStep($blocks, $category, $context);
 

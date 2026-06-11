@@ -30,9 +30,9 @@
     <div class="cdb-ajax-content mt-3">
         @include('category-display-blocks._vendors-grid', [
             'vendors' => $vendors,
+            'category' => $category,
             'themeKey' => $themeKey,
-            'currentStepIndex' => $currentStepIndex ?? 0,
-            'nextStepIndex' => $nextStepIndex ?? null,
+            'canSelectVendor' => $data['canSelectVendor'] ?? true,
             'context' => $context ?? [],
         ])
     </div>

@@ -11,6 +11,7 @@
         @switch($block->block_type)
             @case('sub_categories')
                 @include('category-display-blocks.blocks.sub-categories', $data + [
+                    'category' => $category,
                     'currentStepIndex' => $currentStepIndex ?? 0,
                     'context' => $context ?? [],
                 ])
@@ -23,6 +24,7 @@
                 @break
             @case('sub_sub_categories')
                 @include('category-display-blocks.blocks.sub-sub-categories', $data + [
+                    'category' => $category,
                     'currentStepIndex' => $currentStepIndex ?? 0,
                     'context' => $context ?? [],
                 ])

@@ -30,9 +30,27 @@ class CategoryDisplayBlockWebService
     public function validateBlockStatusChange(CategoryDisplayBlock $block, bool $willBeActive): ?string
     {
         $blocks = $this->blocksForCategory($block->category_id);
+        $simulated = $this->simulateBlockStatusChange($blocks, $block->id, $willBeActive);
 
-        return $this->validateActiveVendorsListLayout(
-            $this->simulateBlockStatusChange($blocks, $block->id, $willBeActive)
+        if ($willBeActive && $block->block_type === CategoryDisplayBlockType::VendorsList->value) {
+            return $this->validateActiveVendorsListLayout($simulated);
+        }
+
+        if (! $willBeActive && $this->hasActiveVendorsList($simulated)) {
+            return $this->validateActiveVendorsListLayout($simulated);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  Collection<int, CategoryDisplayBlock>  $blocks
+     */
+    private function hasActiveVendorsList(Collection $blocks): bool
+    {
+        return $blocks->contains(
+            fn (CategoryDisplayBlock $block): bool => $block->block_type === CategoryDisplayBlockType::VendorsList->value
+                && $block->is_active
         );
     }
 

@@ -28,10 +28,17 @@
         </div>
 
         @if($blocks->contains(fn ($block) => $block->block_type === \App\Enums\CategoryDisplayBlockType::VendorsList->value))
-            <div class="bg-warning bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-2 align-items-start mb-3">
-                <i class="fi fi-sr-info text-warning mt-1"></i>
-                <span>{{ translate('vendors_list_layout_requirement_hint') }}</span>
-                <span class="d-block mt-1">{{ translate('drag_vendors_list_to_top_before_enabling_it') }}</span>
+            <div class="bg-warning bg-opacity-10 fs-12 px-12 py-10 text-dark rounded d-flex gap-3 align-items-start mb-3">
+                <i class="fi fi-sr-info text-warning mt-1 flex-shrink-0"></i>
+                <div class="d-flex flex-column gap-2">
+                    <span class="fw-semibold">{{ translate('vendors_list_setup_guide_title') }}</span>
+                    <ul class="mb-0 ps-3 d-flex flex-column gap-1">
+                        <li>{{ translate('vendors_list_setup_guide_block_order') }}</li>
+                        <li>{{ translate('vendors_list_setup_guide_drag_first') }}</li>
+                        <li>{{ translate('vendors_list_setup_guide_enable_order') }}</li>
+                        <li>{{ translate('vendors_list_setup_guide_before_vendors') }}</li>
+                    </ul>
+                </div>
             </div>
         @endif
 

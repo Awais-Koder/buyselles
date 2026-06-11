@@ -17,10 +17,15 @@ class CategoryDisplayBlockController extends Controller
     public function mixedProducts(Request $request, int $categoryId): JsonResponse
     {
         $category = $this->resolveMainCategory($categoryId);
+        $products = $this->displayBlockService->getMixedProducts($category->id, $request);
+
+        if ($request->filled('step')) {
+            $products->withPath(route('category-products', ['slug' => $category->slug]));
+        }
 
         return response()->json([
             'html' => view('category-display-blocks._products-grid', [
-                'products' => $this->displayBlockService->getMixedProducts($category->id, $request),
+                'products' => $products,
                 'themeKey' => theme_root_path(),
             ])->render(),
         ]);

@@ -76,7 +76,9 @@
         });
     }
 
-    function collectParams(blockEl) {
+    var paginationParamKeys = ['page', 'products_page', 'vendors_page'];
+
+    function collectParams(blockEl, extraParams) {
         var params = new URLSearchParams();
         var searchInput = blockEl.querySelector('.cdb-search-input');
         if (searchInput && searchInput.value.trim()) {
@@ -107,17 +109,38 @@
             }
         });
 
+        if (extraParams) {
+            Object.keys(extraParams).forEach(function (key) {
+                if (extraParams[key] !== null && extraParams[key] !== undefined && extraParams[key] !== '') {
+                    params.set(key, String(extraParams[key]));
+                }
+            });
+        }
+
         return params;
     }
 
-    function loadBlock(blockEl) {
+    function extractPaginationParams(href) {
+        var parsedUrl = new URL(href, window.location.origin);
+        var params = {};
+
+        paginationParamKeys.forEach(function (key) {
+            if (parsedUrl.searchParams.has(key)) {
+                params[key] = parsedUrl.searchParams.get(key);
+            }
+        });
+
+        return params;
+    }
+
+    function loadBlock(blockEl, extraParams) {
         var url = blockEl.dataset.ajaxUrl;
         var content = blockEl.querySelector('.cdb-ajax-content');
         if (!url || !content) {
             return;
         }
 
-        var params = collectParams(blockEl);
+        var params = collectParams(blockEl, extraParams);
         content.classList.add('opacity-50');
 
         fetch(url + (params.toString() ? '?' + params.toString() : ''))
@@ -149,5 +172,25 @@
                 }
             });
         }
+
+        blockEl.addEventListener('click', function (e) {
+            var link = e.target.closest('.pagination a, nav[role="navigation"] a');
+            if (!link || !blockEl.contains(link)) {
+                return;
+            }
+
+            var href = link.getAttribute('href');
+            if (!href || href === '#') {
+                return;
+            }
+
+            var paginationParams = extractPaginationParams(href);
+            if (Object.keys(paginationParams).length === 0) {
+                return;
+            }
+
+            e.preventDefault();
+            loadBlock(blockEl, paginationParams);
+        });
     });
 })();

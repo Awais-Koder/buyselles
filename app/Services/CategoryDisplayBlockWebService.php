@@ -424,23 +424,34 @@ class CategoryDisplayBlockWebService
         $products = CategoryManager::products($categoryId, $scopedRequest, $perPage);
 
         if ($products instanceof LengthAwarePaginator) {
-            return $products->appends($request->only([
-                'search',
-                'product_name',
-                'country_id',
-                'city_id',
-                'area_id',
-                'location_country_id',
-                'location_city_id',
-                'location_area_id',
-                'page',
-                'offset',
-            ]));
+            return $products->appends($this->mixedProductsPaginationAppends($request));
         }
 
         $collection = $products instanceof Collection ? $products : collect($products);
 
         return $this->paginateProductCollection($collection, $request, $perPage);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mixedProductsPaginationAppends(Request $request): array
+    {
+        return $request->only([
+            'search',
+            'product_name',
+            'country_id',
+            'city_id',
+            'area_id',
+            'location_country_id',
+            'location_city_id',
+            'location_area_id',
+            'step',
+            'parent_id',
+            'parent_name',
+            'vendor_id',
+            'vendor_name',
+        ]);
     }
 
     /**
@@ -499,7 +510,7 @@ class CategoryDisplayBlockWebService
             $perPage,
             $page,
             ['path' => Paginator::resolveCurrentPath()],
-        ))->appends($request->only(['search', 'product_name', 'country_id', 'city_id', 'area_id', 'page']));
+        ))->appends($this->mixedProductsPaginationAppends($request));
     }
 
     /**

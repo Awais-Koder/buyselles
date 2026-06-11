@@ -1,6 +1,6 @@
 @php
     $themeKey = $themeKey ?? theme_root_path();
-    $nextStep = $nextStepIndex ?? (($currentStepIndex ?? 0) + 1);
+    $nextStep = ($currentStepIndex ?? 0) + 1;
 @endphp
 
 @if ($vendors->count() > 0)

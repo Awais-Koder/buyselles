@@ -47,14 +47,12 @@ class CategoryController extends Controller
                 $query->where('parent_id', $parentId);
 
                 if ($parentCategory?->position === 0) {
-                    $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId, $parentCategory) {
+                    $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
                         CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
-                        $productQuery->where('category_id', $parentCategory->id);
                     });
                 } elseif ($parentCategory?->position === 1) {
-                    $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId, $parentCategory) {
+                    $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($productAddedBy, $productUserId) {
                         CategoryManager::applyVendorProductScope($productQuery, $productAddedBy, $productUserId);
-                        $productQuery->where('sub_category_id', $parentCategory->id);
                     });
                 }
             })

@@ -100,6 +100,13 @@
             }
         }
 
+        var pageParams = new URLSearchParams(window.location.search);
+        ['step', 'parent_id', 'parent_name', 'vendor_id', 'vendor_name'].forEach(function (key) {
+            if (pageParams.get(key)) {
+                params.set(key, pageParams.get(key));
+            }
+        });
+
         return params;
     }
 

@@ -61,9 +61,8 @@ class CategoryDisplayBlockWebService
 
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
-            $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId, $category) {
+            $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId) {
                 CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
-                $productQuery->where('category_id', $category->id);
             });
         }
 
@@ -603,8 +602,9 @@ class CategoryDisplayBlockWebService
         $direction = $request->string('direction', 'next');
 
         $block = $blocks[$step] ?? null;
+        $hasExplicitNavigationContext = isset($context['vendor_id']) || isset($context['parent_id']);
 
-        if ($block !== null && ! $this->blockHasData($block, $category, $context)) {
+        if ($block !== null && ! $hasExplicitNavigationContext && ! $this->blockHasData($block, $category, $context)) {
             if ($direction === 'back') {
                 $previousStep = $this->findPreviousDataStepIndex($blocks, $category, $step, $context);
                 if ($previousStep === null) {
@@ -737,9 +737,8 @@ class CategoryDisplayBlockWebService
 
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
-            $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId, $mainCategory) {
+            $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId) {
                 CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
-                $productQuery->where('category_id', $mainCategory->id);
             });
         }
 
@@ -765,14 +764,13 @@ class CategoryDisplayBlockWebService
         $query = Category::query()
             ->where('parent_id', $category->id)
             ->where('position', 1)
-            ->with(['childes' => function ($query) use ($category, $context) {
+            ->with(['childes' => function ($query) use ($context) {
                 $query->where('position', 2)->orderBy('priority');
 
                 if (isset($context['vendor_id'])) {
                     $vendorId = (int) $context['vendor_id'];
-                    $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId, $category) {
+                    $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId) {
                         CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
-                        $productQuery->where('category_id', $category->id);
                     });
                 }
             }])
@@ -784,9 +782,8 @@ class CategoryDisplayBlockWebService
 
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
-            $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId, $category) {
+            $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId) {
                 CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
-                $productQuery->where('category_id', $category->id);
             });
         }
 

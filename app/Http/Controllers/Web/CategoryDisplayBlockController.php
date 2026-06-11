@@ -29,11 +29,19 @@ class CategoryDisplayBlockController extends Controller
     public function vendors(Request $request, int $categoryId): JsonResponse
     {
         $category = $this->resolveMainCategory($categoryId);
+        $context = array_filter([
+            'parent_id' => $request->filled('parent_id') ? $request->integer('parent_id') : null,
+            'parent_name' => $request->filled('parent_name') ? (string) $request->string('parent_name') : null,
+            'vendor_id' => $request->filled('vendor_id') ? $request->integer('vendor_id') : null,
+            'vendor_name' => $request->filled('vendor_name') ? (string) $request->string('vendor_name') : null,
+        ], fn ($value) => $value !== null && $value !== '');
 
         return response()->json([
             'html' => view('category-display-blocks._vendors-grid', [
                 'vendors' => $this->displayBlockService->getVendors($category->id, $request),
                 'themeKey' => theme_root_path(),
+                'currentStepIndex' => max(0, $request->integer('step', 0)),
+                'context' => $context,
             ])->render(),
         ]);
     }

@@ -66,7 +66,7 @@
                 </div>
                 <div>
                     @if ($hasNext && $nextUrl)
-                        <a href="{{ $nextUrl }}" class="btn btn-primary btn-sm">
+                        <a href="{{ $nextUrl }}" class="btn btn--primary btn-sm">
                             {{ translate('Next') }} <i class="bi bi-arrow-right"></i>
                         </a>
                     @endif

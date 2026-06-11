@@ -673,7 +673,7 @@ class CategoryDisplayBlockWebService
             CategoryDisplayBlockType::SubCategories->value => $this->getSubCategories($category)->isNotEmpty(),
             CategoryDisplayBlockType::SubCategoryProducts->value => $this->getSubCategories($category)->isNotEmpty(),
             CategoryDisplayBlockType::SubSubCategories->value => $this->subSubCategoriesExist($category, $context),
-            CategoryDisplayBlockType::SubSubCategoryProducts->value => $this->subSubCategoriesExist($category, $context),
+            CategoryDisplayBlockType::SubSubCategoryProducts->value => $this->subSubCategoryProductsHasData($category, $context),
             default => true,
         };
     }
@@ -686,9 +686,17 @@ class CategoryDisplayBlockWebService
         $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
 
         if ($parentId) {
-            $parentCategory = Category::query()->find($parentId);
+            $selectedCategory = Category::query()->find($parentId);
 
-            return $parentCategory && $parentCategory->childes()->where('position', 2)->exists();
+            if (! $selectedCategory) {
+                return false;
+            }
+
+            if ((int) $selectedCategory->position === 2) {
+                return true;
+            }
+
+            return $selectedCategory->childes()->where('position', 2)->exists();
         }
 
         foreach ($this->getSubCategories($category) as $subCategory) {
@@ -698,6 +706,14 @@ class CategoryDisplayBlockWebService
         }
 
         return false;
+    }
+
+    /**
+     * @param  array{parent_id?: int, parent_name?: string}  $context
+     */
+    private function subSubCategoryProductsHasData(Category $category, array $context): bool
+    {
+        return $this->getSubSubCategoryGroupedProducts($category, request(), $context, 1) !== [];
     }
 
     /**
@@ -767,22 +783,42 @@ class CategoryDisplayBlockWebService
     public function getSubSubCategoryGroupedProducts(Category $category, Request $request, array $context = [], int $limit = self::PREVIEW_LIMIT): array
     {
         $parentId = isset($context['parent_id']) ? (int) $context['parent_id'] : null;
-
-        if ($parentId) {
-            $parentCategory = Category::query()->find($parentId);
-            if (! $parentCategory) {
-                return [];
-            }
-            $subCategories = [$parentCategory];
-        } else {
-            $subCategories = $this->getSubCategories($category);
-        }
-
         $groupedProducts = [];
 
-        foreach ($subCategories as $subCategory) {
-            $subSubCategories = $subCategory->childes()->where('position', 2)->get();
+        if ($parentId) {
+            $selectedCategory = Category::query()->find($parentId);
+            if (! $selectedCategory) {
+                return [];
+            }
+
+            if ((int) $selectedCategory->position === 2) {
+                $products = $this->getProductsForSubSubCategoryOnly($selectedCategory->id, $request, $limit);
+                if ($products->isNotEmpty()) {
+                    $groupedProducts[] = [
+                        'category' => $selectedCategory,
+                        'products' => $products,
+                    ];
+                }
+
+                return $groupedProducts;
+            }
+
+            $subSubCategories = $selectedCategory->childes()->where('position', 2)->get();
             foreach ($subSubCategories as $subSubCategory) {
+                $products = $this->getProductsForSubSubCategoryOnly($subSubCategory->id, $request, $limit);
+                if ($products->isNotEmpty()) {
+                    $groupedProducts[] = [
+                        'category' => $subSubCategory,
+                        'products' => $products,
+                    ];
+                }
+            }
+
+            return $groupedProducts;
+        }
+
+        foreach ($this->getSubCategories($category) as $subCategory) {
+            foreach ($subCategory->childes()->where('position', 2)->get() as $subSubCategory) {
                 $products = $this->getProductsForSubSubCategoryOnly($subSubCategory->id, $request, $limit);
                 if ($products->isNotEmpty()) {
                     $groupedProducts[] = [

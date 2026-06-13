@@ -193,7 +193,12 @@ class ShopService
             'l_name' => '',
             'phone' => getInHouseShopConfig('contact'),
             'image' => getInHouseShopConfig('image'),
+            'email' => getWebConfig('company_email'),
             'status' => 'approved',
+            'pos_status' => 1,
+            'minimum_order_amount' => (int) getWebConfig('minimum_order_amount'),
+            'free_delivery_status' => (int) getWebConfig('free_delivery_status'),
+            'free_delivery_over_amount' => getWebConfig('free_delivery_over_amount'),
         ]);
         $seller->id = 0;
         $seller->setRelation('shop', $shop);

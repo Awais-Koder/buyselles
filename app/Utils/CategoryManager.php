@@ -229,7 +229,10 @@ class CategoryManager
             return;
         }
 
-        $query->where(function (Builder $subQuery) use ($countryId, $cityId, $areaId) {
+        $inhouseShop = getInHouseShopConfig();
+        $inhouseMatchesLocation = self::inhouseShopMatchesLocation($inhouseShop, $countryId, $cityId, $areaId);
+
+        $query->where(function (Builder $subQuery) use ($countryId, $cityId, $areaId, $inhouseMatchesLocation) {
             $subQuery->whereHas('shop', function (Builder $shopQuery) use ($countryId, $cityId, $areaId) {
                 if (! empty($countryId) && $countryId !== 'global') {
                     $shopQuery->where('store_country_id', (int) $countryId);
@@ -241,11 +244,31 @@ class CategoryManager
                     $shopQuery->where('store_area_id', (int) $areaId);
                 }
             })
+                ->when($inhouseMatchesLocation, function (Builder $adminQuery) {
+                    $adminQuery->orWhere('added_by', 'admin');
+                })
                 ->orWhere('product_type', 'digital')
                 ->orWhereHas('category', function (Builder $categoryQuery) {
                     $categoryQuery->where('category_type', 'digital');
                 });
         });
+    }
+
+    public static function inhouseShopMatchesLocation(object $shop, mixed $countryId, mixed $cityId, mixed $areaId): bool
+    {
+        if (! empty($countryId) && $countryId !== 'global' && (int) ($shop->store_country_id ?? 0) !== (int) $countryId) {
+            return false;
+        }
+
+        if (! empty($cityId) && (int) ($shop->store_city_id ?? 0) !== (int) $cityId) {
+            return false;
+        }
+
+        if (! empty($areaId) && (int) ($shop->store_area_id ?? 0) !== (int) $areaId) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

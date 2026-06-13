@@ -1452,7 +1452,7 @@ class ProductManager
 
             if ($categoryWiseProductSortBy['out_of_stock_product'] == 'hide') {
                 $query = $query->filter(function ($product) {
-                    return $product->product_type != 'digital' && $product->current_stock > 0;
+                    return $product->product_type === 'digital' || $product->current_stock > 0;
                 });
             }
 

@@ -27,6 +27,7 @@ class VendorModulePermissionMiddleware
         'vendor_messages' => ['vendor.messages'],
         'vendor_delivery_man' => ['vendor.delivery-man'],
         'vendor_wallet' => ['vendor.wallet', 'vendor.withdraw'],
+        'vendor_wallet_transfer' => ['vendor.wallet-transfer'],
         'vendor_reports' => ['vendor.report', 'vendor.transaction'],
         'vendor_shop_settings' => ['vendor.shop'],
         'vendor_business_settings' => ['vendor.business-settings'],

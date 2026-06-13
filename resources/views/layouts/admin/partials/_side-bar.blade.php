@@ -1000,8 +1000,7 @@
                     </a>
                     <ul class="aside-submenu navbar-nav">
                         <li class="nav-item px-3 py-2 fw-semibold text-dark bg-section2 aside-mini-show-element">
-                            {{ translate('vendors') }}</li>
-                        <li class="nav-item ">
+                            {{ translate('vendors') }}</li>                        <li class="nav-item">
                             <a class="nav-link {{ Request::is('admin/vendors/add') ? 'active' : '' }}"
                                 title="{{ translate('add_New_Vendor') }}" href="{{ route('admin.vendors.add') }}">
                                 <span class="text-truncate">
@@ -1015,6 +1014,15 @@
                                 href="{{ route('admin.vendors.vendor-list') }}">
                                 <span class="text-truncate">
                                     {{ translate('vendor_List') }}
+                                </span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ Request::is('admin/vendors/wallet-transfer*') ? 'active' : '' }}"
+                                title="{{ translate('transfer_to_vendor_wallet') }}"
+                                href="{{ route('admin.vendors.wallet-transfer.index') }}">
+                                <span class="text-truncate">
+                                    {{ translate('transfer_to_vendor_wallet') }}
                                 </span>
                             </a>
                         </li>

@@ -1374,6 +1374,7 @@ enum GlobalConstant
         'vendor_messages' => 'messages',
         'vendor_delivery_man' => 'delivery_man_management',
         'vendor_wallet' => 'wallet_and_withdraw',
+        'vendor_wallet_transfer' => 'wallet_transfer_to_customers',
         'vendor_reports' => 'reports_and_analytics',
         'vendor_shop_settings' => 'shop_settings',
         'vendor_business_settings' => 'business_settings',

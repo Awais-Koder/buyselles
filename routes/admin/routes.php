@@ -103,6 +103,7 @@ use App\Http\Controllers\Admin\ThirdParty\SocialMediaChatController;
 use App\Http\Controllers\Admin\TransactionReportController;
 use App\Http\Controllers\Admin\Vendor\VendorController;
 use App\Http\Controllers\Admin\Vendor\VendorPermissionController;
+use App\Http\Controllers\Admin\Vendor\VendorWalletTransferController;
 use App\Http\Controllers\Admin\Vendor\WithdrawalMethodController;
 use App\Http\Controllers\Admin\VendorProductSaleReportController;
 use App\Http\Controllers\FirebaseController;
@@ -467,6 +468,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['admin', '
                 Route::post('status-update', 'updateStatus')->name('status-update');
                 Route::get('update/{id}', 'getUpdateView')->name('edit');
                 Route::post('update', 'update')->name('update');
+            });
+        });
+
+        Route::group(['prefix' => 'wallet-transfer', 'as' => 'wallet-transfer.'], function () {
+            Route::controller(VendorWalletTransferController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('transfer', 'transfer')->name('transfer');
             });
         });
     });

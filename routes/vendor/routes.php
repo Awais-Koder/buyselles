@@ -40,6 +40,7 @@ use App\Http\Controllers\Vendor\ShopController;
 use App\Http\Controllers\Vendor\SystemController;
 use App\Http\Controllers\Vendor\TransactionReportController;
 use App\Http\Controllers\Vendor\VendorPaymentInfoController;
+use App\Http\Controllers\Vendor\WalletTransferController;
 use App\Http\Controllers\Vendor\WithdrawController;
 use Illuminate\Support\Facades\Route;
 
@@ -412,6 +413,15 @@ Route::group(['middleware' => ['maintenance_mode', 'actch:admin_panel']], functi
                         Route::get('export', 'exportList')->name('export-withdraw-list');
                         Route::post('render-withdraw-method-infos', 'renderInfosView')->name('render-withdraw-method-infos');
                     });
+                });
+
+            });
+
+            Route::group(['prefix' => 'wallet-transfer', 'as' => 'wallet-transfer.', 'middleware' => ['vendor_module:vendor_wallet_transfer']], function () {
+                Route::controller(WalletTransferController::class)->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('search-customers', 'searchCustomers')->name('search-customers');
+                    Route::post('transfer', 'transfer')->name('transfer');
                 });
             });
 

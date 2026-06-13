@@ -589,6 +589,20 @@
                                 </a>
                             </li>
                         @endif
+                        @if ($canAccess('vendor_wallet_transfer'))
+                            <li
+                                class="navbar-vertical-aside-has-menu {{ Request::is('vendor/wallet-transfer*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link"
+                                    href="{{ route('vendor.wallet-transfer.index') }}"
+                                    title="{{ translate('wallet_transfer_to_customer') }}">
+                                    <i class="fi fi-rr-wallet nav-icon"></i>
+                                    <span
+                                        class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate text-capitalize">
+                                        {{ translate('wallet_transfer') }}
+                                    </span>
+                                </a>
+                            </li>
+                        @endif
                         @if ($canAccess('vendor_shop_settings'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('vendor/profile/' . Profile::INDEX[URI]) || Request::is('vendor/profile/' . Profile::BANK_INFO_UPDATE[URI]) ? 'active' : '' }}">

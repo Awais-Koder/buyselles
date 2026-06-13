@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id Primary
  * @property int $customer_id
  * @property float $balance
- * @property float $royalty_points
+ * @property float $royality_points
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -21,7 +21,7 @@ class CustomerWallet extends Model
         'id' => 'integer',
         'customer_id' => 'integer',
         'balance' => 'float',
-        'royalty_points' => 'float',
+        'royality_points' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -29,6 +29,6 @@ class CustomerWallet extends Model
     protected $fillable = [
         'customer_id',
         'balance',
-        'royalty_points',
+        'royality_points',
     ];
 }

@@ -19,6 +19,10 @@ class CategoryDisplayBlockWebService
 {
     public const PREVIEW_LIMIT = 12;
 
+    public function __construct(
+        private readonly ShopService $shopService,
+    ) {}
+
     public function hasActiveBlocks(int $categoryId): bool
     {
         return CategoryDisplayBlock::query()
@@ -363,7 +367,7 @@ class CategoryDisplayBlockWebService
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
             $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId) {
-                CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
+                CategoryManager::applyVendorScopeFromVendorId($productQuery, $vendorId);
             });
         }
 
@@ -565,7 +569,51 @@ class CategoryDisplayBlockWebService
             return $seller;
         });
 
-        return $vendors;
+        return $this->prependInhouseSellerToVendorPaginator(
+            $vendors,
+            $categoryId,
+            $request,
+            $request->only(['search', 'country_id', 'city_id', 'area_id', 'page']),
+        );
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, Seller>  $vendors
+     * @param  array<string, mixed>  $appends
+     * @return LengthAwarePaginator<int, Seller>
+     */
+    private function prependInhouseSellerToVendorPaginator(
+        LengthAwarePaginator $vendors,
+        int $categoryId,
+        Request $request,
+        array $appends = [],
+    ): LengthAwarePaginator {
+        if ($vendors->currentPage() !== 1) {
+            return $vendors;
+        }
+
+        $inhouseSeller = $this->shopService->getInhouseSellerForCategory($categoryId, $request);
+        if ($inhouseSeller === null) {
+            return $vendors;
+        }
+
+        $collection = $vendors->getCollection()
+            ->reject(fn (Seller $seller): bool => (int) $seller->id === 0)
+            ->prepend($inhouseSeller);
+
+        $paginator = new LengthAwarePaginator(
+            $collection,
+            $vendors->total() + 1,
+            $vendors->perPage(),
+            $vendors->currentPage(),
+            ['path' => $vendors->path(), 'pageName' => $vendors->getPageName()],
+        );
+
+        if ($appends !== []) {
+            $paginator->appends($appends);
+        }
+
+        return $paginator;
     }
 
     /**
@@ -633,7 +681,12 @@ class CategoryDisplayBlockWebService
 
         return [
             'products' => $products,
-            'vendors' => $vendors,
+            'vendors' => $this->prependInhouseSellerToVendorPaginator(
+                $vendors,
+                $categoryId,
+                $vendorRequest,
+                $vendorRequest->only(['country_id', 'city_id', 'area_id', 'vendors_page']),
+            ),
             'location_label' => $locationLabel,
         ];
     }
@@ -1050,7 +1103,7 @@ class CategoryDisplayBlockWebService
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
             $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId) {
-                CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
+                CategoryManager::applyVendorScopeFromVendorId($productQuery, $vendorId);
             });
         }
 
@@ -1082,7 +1135,7 @@ class CategoryDisplayBlockWebService
                 if (isset($context['vendor_id'])) {
                     $vendorId = (int) $context['vendor_id'];
                     $query->whereHas('subSubCategoryProduct', function (Builder $productQuery) use ($vendorId) {
-                        CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
+                        CategoryManager::applyVendorScopeFromVendorId($productQuery, $vendorId);
                     });
                 }
             }])
@@ -1095,7 +1148,7 @@ class CategoryDisplayBlockWebService
         if (isset($context['vendor_id'])) {
             $vendorId = (int) $context['vendor_id'];
             $query->whereHas('subCategoryProduct', function (Builder $productQuery) use ($vendorId) {
-                CategoryManager::applyVendorProductScope($productQuery, 'seller', $vendorId);
+                CategoryManager::applyVendorScopeFromVendorId($productQuery, $vendorId);
             });
         }
 

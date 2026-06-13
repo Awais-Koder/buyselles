@@ -22,15 +22,14 @@ class CategoryController extends Controller
 
         if ($shop) {
             [$productAddedBy, $productUserId] = CategoryManager::resolveShopVendorContext($shop);
-        } elseif ($request->filled('vendor_id')) {
-            $productAddedBy = 'seller';
-            $productUserId = (int) $request['vendor_id'];
+        } elseif ($request->has('vendor_id')) {
+            [$productAddedBy, $productUserId] = CategoryManager::resolveVendorContextFromVendorId((int) $request['vendor_id']);
         } else {
             $productAddedBy = 'admin';
             $productUserId = 0;
         }
 
-        $hasVendorScope = $shop !== null || $request->filled('vendor_id');
+        $hasVendorScope = $shop !== null || $request->has('vendor_id');
 
         $mainCategoryIds = $shop
             ? CategoryManager::getVendorMainCategoryIds($productAddedBy, $productUserId)

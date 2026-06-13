@@ -40,8 +40,8 @@ class CategoryManager
             filterBy: $request['filter_by'] ?? null,
         );
 
-        $products->when($request->filled('vendor_id'), function (Builder $query) use ($request) {
-            self::applyVendorProductScope($query, 'seller', (int) $request['vendor_id']);
+        $products->when($request->has('vendor_id'), function (Builder $query) use ($request) {
+            self::applyVendorScopeFromVendorId($query, (int) $request['vendor_id']);
         });
 
         if (($request['filter_by'] ?? null) === 'mixed_all') {
@@ -140,6 +140,25 @@ class CategoryManager
             ->when($productAddedBy === 'seller', function (Builder $subQuery) use ($productUserId) {
                 return $subQuery->where('added_by', 'seller')->where('user_id', $productUserId);
             });
+    }
+
+    /**
+     * @return array{0: string, 1: int}
+     */
+    public static function resolveVendorContextFromVendorId(int $vendorId): array
+    {
+        if ($vendorId === 0) {
+            return ['admin', 0];
+        }
+
+        return ['seller', $vendorId];
+    }
+
+    public static function applyVendorScopeFromVendorId(Builder $query, int $vendorId): Builder
+    {
+        [$productAddedBy, $productUserId] = self::resolveVendorContextFromVendorId($vendorId);
+
+        return self::applyVendorProductScope($query, $productAddedBy, $productUserId);
     }
 
     /**

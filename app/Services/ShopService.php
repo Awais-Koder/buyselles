@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Seller;
 use App\Traits\FileManagerTrait;
 use App\Utils\ProductManager;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ShopService
@@ -146,6 +148,62 @@ class ShopService
         $shop->is_vacation_mode_now = checkVendorAbility('inhouse', 'vacation_status');
 
         return $shop;
+    }
+
+    public function getInhouseSellerForCategory(int $categoryId, Request $request): ?Seller
+    {
+        $categoryIdFragment = '"'.$categoryId.'"';
+
+        if ($request->filled('search')) {
+            $search = strtolower($request->string('search')->toString());
+            if (! str_contains(strtolower((string) getInHouseShopConfig('name')), $search)) {
+                return null;
+            }
+        }
+
+        $shop = getInHouseShopConfig();
+
+        if ($request->filled('country_id') && (int) ($shop->store_country_id ?? 0) !== $request->integer('country_id')) {
+            return null;
+        }
+
+        if ($request->filled('city_id') && (int) ($shop->store_city_id ?? 0) !== $request->integer('city_id')) {
+            return null;
+        }
+
+        if ($request->filled('area_id') && (int) ($shop->store_area_id ?? 0) !== $request->integer('area_id')) {
+            return null;
+        }
+
+        $productIds = Product::active()
+            ->where('added_by', 'admin')
+            ->where('category_ids', 'like', '%'.$categoryIdFragment.'%')
+            ->pluck('id');
+
+        if ($productIds->isEmpty()) {
+            return null;
+        }
+
+        $reviewData = Review::active()->whereIn('product_id', $productIds);
+        $reviewCount = $reviewData->count();
+        $positive = $reviewData->pluck('rating')->filter(fn ($rating) => $rating >= 4)->count();
+
+        $seller = new Seller([
+            'f_name' => getInHouseShopConfig('name'),
+            'l_name' => '',
+            'phone' => getInHouseShopConfig('contact'),
+            'image' => getInHouseShopConfig('image'),
+            'status' => 'approved',
+        ]);
+        $seller->id = 0;
+        $seller->setRelation('shop', $shop);
+        $seller['product_count'] = $productIds->count();
+        $seller['average_rating'] = $reviewData->avg('rating') ?? 0;
+        $seller['rating_count'] = $reviewCount;
+        $seller['review_count'] = $reviewCount;
+        $seller['positive_review'] = $reviewCount ? ($positive * 100) / $reviewCount : 0;
+
+        return $seller;
     }
 
     public function applyOrdering($vendors, $request)

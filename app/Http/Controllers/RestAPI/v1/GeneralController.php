@@ -8,13 +8,19 @@ use App\Models\LocationArea;
 use App\Models\LocationCity;
 use App\Models\LocationCountry;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Seller;
+use App\Services\ShopService;
 use App\Utils\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GeneralController extends Controller
 {
+    public function __construct(
+        private readonly ShopService $shopService,
+    ) {}
+
     public function get_categories(): JsonResponse
     {
         $categories = Category::where(['position' => 0])->priority()->get();
@@ -146,9 +152,10 @@ class GeneralController extends Controller
                 }
             })
             ->when($request->has('category_id'), function ($query) use ($request) {
-                $query->whereHas('product', function ($productQuery) use ($request) {
+                $categoryIdFragment = '"'.(int) $request->category_id.'"';
+                $query->whereHas('product', function ($productQuery) use ($categoryIdFragment) {
                     $productQuery->active()
-                        ->where('category_id', (int) $request->category_id);
+                        ->where('category_ids', 'like', '%'.$categoryIdFragment.'%');
                 });
             })
             ->withCount(['product' => function ($query) {
@@ -157,18 +164,30 @@ class GeneralController extends Controller
             ->paginate($limit, ['*'], 'page', $offset);
 
         $vendors->getCollection()->transform(function ($seller) {
-            $seller['average_rating'] = \App\Models\Review::active()->whereHas('product', function ($query) use ($seller) {
+            $seller['average_rating'] = Review::active()->whereHas('product', function ($query) use ($seller) {
                 $query->where('user_id', $seller->id)->where('added_by', 'seller');
             })->avg('rating') ?? 0;
-            $seller['rating_count'] = \App\Models\Review::active()->whereHas('product', function ($query) use ($seller) {
+            $seller['rating_count'] = Review::active()->whereHas('product', function ($query) use ($seller) {
                 $query->where('user_id', $seller->id)->where('added_by', 'seller');
             })->count();
 
             return $seller;
         });
 
+        $inhouseAdded = false;
+        if ($request->has('category_id') && (int) $offset === 1) {
+            $inhouseSeller = $this->shopService->getInhouseSellerForCategory((int) $request->category_id, $request);
+            if ($inhouseSeller !== null) {
+                $collection = $vendors->getCollection()
+                    ->reject(fn (Seller $seller): bool => (int) $seller->id === 0)
+                    ->prepend($inhouseSeller);
+                $vendors->setCollection($collection);
+                $inhouseAdded = true;
+            }
+        }
+
         return response()->json([
-            'total_size' => $vendors->total(),
+            'total_size' => $vendors->total() + ($inhouseAdded ? 1 : 0),
             'limit' => (int) $limit,
             'offset' => (int) $offset,
             'sellers' => $vendors->items(),

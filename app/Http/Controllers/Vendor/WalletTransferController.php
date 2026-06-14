@@ -33,7 +33,7 @@ class WalletTransferController extends Controller
             ->where('from_user_id', $vendorId)
             ->with('toUser')
             ->latest()
-            ->paginate(20);
+            ->paginate(getWebConfig(name: 'pagination_limit'));
 
         return view('vendor-views.wallet-transfer.index', compact('vendorWallet', 'transfers'));
     }

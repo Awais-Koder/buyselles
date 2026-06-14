@@ -127,128 +127,120 @@
             </h2>
         </div>
 
-        <div class="row">
-            {{-- Wallet Info & Transfer Form --}}
-            <div class="col-lg-5 mb-4">
-                {{-- Wallet Balance Card --}}
-                <div class="card mb-4">
-                    <div class="card-body text-center">
-                        <h5 class="text-muted mb-1">{{ translate('your_wallet_balance') }}</h5>
-                        <div class="wallet-balance-display text-primary">
-                            {{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: $vendorWallet?->total_earning ?? 0), currencyCode: getCurrencyCode(type: 'default')) }}
-                        </div>
-                        <small class="text-muted">
-                            {{ translate('withdrawable_balance') }}: 
-                            {{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: ($vendorWallet?->total_earning ?? 0) - ($vendorWallet?->pending_withdraw ?? 0)), currencyCode: getCurrencyCode(type: 'default')) }}
-                        </small>
-                    </div>
+        {{-- Wallet Info & Transfer Form --}}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5 class="text-muted mb-1">{{ translate('your_wallet_balance') }}</h5>
+                <div class="wallet-balance-display text-primary">
+                    {{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: $vendorWallet?->total_earning ?? 0), currencyCode: getCurrencyCode(type: 'default')) }}
                 </div>
-
-                {{-- Transfer Form --}}
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">{{ translate('send_balance_to_customer') }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('vendor.wallet-transfer.transfer') }}" method="POST" id="transferForm">
-                            @csrf
-                            <input type="hidden" name="customer_id" id="customer_id_hidden" value="">
-
-                            {{-- Customer Search --}}
-                            <div class="form-group mb-3">
-                                <label class="form-label">{{ translate('search_customer') }} <span class="text-danger">*</span></label>
-                                <div class="customer-search-wrap">
-                                    <input type="text" id="customer_search_input" class="form-control"
-                                        placeholder="{{ translate('search_by_name_email_or_phone') }}"
-                                        autocomplete="off">
-                                    <div class="customer-search-dropdown" id="customer_search_dropdown"></div>
-                                </div>
-                                <div class="selected-customer-badge" id="selected_customer_badge">
-                                    <i class="fi fi-rr-user text-primary"></i>
-                                    <span class="name" id="selected_customer_name"></span>
-                                    <button type="button" class="clear-btn" id="clear_customer_btn">&times;</button>
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label for="amount" class="form-label">{{ translate('amount') }} ({{ getCurrencySymbol(type: 'default') }}) <span class="text-danger">*</span></label>
-                                <input type="number" name="amount" id="amount" class="form-control" 
-                                    step="0.01" min="0.01" 
-                                    max="{{ $vendorWallet?->total_earning ?? 0 }}"
-                                    required placeholder="{{ translate('enter_amount') }}">
-                            </div>
-
-                            <div class="form-group mb-4">
-                                <label for="reference" class="form-label">{{ translate('reference') }} ({{ translate('optional') }})</label>
-                                <input type="text" name="reference" id="reference" class="form-control"
-                                    placeholder="{{ translate('add_a_note') }}" maxlength="255">
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100" id="submitBtn" disabled>
-                                <i class="fi fi-rr-wallet me-1"></i>
-                                {{ translate('transfer_balance') }}
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                <small class="text-muted">
+                    {{ translate('withdrawable_balance') }}: 
+                    {{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: ($vendorWallet?->total_earning ?? 0) - ($vendorWallet?->pending_withdraw ?? 0)), currencyCode: getCurrencyCode(type: 'default')) }}
+                </small>
             </div>
+        </div>
 
-            {{-- Transfer History --}}
-            <div class="col-lg-7">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">{{ translate('transfer_history') }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-borderless table-thead-bordered align-middle">
-                                <thead class="thead-light thead-50 text-capitalize">
-                                    <tr>
-                                        <th>{{ translate('SL') }}</th>
-                                        <th>{{ translate('customer') }}</th>
-                                        <th>{{ translate('amount') }}</th>
-                                        <th>{{ translate('reference') }}</th>
-                                        <th>{{ translate('date') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($transfers as $key => $transfer)
-                                        <tr>
-                                            <td>{{ $transfers->firstItem() + $key }}</td>
-                                            <td>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="fw-semibold">
-                                                        {{ $transfer->toUser?->f_name ?? translate('N/A') }}
-                                                        {{ $transfer->toUser?->l_name ?? '' }}
-                                                    </span>
-                                                    @if ($transfer->toUser?->email)
-                                                        <br><small class="text-muted">{{ $transfer->toUser->email }}</small>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="fw-bold text-danger">
-                                                    -{{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: $transfer->amount), currencyCode: getCurrencyCode(type: 'default')) }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $transfer->reference ?? translate('N/A') }}</td>
-                                            <td>{{ $transfer->created_at->format('d M Y, h:i A') }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5">
-                                                @include('layouts.vendor.partials._empty-state', ['text' => 'no_data_found'], ['image' => 'default'])
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ translate('send_balance_to_customer') }}</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('vendor.wallet-transfer.transfer') }}" method="POST" id="transferForm">
+                    @csrf
+                    <input type="hidden" name="customer_id" id="customer_id_hidden" value="">
+
+                    {{-- Customer Search --}}
+                    <div class="form-group mb-3">
+                        <label class="form-label">{{ translate('search_customer') }} <span class="text-danger">*</span></label>
+                        <div class="customer-search-wrap">
+                            <input type="text" id="customer_search_input" class="form-control"
+                                placeholder="{{ translate('search_by_name_email_or_phone') }}"
+                                autocomplete="off">
+                            <div class="customer-search-dropdown" id="customer_search_dropdown"></div>
                         </div>
-
-                        <div class="d-flex justify-content-end mt-3">
-                            {{ $transfers->links() }}
+                        <div class="selected-customer-badge" id="selected_customer_badge">
+                            <i class="fi fi-rr-user text-primary"></i>
+                            <span class="name" id="selected_customer_name"></span>
+                            <button type="button" class="clear-btn" id="clear_customer_btn">&times;</button>
                         </div>
                     </div>
+
+                    <div class="form-group mb-3">
+                        <label for="amount" class="form-label">{{ translate('amount') }} ({{ getCurrencySymbol(type: 'default') }}) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" id="amount" class="form-control" 
+                            step="0.01" min="0.01" 
+                            max="{{ $vendorWallet?->total_earning ?? 0 }}"
+                            required placeholder="{{ translate('enter_amount') }}">
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="reference" class="form-label">{{ translate('reference') }} ({{ translate('optional') }})</label>
+                        <input type="text" name="reference" id="reference" class="form-control"
+                            placeholder="{{ translate('add_a_note') }}" maxlength="255">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn" disabled>
+                        <i class="fi fi-rr-wallet me-1"></i>
+                        {{ translate('transfer_balance') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {{-- Transfer History --}}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ translate('transfer_history') }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless table-thead-bordered align-middle">
+                        <thead class="thead-light thead-50 text-capitalize">
+                            <tr>
+                                <th>{{ translate('SL') }}</th>
+                                <th>{{ translate('customer') }}</th>
+                                <th>{{ translate('amount') }}</th>
+                                <th>{{ translate('reference') }}</th>
+                                <th>{{ translate('date') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($transfers as $key => $transfer)
+                                <tr>
+                                    <td>{{ $transfers->firstItem() + $key }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-semibold">
+                                                {{ $transfer->toUser?->f_name ?? translate('N/A') }}
+                                                {{ $transfer->toUser?->l_name ?? '' }}
+                                            </span>
+                                            @if ($transfer->toUser?->email)
+                                                <br><small class="text-muted">{{ $transfer->toUser->email }}</small>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-danger">
+                                            -{{ setCurrencySymbol(amount: usdToDefaultCurrency(amount: $transfer->amount), currencyCode: getCurrencyCode(type: 'default')) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $transfer->reference ?? translate('N/A') }}</td>
+                                    <td>{{ $transfer->created_at->format('d M Y, h:i A') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5">
+                                        @include('layouts.vendor.partials._empty-state', ['text' => 'no_data_found'], ['image' => 'default'])
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                    {{ $transfers->links() }}
                 </div>
             </div>
         </div>

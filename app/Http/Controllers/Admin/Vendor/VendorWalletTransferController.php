@@ -31,7 +31,7 @@ class VendorWalletTransferController extends BaseController
             ->where('to_user_type', 'vendor')
             ->with('toUser.shop')
             ->latest()
-            ->paginate(20);
+            ->paginate(getWebConfig(name: 'pagination_limit'));
 
         return view('admin-views.vendor.wallet-transfer', compact('vendors', 'transfers'));
     }
